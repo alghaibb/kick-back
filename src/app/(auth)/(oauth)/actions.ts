@@ -9,3 +9,10 @@ export async function googleLogin() {
     redirectTo: `${env.NEXT_PUBLIC_BASE_URL}/dashboard`,
   });
 }
+
+export async function facebookLogin() {
+  await signIn("facebook", {
+    redirect: true,
+    redirectTo: `${env.NEXT_PUBLIC_BASE_URL}/dashboard`,
+  });
+}
