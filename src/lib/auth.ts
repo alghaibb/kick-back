@@ -7,6 +7,7 @@ import NextAuth from "next-auth";
 import { Adapter } from "next-auth/adapters";
 import { encode as defaultEncode } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
+import Facebook from "next-auth/providers/facebook";
 import Google from "next-auth/providers/google";
 import { v4 as uuid } from "uuid";
 
@@ -18,6 +19,11 @@ const authConfig: NextAuthConfig = {
     Google({
       clientId: env.AUTH_GOOGLE_ID,
       clientSecret: env.AUTH_GOOGLE_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
+    Facebook({
+      clientId: env.AUTH_FACEBOOK_ID,
+      clientSecret: env.AUTH_FACEBOOK_SECRET,
       allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
