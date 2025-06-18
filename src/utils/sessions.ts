@@ -40,9 +40,15 @@ export async function getSession() {
       ...session,
       user: {
         id: session.user.id,
-        email: session.user.email,
+        nickname: session.user.nickname,
         firstName: session.user.firstName,
         lastName: session.user.lastName,
+        email: session.user.email,
+        password: session.user.password,
+        emailVerified: session.user.emailVerified,
+        image: session.user.image,
+        createdAt: session.user.createdAt,
+        updatedAt: session.user.updatedAt,
       },
       expires: session.expires.toISOString(),
     };
