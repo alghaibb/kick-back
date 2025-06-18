@@ -2,7 +2,7 @@
 
 import { LoadingButton } from '@/components/ui/button';
 import { useTransition } from 'react';
-import { signOut } from '../actions';
+import { logout } from '../actions';
 
 type ButtonVariants =
   | 'default'
@@ -30,7 +30,7 @@ export default function LogoutButton({ className, variant }: LogoutProps) {
 
   function handleClick() {
     startTransition(() => {
-      signOut();
+      logout();
     });
   }
 
