@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { env } from '@/env';
 import {
   Body,
   Container,
@@ -14,11 +12,6 @@ interface KickBackVerifyAccountProps {
   userFirstname: string;
   otp: string;
 }
-
-const baseUrl = env.NEXT_PUBLIC_BASE_URL
-  ? `https://${env.NEXT_PUBLIC_BASE_URL}`
-  : 'http://localhost:3000';
-
 export const VerifyAccount = ({
   userFirstname,
   otp,
@@ -77,14 +70,4 @@ const text = {
   fontFamily: "'Arial', sans-serif",
   color: '#374151',
   lineHeight: '24px',
-};
-
-const anchor = {
-  color: '#1d4ed8',
-  textDecoration: 'underline',
-};
-
-const logo = {
-  display: 'block',
-  margin: '0 auto 20px',
 };

@@ -1,4 +1,3 @@
-import { env } from '@/env';
 import {
   Body,
   Button,
@@ -19,10 +18,6 @@ export const MagicLinkEmail = ({
   userFirstName,
   magicLink,
 }: KickBackMagicLinkEmailProps) => {
-  const baseUrl = env.NEXT_PUBLIC_BASE_URL
-    ? `https://${env.NEXT_PUBLIC_BASE_URL}`
-    : 'http://localhost:3000';
-
   return (
     <Html>
       <Head />
@@ -82,4 +77,3 @@ const button = {
   padding: '12px',
   margin: '20px auto',
 };
-const logo = { display: 'block', margin: '0 auto 20px' };

@@ -11,7 +11,7 @@ export default function CreateAccountPage() {
         Welcome to <span className="font-bold text-primary">Kick Back</span>
       </h2>
       <p className="mt-2 text-sm text-muted-foreground md:text-center">
-        We're excited to have you here! Please create an account to get started.
+        We&apos;re excited to have you here! Please create an account to get started.
       </p>
 
       <Separator className="my-6" />
