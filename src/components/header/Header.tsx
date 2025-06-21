@@ -6,8 +6,8 @@ export default async function Header() {
   const user = session?.user;
 
   return (
-    <header className="py-4">
-      <div className="mx-auto max-w-7xl px-4">
+    <header>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <Navbar user={user} />
       </div>
     </header>

@@ -1,27 +1,13 @@
-'use client';
-
 import { Button } from '@/components/ui/button';
-import { hideHeaderNFooter, navItems } from '@/lib/constants';
+import { navItems } from '@/lib/constants';
 import { User } from '@prisma/client';
-import { User as UserIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { ThemeToggle } from '../ui/theme-toggle';
+import UserDropdown from '../UserDropdown';
 import MobileNavbar from './MobileNav';
 
 export default function Navbar({ user }: { user?: User }) {
-  const pathname = usePathname();
-  const cleanPathname = pathname.split('?')[0];
-
-  const shouldHideNavbar = hideHeaderNFooter.some((route) =>
-    cleanPathname.startsWith(route)
-  );
-
-  if (shouldHideNavbar) {
-    return null;
-  }
-
   return (
     <nav className="flex items-center justify-between w-full">
       <div className="flex flex-1 justify-start">
@@ -58,13 +44,7 @@ export default function Navbar({ user }: { user?: User }) {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Button asChild variant="ghost" size="icon">
-                <Link href="/account">
-                  <UserIcon className="size-5" />
-                  <span className="sr-only">Account</span>
-                </Link>
-              </Button>
-
+              <UserDropdown name={user.firstName} image={user.image} />
               <ThemeToggle />
             </div>
           )}

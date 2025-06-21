@@ -1,23 +1,23 @@
+import { Calendar, CalendarClock, Home, Settings, Users } from "lucide-react";
+
 export const navItems = [
-  { title: "Home", url: "/" },
-  { title: "Groups", url: "/groups" },
-  { title: "Calendar", url: "/calendar" },
+  { title: "Groups", url: "/dashboard/groups" },
+  { title: "Events", url: "/dashboard/events" },
+  { title: "Calendar", url: "/dashboard/calendar" },
   { title: "Dashboard", url: "/dashboard" },
+];
+
+export const dashboardNavItems = [
+  { title: "Home", url: "/dashboard", icon: Home },
+  { title: "Groups", url: "/dashboard/groups", icon: Users },
+  { title: "Events", url: "/dashboard/events", icon: CalendarClock },
+  { title: "Calendar", url: "/dashboard/calendar", icon: Calendar },
+  { title: "Settings", url: "/dashboard/settings", icon: Settings },
 ];
 
 export const mobileNavFooterLinks = [
   { title: "Account", url: "/account" },
+  { title: "About Us", url: "/about" },
   { title: "Contact Us", url: "/contact" },
   { title: "Terms of Service", url: "/terms" },
 ];
-
-export const hideHeaderNFooter = [
-  "/create-account",
-  "/login",
-  "/forgot-password",
-  "/reset-password",
-  "/magic-link-create",
-  "/magic-link-login",
-  "/magic-link-verify",
-  "/verify-account"
-]
