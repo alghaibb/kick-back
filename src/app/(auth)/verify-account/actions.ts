@@ -5,7 +5,6 @@ import prisma from "@/lib/prisma";
 import { deleteVerificationOTP, verifyVerificationOTP } from "@/utils/tokens";
 import { otpSchema, OTPValues } from "@/validations/auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { redirect } from "next/navigation";
 
 export async function verifyAccount(values: OTPValues) {
   try {
@@ -40,7 +39,7 @@ export async function verifyAccount(values: OTPValues) {
       return { error: "Failed to log in. Please try logging in manually." };
     }
 
-    redirect("/dashboard");
+    return { success: "Account verified successfully!" };
   } catch (error) {
     if (isRedirectError(error)) throw error;
     console.error("Error verifying account:", error);

@@ -1,6 +1,5 @@
 'use client';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LoadingButton } from '@/components/ui/button';
 import {
   Form,
@@ -14,14 +13,16 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { createAccountSchema, CreateAccountValues } from '@/validations/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
 import { createAccount } from './actions';
 
 export default function CreateAccountForm() {
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const form = useForm<CreateAccountValues>({
     resolver: zodResolver(createAccountSchema),
@@ -35,12 +36,15 @@ export default function CreateAccountForm() {
   });
 
   function onSubmit(values: z.infer<typeof createAccountSchema>) {
-    setError(null);
     startTransition(async () => {
       const res = await createAccount(values);
       if (res?.error) {
-        setError(res.error);
+        toast.error(res.error);
         form.reset();
+      } else if (res?.success) {
+        toast.success(res.success);
+        form.reset();
+        router.push('/verify-account');
       }
     });
   }
@@ -51,13 +55,6 @@ export default function CreateAccountForm() {
         onSubmit={form.handleSubmit(onSubmit)}
         className="py-10 mx-auto space-y-8 "
       >
-        {error && (
-          <Alert variant="destructive">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
         <div className="flex flex-col gap-4 md:grid md:grid-cols-12">
           <div className="col-span-6">
             <FormField

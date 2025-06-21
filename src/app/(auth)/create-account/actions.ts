@@ -7,7 +7,6 @@ import { getUserByEmail } from "@/utils/user";
 import { createAccountSchema, CreateAccountValues } from "@/validations/auth";
 import bcrypt from "bcryptjs";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { redirect } from "next/navigation";
 
 export async function createAccount(values: CreateAccountValues) {
   try {
@@ -35,7 +34,8 @@ export async function createAccount(values: CreateAccountValues) {
     const verificationCode = await generateVerificationCode(lowercaseEmail, "create-account");
 
     await sendVerifyAccountEmail(lowercaseEmail, verificationCode);
-    redirect("/verify-account");
+
+    return { success: "Account created successfully! Please check your email to verify your account." };
   } catch (error) {
     if (isRedirectError(error)) throw error;
     console.error("Error signing up:", error);

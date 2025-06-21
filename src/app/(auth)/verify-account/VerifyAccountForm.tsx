@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/input-otp';
 import { otpSchema, OTPValues } from '@/validations/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -24,6 +25,7 @@ import { verifyAccount } from './actions';
 
 export default function VerifyAccountForm() {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const form = useForm<OTPValues>({
     resolver: zodResolver(otpSchema),
@@ -37,6 +39,10 @@ export default function VerifyAccountForm() {
       const res = await verifyAccount(values);
       if (res?.error) {
         toast.error(res.error);
+      } else if (res?.success) {
+        toast.success(res.success);
+        form.reset();
+        router.push('/onboaring');
       }
     });
   }

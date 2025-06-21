@@ -23,7 +23,7 @@ export async function verifyMagicLink(token: string) {
       redirect: false,
     });
 
-    return { success: true, redirectTo: "/dashboard" };
+    return { success: true, redirectTo: "/onboarding" };
 
   } catch (error) {
     console.error("Error verifying magic link:", error);
