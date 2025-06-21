@@ -65,6 +65,7 @@ const authConfig: NextAuthConfig = {
           name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
           email: user.email,
           emailVerified: user.emailVerified,
+          image: user.image
         };
       }
     }),
