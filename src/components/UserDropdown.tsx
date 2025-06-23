@@ -19,12 +19,12 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-interface Props {
+interface UserDropdownProps {
   name?: string | null;
   image?: string | null;
 }
 
-export default function UserDropdown({ name, image }: Props) {
+export default function UserDropdown({ name, image }: UserDropdownProps) {
   const fallback = name?.[0]?.toUpperCase() || 'U';
   const router = useRouter();
 
@@ -36,7 +36,7 @@ export default function UserDropdown({ name, image }: Props) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="cursor-pointer" size="icon">
-          <Avatar className="size-5">
+          <Avatar className="size-10">
             <AvatarImage src={image || ''} alt={name || 'User'} />
             <AvatarFallback>{fallback}</AvatarFallback>
           </Avatar>
