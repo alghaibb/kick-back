@@ -45,7 +45,7 @@ export default function LoginPage() {
       </p>
 
       <div className="mt-6 text-center">
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="w-full">
           <Link href="/">Back to Home</Link>
         </Button>
       </div>

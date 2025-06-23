@@ -1,5 +1,6 @@
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import UserDropdown from '@/components/UserDropdown';
+import prisma from '@/lib/prisma';
 import { getSession } from '@/utils/sessions';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -14,11 +15,24 @@ export default async function DashboardLayout({
   children: ReactNode;
 }) {
   const session = await getSession();
-  const user = session?.user;
+  if (!session?.user?.id) redirect('/login');
 
-  if (!session) {
-    redirect('/login');
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      nickname: true,
+      firstName: true,
+      image: true,
+      hasOnboarded: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error('Unauthorized');
   }
+  
+  if (!user.hasOnboarded) redirect('/onboarding');
 
   return (
     <div className="min-h-screen w-full grid md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">

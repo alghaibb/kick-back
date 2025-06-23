@@ -44,8 +44,8 @@ export default function Navbar({ user }: { user?: User }) {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <UserDropdown name={user.firstName} image={user.image} />
               <ThemeToggle />
+              <UserDropdown name={user.firstName} image={user.image} />
             </div>
           )}
         </div>
