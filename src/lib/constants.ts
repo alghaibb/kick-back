@@ -16,7 +16,6 @@ export const dashboardNavItems = [
 ];
 
 export const mobileNavFooterLinks = [
-  { title: "Account", url: "/account" },
   { title: "About Us", url: "/about" },
   { title: "Contact Us", url: "/contact" },
   { title: "Terms of Service", url: "/terms" },

@@ -42,7 +42,7 @@ export default function VerifyAccountForm() {
       } else if (res?.success) {
         toast.success(res.success);
         form.reset();
-        router.push('/onboaring');
+        router.push('/onboarding');
       }
     });
   }

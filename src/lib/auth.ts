@@ -140,8 +140,8 @@ const authConfig: NextAuthConfig = {
     },
   },
   pages: {
-    signIn: "/sign-in",
-    signOut: "/sign-in",
+    signIn: "/login",
+    signOut: "/login",
   },
   trustHost: true,
   secret: env.AUTH_SECRET,

@@ -51,9 +51,6 @@ export default function UserDropdown({ name, image }: UserDropdownProps) {
 
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/account">My Account</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
             <Link href="/dashboard/events">My Events</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
@@ -84,7 +81,7 @@ export default function UserDropdown({ name, image }: UserDropdownProps) {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
-          <Link href="/account/settings">Settings</Link>
+          <Link href="/dashboard/settings">Settings</Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

@@ -31,7 +31,7 @@ export default async function DashboardLayout({
   if (!user) {
     throw new Error('Unauthorized');
   }
-  
+
   if (!user.hasOnboarded) redirect('/onboarding');
 
   return (
@@ -68,6 +68,7 @@ export default async function DashboardLayout({
             />
           </div>
         </header>
+        <main>{children}</main>
       </div>
     </div>
   );

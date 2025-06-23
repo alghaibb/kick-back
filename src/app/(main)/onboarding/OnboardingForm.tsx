@@ -1,6 +1,17 @@
 'use client';
 
+import { useEffect, useRef, useState, useTransition } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import * as z from 'zod';
+
+import { onboardingSchema, OnboardingValues } from '@/validations/onboardingSchema';
+import { User } from '@prisma/client';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 import { LoadingButton } from '@/components/ui/button';
 import {
   Form,
@@ -10,18 +21,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-  onboardingSchema,
-  OnboardingValues,
-} from '@/validations/onboardingSchema';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { User } from '@prisma/client';
-import { useRouter } from 'next/navigation';
-import { useRef, useState, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
+
 import { onboarding } from './actions';
 
 export default function OnboardingForm({ user }: { user: User }) {
@@ -29,8 +29,8 @@ export default function OnboardingForm({ user }: { user: User }) {
   const router = useRouter();
 
   const imageRef = useRef<HTMLInputElement>(null);
-  const [preview] = useState<string | null>(user.image ?? null);
   const [currentFile, setCurrentFile] = useState<File | undefined>(undefined);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(user.image ?? null);
 
   const form = useForm<OnboardingValues>({
     resolver: zodResolver(onboardingSchema),
@@ -40,6 +40,16 @@ export default function OnboardingForm({ user }: { user: User }) {
       nickname: user.nickname ?? '',
     },
   });
+
+  // Handle image preview cleanup
+  useEffect(() => {
+    if (!currentFile) return;
+
+    const objectUrl = URL.createObjectURL(currentFile);
+    setPreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [currentFile]);
 
   function onSubmit(values: z.infer<typeof onboardingSchema>) {
     startTransition(async () => {
@@ -54,7 +64,17 @@ export default function OnboardingForm({ user }: { user: User }) {
           body: formData,
         });
 
+        if (!uploadRes.ok) {
+          toast.error('Image upload failed.');
+          return;
+        }
+
         const { url } = await uploadRes.json();
+        if (!url) {
+          toast.error('No URL returned from upload.');
+          return;
+        }
+
         imageUrl = url;
       }
 
@@ -82,15 +102,11 @@ export default function OnboardingForm({ user }: { user: User }) {
         <div className="text-center">
           <Avatar className="mx-auto size-20">
             <AvatarImage
-              src={
-                currentFile
-                  ? URL.createObjectURL(currentFile)
-                  : preview ?? undefined
-              }
+              src={previewUrl ?? undefined}
               alt="Profile"
             />
             <AvatarFallback>
-              {user.firstName?.[0] ?? user.nickname?.[0] ?? 'U'}
+              {(user.firstName?.[0] ?? user.nickname?.[0] ?? 'U').toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </div>
@@ -102,7 +118,7 @@ export default function OnboardingForm({ user }: { user: User }) {
             <FormItem>
               <FormLabel>First Name</FormLabel>
               <FormControl>
-                <Input placeholder="Your first name" {...field} />
+                <Input placeholder="Your first name" required {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -116,7 +132,7 @@ export default function OnboardingForm({ user }: { user: User }) {
             <FormItem>
               <FormLabel>Last Name</FormLabel>
               <FormControl>
-                <Input placeholder="Your last name" {...field} />
+                <Input placeholder="Your last name" required {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -137,33 +153,23 @@ export default function OnboardingForm({ user }: { user: User }) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="image"
-          render={({ field: { onChange, onBlur, name, ref } }) => (
-            <FormItem>
-              <FormLabel>Profile Image</FormLabel>
-              <FormControl>
-                <Input
-                  type="file"
-                  name={name}
-                  accept="image/*"
-                  disabled={isPending}
-                  ref={imageRef}
-                  onBlur={onBlur}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      onChange(file);
-                      setCurrentFile(file);
-                    }
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <FormItem>
+          <FormLabel>Profile Image</FormLabel>
+          <FormControl>
+            <Input
+              type="file"
+              accept="image/*"
+              disabled={isPending}
+              ref={imageRef}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setCurrentFile(file);
+                }
+              }}
+            />
+          </FormControl>
+        </FormItem>
 
         <LoadingButton
           type="submit"
