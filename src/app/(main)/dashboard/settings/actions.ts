@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/prisma';
 import { getSession } from '@/utils/sessions';
-import { accountSettingsSchema, AccountSettingsValues } from '@/validations/user/accountSettingsSchema';
+import { accountSettingsSchema, AccountSettingsValues } from '@/validations/user';
 import { del } from '@vercel/blob';
 import bcrypt from 'bcryptjs';
 

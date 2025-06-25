@@ -25,6 +25,8 @@ model User {
   verificationOTPs    VerificationOTP[]
   resetPasswordTokens ResetPasswordToken[]
   magicLinkTokens     MagicLinkToken[]
+  Group               Group[]
+  GroupMember         GroupMember[]
 
   @@map("users")
 }
@@ -101,4 +103,47 @@ model MagicLinkToken {
 
   @@index([token])
   @@map("magic_link_tokens")
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  icon        String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  groupMembers GroupMember[]
+  groupInvites GroupInvite[]
+}
+
+model GroupMember {
+  id       String   @id @default(cuid())
+  groupId  String
+  userId   String
+  role     String   @default("member")
+  joinedAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model GroupInvite {
+  id        String   @id @default(cuid())
+  groupId   String
+  email     String
+  status    String   @default("pending")
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id])
+
+  @@map("group_invites")
 }

@@ -1,8 +1,8 @@
-import Header from '@/components/header/Header';
 import { Toaster } from '@/components/ui/sonner';
 import type { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
 import { Poppins } from 'next/font/google';
+import CreateGroupModal from './(main)/dashboard/groups/_components/CreateGroupModal';
 import './globals.css';
 
 const poppins = Poppins({
@@ -34,9 +34,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <main>
-            {children}
-          </main>
+          <CreateGroupModal />
+          <main>{children}</main>
         </ThemeProvider>
         <Toaster richColors closeButton theme="light" />
       </body>

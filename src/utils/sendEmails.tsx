@@ -1,4 +1,5 @@
 import {
+  GroupInviteEmail,
   MagicLinkEmail,
   ResendOTPEmail,
   ResetPasswordEmail,
@@ -11,14 +12,16 @@ import { Resend } from 'resend';
 
 const resend = new Resend(env.RESEND_API_KEY);
 
+// 1. 🔄 Shared email sender
 async function sendEmail(
   to: string,
   subject: string,
-  reactComponent: JSX.Element
+  reactComponent: JSX.Element,
+  from?: string
 ) {
   try {
     await resend.emails.send({
-      from: 'noreply@codewithmj.com',
+      from: from || 'noreply@codewithmj.com',
       to,
       subject,
       react: reactComponent,
@@ -29,73 +32,90 @@ async function sendEmail(
   }
 }
 
-export const sendVerifyAccountEmail = async (email: string, otp: string) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
-  if (!user || !user.firstName) {
-    throw new Error('User not found or missing first name.');
-  }
+// 2. 👤 Reusable helper to get firstName
+async function getUserFirstNameByEmail(email: string) {
+  const user = await prisma.user.findUnique({ where: { email } });
+  return user?.firstName;
+}
 
-  const emailComponent = (
-    <VerifyAccount otp={otp} userFirstname={user.firstName} />
+// 3. 📩 Send specific emails
+
+export async function sendVerifyAccountEmail(email: string, otp: string) {
+  const firstName = await getUserFirstNameByEmail(email);
+  if (!firstName) throw new Error('User not found or missing first name.');
+
+  await sendEmail(
+    email,
+    'Verify your account',
+    <VerifyAccount otp={otp} userFirstname={firstName} />
   );
-  await sendEmail(email, 'Verify your account', emailComponent);
-};
+}
 
-export const sendResendOTPEmail = async (email: string, otp: string) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
-  if (!user || !user.firstName) {
-    throw new Error('User not found or missing first name.');
-  }
+export async function sendResendOTPEmail(email: string, otp: string) {
+  const firstName = await getUserFirstNameByEmail(email);
+  if (!firstName) throw new Error('User not found or missing first name.');
 
-  const emailComponent = (
-    <ResendOTPEmail otp={otp} userFirstname={user.firstName} />
+  await sendEmail(
+    email,
+    'Resend OTP',
+    <ResendOTPEmail otp={otp} userFirstname={firstName} />
   );
-  await sendEmail(email, 'Resend OTP', emailComponent);
-};
+}
 
-export const sendResetPasswordEmail = async (
+export async function sendResetPasswordEmail(
   email: string,
   firstName: string,
   token: string
-) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
-  const userFirstName = user?.firstName || firstName;
+) {
+  const dbFirstName = await getUserFirstNameByEmail(email);
+  const finalName = dbFirstName || firstName;
 
   const resetPasswordLink = `${env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${token}`;
-  const emailComponent = (
+  await sendEmail(
+    email,
+    'Reset your password',
     <ResetPasswordEmail
-      userFirstName={userFirstName}
+      userFirstName={finalName}
       resetPasswordLink={resetPasswordLink}
     />
   );
-  await sendEmail(email, 'Reset your password', emailComponent);
-};
+}
 
-export const sendMagicLinkEmail = async (email: string, magicLink: string) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
+export async function sendMagicLinkEmail(email: string, magicLink: string) {
+  const firstName = await getUserFirstNameByEmail(email);
+  if (!firstName) throw new Error('User not found or missing first name.');
 
-  if (!user || !user.firstName) {
-    throw new Error('User not found or missing first name.');
-  }
   const magicLinkToken = `${env.NEXT_PUBLIC_BASE_URL}/magic-link-verify?token=${magicLink}`;
-  const emailComponent = (
-    <MagicLinkEmail userFirstName={user.firstName} magicLink={magicLinkToken} />
+  await sendEmail(
+    email,
+    'Your Magic Link to Sign In',
+    <MagicLinkEmail userFirstName={firstName} magicLink={magicLinkToken} />
   );
-  await sendEmail(email, 'Your Magic Link to Sign In', emailComponent);
-};
+}
+
+export async function sendGroupInviteEmail({
+  email,
+  inviterName,
+  groupName,
+  token,
+}: {
+  email: string;
+  inviterName: string;
+  groupName: string;
+  token: string;
+}) {
+  const inviteLink = `${env.NEXT_PUBLIC_BASE_URL}/invite/accept?token=${token}`;
+  const firstName = await getUserFirstNameByEmail(email); // might be undefined for non-users
+
+  await sendEmail(
+    email,
+    `You're invited to join "${groupName}" on Kick Back`,
+    <GroupInviteEmail
+      userFirstName={firstName}
+      inviterName={inviterName}
+      groupName={groupName}
+      inviteLink={inviteLink}
+    />,
+    'Kick Back <no-reply@codewithmj.com>'
+  );
+}
