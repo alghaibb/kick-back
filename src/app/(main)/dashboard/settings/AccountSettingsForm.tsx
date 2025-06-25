@@ -16,7 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   AccountSettingsValues,
   accountSettingsSchema,
-} from '@/validations/user/accountSettingsSchema';
+} from '@/validations/user';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { User } from '@prisma/client';
 import { useRouter } from 'next/navigation';

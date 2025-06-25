@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { emailField, firstNameField, lastNameField, passwordField } from '../fields';
+import { emailField, firstNameField, lastNameField, passwordField } from './fields';
 
 export const accountSettingsSchema = z
   .object({
