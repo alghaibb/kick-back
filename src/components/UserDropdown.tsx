@@ -16,7 +16,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useGroupModal } from '@/hooks/useGroupModal';
+import { useGroupModals } from '@/hooks/useModal';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -28,7 +28,7 @@ interface UserDropdownProps {
 export default function UserDropdown({ name, image }: UserDropdownProps) {
   const fallback = name?.[0]?.toUpperCase() || 'U';
   const router = useRouter();
-  const { open: openGroupModal } = useGroupModal();
+  const { open } = useGroupModals();
 
   async function handleLogout() {
     logout();
@@ -71,7 +71,7 @@ export default function UserDropdown({ name, image }: UserDropdownProps) {
               >
                 New Event
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openGroupModal()}>
+              <DropdownMenuItem onClick={() => open('create')}>
                 New Group
               </DropdownMenuItem>
             </DropdownMenuSubContent>

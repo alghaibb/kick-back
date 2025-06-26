@@ -19,7 +19,7 @@ import {
   ResponsiveModalTitle,
 } from '@/components/ui/responsive-modal';
 import { AutosizeTextarea } from '@/components/ui/textarea';
-import { useEditGroupModal } from '@/hooks/useEditGroupModal';
+import { useGroupModals } from '@/hooks/useModal';
 import { createGroupSchema, CreateGroupValues } from '@/validations/group';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useTransition } from 'react';
@@ -28,8 +28,9 @@ import { toast } from 'sonner';
 import { updateGroupAction } from '../actions';
 
 export default function EditGroupModal() {
-  const { isOpen, close, groupId, name, description } = useEditGroupModal();
+  // const { isOpen, close, groupId, name, description } = useEditGroupModal();
   const [isPending, startTransition] = useTransition();
+  const { type, isOpen, close, groupId, name, description } = useGroupModals();
 
   const form = useForm<CreateGroupValues>({
     resolver: zodResolver(createGroupSchema),
@@ -47,6 +48,8 @@ export default function EditGroupModal() {
       form.setValue('invites', ''); // no-op for editing
     }
   }, [isOpen, name, description, form]);
+
+  if (type !== 'edit') return null;
 
   function onSubmit(values: CreateGroupValues) {
     if (!groupId) return;

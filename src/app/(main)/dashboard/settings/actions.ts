@@ -5,6 +5,7 @@ import { getSession } from '@/utils/sessions';
 import { accountSettingsSchema, AccountSettingsValues } from '@/validations/user';
 import { del } from '@vercel/blob';
 import bcrypt from 'bcryptjs';
+import { Prisma } from '@prisma/client';
 
 export async function updateAccountSettings(values: AccountSettingsValues) {
   try {
@@ -24,7 +25,7 @@ export async function updateAccountSettings(values: AccountSettingsValues) {
       await del(previousImage);
     }
 
-    const updateData: any = {
+    const updateData: Prisma.UserUpdateInput = {
       firstName,
       lastName,
       nickname,

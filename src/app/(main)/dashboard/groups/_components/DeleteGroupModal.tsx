@@ -9,14 +9,16 @@ import {
   ResponsiveModalHeader,
   ResponsiveModalTitle,
 } from '@/components/ui/responsive-modal';
-import { useDeleteModal } from '@/hooks/useDeleteGroupModal';
+import { useGroupModals } from '@/hooks/useModal';
 import { useTransition } from 'react';
 import { toast } from 'sonner';
 import { deleteGroupAction } from '../actions';
 
 export default function DeleteGroupModal() {
-  const { isOpen, groupId, close } = useDeleteModal();
   const [isPending, startTransition] = useTransition();
+  const { type, isOpen, groupId, close } = useGroupModals();
+
+  if (type !== 'delete') return null;
 
   const onConfirm = () => {
     if (!groupId) return;
@@ -45,7 +47,7 @@ export default function DeleteGroupModal() {
 
         <ResponsiveModalFooter>
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={close}
             disabled={isPending}
             className="cursor-pointer"
