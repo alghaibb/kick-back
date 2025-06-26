@@ -49,6 +49,7 @@ export async function getSession() {
         image: session.user.image,
         createdAt: session.user.createdAt,
         updatedAt: session.user.updatedAt,
+        hasOnboarded: session.user.hasOnboarded,
       },
       expires: session.expires.toISOString(),
     };

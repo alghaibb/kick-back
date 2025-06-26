@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Header from '@/components/header/Header';
 
 export default function Home() {
@@ -6,8 +8,7 @@ export default function Home() {
       <div className="border-b">
         <Header />
       </div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"></div>
     </>
   );
 }
