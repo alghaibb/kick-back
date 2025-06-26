@@ -18,7 +18,7 @@ import {
   ResponsiveModalHeader,
   ResponsiveModalTitle,
 } from '@/components/ui/responsive-modal';
-import { useInviteModal } from '@/hooks/useInviteGroupModal';
+import { useGroupModals } from '@/hooks/useModal';
 import { emailField } from '@/validations/fields';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTransition } from 'react';
@@ -32,13 +32,16 @@ const inviteSchema = z.object({
 });
 
 export default function InviteGroupMemberModal() {
-  const { isOpen, groupId, close } = useInviteModal();
+  // const { isOpen, groupId, close } = useInviteModal();
   const [isPending, startTransition] = useTransition();
+  const { type, isOpen, close, groupId } = useGroupModals();
 
   const form = useForm<z.infer<typeof inviteSchema>>({
     resolver: zodResolver(inviteSchema),
     defaultValues: { email: '' },
   });
+
+  if (type !== 'invite') return null;
 
   function onSubmit(data: z.infer<typeof inviteSchema>) {
     if (!groupId) return;
@@ -86,7 +89,7 @@ export default function InviteGroupMemberModal() {
                 loading={isPending}
                 disabled={isPending}
                 type="submit"
-                className="w-full"
+                className="w-full cursor-pointer"
               >
                 {isPending ? 'Sending...' : 'Send Invite'}
               </LoadingButton>

@@ -19,7 +19,7 @@ import {
   ResponsiveModalTitle,
 } from '@/components/ui/responsive-modal';
 import { AutosizeTextarea } from '@/components/ui/textarea';
-import { useGroupModal } from '@/hooks/useGroupModal';
+import { useGroupModals } from '@/hooks/useModal';
 import { createGroupSchema, CreateGroupValues } from '@/validations/group';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTransition } from 'react';
@@ -29,8 +29,9 @@ import * as z from 'zod';
 import { createGroupAction } from '../actions';
 
 export default function CreateGroupModal() {
-  const { isOpen, close } = useGroupModal();
+  // const { isOpen, close } = useGroupModal();
   const [isPending, startTransition] = useTransition();
+  const { type, isOpen, close } = useGroupModals();
 
   const form = useForm<CreateGroupValues>({
     resolver: zodResolver(createGroupSchema),
@@ -40,6 +41,8 @@ export default function CreateGroupModal() {
       invites: '',
     },
   });
+
+  if (type !== 'create') return null;
 
   function onSubmit(values: z.infer<typeof createGroupSchema>) {
     startTransition(async () => {

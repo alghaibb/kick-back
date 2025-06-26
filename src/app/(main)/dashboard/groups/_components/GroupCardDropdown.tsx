@@ -7,9 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useDeleteModal } from '@/hooks/useDeleteGroupModal';
-import { useEditGroupModal } from '@/hooks/useEditGroupModal';
-import { useInviteModal } from '@/hooks/useInviteGroupModal';
+import { useGroupModals } from '@/hooks/useModal';
 import { MoreVertical } from 'lucide-react';
 
 interface GroupCardDropdownProps {
@@ -25,10 +23,6 @@ export default function GroupCardDropdown({
   group,
   className,
 }: GroupCardDropdownProps) {
-  const { open: openDeleteModal } = useDeleteModal();
-  const { open: openInviteModal } = useInviteModal();
-  const { open: openEditModal } = useEditGroupModal();
-
   return (
     <div className={className}>
       <DropdownMenu>
@@ -38,12 +32,16 @@ export default function GroupCardDropdown({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => openInviteModal(group.id)}>
+          <DropdownMenuItem
+            onClick={() =>
+              useGroupModals.getState().open('invite', { groupId: group.id })
+            }
+          >
             Invite Member
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() =>
-              openEditModal({
+              useGroupModals.getState().open('edit', {
                 groupId: group.id,
                 name: group.name,
                 description: group.description ?? '',
@@ -53,7 +51,9 @@ export default function GroupCardDropdown({
             Edit Group
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => openDeleteModal(group.id)}
+            onClick={() =>
+              useGroupModals.getState().open('delete', { groupId: group.id })
+            }
             className="text-destructive"
           >
             Delete Group

@@ -8,12 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useGroupModal } from '@/hooks/useGroupModal';
+import { useGroupModals } from '@/hooks/useModal';
 import { Plus } from 'lucide-react';
 import DeleteGroupModal from './_components/DeleteGroupModal';
 import EditGroupModal from './_components/EditGroupModal';
 import GroupCardDropdown from './_components/GroupCardDropdown';
-import InviteGroupMemberModal from './_components/InviteModal';
+import InviteGroupMemberModal from './_components/InviteGroupMemberModal';
 
 interface GroupsClientProps {
   groups: {
@@ -25,14 +25,15 @@ interface GroupsClientProps {
 }
 
 export default function GroupsClient({ groups }: GroupsClientProps) {
-  const { open } = useGroupModal();
+  // const { open } = useGroupModal();
+  const { open } = useGroupModals();
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-foreground">All Groups</h2>
         <Button
-          onClick={open}
+          onClick={() => open('create')}
           variant="ghost"
           className="cursor-pointer flex items-center gap-2"
         >
