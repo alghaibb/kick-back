@@ -19,7 +19,7 @@ export default async function AccountSettingsPage() {
 
   return (
     <div className="flex items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-3xl">
+      <Card className="w-full max-w-7xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Account Settings</CardTitle>
           <CardDescription>

@@ -22,6 +22,14 @@ interface GroupsClientProps {
     name: string;
     description?: string | null;
     createdAt: Date;
+    ownerId: string;
+    owner: {
+      id: string;
+      firstName: string;
+      image: string | null;
+      nickname: string | null;
+      email: string;
+    };
     groupMembers: {
       user: {
         id: string;
@@ -91,11 +99,20 @@ export default function GroupsClient({ groups }: GroupsClientProps) {
                       image: user.image,
                       status: 'member' as const,
                     })),
-                    ...group.groupInvites.map((invite) => ({
-                      email: invite.email,
-                      status: invite.status as 'pending',
-                    })),
+                    ...group.groupInvites
+                      .filter((invite) => invite.status === 'pending')
+                      .map((invite) => ({
+                        email: invite.email,
+                        status: invite.status as 'pending',
+                      })),
                   ]}
+                  owner={{
+                    id: group.ownerId,
+                    email: group.owner.email,
+                    firstName: group.owner.firstName,
+                    nickname: group.owner.nickname,
+                    image: group.owner.image,
+                  }}
                 />
               </CardContent>
             </Card>
