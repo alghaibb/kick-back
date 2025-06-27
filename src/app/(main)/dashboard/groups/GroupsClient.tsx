@@ -14,6 +14,7 @@ import DeleteGroupModal from './_components/DeleteGroupModal';
 import EditGroupModal from './_components/EditGroupModal';
 import GroupCardDropdown from './_components/GroupCardDropdown';
 import InviteGroupMemberModal from './_components/InviteGroupMemberModal';
+import ViewGroupMembersModal from './_components/ViewGroupMembersModal';
 
 interface GroupsClientProps {
   groups: {
@@ -21,11 +22,23 @@ interface GroupsClientProps {
     name: string;
     description?: string | null;
     createdAt: Date;
+    groupMembers: {
+      user: {
+        id: string;
+        firstName: string;
+        image: string | null;
+        nickname: string | null;
+        email: string;
+      };
+    }[];
+    groupInvites: {
+      email: string;
+      status: string;
+    }[];
   }[];
 }
 
 export default function GroupsClient({ groups }: GroupsClientProps) {
-  // const { open } = useGroupModal();
   const { open } = useGroupModals();
 
   return (
@@ -64,10 +77,26 @@ export default function GroupsClient({ groups }: GroupsClientProps) {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <p className="text-xs text-muted-foreground">
                   Created on: {new Date(group.createdAt).toLocaleDateString()}
                 </p>
+                <ViewGroupMembersModal
+                  members={[
+                    ...group.groupMembers.map(({ user }) => ({
+                      id: user.id,
+                      email: user.email,
+                      nickname: user.nickname,
+                      firstName: user.firstName,
+                      image: user.image,
+                      status: 'member' as const,
+                    })),
+                    ...group.groupInvites.map((invite) => ({
+                      email: invite.email,
+                      status: invite.status as 'pending',
+                    })),
+                  ]}
+                />
               </CardContent>
             </Card>
           ))}

@@ -32,7 +32,6 @@ const inviteSchema = z.object({
 });
 
 export default function InviteGroupMemberModal() {
-  // const { isOpen, groupId, close } = useInviteModal();
   const [isPending, startTransition] = useTransition();
   const { type, isOpen, close, groupId } = useGroupModals();
 

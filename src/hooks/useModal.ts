@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-type ModalType = 'create' | 'edit' | 'invite' | 'delete' | null;
+type ModalType = 'create' | 'edit' | 'invite' | 'delete' | 'view-members' | null;
 
 interface GroupModalStore {
   type: ModalType;

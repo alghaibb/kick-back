@@ -15,6 +15,12 @@ export default async function GroupsPage() {
   const groups = await prisma.group.findMany({
     where: { ownerId: session?.user?.id },
     orderBy: { createdAt: 'desc' },
+    include: {
+      groupMembers: {
+        include: { user: true },
+      },
+      groupInvites: true,
+    },
   });
 
   return (
