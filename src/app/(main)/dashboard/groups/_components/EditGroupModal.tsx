@@ -28,7 +28,6 @@ import { toast } from 'sonner';
 import { updateGroupAction } from '../actions';
 
 export default function EditGroupModal() {
-  // const { isOpen, close, groupId, name, description } = useEditGroupModal();
   const [isPending, startTransition] = useTransition();
   const { type, isOpen, close, groupId, name, description } = useGroupModals();
 

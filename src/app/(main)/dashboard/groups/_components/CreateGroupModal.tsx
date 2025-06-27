@@ -29,7 +29,6 @@ import * as z from 'zod';
 import { createGroupAction } from '../actions';
 
 export default function CreateGroupModal() {
-  // const { isOpen, close } = useGroupModal();
   const [isPending, startTransition] = useTransition();
   const { type, isOpen, close } = useGroupModals();
 
