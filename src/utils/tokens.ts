@@ -170,3 +170,32 @@ export const deleteResetPasswordToken = async (token: string) => {
     console.error("Error deleting reset password token:", error);
   }
 };
+
+export const generateGroupInviteToken = async (email: string, groupId: string) => {
+  const token = crypto.randomBytes(32).toString("hex");
+
+  await prisma.groupInvite.create({
+    data: {
+      email,
+      token,
+      groupId,
+      status: 'pending',
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+    },
+  });
+
+  return token;
+};
+
+export const verifyGroupInviteToken = async (token: string) => {
+  const invite = await prisma.groupInvite.findUnique({
+    where: { token },
+    include: { group: true },
+  });
+
+  if (!invite || invite.expiresAt < new Date() || invite.status !== 'pending') {
+    return { error: 'Invalid or expired invitation link.' };
+  }
+
+  return { invite, error: null };
+};

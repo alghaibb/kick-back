@@ -87,6 +87,10 @@ export async function deleteGroupAction(groupId: string) {
       return { error: 'You are not authorized to delete this group.' };
     }
 
+    await prisma.groupMember.deleteMany({
+      where: { groupId },
+    });
+
     await prisma.groupInvite.deleteMany({
       where: { groupId },
     });
