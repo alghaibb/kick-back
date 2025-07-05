@@ -1,6 +1,6 @@
-import {  PrismaClient} from "@/generated/prisma";
 import { env } from "@/lib/env";
 import prisma from "@/lib/prisma";
+import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from "bcryptjs";
 import type { NextAuthConfig } from "next-auth";
 import NextAuth from "next-auth";
@@ -11,7 +11,7 @@ import Facebook from "next-auth/providers/facebook";
 import Google from "next-auth/providers/google";
 import { v4 as uuid } from "uuid";
 
-const adapter = new PrismaClient() as Adapter;
+const adapter = PrismaAdapter(prisma) as Adapter;
 
 const authConfig: NextAuthConfig = {
   adapter,

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { LoadingButton } from '@/components/ui/button';
+import { LoadingButton } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -8,15 +8,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { magicLinkLoginSchema, MagicLinkLoginValues } from '@/validations/auth';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useTransition } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
-import { magicLinkLogin } from './actions';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { magicLinkLoginSchema, MagicLinkLoginValues } from "@/validations/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod";
+import { magicLinkLogin } from "./actions";
 
 export default function MagicLinkLoginForm() {
   const [isPending, startTransition] = useTransition();
@@ -24,7 +24,7 @@ export default function MagicLinkLoginForm() {
   const form = useForm<MagicLinkLoginValues>({
     resolver: zodResolver(magicLinkLoginSchema),
     defaultValues: {
-      email: '',
+      email: "",
     },
   });
 
@@ -66,11 +66,11 @@ export default function MagicLinkLoginForm() {
 
         <LoadingButton
           type="submit"
-          className="w-full md:w-auto"
+          className="w-full"
           loading={isPending}
           disabled={isPending}
         >
-          {isPending ? 'Sending Magic Link...' : 'Login with Magic Link'}
+          {isPending ? "Sending Magic Link..." : "Login with Magic Link"}
         </LoadingButton>
       </form>
     </Form>
