@@ -17,7 +17,7 @@ model User {
   password      String?
   emailVerified DateTime?
   image         String?
-  hasOnboarded  Boolean
+  hasOnboarded  Boolean   @default(false)
 
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
