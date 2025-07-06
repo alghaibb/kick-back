@@ -34,7 +34,7 @@ export default function LoginPage() {
       <AuthCardFooter>
         <div className="text-center space-y-4">
           <p className="text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Button asChild variant="link" className="px-0">
               <Link href="/create-account">Create one now</Link>
             </Button>

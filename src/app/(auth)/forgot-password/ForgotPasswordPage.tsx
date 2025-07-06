@@ -16,7 +16,7 @@ export default function ForgotPasswordPage() {
       <AuthCardHeader>
         <AuthCardTitle>Reset your password</AuthCardTitle>
         <AuthCardDescription>
-          Enter your email address and we'll send you a secure link to reset
+          Enter your email address and we&apos;ll send you a secure link to reset
           your password
         </AuthCardDescription>
       </AuthCardHeader>

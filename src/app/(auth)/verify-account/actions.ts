@@ -22,7 +22,7 @@ export async function verifyAccount(values: OTPValues) {
 
     try {
       await limiter.check(5, "ip", undefined, ipAddress);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof Response) {
         const body = await error.json();
         return { error: body?.error };

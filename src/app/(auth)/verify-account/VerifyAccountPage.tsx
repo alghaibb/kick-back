@@ -39,7 +39,7 @@ export default function VerifyAccountPage() {
       <AuthCardFooter>
         <div className="text-center space-y-4">
           <p className="text-sm text-muted-foreground">
-            Didn't receive a code?{" "}
+            Didn&apos;t receive a code?{" "}
             <ResponsiveModal>
               <ResponsiveModalTrigger asChild>
                 <Button variant="link" className="px-0 cursor-pointer">
