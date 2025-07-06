@@ -149,15 +149,14 @@ export default function CreateAccountForm() {
           )}
         />
 
+        <LoadingButton type="submit" className="w-full" loading={isPending}>
+          {isPending ? "Creating Your Account..." : "Create Account"}
+        </LoadingButton>
         <div className="flex items-center w-full my-8">
           <div className="flex-1 border-t border-border" />
           <span className="mx-4 text-muted-foreground">or</span>
           <div className="flex-1 border-t border-border" />
         </div>
-
-        <LoadingButton type="submit" className="w-full" loading={isPending}>
-          {isPending ? "Creating Your Account..." : "Create Account"}
-        </LoadingButton>
       </form>
     </Form>
   );

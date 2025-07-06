@@ -62,15 +62,15 @@ export default function ForgotPasswordForm() {
           )}
         />
 
+        <LoadingButton type="submit" className="w-full" loading={isPending}>
+          {isPending ? "Sending Reset Link" : "Send Reset Link"}
+        </LoadingButton>
+
         <div className="flex items-center w-full my-8">
           <div className="flex-1 border-t border-border" />
           <span className="mx-4 text-muted-foreground">or</span>
           <div className="flex-1 border-t border-border" />
         </div>
-
-        <LoadingButton type="submit" className="w-full" loading={isPending}>
-          {isPending ? "Sending Reset Link" : "Send Reset Link"}
-        </LoadingButton>
       </form>
     </Form>
   );

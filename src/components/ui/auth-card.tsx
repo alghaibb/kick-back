@@ -1,5 +1,5 @@
-import * as React from "react";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 
 interface AuthCardProps extends React.ComponentProps<"div"> {
   children: React.ReactNode;
@@ -63,19 +63,14 @@ function AuthCardContent({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function AuthCardFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn("mt-8 pt-6 border-t border-border/50 space-y-4", className)}
-      {...props}
-    />
-  );
+  return <div className={cn("mt-8 pt-6 space-y-4", className)} {...props} />;
 }
 
 export {
   AuthCard,
+  AuthCardContent,
+  AuthCardDescription,
+  AuthCardFooter,
   AuthCardHeader,
   AuthCardTitle,
-  AuthCardDescription,
-  AuthCardContent,
-  AuthCardFooter,
 };
