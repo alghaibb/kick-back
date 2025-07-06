@@ -25,6 +25,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-email/components": "0.1.1",
     "@t3-oss/env-nextjs": "0.13.8",
+    "@vercel/blob": "^1.1.1",
     "bcryptjs": "3.0.2",
     "better-auth": "^1.2.12",
     "class-variance-authority": "^0.7.1",

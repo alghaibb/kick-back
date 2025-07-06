@@ -17,6 +17,7 @@ model User {
   password      String?
   emailVerified DateTime?
   image         String?
+  hasOnboarded  Boolean
 
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -105,7 +106,7 @@ model MagicLinkToken {
 
 model RateLimitCounter {
   id        String   @id @default(cuid())
-  key       String   @unique 
+  key       String   @unique
   count     Int      @default(0)
   resetAt   DateTime
   createdAt DateTime @default(now())
