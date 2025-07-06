@@ -1,11 +1,13 @@
 "use server"
 
 import { signIn as authSignIn } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limiter";
 import { getUserByEmail } from "@/utils/user";
 import { LoginValues, loginSchema } from "@/validations/auth";
 import bcrypt from "bcryptjs";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+
+const limiter = rateLimit({ interval: 60000 });
 
 export async function login(values: LoginValues) {
   try {
@@ -13,6 +15,22 @@ export async function login(values: LoginValues) {
     const { email, password } = validatedValues;
 
     const lowercaseEmail = email.toLowerCase();
+
+    // Get IP address for rate limiting
+    const headersList = await headers();
+    const ipAddress = headersList.get('x-forwarded-for') ||
+      headersList.get('x-real-ip') ||
+      'unknown';
+
+    // Check rate limit before processing login
+    try {
+      await limiter.check(5, "combined", lowercaseEmail, ipAddress);
+    } catch (error: any) {
+      if (error.status === 429) {
+        return { error: "Too many login attempts. Please try again later." };
+      }
+      throw error;
+    }
 
     const user = await getUserByEmail(lowercaseEmail);
     if (!user || !user.password) {
@@ -31,10 +49,9 @@ export async function login(values: LoginValues) {
       redirect: false,
     });
 
-    redirect("/dashboard");
+    return { success: true };
 
   } catch (error) {
-    if (isRedirectError(error)) throw error;
     console.error("Error signing in:", error);
     return { error: "An error occurred. Please try again." };
   }

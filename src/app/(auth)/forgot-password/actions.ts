@@ -1,9 +1,12 @@
 "use server";
 
+import { rateLimit } from "@/lib/rate-limiter";
 import { sendResetPasswordEmail } from "@/utils/sendEmails";
 import { generateResetPasswordToken } from "@/utils/tokens";
 import { getUserByEmail } from "@/utils/user";
 import { forgotPasswordSchema, ForgotPasswordValues } from "@/validations/auth";
+
+const limiter = rateLimit({ interval: 60000 });
 
 export async function forgotPassword(values: ForgotPasswordValues) {
   try {
@@ -11,6 +14,8 @@ export async function forgotPassword(values: ForgotPasswordValues) {
     const { email } = validatedValues
 
     const lowercasedEmail = email.toLowerCase()
+
+    await limiter.check(5, "email", lowercasedEmail)
 
     const user = await getUserByEmail(lowercasedEmail)
     if (!user) {

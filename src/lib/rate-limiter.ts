@@ -1,51 +1,126 @@
-import { LRUCache } from 'lru-cache';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import prisma from './prisma';
 
 type Options = {
-  uniqueTokenPerInterval?: number;
-  interval?: number;
+  interval?: number; // in milliseconds
 };
 
+type RateLimitType = 'ip' | 'email' | 'combined';
+
 export function rateLimit(options?: Options) {
-  const tokenCache = new LRUCache({
-    max: options?.uniqueTokenPerInterval || 500,
-    ttl: options?.interval || 60000,
-  });
+  const interval = options?.interval || 60000; // default 1 minute
 
   return {
-    check: (request: NextRequest, limit: number) => {
-      return new Promise<void>((resolve, reject) => {
-        const ip =
-          request.headers.get('x-forwarded-for') ||
-          request.headers.get('x-real-ip') ||
-          // @ts-ignore ignore
-          request?.socket?.remoteAddress;
-        if (!ip) {
-          reject(NextResponse.json({ error: 'can not get IP.' }, { status: 400 }));
-          return;
+    check: async (
+      limit: number,
+      type: RateLimitType = 'ip',
+      identifier?: string,
+      ip?: string
+    ) => {
+      return new Promise<void>(async (resolve, reject) => {
+        let key: string;
+
+        switch (type) {
+          case 'ip':
+            if (!ip) {
+              reject(NextResponse.json({ error: 'IP address required.' }, { status: 400 }));
+              return;
+            }
+            key = `ip:${ip}`;
+            break;
+
+          case 'email':
+            if (!identifier) {
+              reject(NextResponse.json({ error: 'Email identifier required.' }, { status: 400 }));
+              return;
+            }
+            key = `email:${identifier.toLowerCase()}`;
+            break;
+
+          case 'combined':
+            if (!ip || !identifier) {
+              reject(NextResponse.json({ error: 'IP and email required.' }, { status: 400 }));
+              return;
+            }
+            key = `combined:${ip}:${identifier.toLowerCase()}`;
+            break;
+
+          default:
+            reject(NextResponse.json({ error: 'Invalid rate limit type.' }, { status: 400 }));
+            return;
         }
 
-        const tokenCount = (tokenCache.get(ip) as number[]) || [0];
-        if (tokenCount[0] === 0) {
-          tokenCache.set(ip, tokenCount);
-        }
-        tokenCount[0] += 1;
+        try {
+          const now = new Date();
+          const resetAt = new Date(now.getTime() + interval);
 
-        const currentUsage = tokenCount[0];
-        const isRateLimited = currentUsage > limit;
+          // Use upsert to either create a new counter or update existing one
+          const counter = await prisma.rateLimitCounter.upsert({
+            where: { key },
+            update: {
+              count: {
+                increment: 1
+              },
+              resetAt,
+              updatedAt: now
+            },
+            create: {
+              key,
+              count: 1,
+              resetAt,
+            }
+          });
 
-        if (isRateLimited) {
-          const response = NextResponse.json(
-            { error: 'Too many requests, please try again later.' },
-            { status: 429 },
-          );
-          response.headers.set('X-RateLimit-Limit', limit.toString());
-          response.headers.set('X-RateLimit-Remaining', '0');
-          reject(response);
-        } else {
-          resolve();
+          // Check if we need to reset the counter (time window has passed)
+          if (counter.resetAt < now) {
+            await prisma.rateLimitCounter.update({
+              where: { key },
+              data: {
+                count: 1,
+                resetAt,
+                updatedAt: now
+              }
+            });
+            resolve();
+            return;
+          }
+
+          const currentUsage = counter.count;
+          const isRateLimited = currentUsage > limit;
+
+          if (isRateLimited) {
+            const response = NextResponse.json(
+              { error: 'Too many requests, please try again later.' },
+              { status: 429 },
+            );
+            response.headers.set('X-RateLimit-Limit', limit.toString());
+            response.headers.set('X-RateLimit-Remaining', '0');
+            response.headers.set('X-RateLimit-Reset', counter.resetAt.toISOString());
+            reject(response);
+          } else {
+            resolve();
+          }
+        } catch (error) {
+          console.error('Rate limiting error:', error);
+          reject(NextResponse.json({ error: 'Rate limiting error.' }, { status: 500 }));
         }
       });
     },
   };
 }
+
+// Cleanup function to remove expired counters (can be run periodically)
+export async function cleanupExpiredCounters() {
+  try {
+    await prisma.rateLimitCounter.deleteMany({
+      where: {
+        resetAt: {
+          lt: new Date()
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error cleaning up expired counters:', error);
+  }
+}
+

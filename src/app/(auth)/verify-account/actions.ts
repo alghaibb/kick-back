@@ -2,13 +2,32 @@
 
 import { signIn } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limiter";
 import { deleteVerificationOTP, verifyVerificationOTP } from "@/utils/tokens";
 import { otpSchema, OTPValues } from "@/validations/auth";
+import { headers } from "next/headers";
+
+const limiter = rateLimit({ interval: 60000 });
 
 export async function verifyAccount(values: OTPValues) {
   try {
     const validatedValues = otpSchema.parse(values);
     const { otp } = validatedValues;
+
+    // Get IP address for rate limiting
+    const headersList = await headers();
+    const ipAddress = headersList.get('x-forwarded-for') ||
+      headersList.get('x-real-ip') ||
+      'unknown';
+
+    try {
+      await limiter.check(5, "ip", undefined, ipAddress);
+    } catch (error: any) {
+      if (error.status === 429) {
+        return { error: "Too many verification attempts. Please try again later." };
+      }
+      throw error;
+    }
 
     const { user, error } = await verifyVerificationOTP(otp);
 
@@ -18,6 +37,10 @@ export async function verifyAccount(values: OTPValues) {
 
     if (!user) {
       return { error: "Invalid or expired OTP." };
+    }
+
+    if (user.emailVerified) {
+      return { error: "Your account is already verified." };
     }
 
     await prisma.user.update({

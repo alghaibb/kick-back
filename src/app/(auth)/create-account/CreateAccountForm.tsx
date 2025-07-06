@@ -40,7 +40,6 @@ export default function CreateAccountForm() {
       const res = await createAccount(values);
       if (res?.error) {
         toast.error(res.error);
-        form.reset();
       } else if (res?.success) {
         toast.success(res.success);
         form.reset();

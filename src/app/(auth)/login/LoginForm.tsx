@@ -36,7 +36,8 @@ export default function LoginForm() {
       const res = await login(values);
       if (res?.error) {
         toast.error(res.error);
-        form.reset();
+      } else {
+        window.location.href = "/dashboard";
       }
     });
   }
@@ -106,12 +107,7 @@ export default function LoginForm() {
           </div>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          asChild
-        >
+        <Button type="button" variant="outline" className="w-full" asChild>
           <Link href="/magic-link-login">Continue with Magic Link</Link>
         </Button>
       </form>

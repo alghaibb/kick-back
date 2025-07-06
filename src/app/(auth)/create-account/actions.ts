@@ -1,11 +1,14 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limiter";
 import { sendVerifyAccountEmail } from "@/utils/sendEmails";
 import { generateVerificationCode } from "@/utils/tokens";
 import { getUserByEmail } from "@/utils/user";
 import { createAccountSchema, CreateAccountValues } from "@/validations/auth";
 import bcrypt from "bcryptjs";
+
+const limiter = rateLimit({ interval: 60000 });
 
 export async function createAccount(values: CreateAccountValues) {
   try {
@@ -13,6 +16,8 @@ export async function createAccount(values: CreateAccountValues) {
     const { firstName, lastName, email, password } = validatedValues;
 
     const lowercaseEmail = email.toLowerCase();
+
+    await limiter.check(5, "email", lowercaseEmail);
 
     const existingUser = await getUserByEmail(lowercaseEmail);
     if (existingUser) {

@@ -1,10 +1,13 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limiter";
 import { sendMagicLinkEmail } from "@/utils/sendEmails";
 import { generateMagicLinkToken } from "@/utils/tokens";
 import { getUserByEmail } from "@/utils/user";
 import { MagicLinkCreateAccountValues, magicLinkCreateAccountSchema } from "@/validations/auth";
+
+const limiter = rateLimit({ interval: 60000 });
 
 export async function magicLinkCreate(values: MagicLinkCreateAccountValues) {
   try {
@@ -12,6 +15,8 @@ export async function magicLinkCreate(values: MagicLinkCreateAccountValues) {
     const { firstName, lastName, email } = validatedValues;
 
     const lowercaseEmail = email.toLowerCase();
+
+    await limiter.check(5, "email", lowercaseEmail);
 
     const existingUser = await getUserByEmail(lowercaseEmail);
     if (existingUser) {

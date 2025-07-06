@@ -102,3 +102,16 @@ model MagicLinkToken {
   @@index([token])
   @@map("magic_link_tokens")
 }
+
+model RateLimitCounter {
+  id        String   @id @default(cuid())
+  key       String   @unique 
+  count     Int      @default(0)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@index([resetAt])
+  @@map("rate_limit_counters")
+}

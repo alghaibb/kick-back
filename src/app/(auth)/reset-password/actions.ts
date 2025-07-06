@@ -1,17 +1,37 @@
 "use server"
 
 import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limiter";
 import { deleteResetPasswordToken } from "@/utils/tokens";
 import { getUserByResetPasswordToken } from "@/utils/user";
 import { resetPasswordSchema, ResetPasswordValues } from "@/validations/auth";
 import bcrypt from "bcryptjs";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+
+const limiter = rateLimit({ interval: 60000 });
 
 export async function resetPassword(token: string, values: ResetPasswordValues) {
   try {
     const validatedValues = resetPasswordSchema.parse(values);
     const { newPassword, newConfirmPassword } = validatedValues;
+
+    // Get IP address for rate limiting
+    const headersList = await headers();
+    const ipAddress = headersList.get('x-forwarded-for') ||
+      headersList.get('x-real-ip') ||
+      'unknown';
+
+    // Check rate limit before processing password reset
+    try {
+      await limiter.check(3, "ip", undefined, ipAddress);
+    } catch (error: any) {
+      if (error.status === 429) {
+        return { error: "Too many password reset attempts. Please try again later." };
+      }
+      throw error;
+    }
 
     if (newPassword !== newConfirmPassword) {
       return { error: "Passwords do not match" };
