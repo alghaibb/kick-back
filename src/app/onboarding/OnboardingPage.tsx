@@ -16,6 +16,15 @@ export default async function OnboardingPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      nickname: true,
+      image: true,
+      hasOnboarded: true,
+    },
   });
 
   if (!user) {
@@ -27,13 +36,16 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
+       <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]" />
       <AuthCard className="w-full max-w-md">
-        <AuthCardHeader>
-          <AuthCardTitle>Finish Setting Up</AuthCardTitle>
-          <AuthCardDescription>
-            You can set a nickname and update your profile image before getting
-            started.
+        <AuthCardHeader className="text-center">
+          <AuthCardTitle className="text-2xl font-bold">
+            Welcome to Kick Back! 
+          </AuthCardTitle>
+          <AuthCardDescription className="text-base">
+            Let's get your profile set up so you can start planning amazing
+            events with your friends and family.
           </AuthCardDescription>
         </AuthCardHeader>
         <AuthCardContent>
