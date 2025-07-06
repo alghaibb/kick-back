@@ -9,15 +9,15 @@ function AuthCard({ className, children, ...props }: AuthCardProps) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border-0 bg-card/80 backdrop-blur-xl shadow-2xl shadow-border/50",
-        "ring-1 ring-border/50",
+        "relative overflow-hidden rounded-2xl border bg-card/80 backdrop-blur-xl shadow-2xl",
+        "ring-1 ring-border/20",
         "animate-in fade-in-0 slide-in-from-bottom-4 duration-500",
         className
       )}
       {...props}
     >
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background/50 via-transparent to-muted/30 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-background/50 via-transparent to-muted/20 pointer-events-none" />
 
       {/* Content */}
       <div className="relative z-10 p-8">{children}</div>

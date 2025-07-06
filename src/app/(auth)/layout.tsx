@@ -7,7 +7,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-indigo-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 dark:from-background dark:via-background dark:to-muted/10">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]" />
 
@@ -18,7 +18,13 @@ export default function AuthLayout({
           <div className="flex items-center gap-2">
             <Link href="/">
               {" "}
-              <Image src="/logo.png" alt="Kick Back" width={130} height={130} />
+              <Image
+                src="/logo.png"
+                alt="Kick Back"
+                width={130}
+                height={130}
+                className="dark:invert"
+              />
             </Link>
           </div>
         </div>

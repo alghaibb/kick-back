@@ -96,15 +96,10 @@ export default function LoginForm() {
           {isPending ? "Logging in..." : "Log in"}
         </LoadingButton>
 
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-background text-muted-foreground font-medium">
-              or
-            </span>
-          </div>
+        <div className="flex items-center w-full my-8">
+          <div className="flex-1 border-t border-border" />
+          <span className="mx-4 text-muted-foreground">or</span>
+          <div className="flex-1 border-t border-border" />
         </div>
 
         <Button type="button" variant="outline" className="w-full" asChild>
