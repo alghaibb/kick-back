@@ -115,11 +115,7 @@ export default function MagicLinkCreateForm() {
             : "Create Account with Magic Link"}
         </LoadingButton>
 
-        <div className="flex items-center w-full my-8">
-          <div className="flex-1 border-t border-border" />
-          <span className="mx-4 text-muted-foreground">or</span>
-          <div className="flex-1 border-t border-border" />
-        </div>
+     
       </form>
     </Form>
   );

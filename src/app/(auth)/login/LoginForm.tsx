@@ -95,16 +95,16 @@ export default function LoginForm() {
         <LoadingButton type="submit" className="w-full" loading={isPending}>
           {isPending ? "Logging in..." : "Log in"}
         </LoadingButton>
-
-        <Button type="button" variant="outline" className="w-full" asChild>
-          <Link href="/magic-link-login">Continue with Magic Link</Link>
-        </Button>
-
+        
         <div className="flex items-center w-full my-8">
           <div className="flex-1 border-t border-border" />
           <span className="mx-4 text-muted-foreground">or</span>
           <div className="flex-1 border-t border-border" />
         </div>
+
+        <Button type="button" variant="outline" className="w-full" asChild>
+          <Link href="/magic-link-login">Continue with Magic Link</Link>
+        </Button>
       </form>
     </Form>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingButton } from "@/components/ui/button";
+import { Button, LoadingButton } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -19,6 +19,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { createAccount } from "./actions";
+import Link from "next/link";
 
 export default function CreateAccountForm() {
   const [isPending, startTransition] = useTransition();
@@ -152,11 +153,18 @@ export default function CreateAccountForm() {
         <LoadingButton type="submit" className="w-full" loading={isPending}>
           {isPending ? "Creating Your Account..." : "Create Account"}
         </LoadingButton>
+
         <div className="flex items-center w-full my-8">
           <div className="flex-1 border-t border-border" />
           <span className="mx-4 text-muted-foreground">or</span>
           <div className="flex-1 border-t border-border" />
         </div>
+
+        <Button type="button" variant="outline" className="w-full" asChild>
+          <Link href="/magic-link-create">
+            Create an account with Magic Link
+          </Link>
+        </Button>
       </form>
     </Form>
   );
