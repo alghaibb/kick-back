@@ -23,7 +23,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Card, CardContent } from "@/components/ui/card";
 import { Camera, Upload, X } from "lucide-react";
 
 import { onboarding } from "./actions";

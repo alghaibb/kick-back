@@ -44,7 +44,7 @@ export default async function OnboardingPage() {
             Welcome to Kick Back! 
           </AuthCardTitle>
           <AuthCardDescription className="text-base">
-            Let's get your profile set up so you can start planning amazing
+            Let&apos;s get your profile set up so you can start planning amazing
             events with your friends and family.
           </AuthCardDescription>
         </AuthCardHeader>
