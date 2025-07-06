@@ -25,11 +25,11 @@ export async function login(values: LoginValues) {
     // Check rate limit before processing login
     try {
       await limiter.check(5, "combined", lowercaseEmail, ipAddress);
-    } catch (error: any) {
-      if (error.status === 429) {
-        return { error: "Too many login attempts. Please try again later." };
+    } catch (error) {
+      if (error instanceof Response) {
+        const body = await error.json();
+        return { error: body?.error }
       }
-      throw error;
     }
 
     const user = await getUserByEmail(lowercaseEmail);

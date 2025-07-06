@@ -7,8 +7,8 @@ import { getUserByResetPasswordToken } from "@/utils/user";
 import { resetPasswordSchema, ResetPasswordValues } from "@/validations/auth";
 import bcrypt from "bcryptjs";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 const limiter = rateLimit({ interval: 60000 });
 
@@ -26,11 +26,11 @@ export async function resetPassword(token: string, values: ResetPasswordValues) 
     // Check rate limit before processing password reset
     try {
       await limiter.check(3, "ip", undefined, ipAddress);
-    } catch (error: any) {
-      if (error.status === 429) {
-        return { error: "Too many password reset attempts. Please try again later." };
+    } catch (error) {
+      if (error instanceof Response) {
+        const body = await error.json();
+        return { error: body?.error };
       }
-      throw error;
     }
 
     if (newPassword !== newConfirmPassword) {

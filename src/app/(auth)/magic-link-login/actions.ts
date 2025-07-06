@@ -15,7 +15,14 @@ export async function magicLinkLogin(values: MagicLinkLoginValues) {
 
     const lowercaseEmail = email.toLowerCase();
 
-    await limiter.check(5, "email", lowercaseEmail);
+    try {
+      await limiter.check(5, "email", lowercaseEmail);
+    } catch (error) {
+      if (error instanceof Response) {
+        const body = await error.json();
+        return { error: body?.error };
+      }
+    }
 
     const user = await getUserByEmail(lowercaseEmail);
 

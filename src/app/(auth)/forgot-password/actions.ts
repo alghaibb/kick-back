@@ -15,7 +15,15 @@ export async function forgotPassword(values: ForgotPasswordValues) {
 
     const lowercasedEmail = email.toLowerCase()
 
-    await limiter.check(5, "email", lowercasedEmail)
+    try {
+      await limiter.check(5, "email", lowercasedEmail)
+
+    } catch (error) {
+      if (error instanceof Response) {
+        const body = await error.json();
+        return { error: body?.error }
+      }
+    }
 
     const user = await getUserByEmail(lowercasedEmail)
     if (!user) {

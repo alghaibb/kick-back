@@ -23,10 +23,10 @@ export async function verifyAccount(values: OTPValues) {
     try {
       await limiter.check(5, "ip", undefined, ipAddress);
     } catch (error: any) {
-      if (error.status === 429) {
-        return { error: "Too many verification attempts. Please try again later." };
+      if (error instanceof Response) {
+        const body = await error.json();
+        return { error: body?.error };
       }
-      throw error;
     }
 
     const { user, error } = await verifyVerificationOTP(otp);
