@@ -46,8 +46,9 @@ export function GroupInviteManager({
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     loadInvites();
-  }, [groupId, loadInvites]);
+  }, [groupId]);
 
   async function loadInvites() {
     try {

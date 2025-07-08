@@ -31,7 +31,7 @@ export function MainSidebar({ user, onClose, isMobile }: MainSidebarProps) {
     return (firstName[0] || nickname[0] || "U").toUpperCase();
   };
 
-  const handleNavigation = (_href: string) => {
+  const handleNavigation = () => {
     if (isMobile && onClose) {
       onClose();
     }
@@ -76,9 +76,11 @@ export function MainSidebar({ user, onClose, isMobile }: MainSidebarProps) {
                 "w-full justify-start",
                 isActive && "bg-primary text-primary-foreground"
               )}
-              onClick={() => handleNavigation(item.href)}
             >
-              <Link href={item.href}>
+              <Link
+                href={item.href}
+                onClick={handleNavigation}
+              >
                 <item.icon className="mr-3 h-4 w-4" />
                 {item.name}
               </Link>
