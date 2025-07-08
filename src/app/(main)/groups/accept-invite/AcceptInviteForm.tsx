@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { InviteData } from "@/types/invite-data";
 
 interface AcceptInviteFormProps {
   token: string;
