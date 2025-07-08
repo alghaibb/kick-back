@@ -4,10 +4,10 @@ import { useState } from "react";
 import {
   ResponsiveModal,
   ResponsiveModalContent,
-  ResponsiveModalHeader,
-  ResponsiveModalTitle,
   ResponsiveModalDescription,
   ResponsiveModalFooter,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
 } from "@/components/ui/responsive-modal";
 import { useModal } from "@/hooks/use-modal";
 import { InviteGroupForm } from "../forms/InviteGroupForm";
@@ -20,9 +20,10 @@ export function InviteGroupModal() {
   const { type, isOpen, close, data } = useModal();
   const [activeTab, setActiveTab] = useState("invite");
 
-  // Only open if type is invite-group and groupId is present
   if (type !== "invite-group" || !data?.groupId || !data?.groupName)
     return null;
+
+  const isAdmin = data?.userRole === "admin" || data?.userRole === "owner";
 
   return (
     <ResponsiveModal open={isOpen} onOpenChange={(open) => !open && close()}>
@@ -32,17 +33,23 @@ export function InviteGroupModal() {
             Invite to {data.groupName}
           </ResponsiveModalTitle>
           <ResponsiveModalDescription>
-            Send invitations to new members and manage existing invitations.
+            Send invitations to new members
+            {isAdmin ? " and manage existing ones" : ""}.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
             <TabsTrigger value="invite" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Send Invite
             </TabsTrigger>
-            <TabsTrigger value="manage" className="flex items-center gap-2">
+
+            <TabsTrigger
+              value="manage"
+              className="flex items-center gap-2"
+              disabled={!isAdmin}
+            >
               <Users className="h-4 w-4" />
               Manage Invites
             </TabsTrigger>
@@ -52,16 +59,18 @@ export function InviteGroupModal() {
             <InviteGroupForm
               groupId={data.groupId}
               groupName={data.groupName}
-              onSuccess={() => setActiveTab("manage")}
+              onSuccess={() => isAdmin && setActiveTab("manage")}
             />
           </TabsContent>
 
-          <TabsContent value="manage" className="mt-6">
-            <GroupInviteManager
-              groupId={data.groupId}
-              groupName={data.groupName}
-            />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="manage" className="mt-6">
+              <GroupInviteManager
+                groupId={data.groupId}
+                groupName={data.groupName}
+              />
+            </TabsContent>
+          )}
         </Tabs>
 
         <ResponsiveModalFooter>

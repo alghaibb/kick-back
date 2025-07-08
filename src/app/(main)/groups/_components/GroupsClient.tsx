@@ -59,30 +59,41 @@ export default function GroupsClient({
             </div>
           ) : (
             <div className="space-y-4">
-              {groupsOwned.map((group) => (
-                <div
-                  key={group.id}
-                  className="p-4 border rounded flex items-center justify-between bg-card"
-                >
-                  <div>
-                    <div className="font-semibold text-lg">{group.name}</div>
-                    {group.description && (
-                      <div className="text-sm text-muted-foreground">
-                        {group.description}
-                      </div>
-                    )}
+              {groupsOwned.map((group) => {
+                const groupMember = group.members.find(
+                  (m) => m.userId === currentUser.id
+                );
+                const userRole = groupMember?.role;
+
+                return (
+                  <div
+                    key={group.id}
+                    className="p-4 border rounded flex items-center justify-between bg-card"
+                  >
+                    <div>
+                      <div className="font-semibold text-lg">{group.name}</div>
+                      {group.description && (
+                        <div className="text-sm text-muted-foreground">
+                          {group.description}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <InviteButton
+                        groupId={group.id}
+                        groupName={group.name}
+                        userRole={userRole}
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => openMembersModal(group)}
+                      >
+                        View Members
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <InviteButton groupId={group.id} groupName={group.name} />
-                    <Button
-                      variant="outline"
-                      onClick={() => openMembersModal(group)}
-                    >
-                      View Members
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
