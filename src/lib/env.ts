@@ -11,6 +11,7 @@ export const env = createEnv({
     AUTH_FACEBOOK_ID: z.string().min(1, "AUTH_FACEBOOK_ID is required"),
     AUTH_FACEBOOK_SECRET: z.string().min(1, "AUTH_FACEBOOK_SECRET is required"),
     BLOB_READ_WRITE_TOKEN: z.string().min(1, "BLOB_READ_WRITE_TOKEN is required"),
+    CRON_SECRET: z.string().min(1, "CRON_SECRET is required"),
   },
   client: {
     NEXT_PUBLIC_BASE_URL: z

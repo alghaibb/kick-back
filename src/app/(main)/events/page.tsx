@@ -7,6 +7,7 @@ import { getSession } from "@/lib/sessions";
 import prisma from "@/lib/prisma";
 import { Metadata } from "next";
 import { EventCard } from "./_components/EventCard";
+import { isAfter, isBefore, isToday, startOfDay, endOfDay } from "date-fns";
 
 export const metadata: Metadata = {
   title: "Events",
@@ -41,6 +42,16 @@ export default async function Page() {
     orderBy: { date: "asc" },
   });
 
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const todayEnd = endOfDay(now);
+
+  const todayEvents = events.filter(
+    (e) => new Date(e.date) >= todayStart && new Date(e.date) <= todayEnd
+  );
+  const upcomingEvents = events.filter((e) => new Date(e.date) > todayEnd);
+  const pastEvents = events.filter((e) => new Date(e.date) < todayStart);
+
   return (
     <div className="container py-8">
       <PageHeader
@@ -51,20 +62,68 @@ export default async function Page() {
           <CreateActionButton modalType="create-event" label="Create Event" />
         }
       />
+
       {events.length === 0 ? (
         <div className="text-muted-foreground">No events yet.</div>
       ) : (
-        <div className="space-y-4">
-          {events.map((event) => (
-            <EventCard
-              key={event.id}
-              id={event.id}
-              name={event.name}
-              description={event.description || ""}
-              date={event.date.toISOString()}
-            />
-          ))}
-        </div>
+        <>
+          {todayEvents.length > 0 && (
+            <section className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">
+                Today&apos;s Events
+              </h2>
+              <div className="space-y-4">
+                {todayEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    id={event.id}
+                    name={event.name}
+                    description={event.description || ""}
+                    date={event.date.toISOString()}
+                    createdByCurrentUser={event.createdBy === session.user.id}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {upcomingEvents.length > 0 && (
+            <section className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">Upcoming Events</h2>
+              <div className="space-y-4">
+                {upcomingEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    id={event.id}
+                    name={event.name}
+                    description={event.description || ""}
+                    date={event.date.toISOString()}
+                    createdByCurrentUser={event.createdBy === session.user.id}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {pastEvents.length > 0 && (
+            <section className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">Past Events</h2>
+              <div className="space-y-4">
+                {pastEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    id={event.id}
+                    name={event.name}
+                    description={event.description || ""}
+                    date={event.date.toISOString()}
+                    createdByCurrentUser={event.createdBy === session.user.id}
+                    disabled
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
     </div>
   );
