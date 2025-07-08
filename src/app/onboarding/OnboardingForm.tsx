@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import * as z from "zod";
 
@@ -40,6 +40,8 @@ type OnboardingUser = {
 export default function OnboardingForm({ user }: { user: OnboardingUser }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get("inviteToken");
 
   const imageRef = useRef<HTMLInputElement>(null);
   const [currentFile, setCurrentFile] = useState<File | undefined>(undefined);
@@ -102,7 +104,14 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
         if (currentFile) {
           setUploadProgress(0);
           const formData = new FormData();
-          formData.append("file", currentFile);
+          const ext = currentFile.name.split(".").pop();
+          const base = currentFile.name.replace(/\.[^/.]+$/, "");
+          const uniqueName = `${base}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+          const renamedFile = new File([currentFile], uniqueName, {
+            type: currentFile.type,
+          });
+
+          formData.append("file", renamedFile);
 
           const uploadRes = await fetch("/api/blob/upload", {
             method: "POST",
@@ -132,7 +141,11 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
         });
 
         if (res?.error) {
-          toast.error(res.error);
+          toast.error(
+            typeof res.error === "string"
+              ? res.error
+              : "Failed to update profile"
+          );
         } else if (res?.success) {
           toast.success("Profile updated successfully!");
           router.push("/dashboard");

@@ -170,3 +170,10 @@ export const deleteResetPasswordToken = async (token: string) => {
     console.error("Error deleting reset password token:", error);
   }
 };
+
+// -------------------- GROUP INVITE FUNCTIONS --------------------
+
+// Generate a secure token for group invites
+export const generateToken = () => {
+  return crypto.randomBytes(32).toString("hex");
+};

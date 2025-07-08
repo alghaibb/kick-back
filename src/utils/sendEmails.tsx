@@ -3,14 +3,15 @@ import {
   ResendOTPEmail,
   ResetPasswordEmail,
   VerifyAccount,
-} from '@/components/emails';
-import { env } from '@/lib/env';
-import prisma from '@/lib/prisma';
-import { JSX } from 'react';
-import { Resend } from 'resend';
+  GroupInviteEmail,
+} from "@/components/emails";
+import { env } from "@/lib/env";
+import prisma from "@/lib/prisma";
+import { JSX } from "react";
+import { Resend } from "resend";
 
 const resend = new Resend(env.RESEND_API_KEY);
-const defaultFrom = 'Kick Back <noreply@codewithmj.com>';
+const defaultFrom = "Kick Back <noreply@codewithmj.com>";
 
 // 📨 Shared email sender
 async function sendEmail(
@@ -28,14 +29,14 @@ async function sendEmail(
     });
   } catch (error) {
     console.error(`❌ Failed to send email to ${to}:`, error);
-    throw new Error('Email sending failed.');
+    throw new Error("Email sending failed.");
   }
 }
 
-// 🧠 Get user’s first name by email
+// 🧠 Get user's first name by email
 async function getUserFirstNameByEmail(email: string) {
   const user = await prisma.user.findUnique({ where: { email } });
-  return user?.firstName ?? 'there';
+  return user?.firstName ?? "there";
 }
 
 // ✅ Send verification email
@@ -44,7 +45,7 @@ export async function sendVerifyAccountEmail(email: string, otp: string) {
 
   await sendEmail(
     email,
-    'Kick Back: Verify your account',
+    "Kick Back: Verify your account",
     <VerifyAccount otp={otp} userFirstname={firstName} />
   );
 }
@@ -55,7 +56,7 @@ export async function sendResendOTPEmail(email: string, otp: string) {
 
   await sendEmail(
     email,
-    'Kick Back: Your new OTP',
+    "Kick Back: Your new OTP",
     <ResendOTPEmail otp={otp} userFirstname={firstName} />
   );
 }
@@ -72,7 +73,7 @@ export async function sendResetPasswordEmail(
   const resetPasswordLink = `${env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${token}`;
   await sendEmail(
     email,
-    'Kick Back: Reset your password',
+    "Kick Back: Reset your password",
     <ResetPasswordEmail
       userFirstName={finalName}
       resetPasswordLink={resetPasswordLink}
@@ -87,7 +88,29 @@ export async function sendMagicLinkEmail(email: string, magicLink: string) {
   const magicLinkToken = `${env.NEXT_PUBLIC_BASE_URL}/magic-link-verify?token=${magicLink}`;
   await sendEmail(
     email,
-    'Kick Back: Your Magic Link to Sign In',
+    "Kick Back: Your Magic Link to Sign In",
     <MagicLinkEmail userFirstName={firstName} magicLink={magicLinkToken} />
+  );
+}
+
+// 👥 Group invite email
+export async function sendGroupInviteEmail(
+  email: string,
+  inviterName: string,
+  groupName: string,
+  inviteToken: string
+) {
+  const firstName = await getUserFirstNameByEmail(email);
+  const inviteLink = `${env.NEXT_PUBLIC_BASE_URL}/groups/accept-invite?token=${inviteToken}`;
+
+  await sendEmail(
+    email,
+    `You've been invited to join ${groupName} on Kick Back`,
+    <GroupInviteEmail
+      userFirstName={firstName}
+      inviterName={inviterName}
+      groupName={groupName}
+      inviteLink={inviteLink}
+    />
   );
 }

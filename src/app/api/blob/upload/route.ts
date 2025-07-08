@@ -9,7 +9,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formData = await request.formData();
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch (err) {
+      return NextResponse.json({ error: "Invalid or missing multipart/form-data" }, { status: 400 });
+    }
     const file = formData.get("file") as File;
 
     if (!file) {
@@ -34,7 +39,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(
-      { error: "Upload failed" },
+      { error: error instanceof Error ? error.message : "Upload failed" },
       { status: 500 }
     );
   }

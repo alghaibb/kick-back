@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:setup": "npx tsx scripts/create-test-data.ts",
+    "test:email": "npx tsx scripts/test-email.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.10.0",
@@ -22,6 +24,7 @@
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-email/components": "0.1.1",
     "@t3-oss/env-nextjs": "0.13.8",

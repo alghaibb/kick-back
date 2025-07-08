@@ -1,0 +1,119 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut, X } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { navigation } from "./constants";
+
+interface MainSidebarProps {
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string | null;
+    email: string;
+    nickname: string | null;
+    image: string | null;
+  };
+  onClose?: () => void;
+  isMobile?: boolean;
+}
+
+export function MainSidebar({ user, onClose, isMobile }: MainSidebarProps) {
+  const pathname = usePathname();
+
+  const getInitials = () => {
+    const firstName = user.firstName || "";
+    const nickname = user.nickname || "";
+    return (firstName[0] || nickname[0] || "U").toUpperCase();
+  };
+
+  const handleNavigation = (href: string) => {
+    if (isMobile && onClose) {
+      onClose();
+    }
+  };
+
+  return (
+    <div className="w-64 bg-card border-r border-border flex flex-col h-full">
+      {/* Logo/Brand */}
+      <div className="p-6 border-b border-border flex items-center justify-between">
+        <Link href="/" className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">
+              KB
+            </span>
+          </div>
+          <span className="font-bold text-xl">Kick Back</span>
+        </Link>
+
+        {/* Close button for mobile */}
+        {isMobile && onClose && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="md:hidden"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 flex flex-col space-y-4">
+        {navigation.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Button
+              key={item.name}
+              asChild
+              variant={isActive ? "default" : "ghost"}
+              className={cn(
+                "w-full justify-start",
+                isActive && "bg-primary text-primary-foreground"
+              )}
+              onClick={() => handleNavigation(item.href)}
+            >
+              <Link href={item.href}>
+                <item.icon className="mr-3 h-4 w-4" />
+                {item.name}
+              </Link>
+            </Button>
+          );
+        })}
+      </nav>
+
+      {/* User Profile */}
+      <div className="p-4 border-t border-border">
+        <div className="flex items-center space-x-3 mb-3">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={user.image ?? undefined} alt="Profile" />
+            <AvatarFallback>{getInitials()}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">
+              {user.nickname || user.firstName}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {user.email}
+            </p>
+          </div>
+        </div>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start text-muted-foreground hover:text-foreground"
+          onClick={() => signOut()}
+        >
+          <LogOut className="mr-3 h-4 w-4" />
+          Sign Out
+        </Button>
+      </div>
+    </div>
+  );
+}
