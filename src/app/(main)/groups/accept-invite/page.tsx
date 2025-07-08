@@ -2,17 +2,15 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/sessions";
 import { AcceptInviteForm } from "./AcceptInviteForm";
 
-interface AcceptInvitePageProps {
-  searchParams: { token?: string };
-}
-
 export default async function AcceptInvitePage({
   searchParams,
-}: AcceptInvitePageProps) {
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+}) {
   const session = await getSession();
-  const { token } = searchParams;
+  const token = searchParams.token;
 
-  if (!token) {
+  if (!token || typeof token !== "string") {
     redirect("/dashboard");
   }
 
@@ -22,7 +20,7 @@ export default async function AcceptInvitePage({
 
   return (
     <div className="container max-w-md mx-auto py-8">
-      <AcceptInviteForm token={token!} />
+      <AcceptInviteForm token={token} />
     </div>
   );
 }
