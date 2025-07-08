@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Metadata } from "next";
 import { StatsCard } from "./_components/StatsCard";
 import { WelcomeSection } from "./_components/WelcomeSection";
@@ -11,7 +13,7 @@ export const metadata: Metadata = {
   description: "Your personal event planning dashboard",
 };
 
-export default async function DashboardPage() {
+export default async function Page() {
   const session = await getSession();
   const userId = session?.user?.id;
 

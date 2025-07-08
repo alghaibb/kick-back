@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getSession } from "@/lib/sessions";
 import prisma from "@/lib/prisma";
 import { Users } from "lucide-react";
@@ -12,7 +14,7 @@ export const metadata: Metadata = {
     "Where you will see a list of groups you've created/or been invited to",
 };
 
-export default async function GroupsPage() {
+export default async function Page() {
   const session = await getSession();
   const userId = session?.user?.id;
 

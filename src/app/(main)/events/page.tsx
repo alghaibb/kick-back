@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { PageHeader } from "../_components/PageHeader";
 import { CreateActionButton } from "../_components/CreateActionButton";
 import { Calendar } from "lucide-react";
@@ -11,7 +13,7 @@ export const metadata: Metadata = {
   description: "Where your upcoming and past events will be.",
 };
 
-export default async function EventsPage() {
+export default async function Page() {
   const session = await getSession();
   if (!session?.user?.id) {
     return (
