@@ -7,7 +7,7 @@ import { getSession } from "@/lib/sessions";
 import prisma from "@/lib/prisma";
 import { Metadata } from "next";
 import { EventCard } from "./_components/EventCard";
-import { isAfter, isBefore, isToday, startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay } from "date-fns";
 
 export const metadata: Metadata = {
   title: "Events",
