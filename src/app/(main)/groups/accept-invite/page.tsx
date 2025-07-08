@@ -5,10 +5,10 @@ import { AcceptInviteForm } from "./AcceptInviteForm";
 export default async function AcceptInvitePage({
   searchParams,
 }: {
-  searchParams: { token?: string };
+  searchParams: Promise<{ token?: string }>;
 }) {
   const session = await getSession();
-  const token = searchParams.token;
+  const token = (await searchParams).token;
 
   if (!token) redirect("/dashboard");
   if (!session?.user?.id) redirect("/login");
