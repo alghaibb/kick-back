@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
     let formData: FormData;
     try {
       formData = await request.formData();
-    } catch (err) {
+    } catch (error) {
+      console.error("Invalid or missing multipart/form-data:", error);
       return NextResponse.json({ error: "Invalid or missing multipart/form-data" }, { status: 400 });
     }
     const file = formData.get("file") as File;

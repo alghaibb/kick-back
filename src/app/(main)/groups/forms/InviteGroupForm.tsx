@@ -78,7 +78,7 @@ export function InviteGroupForm({
       <div>
         <h3 className="text-lg font-medium">Invite to {groupName}</h3>
         <p className="text-sm text-muted-foreground">
-          Send an invitation to join your group. They'll receive an email with a
+          Send an invitation to join your group. They&apos;ll receive an email with a
           link to accept.
         </p>
       </div>

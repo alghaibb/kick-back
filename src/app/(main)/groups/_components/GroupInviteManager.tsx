@@ -47,23 +47,30 @@ export function GroupInviteManager({
 
   useEffect(() => {
     loadInvites();
-  }, [groupId]);
+  }, [groupId, loadInvites]);
 
   async function loadInvites() {
     try {
       const result = await getGroupInvitesAction(groupId);
       if (result?.success) {
         setInvites(
-          result.invites.map((invite: any) => ({
-            ...invite,
+          result.invites.map((invite) => ({
+            id: invite.id,
+            email: invite.email,
+            status: invite.status,
             createdAt: invite.createdAt.toString(),
             expiresAt: invite.expiresAt.toString(),
+            inviter: {
+              firstName: invite.inviter.firstName,
+              email: invite.inviter.email,
+            },
           }))
         );
       } else {
         toast.error("Failed to load invitations");
       }
     } catch (error) {
+      console.error("Faile to load invitations:", error);
       toast.error("Failed to load invitations");
     } finally {
       setLoading(false);
@@ -80,6 +87,7 @@ export function GroupInviteManager({
         toast.error(result?.error || "Failed to cancel invitation");
       }
     } catch (error) {
+      console.error("Failed to cancel invitation:", error);
       toast.error("Failed to cancel invitation");
     }
   }
@@ -95,6 +103,7 @@ export function GroupInviteManager({
         toast.error(result?.error || "Failed to resend invitation");
       }
     } catch (error) {
+      console.error("Failed to resend invitation:", error);
       toast.error("Failed to resend invitation");
     } finally {
       setRefreshing(false);

@@ -25,39 +25,9 @@ export default async function MainLayout({
     orderBy: { name: "asc" },
   });
 
-  const eventsRaw = await prisma.event.findMany({
-    where: {
-      OR: [
-        { createdBy: session.user.id },
-        { attendees: { some: { userId: session.user.id } } },
-      ],
-    },
-    include: {
-      group: { select: { name: true } },
-      attendees: {
-        include: {
-          user: true,
-        },
-      },
-    },
-    orderBy: { date: "asc" },
-  });
 
   // Map to CalendarEvent type
-  const events = eventsRaw.map((event) => ({
-    id: event.id,
-    name: event.name,
-    description: event.description ?? undefined,
-    date: event.date,
-    group: event.group ? { name: event.group.name } : undefined,
-    attendees: event.attendees.map((a) => ({
-      user: {
-        id: a.user.id,
-        nickname: a.user.nickname ?? undefined,
-        firstName: a.user.firstName ?? undefined,
-      },
-    })),
-  }));
+  
 
   return (
     <>

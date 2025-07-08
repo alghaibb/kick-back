@@ -17,7 +17,8 @@ export async function createGroupAction(formData: FormData) {
   const raw = Object.fromEntries(formData.entries());
   const parsed = serverCreateGroupSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.flatten() };
+    return { error: parsed.error.flatten().formErrors.join(", ") || "Invalid input" };
+
   }
 
   const { name, description, image } = parsed.data;
@@ -42,6 +43,7 @@ export async function createGroupAction(formData: FormData) {
 
     return { success: true, group };
   } catch (error) {
+    console.error("Group invite error:", error);
     return { error: "Failed to create group" };
   }
 }
@@ -57,16 +59,18 @@ export async function inviteToGroupAction(formData: FormData) {
   try {
     await limiter.check(10, 'email', session.user.id);
   } catch (error) {
+    console.error("Rate limit error:", error);
     return { error: "Too many invite requests. Please try again later." };
   }
 
   const raw = Object.fromEntries(formData.entries());
   const parsed = serverInviteGroupSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.flatten() };
+    return { error: parsed.error.flatten().formErrors.join(", ") || "Invalid input" };
+
   }
 
-  const { groupId, email, role } = parsed.data;
+  const { groupId, email } = parsed.data;
 
   try {
     // Check if group exists and user has permission
@@ -167,7 +171,8 @@ export async function acceptGroupInviteAction(formData: FormData) {
   const raw = Object.fromEntries(formData.entries());
   const parsed = acceptInviteSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.flatten() };
+    return { error: parsed.error.flatten().formErrors.join(", ") || "Invalid input" };
+
   }
 
   const { token } = parsed.data;
@@ -287,6 +292,7 @@ export async function resendGroupInviteAction(inviteId: string) {
   try {
     await limiter.check(5, 'email', session.user.id);
   } catch (error) {
+    console.error("Rate limit error:", error);
     return { error: "Too many resend requests. Please try again later." };
   }
 

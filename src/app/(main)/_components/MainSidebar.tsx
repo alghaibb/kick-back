@@ -31,7 +31,7 @@ export function MainSidebar({ user, onClose, isMobile }: MainSidebarProps) {
     return (firstName[0] || nickname[0] || "U").toUpperCase();
   };
 
-  const handleNavigation = (href: string) => {
+  const handleNavigation = (_href: string) => {
     if (isMobile && onClose) {
       onClose();
     }

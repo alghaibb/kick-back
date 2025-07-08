@@ -5,13 +5,30 @@ import InviteButton from "./InviteButton";
 import { Button } from "@/components/ui/button";
 import { GroupMembersModal } from "./GroupMembersModal";
 
+interface FullGroup {
+  id: string;
+  name: string;
+  createdBy: string;
+  members: {
+    userId: string;
+    role: string;
+    user?: {
+      id: string;
+      firstName?: string;
+      email?: string;
+      image?: string | null;
+    };
+  }[];
+  description?: string | null;
+}
+
 export default function GroupsClient({
   groupsOwned,
   groupsIn,
   currentUser,
 }: {
-  groupsOwned: any[];
-  groupsIn: any[];
+  groupsOwned: FullGroup[];
+  groupsIn: FullGroup[];
   currentUser: {
     id: string;
     email: string;
@@ -21,9 +38,9 @@ export default function GroupsClient({
   };
 }) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<any | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<FullGroup | null>(null);
 
-  const openMembersModal = (group: any) => {
+  const openMembersModal = (group: FullGroup) => {
     setSelectedGroup(group);
     setModalOpen(true);
   };
@@ -38,7 +55,7 @@ export default function GroupsClient({
           <h2 className="font-semibold text-lg mb-2">Groups You Own</h2>
           {groupsOwned.length === 0 ? (
             <div className="text-muted-foreground mb-4">
-              You don't own any groups yet.
+              You don&apos;t own any groups yet.
             </div>
           ) : (
             <div className="space-y-4">
@@ -70,10 +87,10 @@ export default function GroupsClient({
           )}
         </div>
         <div>
-          <h2 className="font-semibold text-lg mb-2">Groups You're In</h2>
+          <h2 className="font-semibold text-lg mb-2">Groups You&apos;re In</h2>
           {groupsIn.length === 0 ? (
             <div className="text-muted-foreground mb-4">
-              You're not a member of any other groups.
+              You&apos;re not a member of any other groups.
             </div>
           ) : (
             <div className="space-y-4">

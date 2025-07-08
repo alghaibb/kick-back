@@ -8,7 +8,7 @@ import {
 } from "@/validations/group/inviteGroupSchema";
 import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
 import { LoadingButton } from "@/components/ui/button";
-import { useTransition, useEffect, useState } from "react";
+import { useTransition, useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { acceptGroupInviteAction } from "../actions";
 import {
@@ -30,7 +30,7 @@ type InviteStatus = "loading" | "valid" | "invalid" | "accepted" | "error";
 export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<InviteStatus>("loading");
-  const [inviteData, setInviteData] = useState<any>(null);
+  const [inviteData, setInviteData] = useState<InviteData>(null);
   const router = useRouter();
 
   const form = useForm<AcceptInviteValues>({
@@ -40,16 +40,10 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
     },
   });
 
-  useEffect(() => {
-    // Validate token on component mount
-    validateToken();
-  }, [token]);
-
-  async function validateToken() {
+  const validateToken = useCallback(async () => {
     try {
       const formData = new FormData();
       formData.append("token", token);
-
       const res = await acceptGroupInviteAction(formData);
       if (res?.error) {
         setStatus("invalid");
@@ -63,10 +57,15 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
         }, 2000);
       }
     } catch (error) {
+      console.error("Failed to validate invitation:", error);
       setStatus("error");
       setInviteData({ error: "Failed to validate invitation" });
     }
-  }
+  }, [token, router]);
+
+  useEffect(() => {
+    validateToken();
+  }, [validateToken]);
 
   function onSubmit(values: AcceptInviteValues) {
     startTransition(async () => {
@@ -118,7 +117,9 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
             Invalid Invitation
           </CardTitle>
           <CardDescription>
-            {inviteData?.error || "This invitation is invalid or has expired."}
+            {inviteData && "error" in inviteData
+              ? inviteData.error
+              : "This invitation is invalid or has expired."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -142,7 +143,9 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
             Welcome to the Group!
           </CardTitle>
           <CardDescription>
-            You have successfully joined {inviteData?.name || "the group"}.
+            You have successfully joined{" "}
+            {inviteData && "name" in inviteData ? inviteData.name : "the group"}
+            .
           </CardDescription>
         </CardHeader>
         <CardContent>

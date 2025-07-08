@@ -34,7 +34,7 @@ interface MainHeaderProps {
   isMobile?: boolean;
 }
 
-export function MainHeader({ user, onMenuClick, isMobile }: MainHeaderProps) {
+export function MainHeader({ onMenuClick }: MainHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
