@@ -466,4 +466,47 @@ export async function leaveGroupAction(groupId: string) {
   await prisma.groupMember.delete({ where: { groupId_userId: { groupId, userId: session.user.id } } });
   revalidatePath("/groups")
   return { success: true };
+}
+
+export async function editGroupAction(groupId: string, values: { name: string; description?: string; image?: string | null }) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  // Validate input
+  const parsed = serverCreateGroupSchema.safeParse(values);
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().formErrors.join(", ") || "Invalid input" };
+  }
+
+  try {
+    // Check if user is group owner or admin
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      include: { members: true },
+    });
+    if (!group) {
+      return { error: "Group not found" };
+    }
+    const actingMember = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId, userId: session.user.id } },
+    });
+    if (!actingMember || (actingMember.role !== "admin" && group.createdBy !== session.user.id)) {
+      return { error: "You do not have permission to edit this group" };
+    }
+    const updatedGroup = await prisma.group.update({
+      where: { id: groupId },
+      data: {
+        name: parsed.data.name,
+        description: parsed.data.description,
+        image: values.image === null ? null : parsed.data.image ?? undefined,
+      },
+    });
+    revalidatePath("/groups");
+    return { success: true, group: updatedGroup };
+  } catch (error) {
+    console.error("Error editing group:", error);
+    return { error: "An error occurred while editing the group." };
+  }
 } 

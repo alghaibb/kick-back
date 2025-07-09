@@ -4,7 +4,8 @@ export type ModalType =
   | "create-group"
   | "invite-group"
   | "create-event"
-  | "delete-event";
+  | "delete-event"
+  | "edit-group";
 
 interface ModalState {
   type: ModalType | null;
@@ -15,6 +16,8 @@ interface ModalState {
     eventId?: string;
     eventName?: string;
     userRole?: string;
+    description?: string;
+    image?: string | null;
   };
   open: (
     type: ModalType,
@@ -24,6 +27,8 @@ interface ModalState {
       eventId?: string;
       eventName?: string;
       userRole?: string;
+      description?: string;
+      image?: string | null;
     }
   ) => void;
   close: () => void;

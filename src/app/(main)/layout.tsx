@@ -6,6 +6,8 @@ import { CreateEventModal } from "./events/_components/CreateEventModal";
 import prisma from "@/lib/prisma";
 import { CreateGroupModal } from "./groups/_components/CreateGroupModal";
 import { DeleteEventModal } from "./events/_components/DeleteEventModal";
+import EditGroupModal from "./groups/_components/EditGroupModal";
+
 export default async function MainLayout({
   children,
 }: {
@@ -25,9 +27,7 @@ export default async function MainLayout({
     orderBy: { name: "asc" },
   });
 
-
   // Map to CalendarEvent type
-  
 
   return (
     <>
@@ -36,6 +36,7 @@ export default async function MainLayout({
       <InviteGroupModal />
       <CreateEventModal groups={groups} />
       <DeleteEventModal />
+      <EditGroupModal />
     </>
   );
 }

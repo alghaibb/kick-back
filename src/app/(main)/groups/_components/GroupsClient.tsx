@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
-import { Users } from "lucide-react";
+import { Users, Pencil } from "lucide-react";
 import InviteButton from "./InviteButton";
 import { Button } from "@/components/ui/button";
 import { GroupMembersModal } from "./GroupMembersModal";
+import { useModal } from "@/hooks/use-modal";
+import Image from "next/image";
 
 interface FullGroup {
   id: string;
@@ -20,6 +22,7 @@ interface FullGroup {
     };
   }[];
   description?: string | null;
+  image?: string | null;
 }
 
 export default function GroupsClient({
@@ -39,6 +42,7 @@ export default function GroupsClient({
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<FullGroup | null>(null);
+  const { open } = useModal();
 
   const openMembersModal = (group: FullGroup) => {
     setSelectedGroup(group);
@@ -68,17 +72,47 @@ export default function GroupsClient({
                 return (
                   <div
                     key={group.id}
-                    className="p-4 border rounded flex items-center justify-between bg-card"
+                    className="p-4 border rounded bg-card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div>
-                      <div className="font-semibold text-lg">{group.name}</div>
-                      {group.description && (
-                        <div className="text-sm text-muted-foreground">
-                          {group.description}
-                        </div>
+                    <div className="flex flex-col items-center gap-3 mb-2 sm:flex-row sm:items-center sm:gap-3">
+                      {group.image && (
+                        <Image
+                          src={group.image}
+                          alt={group.name}
+                          width={64}
+                          height={64}
+                          className="rounded object-cover border"
+                          style={{ minWidth: 64, minHeight: 64 }}
+                        />
                       )}
+                      <div className="text-center sm:text-left">
+                        <div className="font-semibold text-lg">
+                          {group.name}
+                        </div>
+                        {group.description && (
+                          <div className="text-sm text-muted-foreground">
+                            {group.description}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 w-full sm:w-auto">
+                      <Button
+                        variant="ghost"
+                        aria-label="Edit Group"
+                        onClick={() =>
+                          open("edit-group", {
+                            groupId: group.id,
+                            groupName: group.name,
+                            description: group.description ?? undefined,
+                            image: group.image,
+                          })
+                        }
+                        className="text-muted-foreground hover:text-primary w-full sm:w-auto"
+                        title="Edit Group"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       <InviteButton
                         groupId={group.id}
                         groupName={group.name}
@@ -87,6 +121,7 @@ export default function GroupsClient({
                       <Button
                         variant="outline"
                         onClick={() => openMembersModal(group)}
+                        className="w-full sm:w-auto"
                       >
                         View Members
                       </Button>
@@ -108,21 +143,34 @@ export default function GroupsClient({
               {groupsIn.map((group) => (
                 <div
                   key={group.id}
-                  className="p-4 border rounded flex items-center justify-between bg-card"
+                  className="p-4 border rounded bg-card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
-                    <div className="font-semibold text-lg">{group.name}</div>
-                    {group.description && (
-                      <div className="text-sm text-muted-foreground">
-                        {group.description}
-                      </div>
+                  <div className="flex flex-col items-center gap-3 mb-2 sm:flex-row sm:items-center sm:gap-3">
+                    {group.image && (
+                      <Image
+                        src={group.image}
+                        alt={group.name}
+                        width={64}
+                        height={64}
+                        className="rounded object-cover border"
+                        style={{ minWidth: 64, minHeight: 64 }}
+                      />
                     )}
+                    <div className="text-center sm:text-left">
+                      <div className="font-semibold text-lg">{group.name}</div>
+                      {group.description && (
+                        <div className="text-sm text-muted-foreground">
+                          {group.description}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 w-full sm:w-auto">
                     <InviteButton groupId={group.id} groupName={group.name} />
                     <Button
                       variant="outline"
                       onClick={() => openMembersModal(group)}
+                      className="w-full sm:w-auto"
                     >
                       View Members
                     </Button>
