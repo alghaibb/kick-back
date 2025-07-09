@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/responsive-modal";
 import { useModal } from "@/hooks/use-modal";
 import EditGroupForm from "../forms/EditGroupForm";
-import { CreateGroupValues } from "@/validations/group/createGroupSchema";
 
 export default function EditGroupModal() {
   const { type, isOpen, close, data } = useModal();

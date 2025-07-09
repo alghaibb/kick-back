@@ -112,6 +112,7 @@ export default function EditGroupForm({
       }
       return url;
     } catch (error) {
+      console.error("Failed to upload image", error);
       setUploadError("Failed to upload image");
       return null;
     } finally {
