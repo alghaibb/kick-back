@@ -24,17 +24,23 @@ import {
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
 import { toast } from "sonner";
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { createEventAction } from "../actions";
 import { LoadingButton } from "@/components/ui/button";
+import { useModal } from "@/hooks/use-modal";
 
 interface CreateEventFormProps {
   groups: { id: string; name: string }[];
   onSuccess?: () => void;
 }
 
-export function CreateEventForm({ groups, onSuccess }: CreateEventFormProps) {
+export function CreateEventForm({
+  groups: initialGroups,
+  onSuccess,
+}: CreateEventFormProps) {
   const [isPending, startTransition] = useTransition();
+  const [groups, setGroups] = useState(initialGroups);
+  const modal = useModal();
 
   const form = useForm<CreateEventValues>({
     resolver: zodResolver(createEventSchema),
@@ -147,7 +153,13 @@ export function CreateEventForm({ groups, onSuccess }: CreateEventFormProps) {
               <FormLabel>Assign to Group (optional)</FormLabel>
               <Select
                 value={field.value ?? undefined}
-                onValueChange={field.onChange}
+                onValueChange={(val) => {
+                  if (val === "__create__") {
+                    modal.open("create-group");
+                    return;
+                  }
+                  field.onChange(val);
+                }}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -167,6 +179,7 @@ export function CreateEventForm({ groups, onSuccess }: CreateEventFormProps) {
             </FormItem>
           )}
         />
+
         <LoadingButton type="submit" loading={isPending}>
           {isPending ? "Creating Event..." : "Create Event"}
         </LoadingButton>

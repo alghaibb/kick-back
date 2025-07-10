@@ -28,14 +28,6 @@ import { Camera, Upload, X } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { onboarding } from "./actions";
-import { timeZonesNames } from "@vvo/tzdb";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
 import { TimezoneCombobox } from "@/components/ui/timezone-combobox";
 
 type OnboardingUser = {

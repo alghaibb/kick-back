@@ -28,8 +28,6 @@ export default async function MainLayout({
     orderBy: { name: "asc" },
   });
 
-  // Map to CalendarEvent type
-
   return (
     <>
       <MainLayoutClient user={session.user}>{children}</MainLayoutClient>
