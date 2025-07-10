@@ -92,9 +92,12 @@ export default async function Page() {
                     name={event.name}
                     description={event.description || ""}
                     date={event.date.toISOString()}
-                    time={event.time}
-                    location={event.location}
-                    groupId={event.groupId}
+                    time={event.date.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    location={event.location || ""}
+                    groupId={event.groupId || ""}
                     groups={groups}
                     createdByCurrentUser={event.createdBy === session.user.id}
                   />
@@ -114,9 +117,12 @@ export default async function Page() {
                     name={event.name}
                     description={event.description || ""}
                     date={event.date.toISOString()}
-                    time={event.time}
-                    location={event.location}
-                    groupId={event.groupId}
+                    time={event.date.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    location={event.location || ""}
+                    groupId={event.groupId || ""}
                     groups={groups}
                     createdByCurrentUser={event.createdBy === session.user.id}
                   />
@@ -136,9 +142,12 @@ export default async function Page() {
                     name={event.name}
                     description={event.description || ""}
                     date={event.date.toISOString()}
-                    time={event.time}
-                    location={event.location}
-                    groupId={event.groupId}
+                    time={event.date.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    location={event.location || ""}
+                    groupId={event.groupId || ""}
                     groups={groups}
                     createdByCurrentUser={event.createdBy === session.user.id}
                     disabled
