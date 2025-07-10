@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 export async function onboarding(values: unknown) {
   try {
     const validated = serverOnboardingSchema.parse(values);
-    const { firstName, lastName, nickname, image, previousImage } = validated;
+    const { firstName, lastName, nickname, image, previousImage, reminderType, phoneNumber, reminderTime } = validated;
 
     const session = await getSession();
     const userId = session?.user?.id;
@@ -45,15 +45,30 @@ export async function onboarding(values: unknown) {
       }
     }
 
-    // Update user profile
+    if (phoneNumber) {
+      const existingUser = await prisma.user.findUnique({
+        where: { phoneNumber },
+        select: { id: true }
+      });
+
+      if (existingUser && existingUser.id !== userId) {
+        return { error: "This phone number is already registered" };
+      }
+    }
+
+    // Update user profile with reminder preferences
     await prisma.user.update({
       where: { id: userId },
-      data: { 
-        firstName, 
-        lastName, 
-        nickname: nickname || null, 
-        image, 
-        hasOnboarded: true 
+      data: {
+        firstName,
+        lastName,
+        nickname: nickname || null,
+        image,
+        hasOnboarded: true,
+        // Add reminder preferences
+        reminderType,
+        phoneNumber,
+        reminderTime,
       },
     });
 
@@ -64,11 +79,11 @@ export async function onboarding(values: unknown) {
     return { success: "Profile setup completed successfully!" };
   } catch (error) {
     console.error("Onboarding error:", error);
-    
+
     if (error instanceof Error) {
       return { error: error.message };
     }
-    
+
     return { error: "Something went wrong. Please try again." };
   }
 }

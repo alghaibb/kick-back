@@ -18,12 +18,15 @@ import { LoadingButton } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Camera, Upload, X } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 import { onboarding } from "./actions";
 
@@ -54,8 +57,14 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
       firstName: user.firstName ?? "",
       lastName: user.lastName ?? "",
       nickname: user.nickname ?? "",
+      reminderType: "email",
+      phoneNumber: "",
+      reminderTime: "09:00",
     },
   });
+
+  // Watch reminder type to conditionally show phone number
+  const reminderType = form.watch("reminderType");
 
   // Handle image preview cleanup
   useEffect(() => {
@@ -281,6 +290,93 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
                     {...field}
                     disabled={isPending}
                   />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Reminder Preferences Section */}
+        <div className="space-y-4">
+          <div>
+            <FormLabel className="text-base font-medium">
+              Reminder Preferences
+            </FormLabel>
+            <FormDescription>
+              {" "}
+              Choose how you&apos;d like to receive event reminders. You can
+              change them later in your settings.
+            </FormDescription>
+          </div>
+
+          <FormField
+            control={form.control}
+            name="reminderType"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="grid grid-cols-3 gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="email" id="email" />
+                      <Label
+                        htmlFor="email"
+                        className="flex items-center gap-2"
+                      >
+                        <span>Email</span>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="sms" id="sms" />
+                      <Label htmlFor="sms" className="flex items-center gap-2">
+                        <span>SMS</span>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="both" id="both" />
+                      <Label htmlFor="both" className="flex items-center gap-2">
+                        <span>Both</span>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {(reminderType === "sms" || reminderType === "both") && (
+            <FormField
+              control={form.control}
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Your phone number"
+                      {...field}
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          <FormField
+            control={form.control}
+            name="reminderTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Reminder Time</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} disabled={isPending} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

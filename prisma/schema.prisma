@@ -18,6 +18,9 @@ model User {
   emailVerified DateTime?
   image         String?
   hasOnboarded  Boolean   @default(false)
+  phoneNumber   String?   @unique
+  reminderType  String    @default("email")
+  reminderTime  String    @default("09:00")
 
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt

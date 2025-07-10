@@ -24,6 +24,20 @@ export const onboardingSchema = z.object({
       "Image must be less than 4MB"
     )
     .optional(),
+  reminderType: z.enum(["email", "sms", "both"]),
+  phoneNumber: z
+    .string()
+    .regex(/^(\+61|0)[2-478]\d{8}$/, "Please enter a valid Australian phone number")
+    .optional(),
+  reminderTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)"),
+}).refine((data) => {
+  if ((data.reminderType === "sms" || data.reminderType === "both") && !data.phoneNumber) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Phone number is required for SMS reminders",
+  path: ["phoneNumber"],
 });
 
 export type OnboardingValues = z.infer<typeof onboardingSchema>;
@@ -40,7 +54,7 @@ export const serverOnboardingSchema = z.object({
     .or(z.literal("")),
   image: z.string().url().optional().nullable(),
   previousImage: z.string().url().optional().nullable(),
+  reminderType: z.enum(["email", "sms", "both"]).default("email"),
+  phoneNumber: z.string().optional().nullable(),
+  reminderTime: z.string().default("09:00"),
 });
-
-export type ServerOnboardingValues = z.infer<typeof serverOnboardingSchema>;
-
