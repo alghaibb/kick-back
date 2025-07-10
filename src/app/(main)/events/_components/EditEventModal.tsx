@@ -9,21 +9,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
 import EditEventForm from "../forms/EditEventForm";
-import { CreateEventValues } from "@/validations/events/createEventSchema";
+import {format} from "date-fns";
 
-interface EditEventModalProps {
-  eventId: string;
-  initialValues: CreateEventValues;
-  groups: { id: string; name: string }[];
-}
+export default function EditEventModal() {
+  const { type, isOpen, close, data } = useModal();
+  if (type !== "edit-event" || !data?.eventId || !data?.groups) return null;
 
-export default function EditEventModal({
-  eventId,
-  initialValues,
-  groups,
-}: EditEventModalProps) {
-  const { type, isOpen, close } = useModal();
-  if (type !== "edit-event") return null;
+  // Prepare initialValues for the form
+  const initialValues = {
+    name: data.name ?? "",
+    description: data.description ?? "",
+    location: data.location ?? "",
+    date: data.date ? new Date(data.date) : new Date(),
+    time: data.time ?? (data.date ? format(new Date(data.date), "HH:mm") : ""),
+    groupId: data.groupId ?? undefined,
+  };
 
   return (
     <ResponsiveModal open={isOpen} onOpenChange={(open) => !open && close()}>
@@ -32,9 +32,9 @@ export default function EditEventModal({
           <ResponsiveModalTitle>Edit Event</ResponsiveModalTitle>
         </ResponsiveModalHeader>
         <EditEventForm
-          eventId={eventId}
+          eventId={data.eventId}
           initialValues={initialValues}
-          groups={groups}
+          groups={data.groups}
           onSuccess={close}
         />
         <ResponsiveModalFooter>

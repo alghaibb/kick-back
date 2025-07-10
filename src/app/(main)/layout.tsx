@@ -7,6 +7,7 @@ import prisma from "@/lib/prisma";
 import { CreateGroupModal } from "./groups/_components/CreateGroupModal";
 import { DeleteEventModal } from "./events/_components/DeleteEventModal";
 import EditGroupModal from "./groups/_components/EditGroupModal";
+import EditEventModal from "./events/_components/EditEventModal";
 
 export default async function MainLayout({
   children,
@@ -37,6 +38,7 @@ export default async function MainLayout({
       <CreateEventModal groups={groups} />
       <DeleteEventModal />
       <EditGroupModal />
+      <EditEventModal />
     </>
   );
 }

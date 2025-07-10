@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
 import { format } from "date-fns";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,10 @@ interface EventCardProps {
   name: string;
   description?: string;
   date: string;
+  time?: string;
+  location?: string;
+  groupId?: string;
+  groups: { id: string; name: string }[];
   createdByCurrentUser: boolean;
   disabled?: boolean;
 }
@@ -21,11 +25,18 @@ export function EventCard({
   name,
   description,
   date,
+  time,
+  location,
+  groupId,
+  groups,
   createdByCurrentUser,
   disabled,
 }: EventCardProps) {
   const { open } = useModal();
-  const formattedDate = format(new Date(date), "eeee, MMMM do yyyy • h:mm a");
+  const formattedDate = format(
+    new Date(date),
+    "eeee, MMMM do yyyy \u2022 h:mm a"
+  );
 
   return (
     <div
@@ -46,7 +57,29 @@ export function EventCard({
       )}
       <div className="text-xs text-muted-foreground">{formattedDate}</div>
 
-      <div className="flex justify-end mt-2">
+      <div className="flex justify-end mt-2 gap-2">
+        {createdByCurrentUser && !disabled && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() =>
+              open("edit-event", {
+                eventId: id,
+                name,
+                description,
+                date,
+                time,
+                location,
+                groupId,
+                groups,
+              })
+            }
+            className="text-primary hover:bg-primary/10"
+            aria-label="Edit Event"
+          >
+            <Pencil className="w-4 h-4" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"

@@ -3,9 +3,10 @@ import { create } from "zustand";
 export type ModalType =
   | "create-group"
   | "invite-group"
+  | "edit-group"
   | "create-event"
-  | "delete-event"
-  | "edit-group";
+  | "edit-event"
+  | "delete-event";
 
 interface ModalState {
   type: ModalType | null;
@@ -18,6 +19,12 @@ interface ModalState {
     userRole?: string;
     description?: string;
     image?: string | null;
+    // Event editing fields
+    name?: string;
+    location?: string;
+    date?: string;
+    time?: string;
+    groups?: { id: string; name: string }[];
   };
   open: (
     type: ModalType,
@@ -29,6 +36,12 @@ interface ModalState {
       userRole?: string;
       description?: string;
       image?: string | null;
+      // Event editing fields
+      name?: string;
+      location?: string;
+      date?: string;
+      time?: string;
+      groups?: { id: string; name: string }[];
     }
   ) => void;
   close: () => void;

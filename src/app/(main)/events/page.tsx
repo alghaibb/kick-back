@@ -52,6 +52,18 @@ export default async function Page() {
   const upcomingEvents = events.filter((e) => new Date(e.date) > todayEnd);
   const pastEvents = events.filter((e) => new Date(e.date) < todayStart);
 
+  // Fetch all groups for the user
+  const groups = await prisma.group.findMany({
+    where: {
+      OR: [
+        { createdBy: session.user.id },
+        { members: { some: { userId: session.user.id } } },
+      ],
+    },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+
   return (
     <div className="container py-8">
       <PageHeader
@@ -80,6 +92,10 @@ export default async function Page() {
                     name={event.name}
                     description={event.description || ""}
                     date={event.date.toISOString()}
+                    time={event.time}
+                    location={event.location}
+                    groupId={event.groupId}
+                    groups={groups}
                     createdByCurrentUser={event.createdBy === session.user.id}
                   />
                 ))}
@@ -98,6 +114,10 @@ export default async function Page() {
                     name={event.name}
                     description={event.description || ""}
                     date={event.date.toISOString()}
+                    time={event.time}
+                    location={event.location}
+                    groupId={event.groupId}
+                    groups={groups}
                     createdByCurrentUser={event.createdBy === session.user.id}
                   />
                 ))}
@@ -116,6 +136,10 @@ export default async function Page() {
                     name={event.name}
                     description={event.description || ""}
                     date={event.date.toISOString()}
+                    time={event.time}
+                    location={event.location}
+                    groupId={event.groupId}
+                    groups={groups}
                     createdByCurrentUser={event.createdBy === session.user.id}
                     disabled
                   />
