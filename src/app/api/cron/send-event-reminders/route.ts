@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendEventReminderEmail } from "@/utils/sendEmails";
-import { addDays, startOfDay, endOfDay } from "date-fns";
+import { sendSMS } from "@/utils/sendSMS";
+import { formatToE164 } from "@/utils/formatPhoneNumber";
+import { addDays, startOfDay, endOfDay, format } from "date-fns";
 import { toZonedTime, format as formatTz } from "date-fns-tz";
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify the request is from a legitimate cron service
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get tomorrow's date range
     const tomorrow = addDays(new Date(), 1);
     const tomorrowStart = startOfDay(tomorrow);
     const tomorrowEnd = endOfDay(tomorrow);
 
-    // Find events happening tomorrow
     const events = await prisma.event.findMany({
       where: {
         date: {
@@ -38,6 +37,7 @@ export async function GET(request: NextRequest) {
                 reminderType: true,
                 reminderTime: true,
                 timezone: true,
+                phoneNumber: true,
               },
             },
           },
@@ -51,10 +51,10 @@ export async function GET(request: NextRequest) {
     });
 
     let emailsSent = 0;
+    let smsSent = 0;
     let errors = 0;
 
     for (const event of events) {
-      // Get event creator's info
       const creatorInfo = await prisma.user.findUnique({
         where: { id: event.createdBy },
         select: {
@@ -65,20 +65,19 @@ export async function GET(request: NextRequest) {
           reminderType: true,
           reminderTime: true,
           timezone: true,
+          phoneNumber: true,
         },
       });
 
       const creatorName = creatorInfo?.nickname ||
         `${creatorInfo?.firstName || "Unknown"}${creatorInfo?.lastName ? ` ${creatorInfo.lastName}` : ""}`;
 
-      // Get all attendees for the event
       const attendees = event.attendees.map((attendee) => ({
         firstName: attendee.user.firstName,
         lastName: attendee.user.lastName,
         nickname: attendee.user.nickname,
       }));
 
-      // Send reminder emails to attendees who prefer email or both, at their local time
       for (const attendee of event.attendees) {
         const user = attendee.user;
         const userTimezone = user.timezone || "UTC";
@@ -106,9 +105,43 @@ export async function GET(request: NextRequest) {
             errors++;
           }
         }
+
+        if (
+          user.reminderTime === userCurrentTime &&
+          (user.reminderType === "sms" || user.reminderType === "both") &&
+          user.phoneNumber
+        ) {
+          try {
+            const formattedPhone = formatToE164(user.phoneNumber);
+            if (!formattedPhone) {
+              console.warn(`Invalid attendee phone number: ${user.phoneNumber}`);
+              errors++;
+              continue;
+            }
+
+            const eventDateInUserTz = toZonedTime(event.date, userTimezone);
+            const formattedDate = format(eventDateInUserTz, "EEEE, MMMM d, yyyy 'at' h:mm a");
+
+            const attendeeNames = attendees.map(a => a.nickname || a.firstName).join(', ');
+            const smsBody = [
+              `Event Reminder: ${event.name}`,
+              `Date: ${formattedDate} (${userTimezone})`,
+              event.location ? `Location: ${event.location}` : null,
+              event.group?.name ? `Group: ${event.group.name}` : null,
+              `Host: ${creatorName}`,
+              attendeeNames ? `Attendees: ${attendeeNames}` : null,
+              event.description ? `Details: ${event.description}` : null,
+            ].filter(Boolean).join('\n');
+
+            await sendSMS(formattedPhone, smsBody);
+            smsSent++;
+          } catch (error) {
+            console.error(`Failed to send SMS to ${user.phoneNumber}:`, error);
+            errors++;
+          }
+        }
       }
 
-      // Also send reminder to event creator if it's their local reminder time
       if (creatorInfo) {
         const creatorTimezone = creatorInfo.timezone || "UTC";
         const now = new Date();
@@ -135,14 +168,50 @@ export async function GET(request: NextRequest) {
             errors++;
           }
         }
+
+        if (
+          creatorInfo.reminderTime === creatorCurrentTime &&
+          (creatorInfo.reminderType === "sms" || creatorInfo.reminderType === "both") &&
+          creatorInfo.phoneNumber
+        ) {
+          try {
+            const formattedCreatorPhone = formatToE164(creatorInfo.phoneNumber);
+            if (!formattedCreatorPhone) {
+              console.warn(`Invalid creator phone number: ${creatorInfo.phoneNumber}`);
+              errors++;
+              continue;
+            }
+
+            const eventDateInCreatorTz = toZonedTime(event.date, creatorTimezone);
+            const formattedDate = format(eventDateInCreatorTz, "EEEE, MMMM d, yyyy 'at' h:mm a");
+
+            const attendeeNames = attendees.map(a => a.nickname || a.firstName).join(', ');
+            const smsBody = [
+              `Event Reminder: ${event.name}`,
+              `Date: ${formattedDate} (${creatorTimezone})`,
+              event.location ? `Location: ${event.location}` : null,
+              event.group?.name ? `Group: ${event.group.name}` : null,
+              `Host: ${creatorName}`,
+              attendeeNames ? `Attendees: ${attendeeNames}` : null,
+              event.description ? `Details: ${event.description}` : null,
+            ].filter(Boolean).join('\n');
+
+            await sendSMS(formattedCreatorPhone, smsBody);
+            smsSent++;
+          } catch (error) {
+            console.error(`Failed to send SMS to creator ${creatorInfo.phoneNumber}:`, error);
+            errors++;
+          }
+        }
       }
     }
 
     return NextResponse.json({
       success: true,
-      message: `Event reminders sent: ${emailsSent} emails, ${errors} errors`,
+      message: `Event reminders sent: ${emailsSent} emails, ${smsSent} SMS, ${errors} errors`,
       eventsProcessed: events.length,
       emailsSent,
+      smsSent,
       errors,
     });
   } catch (error) {
@@ -152,4 +221,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

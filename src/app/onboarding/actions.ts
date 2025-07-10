@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 export async function onboarding(values: unknown) {
   try {
     const validated = serverOnboardingSchema.parse(values);
-    const { firstName, lastName, nickname, image, previousImage, reminderType, phoneNumber, reminderTime } = validated;
+    const { firstName, lastName, nickname, image, previousImage, reminderType, phoneNumber, reminderTime, timezone } = validated;
 
     const session = await getSession();
     const userId = session?.user?.id;
@@ -65,10 +65,10 @@ export async function onboarding(values: unknown) {
         nickname: nickname || null,
         image,
         hasOnboarded: true,
-        // Add reminder preferences
         reminderType,
         phoneNumber,
         reminderTime,
+        timezone,
       },
     });
 

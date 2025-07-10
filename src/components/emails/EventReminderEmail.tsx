@@ -255,3 +255,4 @@ const footer = {
 };
 
 export default EventReminderEmail;
+ 
