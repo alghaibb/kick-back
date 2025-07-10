@@ -4,6 +4,7 @@ import {
   ResetPasswordEmail,
   VerifyAccount,
   GroupInviteEmail,
+  EventReminderEmail,
 } from "@/components/emails";
 import { env } from "@/lib/env";
 import prisma from "@/lib/prisma";
@@ -111,6 +112,43 @@ export async function sendGroupInviteEmail(
       inviterName={inviterName}
       groupName={groupName}
       inviteLink={inviteLink}
+    />
+  );
+}
+
+// 📅 Event reminder email
+export async function sendEventReminderEmail(
+  email: string,
+  eventName: string,
+  eventDescription: string | null,
+  eventDate: Date,
+  eventLocation: string | null,
+  eventCreatorName: string,
+  attendees: Array<{
+    firstName: string;
+    lastName: string | null;
+    nickname: string | null;
+  }>
+) {
+  const firstName = await getUserFirstNameByEmail(email);
+  const eventLink = `${env.NEXT_PUBLIC_BASE_URL}/events`;
+
+  await sendEmail(
+    email,
+    `Reminder: ${eventName} is happening soon`,
+    <EventReminderEmail
+      userFirstName={firstName}
+      eventName={eventName}
+      eventDescription={eventDescription || undefined}
+      eventDate={eventDate}
+      eventLocation={eventLocation || undefined}
+      eventCreator={eventCreatorName}
+      attendees={attendees.map((attendee) => ({
+        firstName: attendee.firstName,
+        lastName: attendee.lastName || undefined,
+        nickname: attendee.nickname || undefined,
+      }))}
+      eventLink={eventLink}
     />
   );
 }
