@@ -27,8 +27,8 @@ import {
 import { Camera, Upload, X } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-
 import { onboarding } from "./actions";
+import { timeZonesNames } from "@vvo/tzdb";
 
 type OnboardingUser = {
   id: string;
@@ -377,6 +377,27 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
                 <FormLabel>Reminder Time</FormLabel>
                 <FormControl>
                   <Input type="time" {...field} disabled={isPending} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="timezone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Timezone</FormLabel>
+                <FormControl>
+                  <select {...field} disabled={isPending} className="input">
+                    <option value="">Select your timezone</option>
+                    {timeZonesNames.map((tz) => (
+                      <option key={tz} value={tz}>
+                        {tz}
+                      </option>
+                    ))}
+                  </select>
                 </FormControl>
                 <FormMessage />
               </FormItem>

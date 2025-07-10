@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendEventReminderEmail } from "@/utils/sendEmails";
 import { addDays, startOfDay, endOfDay } from "date-fns";
+import { toZonedTime, format as formatTz } from "date-fns-tz";
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,6 +37,7 @@ export async function GET(request: NextRequest) {
                 nickname: true,
                 reminderType: true,
                 reminderTime: true,
+                timezone: true,
               },
             },
           },
@@ -61,7 +63,8 @@ export async function GET(request: NextRequest) {
           nickname: true,
           email: true,
           reminderType: true,
-          reminderTime: true
+          reminderTime: true,
+          timezone: true,
         },
       });
 
@@ -75,12 +78,18 @@ export async function GET(request: NextRequest) {
         nickname: attendee.user.nickname,
       }));
 
-      // Send reminder emails to attendees who prefer email or both
+      // Send reminder emails to attendees who prefer email or both, at their local time
       for (const attendee of event.attendees) {
         const user = attendee.user;
+        const userTimezone = user.timezone || "UTC";
+        const now = new Date();
+        const userNow = toZonedTime(now, userTimezone);
+        const userCurrentTime = formatTz(userNow, "HH:mm");
 
-        // Send email reminders to users who prefer email or both
-        if (user.reminderType === "email" || user.reminderType === "both") {
+        if (
+          user.reminderTime === userCurrentTime &&
+          (user.reminderType === "email" || user.reminderType === "both")
+        ) {
           try {
             await sendEventReminderEmail(
               user.email,
@@ -99,23 +108,32 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Also send reminder to event creator if they prefer email or both
-      if (creatorInfo &&
-        (creatorInfo.reminderType === "email" || creatorInfo.reminderType === "both")) {
-        try {
-          await sendEventReminderEmail(
-            creatorInfo.email,
-            event.name,
-            event.description,
-            event.date,
-            event.location,
-            creatorName,
-            attendees
-          );
-          emailsSent++;
-        } catch (error) {
-          console.error(`Failed to send reminder email to creator ${creatorInfo.email}:`, error);
-          errors++;
+      // Also send reminder to event creator if it's their local reminder time
+      if (creatorInfo) {
+        const creatorTimezone = creatorInfo.timezone || "UTC";
+        const now = new Date();
+        const creatorNow = toZonedTime(now, creatorTimezone);
+        const creatorCurrentTime = formatTz(creatorNow, "HH:mm");
+
+        if (
+          creatorInfo.reminderTime === creatorCurrentTime &&
+          (creatorInfo.reminderType === "email" || creatorInfo.reminderType === "both")
+        ) {
+          try {
+            await sendEventReminderEmail(
+              creatorInfo.email,
+              event.name,
+              event.description,
+              event.date,
+              event.location,
+              creatorName,
+              attendees
+            );
+            emailsSent++;
+          } catch (error) {
+            console.error(`Failed to send reminder email to creator ${creatorInfo.email}:`, error);
+            errors++;
+          }
         }
       }
     }
