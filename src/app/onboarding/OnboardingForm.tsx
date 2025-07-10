@@ -29,6 +29,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { onboarding } from "./actions";
 import { timeZonesNames } from "@vvo/tzdb";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+import { TimezoneCombobox } from "@/components/ui/timezone-combobox";
 
 type OnboardingUser = {
   id: string;
@@ -51,6 +59,8 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
   );
   const [uploadProgress, setUploadProgress] = useState<number>(0);
 
+  const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   const form = useForm<OnboardingValues>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
@@ -60,6 +70,7 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
       reminderType: "email",
       phoneNumber: "",
       reminderTime: "09:00",
+      timezone: detectedTz,
     },
   });
 
@@ -390,14 +401,11 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
               <FormItem>
                 <FormLabel>Timezone</FormLabel>
                 <FormControl>
-                  <select {...field} disabled={isPending} className="input">
-                    <option value="">Select your timezone</option>
-                    {timeZonesNames.map((tz) => (
-                      <option key={tz} value={tz}>
-                        {tz}
-                      </option>
-                    ))}
-                  </select>
+                  <TimezoneCombobox
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={isPending}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

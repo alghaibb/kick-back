@@ -28,6 +28,7 @@ export const onboardingSchema = z.object({
   phoneNumber: z
     .string()
     .regex(/^(\+61|0)[2-478]\d{8}$/, "Please enter a valid Australian phone number")
+    .trim()
     .optional(),
   reminderTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)"),
   timezone: z.string().min(1, "Timezone is required"),
@@ -56,7 +57,7 @@ export const serverOnboardingSchema = z.object({
   image: z.string().url().optional().nullable(),
   previousImage: z.string().url().optional().nullable(),
   reminderType: z.enum(["email", "sms", "both"]).default("email"),
-  phoneNumber: z.string().optional().nullable(),
+  phoneNumber: z.string().trim().optional().nullable(),
   reminderTime: z.string().default("09:00"),
   timezone: z.string().min(1, "Timezone is required"),
 });
