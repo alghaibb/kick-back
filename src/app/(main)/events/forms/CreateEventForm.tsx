@@ -39,7 +39,7 @@ export function CreateEventForm({
   onSuccess,
 }: CreateEventFormProps) {
   const [isPending, startTransition] = useTransition();
-  const [groups, setGroups] = useState(initialGroups);
+  const [groups] = useState(initialGroups);
   const modal = useModal();
 
   const form = useForm<CreateEventValues>({
