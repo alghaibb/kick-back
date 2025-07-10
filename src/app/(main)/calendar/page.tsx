@@ -7,6 +7,12 @@ import { CalendarEvent } from "@/types/calender";
 import { CalendarPageClient } from "./_components/CalendarPageClient";
 import { CalendarDays } from "lucide-react";
 import { PageHeader } from "../_components/PageHeader";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Your Calendar",
+  description: "Where you can view your calendar, upon clicking on the dates, it'll show you the list of events you have that day."
+}
 
 export default async function Page() {
   const session = await getSession();
