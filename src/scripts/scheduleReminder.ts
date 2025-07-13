@@ -4,6 +4,7 @@ import { sendEventReminderEmail } from "@/utils/sendEmails";
 import { sendSMS } from "@/utils/sendSMS";
 import { formatToE164 } from "@/utils/formatPhoneNumber";
 import { addDays, startOfDay, endOfDay, format } from "date-fns";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { toZonedTime, format as formatTz } from "date-fns-tz";
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 
