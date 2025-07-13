@@ -3,10 +3,6 @@
     {
       "path": "/api/cron/clean-events",
       "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/send-event-reminders",
-      "schedule": "0 * * * *"
     }
   ]
 }

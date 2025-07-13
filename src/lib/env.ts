@@ -15,6 +15,7 @@ export const env = createEnv({
     TWILIO_ACCOUNT_SID: z.string().min(1, "TWILIO_ACCOUNT_SID is required"),
     TWILIO_AUTH_TOKEN: z.string().min(1, "TWILIO_AUTH_TOKEN is required"),
     TWILIO_PHONE_NUMBER: z.string().min(1, "TWILIO_PHONE_NUMBER is required"),
+    QSTASH_TOKEN: z.string().min(1, "QSTASH_TOKEN is required"),
   },
   client: {
     NEXT_PUBLIC_BASE_URL: z
