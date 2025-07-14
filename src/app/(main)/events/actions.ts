@@ -26,19 +26,19 @@ export async function createEventAction(values: CreateEventValues) {
     const month = date.getMonth();
     const day = date.getDate();
 
-    // Create a date object representing the local time in the user's timezone
-    const localDateTime = new Date(year, month, day, hours, minutes, 0, 0);
-
-    // Convert from user's timezone to UTC for database storage
-    const eventDateTime = fromZonedTime(localDateTime, userTimezone);
+    // Create a date string in ISO format without timezone (represents local time in user's timezone)
+    const dateTimeString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+    
+    // Parse this as a date in the user's timezone and convert to UTC
+    const eventDateTime = fromZonedTime(dateTimeString, userTimezone);
 
     console.log(`Creating event: ${name}`);
     console.log(`Selected date from calendar: ${date.toISOString()}`);
     console.log(`Selected time: ${time}`);
     console.log(`User timezone: ${userTimezone}`);
-    console.log(`Local date/time: ${localDateTime.toString()}`);
+    console.log(`Date/time string: ${dateTimeString}`);
     console.log(`Final event date/time (UTC): ${eventDateTime.toISOString()}`);
-    console.log(`Timezone offset: ${localDateTime.getTimezoneOffset()} minutes`);
+    console.log(`Timezone offset: ${eventDateTime.getTimezoneOffset()} minutes`);
 
     const event = await prisma.event.create({
       data: {
@@ -147,17 +147,17 @@ export async function editEventAction(eventId: string, values: CreateEventValues
     const month = date.getMonth();
     const day = date.getDate();
 
-    // Create a date object representing the local time in the user's timezone
-    const localDateTime = new Date(year, month, day, hours, minutes, 0, 0);
-
-    // Convert from user's timezone to UTC for database storage
-    const eventDateTime = fromZonedTime(localDateTime, userTimezone);
+    // Create a date string in ISO format without timezone (represents local time in user's timezone)
+    const dateTimeString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+    
+    // Parse this as a date in the user's timezone and convert to UTC
+    const eventDateTime = fromZonedTime(dateTimeString, userTimezone);
 
     console.log(`Editing event: ${name}`);
     console.log(`Selected date from calendar: ${date.toISOString()}`);
     console.log(`Selected time: ${time}`);
     console.log(`User timezone: ${userTimezone}`);
-    console.log(`Local date/time: ${localDateTime.toString()}`);
+    console.log(`Date/time string: ${dateTimeString}`);
     console.log(`Final event date/time (UTC): ${eventDateTime.toISOString()}`);
 
     // Update the event fields
