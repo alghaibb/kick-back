@@ -15,23 +15,21 @@ import { format as formatTz, toZonedTime } from "date-fns-tz";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
+  // Check if this is a Vercel cron job (has upstash headers)
+  const isVercelCron = request.headers.get("upstash-signature");
   const authHeader = request.headers.get("authorization");
   
-  // Debug logging for authorization issues
-  console.log("🔍 Authorization debug:");
-  console.log("Auth header received:", authHeader);
-  console.log("Expected:", `Bearer ${env.CRON_SECRET}`);
-  console.log("CRON_SECRET exists:", !!env.CRON_SECRET);
-  console.log("All headers:", Object.fromEntries(request.headers.entries()));
-  
-  if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
-    console.log("❌ Authorization failed");
+  // Allow either Vercel cron (upstash-signature) or manual trigger with CRON_SECRET
+  if (!isVercelCron && authHeader !== `Bearer ${env.CRON_SECRET}`) {
+    console.log("❌ Authorization failed - neither Vercel cron nor valid CRON_SECRET");
+    console.log("Has upstash signature:", !!isVercelCron);
+    console.log("Auth header:", authHeader);
     return new Response("Unauthorized", {
       status: 401,
     });
   }
 
-  console.log("🔐 Vercel Cron job triggered for event reminders");
+  console.log("🔐 Cron job triggered", isVercelCron ? "(Vercel)" : "(Manual)");
 
   // Get events for the next 2 days to account for timezone differences
   const today = new Date();

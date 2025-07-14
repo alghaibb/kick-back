@@ -3,11 +3,17 @@ import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
+  // Check if this is a Vercel cron job (has upstash headers)
+  const isVercelCron = req.headers.get("upstash-signature");
   const authHeader = req.headers.get("Authorization");
 
-  if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
+  // Allow either Vercel cron (upstash-signature) or manual trigger with CRON_SECRET
+  if (!isVercelCron && authHeader !== `Bearer ${env.CRON_SECRET}`) {
+    console.log("❌ Clean events cron - authorization failed");
     return new NextResponse("Unauthorized", { status: 401 });
   }
+
+  console.log("🧹 Clean events cron triggered", isVercelCron ? "(Vercel)" : "(Manual)");
 
   const now = new Date();
 

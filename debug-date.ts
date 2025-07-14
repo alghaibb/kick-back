@@ -1,12 +1,32 @@
-// Test script to debug date/time issues
-const testDate = new Date(2025, 6, 15, 20, 5, 0, 0); // July 15, 2025, 8:05 PM
-console.log("Test date created:", testDate.toISOString());
-console.log("Local string:", testDate.toString());
-console.log("UTC Hours:", testDate.getUTCHours());
-console.log("Local Hours:", testDate.getHours());
-console.log("Timezone offset:", testDate.getTimezoneOffset());
+// Test script to debug event categorization
+import { startOfDay, endOfDay } from "date-fns";
 
-// Simulate what happens when we parse it back
-const parsed = new Date(testDate.toISOString());
-console.log("Parsed back:", parsed.toString());
-console.log("Parsed local hours:", parsed.getHours());
+console.log("=== TESTING EVENT CATEGORIZATION ===");
+
+// Current time (July 14, 2025)
+const now = new Date(); // Should be July 14
+console.log("1. Current time:", now.toString());
+
+const todayStart = startOfDay(now);
+const todayEnd = endOfDay(now);
+console.log("2. Today start:", todayStart.toString());
+console.log("3. Today end:", todayEnd.toString());
+
+// Event date (July 15 8:05 PM stored as UTC)
+const eventDate = new Date("2025-07-15T10:05:00.000Z");
+console.log("4. Event date:", eventDate.toString());
+
+// Test categorization
+const isToday = eventDate >= todayStart && eventDate <= todayEnd;
+const isUpcoming = eventDate > todayEnd;
+const isPast = eventDate < todayStart;
+
+console.log("5. Is today?", isToday);
+console.log("6. Is upcoming?", isUpcoming);
+console.log("7. Is past?", isPast);
+
+console.log("\n=== COMPARISON DETAILS ===");
+console.log("Event time (ms):", eventDate.getTime());
+console.log("Today start (ms):", todayStart.getTime());
+console.log("Today end (ms):", todayEnd.getTime());
+console.log("Event > today end?", eventDate.getTime() > todayEnd.getTime());
