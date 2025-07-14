@@ -12,14 +12,9 @@ import {
   addMinutes,
 } from "date-fns";
 import { toZonedTime, format as formatTz } from "date-fns-tz";
-import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 
-async function handleReminderRequest(request: Request) {
-  // QStash signature verification is handled by the verifySignatureAppRouter wrapper
-  console.log("🔐 Authorized QStash cron job triggered - v2.", {
-    method: request.method,
-    url: request.url,
-  });
+export async function GET() {
+  console.log("🔐 Vercel Cron job triggered for event reminders");
 
   // Get events for the next 2 days to account for timezone differences
   const today = new Date();
@@ -78,6 +73,7 @@ async function handleReminderRequest(request: Request) {
   let errors = 0;
 
   // Helper function to check if current time is within reminder window
+  // Expanded to 5-minute window since cron runs every 5 minutes
   const isWithinReminderWindow = (
     userTime: Date,
     reminderTime: string
@@ -89,15 +85,15 @@ async function handleReminderRequest(request: Request) {
     const reminderDateTime = new Date(userTime);
     reminderDateTime.setHours(reminderHour, reminderMinute, 0, 0);
 
-    // Create a 2-minute window around the reminder time
-    const windowStart = subMinutes(reminderDateTime, 1);
-    const windowEnd = addMinutes(reminderDateTime, 1);
+    // Create a 5-minute window around the reminder time to account for cron frequency
+    const windowStart = subMinutes(reminderDateTime, 2);
+    const windowEnd = addMinutes(reminderDateTime, 3);
 
     const isInWindow = userTime >= windowStart && userTime <= windowEnd;
 
     if (isInWindow) {
       console.log(
-        `⏰ Within reminder window: ${formatTz(userTime, "HH:mm:ss", { timeZone: "UTC" })} vs ${reminderTime} (±1min)`
+        `⏰ Within reminder window: ${formatTz(userTime, "HH:mm:ss", { timeZone: "UTC" })} vs ${reminderTime} (±2-3min)`
       );
     }
 
@@ -348,5 +344,3 @@ async function handleReminderRequest(request: Request) {
     errors,
   });
 }
-
-export const POST = verifySignatureAppRouter(handleReminderRequest);
