@@ -1,18 +1,18 @@
-import { NextResponse } from "next/server";
+import { env } from "@/lib/env";
 import prisma from "@/lib/prisma";
+import { formatToE164 } from "@/utils/formatPhoneNumber";
 import { sendEventReminderEmail } from "@/utils/sendEmails";
 import { sendSMS } from "@/utils/sendSMS";
-import { formatToE164 } from "@/utils/formatPhoneNumber";
-import { env } from "@/lib/env";
 import {
   addDays,
-  startOfDay,
+  addMinutes,
   endOfDay,
   format,
+  startOfDay,
   subMinutes,
-  addMinutes,
 } from "date-fns";
-import { toZonedTime, format as formatTz } from "date-fns-tz";
+import { format as formatTz, toZonedTime } from "date-fns-tz";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   // Verify CRON_SECRET for additional security
@@ -31,6 +31,11 @@ export async function GET(request: Request) {
   const dayAfter = addDays(today, 2);
   const startDate = startOfDay(tomorrow);
   const endDate = endOfDay(dayAfter);
+
+  console.log(`🕐 Current server time: ${new Date().toISOString()}`);
+  console.log(`📅 Today: ${format(today, "yyyy-MM-dd")}`);
+  console.log(`📅 Tomorrow: ${format(tomorrow, "yyyy-MM-dd")}`);
+  console.log(`📅 Day after: ${format(dayAfter, "yyyy-MM-dd")}`);
 
   console.log("📆 Checking events from", {
     from: startDate.toISOString(),
@@ -118,6 +123,7 @@ export async function GET(request: Request) {
 
   for (const event of events) {
     console.log(`📍 Event: "${event.name}" on ${event.date.toISOString()}`);
+    console.log(`📊 Event has ${event.attendees.length} attendees`);
 
     const creatorInfo = await prisma.user.findUnique({
       where: { id: event.createdBy },
@@ -156,11 +162,23 @@ export async function GET(request: Request) {
       // Check if event is tomorrow in user's timezone and if it's within reminder window
       if (!isEventTomorrow(event.date, userTimezone)) {
         console.log(`⏭️ Event not tomorrow for ${user.email}, skipping`);
+        console.log(`   📅 Event date in user TZ: ${formatTz(toZonedTime(event.date, userTimezone), "yyyy-MM-dd HH:mm", { timeZone: userTimezone })}`);
+        console.log(`   📅 Tomorrow range: ${formatTz(startOfDay(addDays(userNow, 1)), "yyyy-MM-dd", { timeZone: userTimezone })} to ${formatTz(endOfDay(addDays(userNow, 1)), "yyyy-MM-dd", { timeZone: userTimezone })}`);
         continue;
       }
 
       if (!isWithinReminderWindow(userNow, user.reminderTime)) {
         console.log(`⏰ Not within reminder window for ${user.email}`);
+        console.log(`   ⏰ Current user time: ${formatTz(userNow, "HH:mm:ss", { timeZone: userTimezone })}`);
+        console.log(`   ⏰ Reminder time: ${user.reminderTime}`);
+
+        // Calculate and show the next reminder window
+        const [reminderHour, reminderMinute] = user.reminderTime.split(":").map(Number);
+        const reminderDateTime = new Date(userNow);
+        reminderDateTime.setHours(reminderHour, reminderMinute, 0, 0);
+        const windowStart = subMinutes(reminderDateTime, 2);
+        const windowEnd = addMinutes(reminderDateTime, 3);
+        console.log(`   ⏰ Window: ${formatTz(windowStart, "HH:mm:ss", { timeZone: userTimezone })} to ${formatTz(windowEnd, "HH:mm:ss", { timeZone: userTimezone })}`);
         continue;
       }
 
@@ -168,8 +186,14 @@ export async function GET(request: Request) {
       const today = startOfDay(userNow);
       if (attendee.lastReminderSent && attendee.lastReminderSent >= today) {
         console.log(`✅ Reminder already sent today for ${user.email}`);
+        console.log(`   📅 Last sent: ${attendee.lastReminderSent.toISOString()}`);
+        console.log(`   📅 Today starts: ${today.toISOString()}`);
         continue;
       }
+
+      console.log(`🚀 PROCEEDING TO SEND REMINDER to ${user.email}`);
+      console.log(`   📧 Reminder type: ${user.reminderType}`);
+      console.log(`   📱 Phone number: ${user.phoneNumber || 'N/A'}`);
 
       if (user.reminderType === "email" || user.reminderType === "both") {
         try {
@@ -257,13 +281,18 @@ export async function GET(request: Request) {
       console.log(
         `🧑‍💼 Creator: ${creatorInfo.email} | Time: ${formatTz(creatorNow, "HH:mm", { timeZone: creatorTimezone })} | Reminder: ${creatorInfo.reminderTime}`
       );
+      console.log(`🧑‍💼 Creator timezone: ${creatorTimezone} | Reminder type: ${creatorInfo.reminderType}`);
 
       // Check if event is tomorrow in creator's timezone and if it's within reminder window
       if (!isEventTomorrow(event.date, creatorTimezone)) {
         console.log(
           `⏭️ Event not tomorrow for creator ${creatorInfo.email}, skipping`
         );
+        console.log(`   📅 Event date in creator TZ: ${formatTz(toZonedTime(event.date, creatorTimezone), "yyyy-MM-dd HH:mm", { timeZone: creatorTimezone })}`);
+        console.log(`   📅 Tomorrow range: ${formatTz(startOfDay(addDays(creatorNow, 1)), "yyyy-MM-dd", { timeZone: creatorTimezone })} to ${formatTz(endOfDay(addDays(creatorNow, 1)), "yyyy-MM-dd", { timeZone: creatorTimezone })}`);
       } else if (isWithinReminderWindow(creatorNow, creatorInfo.reminderTime)) {
+        console.log(`🚀 PROCEEDING TO SEND REMINDER to creator ${creatorInfo.email}`);
+
         if (
           creatorInfo.reminderType === "email" ||
           creatorInfo.reminderType === "both"
@@ -331,7 +360,21 @@ export async function GET(request: Request) {
             errors++;
           }
         }
+      } else {
+        console.log(`⏰ Creator not within reminder window`);
+        console.log(`   ⏰ Current creator time: ${formatTz(creatorNow, "HH:mm:ss", { timeZone: creatorTimezone })}`);
+        console.log(`   ⏰ Reminder time: ${creatorInfo.reminderTime}`);
+
+        // Calculate and show the next reminder window
+        const [reminderHour, reminderMinute] = creatorInfo.reminderTime.split(":").map(Number);
+        const reminderDateTime = new Date(creatorNow);
+        reminderDateTime.setHours(reminderHour, reminderMinute, 0, 0);
+        const windowStart = subMinutes(reminderDateTime, 2);
+        const windowEnd = addMinutes(reminderDateTime, 3);
+        console.log(`   ⏰ Window: ${formatTz(windowStart, "HH:mm:ss", { timeZone: creatorTimezone })} to ${formatTz(windowEnd, "HH:mm:ss", { timeZone: creatorTimezone })}`);
       }
+    } else {
+      console.log(`❌ No creator info found for event ${event.name}`);
     }
   }
 

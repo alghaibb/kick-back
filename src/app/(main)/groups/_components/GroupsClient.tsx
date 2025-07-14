@@ -1,11 +1,6 @@
-import { Suspense } from "react";
-import { Users, Pencil } from "lucide-react";
-import { getSession } from "@/lib/sessions";
 import prisma from "@/lib/prisma";
-import InviteButton from "./InviteButton";
-import { Button } from "@/components/ui/button";
-import { GroupMembersModal } from "./GroupMembersModal";
-import { GroupInviteManager } from "./GroupInviteManager";
+import { getSession } from "@/lib/sessions";
+import { Suspense } from "react";
 import { GroupsClientContent } from "./GroupsClientContent";
 import { GroupsSkeleton } from "./GroupsSkeleton";
 

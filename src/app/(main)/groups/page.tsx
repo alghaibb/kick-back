@@ -1,12 +1,12 @@
 export const dynamic = "force-dynamic";
 
-import { Suspense } from "react";
-import { Users } from "lucide-react";
-import { getSession } from "@/lib/sessions";
 import prisma from "@/lib/prisma";
-import { PageHeader } from "../_components/PageHeader";
+import { getSession } from "@/lib/sessions";
+import { Users } from "lucide-react";
+import { Suspense } from "react";
 import { CreateActionButton } from "../_components/CreateActionButton";
-import { GroupsClient } from "./_components/GroupsClient";
+import { PageHeader } from "../_components/PageHeader";
+import GroupsClient from "./_components/GroupsClient";
 import { GroupsSkeleton } from "./_components/GroupsSkeleton";
 
 export default async function Page() {

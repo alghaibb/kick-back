@@ -1,12 +1,12 @@
 export const dynamic = "force-dynamic";
 
-import { Suspense } from "react";
-import { Calendar, Plus } from "lucide-react";
-import { getSession } from "@/lib/sessions";
 import prisma from "@/lib/prisma";
-import { startOfDay, endOfDay } from "date-fns";
-import { PageHeader } from "../_components/PageHeader";
+import { getSession } from "@/lib/sessions";
+import { endOfDay, format, startOfDay } from "date-fns";
+import { Calendar } from "lucide-react";
+import { Suspense } from "react";
 import { CreateActionButton } from "../_components/CreateActionButton";
+import { PageHeader } from "../_components/PageHeader";
 import { EventCard } from "./_components/EventCard";
 import { EventsSkeleton } from "./_components/EventsSkeleton";
 
@@ -83,9 +83,15 @@ export default async function Page() {
                 {todayEvents.map((event) => (
                   <EventCard
                     key={event.id}
-                    event={event}
+                    id={event.id}
+                    name={event.name}
+                    description={event.description || undefined}
+                    date={format(event.date, "yyyy-MM-dd")}
+                    time={format(event.date, "HH:mm")}
+                    location={event.location || undefined}
+                    groupId={event.groupId || undefined}
                     groups={groups}
-                    currentUserId={session.user.id}
+                    createdByCurrentUser={event.createdBy === session.user.id}
                   />
                 ))}
               </div>
@@ -102,9 +108,15 @@ export default async function Page() {
                 {upcomingEvents.map((event) => (
                   <EventCard
                     key={event.id}
-                    event={event}
+                    id={event.id}
+                    name={event.name}
+                    description={event.description || undefined}
+                    date={format(event.date, "yyyy-MM-dd")}
+                    time={format(event.date, "HH:mm")}
+                    location={event.location || undefined}
+                    groupId={event.groupId || undefined}
                     groups={groups}
-                    currentUserId={session.user.id}
+                    createdByCurrentUser={event.createdBy === session.user.id}
                   />
                 ))}
               </div>
@@ -121,9 +133,16 @@ export default async function Page() {
                 {pastEvents.map((event) => (
                   <EventCard
                     key={event.id}
-                    event={event}
+                    id={event.id}
+                    name={event.name}
+                    description={event.description || undefined}
+                    date={format(event.date, "yyyy-MM-dd")}
+                    time={format(event.date, "HH:mm")}
+                    location={event.location || undefined}
+                    groupId={event.groupId || undefined}
                     groups={groups}
-                    currentUserId={session.user.id}
+                    createdByCurrentUser={event.createdBy === session.user.id}
+                    disabled={true}
                   />
                 ))}
               </div>

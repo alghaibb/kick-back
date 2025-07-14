@@ -1,12 +1,12 @@
 "use client";
-import { useState } from "react";
-import { Users, Pencil } from "lucide-react";
-import InviteButton from "./InviteButton";
 import { Button } from "@/components/ui/button";
-import { GroupMembersModal } from "./GroupMembersModal";
-import { GroupInviteManager } from "./GroupInviteManager";
 import { useModal } from "@/hooks/use-modal";
+import { Pencil } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
+import { GroupInviteManager } from "./GroupInviteManager";
+import { GroupMembersModal } from "./GroupMembersModal";
+import InviteButton from "./InviteButton";
 
 interface FullGroup {
   id: string;
@@ -89,9 +89,6 @@ export function GroupsClientContent({
                 (m) => m.userId === currentUser.id
               );
               const userRole = groupMember?.role;
-              const groupInviteData = groupInvites.find(
-                (gi) => gi.groupId === group.id
-              );
 
               return (
                 <div

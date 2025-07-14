@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { toast } from "sonner";
-import { cancelGroupInviteAction, resendGroupInviteAction } from "../actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,11 +9,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Mail, X, RefreshCw, Clock, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
+import { CheckCircle, Clock, Mail, RefreshCw, X, XCircle } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { cancelGroupInviteAction, resendGroupInviteAction } from "../actions";
 
 interface GroupInviteManagerProps {
   groupId: string;
@@ -44,18 +44,39 @@ export function GroupInviteManager({
   const [invites, setInvites] = useState<Invite[]>(initialInvites);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Log component initialization for debugging
+  console.log(
+    `GroupInviteManager initialized for group ${groupId} with ${initialInvites.length} invites`
+  );
+
   async function handleCancelInvite(inviteId: string) {
     try {
+      // Additional validation: ensure invite belongs to this group
+      const inviteToCancel = invites.find((invite) => invite.id === inviteId);
+      if (!inviteToCancel) {
+        console.error(`Invite ${inviteId} not found in group ${groupId}`);
+        toast.error("Invitation not found");
+        return;
+      }
+
+      console.log(`Cancelling invite ${inviteId} for group ${groupId}`);
       const result = await cancelGroupInviteAction(inviteId);
       if (result?.success) {
         toast.success("Invitation cancelled");
         setInvites((prev) => prev.filter((invite) => invite.id !== inviteId));
         onInvitesUpdate();
       } else {
+        console.error(
+          `Failed to cancel invite ${inviteId} for group ${groupId}:`,
+          result?.error
+        );
         toast.error(result?.error || "Failed to cancel invitation");
       }
     } catch (error) {
-      console.error("Failed to cancel invitation:", error);
+      console.error(
+        `Failed to cancel invitation ${inviteId} for group ${groupId}:`,
+        error
+      );
       toast.error("Failed to cancel invitation");
     }
   }
@@ -63,15 +84,32 @@ export function GroupInviteManager({
   async function handleResendInvite(inviteId: string) {
     setRefreshing(true);
     try {
+      // Additional validation: ensure invite belongs to this group
+      const inviteToResend = invites.find((invite) => invite.id === inviteId);
+      if (!inviteToResend) {
+        console.error(`Invite ${inviteId} not found in group ${groupId}`);
+        toast.error("Invitation not found");
+        setRefreshing(false);
+        return;
+      }
+
+      console.log(`Resending invite ${inviteId} for group ${groupId}`);
       const result = await resendGroupInviteAction(inviteId);
       if (result?.success) {
         toast.success("Invitation resent successfully");
         onInvitesUpdate();
       } else {
+        console.error(
+          `Failed to resend invite ${inviteId} for group ${groupId}:`,
+          result?.error
+        );
         toast.error(result?.error || "Failed to resend invitation");
       }
     } catch (error) {
-      console.error("Failed to resend invitation:", error);
+      console.error(
+        `Failed to resend invitation ${inviteId} for group ${groupId}:`,
+        error
+      );
       toast.error("Failed to resend invitation");
     } finally {
       setRefreshing(false);
