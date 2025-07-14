@@ -94,7 +94,7 @@ async function handleReminderRequest(request: Request) {
 
     if (isInWindow) {
       console.log(
-        `⏰ Within reminder window: ${formatTz(userTime, "HH:mm:ss")} vs ${reminderTime} (±1min)`
+        `⏰ Within reminder window: ${formatTz(userTime, "HH:mm:ss", { timeZone: "UTC" })} vs ${reminderTime} (±1min)`
       );
     }
 
@@ -147,7 +147,7 @@ async function handleReminderRequest(request: Request) {
 
       console.log(`👤 Checking ${user.email} | Timezone: ${userTimezone}`);
       console.log(
-        `⏰ User time: ${formatTz(userNow, "HH:mm")} | Reminder time: ${user.reminderTime}`
+        `⏰ User time: ${formatTz(userNow, "HH:mm", { timeZone: userTimezone })} | Reminder time: ${user.reminderTime}`
       );
 
       // Check if event is tomorrow in user's timezone and if it's within reminder window
@@ -252,7 +252,7 @@ async function handleReminderRequest(request: Request) {
       const creatorNow = toZonedTime(new Date(), creatorTimezone);
 
       console.log(
-        `🧑‍💼 Creator: ${creatorInfo.email} | Time: ${formatTz(creatorNow, "HH:mm")} | Reminder: ${creatorInfo.reminderTime}`
+        `🧑‍💼 Creator: ${creatorInfo.email} | Time: ${formatTz(creatorNow, "HH:mm", { timeZone: creatorTimezone })} | Reminder: ${creatorInfo.reminderTime}`
       );
 
       // Check if event is tomorrow in creator's timezone and if it's within reminder window
