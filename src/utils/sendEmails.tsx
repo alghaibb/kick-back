@@ -8,7 +8,7 @@ import {
 } from "@/components/emails";
 import { env } from "@/lib/env";
 import prisma from "@/lib/prisma";
-import { JSX } from "react";
+import React, { JSX } from "react";
 import { Resend } from "resend";
 
 const resend = new Resend(env.RESEND_API_KEY);
