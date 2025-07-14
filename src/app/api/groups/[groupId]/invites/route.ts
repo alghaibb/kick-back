@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: { groupId: string } }
+  { params }: { params: Promise<{ groupId: string }> }
 ) {
   try {
-    const invites = await getGroupInvites(params.groupId);
+    const { groupId } = await params;
+    const invites = await getGroupInvites(groupId);
     return NextResponse.json({ success: true, invites });
   } catch (error) {
     console.error("Error fetching group invites:", error);
