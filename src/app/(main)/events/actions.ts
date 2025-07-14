@@ -2,6 +2,7 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { createEventSchema, CreateEventValues } from "@/validations/events/createEventSchema";
+import { fromZonedTime } from "date-fns-tz";
 import { revalidatePath } from "next/cache";
 
 export async function createEventAction(values: CreateEventValues) {
@@ -17,20 +18,27 @@ export async function createEventAction(values: CreateEventValues) {
     // Parse the time input (HH:mm format)
     const [hours, minutes] = time.split(":").map(Number);
 
-    // Create date/time combination properly
-    // The date from the calendar picker might be in UTC, so we need to use its components
+    // Get user's timezone from session
+    const userTimezone = session.user.timezone || 'UTC';
+
+    // Create date/time combination in the user's timezone
     const year = date.getFullYear();
     const month = date.getMonth();
     const day = date.getDate();
 
-    // Create a new date with the selected date and time
-    const eventDateTime = new Date(year, month, day, hours, minutes, 0, 0);
+    // Create a date object representing the local time in the user's timezone
+    const localDateTime = new Date(year, month, day, hours, minutes, 0, 0);
+
+    // Convert from user's timezone to UTC for database storage
+    const eventDateTime = fromZonedTime(localDateTime, userTimezone);
 
     console.log(`Creating event: ${name}`);
     console.log(`Selected date from calendar: ${date.toISOString()}`);
     console.log(`Selected time: ${time}`);
-    console.log(`Final event date/time: ${eventDateTime.toISOString()}`);
-    console.log(`Local timezone offset: ${eventDateTime.getTimezoneOffset()} minutes`);
+    console.log(`User timezone: ${userTimezone}`);
+    console.log(`Local date/time: ${localDateTime.toString()}`);
+    console.log(`Final event date/time (UTC): ${eventDateTime.toISOString()}`);
+    console.log(`Timezone offset: ${localDateTime.getTimezoneOffset()} minutes`);
 
     const event = await prisma.event.create({
       data: {
@@ -127,19 +135,26 @@ export async function editEventAction(eventId: string, values: CreateEventValues
     // Parse the time input (HH:mm format)
     const [hours, minutes] = time.split(":").map(Number);
 
-    // Create date/time combination properly
-    // The date from the calendar picker might be in UTC, so we need to use its components
+    // Get user's timezone from session
+    const userTimezone = session.user.timezone || 'UTC';
+
+    // Create date/time combination in the user's timezone
     const year = date.getFullYear();
     const month = date.getMonth();
     const day = date.getDate();
 
-    // Create a new date with the selected date and time
-    const eventDateTime = new Date(year, month, day, hours, minutes, 0, 0);
+    // Create a date object representing the local time in the user's timezone
+    const localDateTime = new Date(year, month, day, hours, minutes, 0, 0);
+
+    // Convert from user's timezone to UTC for database storage
+    const eventDateTime = fromZonedTime(localDateTime, userTimezone);
 
     console.log(`Editing event: ${name}`);
     console.log(`Selected date from calendar: ${date.toISOString()}`);
     console.log(`Selected time: ${time}`);
-    console.log(`Final event date/time: ${eventDateTime.toISOString()}`);
+    console.log(`User timezone: ${userTimezone}`);
+    console.log(`Local date/time: ${localDateTime.toString()}`);
+    console.log(`Final event date/time (UTC): ${eventDateTime.toISOString()}`);
 
     // Update the event fields
     const updatedEvent = await prisma.event.update({
