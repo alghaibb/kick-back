@@ -76,7 +76,7 @@ function testInternationalNumbers() {
   ];
 
   testCases.forEach((test) => {
-    const formatted = formatToE164(test.number, test.country as any);
+    const formatted = formatToE164(test.number, test.country as "AU" | "US" | "GB" | "DE" | "FR" | "IN" | "JP");
     console.log(`${test.description}:`);
     console.log(`  Input: ${test.number} (${test.country})`);
     console.log(`  Output: ${formatted || "FAILED"}`);
