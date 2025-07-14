@@ -88,7 +88,7 @@ export async function GET(request: Request) {
   let errors = 0;
 
   // Helper function to check if current time is within reminder window
-  // Expanded to 5-minute window since cron runs every 5 minutes
+  // Expanded to 15-minute window since cron runs every 15 minutes
   const isWithinReminderWindow = (
     userTime: Date,
     reminderTime: string
@@ -100,9 +100,9 @@ export async function GET(request: Request) {
     const reminderDateTime = new Date(userTime);
     reminderDateTime.setHours(reminderHour, reminderMinute, 0, 0);
 
-    // Create a 5-minute window around the reminder time to account for cron frequency
-    const windowStart = subMinutes(reminderDateTime, 2);
-    const windowEnd = addMinutes(reminderDateTime, 3);
+    // Create a 15-minute window around the reminder time to account for cron frequency
+    const windowStart = subMinutes(reminderDateTime, 7);
+    const windowEnd = addMinutes(reminderDateTime, 8);
 
     const isInWindow = userTime >= windowStart && userTime <= windowEnd;
 
