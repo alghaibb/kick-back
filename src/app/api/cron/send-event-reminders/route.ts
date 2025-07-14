@@ -52,11 +52,6 @@ export async function GET() {
             },
           },
         },
-        select: {
-          id: true,
-          lastReminderSent: true,
-          user: true,
-        },
       },
       group: {
         select: {
