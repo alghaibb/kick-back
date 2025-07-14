@@ -2,7 +2,7 @@ import "dotenv/config";
 import prisma from "@/lib/prisma";
 
 async function updateReminderTime() {
-  try {    console.log("📝 Updating reminder time to 12:10...");
+  try {    console.log("📝 Updating reminder time to 12:20...");
     
     // Update your user's reminder time
     const result = await prisma.user.update({
@@ -10,7 +10,7 @@ async function updateReminderTime() {
         email: "halla.hkuku@gmail.com",
       },
       data: {
-        reminderTime: "12:10",
+        reminderTime: "12:20",
       },
     });
 
