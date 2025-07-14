@@ -6,8 +6,10 @@ import { CalendarEvent } from "@/types/calender";
 import { CalendarDays } from "lucide-react";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { PageHeader } from "../_components/PageHeader";
 import { CalendarPageClient } from "./_components/CalendarPageClient";
+import { CalendarSkeleton } from "./_components/CalendarSkeleton";
 
 export const metadata: Metadata = {
   title: "Your Calendar",
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
     "Where you can view your calendar, upon clicking on the dates, it'll show you the list of events you have that day.",
 };
 
-export default async function Page() {
+async function CalendarContent() {
   const session = await getSession();
   if (!session?.user?.id) redirect("/login");
 
@@ -68,6 +70,10 @@ export default async function Page() {
     })),
   }));
 
+  return <CalendarPageClient events={events} />;
+}
+
+export default async function Page() {
   return (
     <div className="container py-8">
       <PageHeader
@@ -77,7 +83,9 @@ export default async function Page() {
         action=""
       />
 
-      <CalendarPageClient events={events} />
+      <Suspense fallback={<CalendarSkeleton />}>
+        <CalendarContent />
+      </Suspense>
     </div>
   );
 }

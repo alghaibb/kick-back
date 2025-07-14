@@ -1,3 +1,5 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 export function DashboardSkeleton() {
-  return <div className="w-full h-64 bg-muted animate-pulse rounded-lg" />;
+  return <Skeleton className="w-full h-32" />;
 }

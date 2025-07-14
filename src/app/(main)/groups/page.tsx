@@ -3,28 +3,20 @@ export const dynamic = "force-dynamic";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { Users } from "lucide-react";
+import { Suspense } from "react";
 import { CreateActionButton } from "../_components/CreateActionButton";
 import { PageHeader } from "../_components/PageHeader";
 import GroupsClient from "./_components/GroupsClient";
+import { GroupsSkeleton } from "./_components/GroupsSkeleton";
 
-export default async function Page() {
+async function GroupsContent() {
   const session = await getSession();
   const userId = session?.user?.id;
 
   if (!userId) {
     return (
-      <div className="container py-8">
-        <PageHeader
-          icon={<Users className="h-6 w-6" />}
-          title="Groups"
-          subtitle="Manage and create groups for your events or collaborations."
-          action={
-            <CreateActionButton modalType="create-group" label="Create Group" />
-          }
-        />
-        <div className="text-muted-foreground">
-          You must be logged in to view your groups.
-        </div>
+      <div className="text-muted-foreground">
+        You must be logged in to view your groups.
       </div>
     );
   }
@@ -56,6 +48,23 @@ export default async function Page() {
 
   const hasGroups = groupsOwned.length > 0 || groupsIn.length > 0;
 
+  return hasGroups ? (
+    <GroupsClient
+      groupsOwned={groupsOwned}
+      groupsIn={groupsIn}
+      currentUser={{
+        ...session.user,
+        firstName: session.user.firstName ?? undefined,
+        lastName: session.user.lastName ?? undefined,
+        image: session.user.image ?? undefined,
+      }}
+    />
+  ) : (
+    <div className="text-muted-foreground">No groups yet.</div>
+  );
+}
+
+export default async function Page() {
   return (
     <div className="container py-8">
       <PageHeader
@@ -67,20 +76,9 @@ export default async function Page() {
         }
       />
 
-      {hasGroups ? (
-        <GroupsClient
-          groupsOwned={groupsOwned}
-          groupsIn={groupsIn}
-          currentUser={{
-            ...session.user,
-            firstName: session.user.firstName ?? undefined,
-            lastName: session.user.lastName ?? undefined,
-            image: session.user.image ?? undefined,
-          }}
-        />
-      ) : (
-        <div className="text-muted-foreground">No groups yet.</div>
-      )}
+      <Suspense fallback={<GroupsSkeleton />}>
+        <GroupsContent />
+      </Suspense>
     </div>
   );
 }

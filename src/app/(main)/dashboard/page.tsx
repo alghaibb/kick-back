@@ -3,8 +3,10 @@ export const dynamic = "force-dynamic";
 import { getDashboardStats } from "@/lib/dashboard-stats";
 import { getSession } from "@/lib/sessions";
 import { Metadata } from "next";
+import { Suspense } from "react";
 import { dashboardStatsTemplate } from "./_components/dashboard-data";
 import { DashboardQuickActionsClient } from "./_components/DashboardQuickActionsClient";
+import { DashboardSkeleton } from "./_components/DashboardSkeleton";
 import { StatsCard } from "./_components/StatsCard";
 import { WelcomeSection } from "./_components/WelcomeSection";
 
@@ -13,7 +15,7 @@ export const metadata: Metadata = {
   description: "Your personal event planning dashboard",
 };
 
-export default async function Page() {
+async function DashboardStats() {
   const session = await getSession();
   const userId = session?.user?.id;
 
@@ -46,6 +48,16 @@ export default async function Page() {
   ];
 
   return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {dashboardStats.map((stat) => (
+        <StatsCard key={stat.title} {...stat} />
+      ))}
+    </div>
+  );
+}
+
+export default async function Page() {
+  return (
     <>
       <div className="space-y-8">
         <WelcomeSection />
@@ -58,11 +70,9 @@ export default async function Page() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {dashboardStats.map((stat) => (
-              <StatsCard key={stat.title} {...stat} />
-            ))}
-          </div>
+          <Suspense fallback={<DashboardSkeleton />}>
+            <DashboardStats />
+          </Suspense>
         </div>
 
         <div className="space-y-6">
