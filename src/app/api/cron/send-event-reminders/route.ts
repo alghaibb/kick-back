@@ -16,7 +16,16 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
+  
+  // Debug logging for authorization issues
+  console.log("🔍 Authorization debug:");
+  console.log("Auth header received:", authHeader);
+  console.log("Expected:", `Bearer ${env.CRON_SECRET}`);
+  console.log("CRON_SECRET exists:", !!env.CRON_SECRET);
+  console.log("All headers:", Object.fromEntries(request.headers.entries()));
+  
   if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
+    console.log("❌ Authorization failed");
     return new Response("Unauthorized", {
       status: 401,
     });
