@@ -16,7 +16,10 @@ import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 
 async function handleReminderRequest(request: Request) {
   // QStash signature verification is handled by the verifySignatureAppRouter wrapper
-  console.log("🔐 Authorized QStash cron job triggered.");
+  console.log("🔐 Authorized QStash cron job triggered.", {
+    method: request.method,
+    url: request.url,
+  });
 
   // Get events for the next 2 days to account for timezone differences
   const today = new Date();
