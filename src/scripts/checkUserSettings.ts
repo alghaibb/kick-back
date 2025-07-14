@@ -16,6 +16,7 @@ async function checkReminderTime() {
         timezone: true,
         firstName: true,
         lastName: true,
+        phoneNumber: true,
       },
     });
 
@@ -23,6 +24,7 @@ async function checkReminderTime() {
       console.log("👤 User details:");
       console.log(`   Email: ${user.email}`);
       console.log(`   Name: ${user.firstName} ${user.lastName}`);
+      console.log(`   Phone Number: ${user.phoneNumber || 'NOT SET'}`);
       console.log(`   Reminder Time: ${user.reminderTime}`);
       console.log(`   Reminder Type: ${user.reminderType}`);
       console.log(`   Timezone: ${user.timezone}`);
