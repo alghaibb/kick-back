@@ -14,11 +14,7 @@ import { format } from "date-fns";
 import { CheckCircle, Clock, Mail, RefreshCw, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  cancelGroupInviteAction,
-  getGroupInvitesAction,
-  resendGroupInviteAction,
-} from "../actions";
+import { cancelGroupInviteAction, resendGroupInviteAction } from "../actions";
 
 interface GroupInviteManagerProps {
   groupId: string;
@@ -56,7 +52,9 @@ export function GroupInviteManager({
   async function fetchInvites() {
     try {
       setLoading(true);
-      const result = await getGroupInvitesAction(groupId);
+      const response = await fetch(`/api/groups/${groupId}/invites`);
+      const result = await response.json();
+
       if (result.success) {
         setInvites(result.invites);
       } else {
