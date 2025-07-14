@@ -4,7 +4,6 @@ import { useModal } from "@/hooks/use-modal";
 import { Pencil } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { GroupInviteManager } from "./GroupInviteManager";
 import { GroupMembersModal } from "./GroupMembersModal";
 import InviteButton from "./InviteButton";
 
@@ -26,27 +25,10 @@ interface FullGroup {
   image?: string | null;
 }
 
-interface GroupInvite {
-  groupId: string;
-  groupName: string;
-  invites: {
-    id: string;
-    email: string;
-    status: string;
-    createdAt: string;
-    expiresAt: string;
-    inviter: {
-      firstName: string;
-      email: string;
-    };
-  }[];
-}
-
 export function GroupsClientContent({
   groupsOwned,
   groupsIn,
   currentUser,
-  groupInvites,
 }: {
   groupsOwned: FullGroup[];
   groupsIn: FullGroup[];
@@ -57,7 +39,6 @@ export function GroupsClientContent({
     lastName?: string;
     image?: string | null;
   };
-  groupInvites: GroupInvite[];
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<FullGroup | null>(null);
@@ -196,15 +177,6 @@ export function GroupsClientContent({
           </div>
         )}
       </div>
-
-      {/* Group Invite Managers */}
-      {groupInvites.map((groupInvite) => (
-        <GroupInviteManager
-          key={groupInvite.groupId}
-          groupId={groupInvite.groupId}
-          groupName={groupInvite.groupName}
-        />
-      ))}
 
       {/* Members Modal */}
       {selectedGroup && (

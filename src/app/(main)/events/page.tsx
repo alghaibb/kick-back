@@ -4,11 +4,9 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { endOfDay, format, startOfDay } from "date-fns";
 import { Calendar } from "lucide-react";
-import { Suspense } from "react";
 import { CreateActionButton } from "../_components/CreateActionButton";
 import { PageHeader } from "../_components/PageHeader";
 import { EventCard } from "./_components/EventCard";
-import { EventsSkeleton } from "./_components/EventsSkeleton";
 
 export default async function Page() {
   const session = await getSession();
@@ -71,88 +69,86 @@ export default async function Page() {
         }
       />
 
-      <Suspense fallback={<EventsSkeleton />}>
-        <div className="space-y-8">
-          {/* Today's Events */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Today&apos;s Events</h2>
-            {todayEvents.length === 0 ? (
-              <p className="text-muted-foreground">No events today.</p>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {todayEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    id={event.id}
-                    name={event.name}
-                    description={event.description || undefined}
-                    date={event.date.toISOString()}
-                    time={format(event.date, "HH:mm")}
-                    location={event.location || undefined}
-                    groupId={event.groupId || undefined}
-                    groups={groups}
-                    timezone={session.user.timezone || "UTC"}
-                    createdByCurrentUser={event.createdBy === session.user.id}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Upcoming Events */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
-            {upcomingEvents.length === 0 ? (
-              <p className="text-muted-foreground">No upcoming events.</p>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {upcomingEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    id={event.id}
-                    name={event.name}
-                    description={event.description || undefined}
-                    date={event.date.toISOString()}
-                    time={format(event.date, "HH:mm")}
-                    location={event.location || undefined}
-                    groupId={event.groupId || undefined}
-                    groups={groups}
-                    timezone={session.user.timezone || "UTC"}
-                    createdByCurrentUser={event.createdBy === session.user.id}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Past Events */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Past Events</h2>
-            {pastEvents.length === 0 ? (
-              <p className="text-muted-foreground">No past events.</p>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {pastEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    id={event.id}
-                    name={event.name}
-                    description={event.description || undefined}
-                    date={event.date.toISOString()}
-                    time={format(event.date, "HH:mm")}
-                    location={event.location || undefined}
-                    groupId={event.groupId || undefined}
-                    groups={groups}
-                    timezone={session.user.timezone || "UTC"}
-                    createdByCurrentUser={event.createdBy === session.user.id}
-                    disabled={true}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+      <div className="space-y-8">
+        {/* Today's Events */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Today&apos;s Events</h2>
+          {todayEvents.length === 0 ? (
+            <p className="text-muted-foreground">No events today.</p>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {todayEvents.map((event) => (
+                <EventCard
+                  key={event.id}
+                  id={event.id}
+                  name={event.name}
+                  description={event.description || undefined}
+                  date={event.date.toISOString()}
+                  time={format(event.date, "HH:mm")}
+                  location={event.location || undefined}
+                  groupId={event.groupId || undefined}
+                  groups={groups}
+                  timezone={session.user.timezone || "UTC"}
+                  createdByCurrentUser={event.createdBy === session.user.id}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      </Suspense>
+
+        {/* Upcoming Events */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
+          {upcomingEvents.length === 0 ? (
+            <p className="text-muted-foreground">No upcoming events.</p>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {upcomingEvents.map((event) => (
+                <EventCard
+                  key={event.id}
+                  id={event.id}
+                  name={event.name}
+                  description={event.description || undefined}
+                  date={event.date.toISOString()}
+                  time={format(event.date, "HH:mm")}
+                  location={event.location || undefined}
+                  groupId={event.groupId || undefined}
+                  groups={groups}
+                  timezone={session.user.timezone || "UTC"}
+                  createdByCurrentUser={event.createdBy === session.user.id}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Past Events */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Past Events</h2>
+          {pastEvents.length === 0 ? (
+            <p className="text-muted-foreground">No past events.</p>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {pastEvents.map((event) => (
+                <EventCard
+                  key={event.id}
+                  id={event.id}
+                  name={event.name}
+                  description={event.description || undefined}
+                  date={event.date.toISOString()}
+                  time={format(event.date, "HH:mm")}
+                  location={event.location || undefined}
+                  groupId={event.groupId || undefined}
+                  groups={groups}
+                  timezone={session.user.timezone || "UTC"}
+                  createdByCurrentUser={event.createdBy === session.user.id}
+                  disabled={true}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

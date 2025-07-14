@@ -6,10 +6,8 @@ import { CalendarEvent } from "@/types/calender";
 import { CalendarDays } from "lucide-react";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 import { PageHeader } from "../_components/PageHeader";
 import { CalendarPageClient } from "./_components/CalendarPageClient";
-import { CalendarSkeleton } from "./_components/CalendarSkeleton";
 
 export const metadata: Metadata = {
   title: "Your Calendar",
@@ -78,9 +76,8 @@ export default async function Page() {
         subtitle="View all your upcoming events here"
         action=""
       />
-      <Suspense fallback={<CalendarSkeleton />}>
-        <CalendarPageClient events={events} />
-      </Suspense>
+
+      <CalendarPageClient events={events} />
     </div>
   );
 }
