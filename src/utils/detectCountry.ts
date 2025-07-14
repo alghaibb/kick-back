@@ -96,6 +96,8 @@ export function detectCountryForSMS(
     }
   } catch (error) {
     // Phone number parsing failed, continue to next strategy
+    console.error(`❌ Phone number parsing failed: ${error instanceof Error ? error.message : String(error)}`);
+    
     console.log(`📱 Phone number parsing failed for ${phoneNumber}, trying timezone...`);
   }
 
