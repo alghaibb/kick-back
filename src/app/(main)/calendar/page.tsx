@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { Suspense } from "react";
 import { getSession } from "@/lib/sessions";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
@@ -8,11 +9,13 @@ import { CalendarPageClient } from "./_components/CalendarPageClient";
 import { CalendarDays } from "lucide-react";
 import { PageHeader } from "../_components/PageHeader";
 import { Metadata } from "next";
+import { CalendarSkeleton } from "./_components/CalendarSkeleton";
 
 export const metadata: Metadata = {
   title: "Your Calendar",
-  description: "Where you can view your calendar, upon clicking on the dates, it'll show you the list of events you have that day."
-}
+  description:
+    "Where you can view your calendar, upon clicking on the dates, it'll show you the list of events you have that day.",
+};
 
 export default async function Page() {
   const session = await getSession();
@@ -69,14 +72,15 @@ export default async function Page() {
 
   return (
     <div className="container py-8">
-      {/* <h1 className="text-2xl font-bold mb-6">Calendar</h1> */}
       <PageHeader
         icon={<CalendarDays className="h-6 w-6" />}
         title="Your Calendar"
         subtitle="View all your upcoming events here"
         action=""
       />
-      <CalendarPageClient events={events} />
+      <Suspense fallback={<CalendarSkeleton />}>
+        <CalendarPageClient events={events} />
+      </Suspense>
     </div>
   );
 }

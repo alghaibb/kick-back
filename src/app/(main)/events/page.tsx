@@ -1,18 +1,14 @@
 export const dynamic = "force-dynamic";
 
-import { PageHeader } from "../_components/PageHeader";
-import { CreateActionButton } from "../_components/CreateActionButton";
-import { Calendar } from "lucide-react";
+import { Suspense } from "react";
+import { Calendar, Plus } from "lucide-react";
 import { getSession } from "@/lib/sessions";
 import prisma from "@/lib/prisma";
-import { Metadata } from "next";
-import { EventCard } from "./_components/EventCard";
 import { startOfDay, endOfDay } from "date-fns";
-
-export const metadata: Metadata = {
-  title: "Events",
-  description: "Where your upcoming and past events will be.",
-};
+import { PageHeader } from "../_components/PageHeader";
+import { CreateActionButton } from "../_components/CreateActionButton";
+import { EventCard } from "./_components/EventCard";
+import { EventsSkeleton } from "./_components/EventsSkeleton";
 
 export default async function Page() {
   const session = await getSession();
@@ -69,95 +65,72 @@ export default async function Page() {
       <PageHeader
         icon={<Calendar className="h-6 w-6" />}
         title="Events"
-        subtitle="Manage and create events for your groups or personal use."
+        subtitle="Manage and view all your events."
         action={
           <CreateActionButton modalType="create-event" label="Create Event" />
         }
       />
 
-      {events.length === 0 ? (
-        <div className="text-muted-foreground">No events yet.</div>
-      ) : (
-        <>
-          {todayEvents.length > 0 && (
-            <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-2">
-                Today&apos;s Events
-              </h2>
-              <div className="space-y-4">
+      <Suspense fallback={<EventsSkeleton />}>
+        <div className="space-y-8">
+          {/* Today's Events */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Today&apos;s Events</h2>
+            {todayEvents.length === 0 ? (
+              <p className="text-muted-foreground">No events today.</p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {todayEvents.map((event) => (
                   <EventCard
                     key={event.id}
-                    id={event.id}
-                    name={event.name}
-                    description={event.description || ""}
-                    date={event.date.toISOString()}
-                    time={event.date.toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                    location={event.location || ""}
-                    groupId={event.groupId || ""}
+                    event={event}
                     groups={groups}
-                    createdByCurrentUser={event.createdBy === session.user.id}
+                    currentUserId={session.user.id}
                   />
                 ))}
               </div>
-            </section>
-          )}
+            )}
+          </div>
 
-          {upcomingEvents.length > 0 && (
-            <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-2">Upcoming Events</h2>
-              <div className="space-y-4">
+          {/* Upcoming Events */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
+            {upcomingEvents.length === 0 ? (
+              <p className="text-muted-foreground">No upcoming events.</p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {upcomingEvents.map((event) => (
                   <EventCard
                     key={event.id}
-                    id={event.id}
-                    name={event.name}
-                    description={event.description || ""}
-                    date={event.date.toISOString()}
-                    time={event.date.toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                    location={event.location || ""}
-                    groupId={event.groupId || ""}
+                    event={event}
                     groups={groups}
-                    createdByCurrentUser={event.createdBy === session.user.id}
+                    currentUserId={session.user.id}
                   />
                 ))}
               </div>
-            </section>
-          )}
+            )}
+          </div>
 
-          {pastEvents.length > 0 && (
-            <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-2">Past Events</h2>
-              <div className="space-y-4">
+          {/* Past Events */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Past Events</h2>
+            {pastEvents.length === 0 ? (
+              <p className="text-muted-foreground">No past events.</p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {pastEvents.map((event) => (
                   <EventCard
                     key={event.id}
-                    id={event.id}
-                    name={event.name}
-                    description={event.description || ""}
-                    date={event.date.toISOString()}
-                    time={event.date.toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                    location={event.location || ""}
-                    groupId={event.groupId || ""}
+                    event={event}
                     groups={groups}
-                    createdByCurrentUser={event.createdBy === session.user.id}
-                    disabled
+                    currentUserId={session.user.id}
                   />
                 ))}
               </div>
-            </section>
-          )}
-        </>
-      )}
+            )}
+          </div>
+        </div>
+      </Suspense>
     </div>
   );
 }

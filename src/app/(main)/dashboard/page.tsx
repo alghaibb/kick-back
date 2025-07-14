@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { Suspense } from "react";
 import { Metadata } from "next";
 import { StatsCard } from "./_components/StatsCard";
 import { WelcomeSection } from "./_components/WelcomeSection";
@@ -7,6 +8,7 @@ import { dashboardStatsTemplate } from "./_components/dashboard-data";
 import { DashboardQuickActionsClient } from "./_components/DashboardQuickActionsClient";
 import { getSession } from "@/lib/sessions";
 import { getDashboardStats } from "@/lib/dashboard-stats";
+import { DashboardSkeleton } from "./_components/DashboardSkeleton";
 
 export const metadata: Metadata = {
   title: "Dashboard | Kick Back",
@@ -48,7 +50,11 @@ export default async function Page() {
   return (
     <>
       <div className="space-y-8">
-        <WelcomeSection />
+        <Suspense
+          fallback={<div className="h-32 animate-pulse bg-muted rounded-lg" />}
+        >
+          <WelcomeSection />
+        </Suspense>
 
         <div className="space-y-6">
           <div>
@@ -58,11 +64,13 @@ export default async function Page() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {dashboardStats.map((stat) => (
-              <StatsCard key={stat.title} {...stat} />
-            ))}
-          </div>
+          <Suspense fallback={<DashboardSkeleton />}>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {dashboardStats.map((stat) => (
+                <StatsCard key={stat.title} {...stat} />
+              ))}
+            </div>
+          </Suspense>
         </div>
 
         <div className="space-y-6">
@@ -76,7 +84,13 @@ export default async function Page() {
               </p>
             </div>
           </div>
-          <DashboardQuickActionsClient />
+          <Suspense
+            fallback={
+              <div className="h-32 animate-pulse bg-muted rounded-lg" />
+            }
+          >
+            <DashboardQuickActionsClient />
+          </Suspense>
         </div>
       </div>
     </>

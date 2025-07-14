@@ -1,18 +1,13 @@
 export const dynamic = "force-dynamic";
 
+import { Suspense } from "react";
+import { Users } from "lucide-react";
 import { getSession } from "@/lib/sessions";
 import prisma from "@/lib/prisma";
-import { Users } from "lucide-react";
-import GroupsClient from "./_components/GroupsClient";
-import { Metadata } from "next";
 import { PageHeader } from "../_components/PageHeader";
 import { CreateActionButton } from "../_components/CreateActionButton";
-
-export const metadata: Metadata = {
-  title: "Your Groups",
-  description:
-    "Where you will see a list of groups you've created/or been invited to",
-};
+import { GroupsClient } from "./_components/GroupsClient";
+import { GroupsSkeleton } from "./_components/GroupsSkeleton";
 
 export default async function Page() {
   const session = await getSession();
@@ -63,20 +58,22 @@ export default async function Page() {
           <CreateActionButton modalType="create-group" label="Create Group" />
         }
       />
-      {hasGroups ? (
-        <GroupsClient
-          groupsOwned={groupsOwned}
-          groupsIn={groupsIn}
-          currentUser={{
-            ...session.user,
-            firstName: session.user.firstName ?? undefined,
-            lastName: session.user.lastName ?? undefined,
-            image: session.user.image ?? undefined,
-          }}
-        />
-      ) : (
-        <div className="text-muted-foreground">No groups yet.</div>
-      )}
+      <Suspense fallback={<GroupsSkeleton />}>
+        {hasGroups ? (
+          <GroupsClient
+            groupsOwned={groupsOwned}
+            groupsIn={groupsIn}
+            currentUser={{
+              ...session.user,
+              firstName: session.user.firstName ?? undefined,
+              lastName: session.user.lastName ?? undefined,
+              image: session.user.image ?? undefined,
+            }}
+          />
+        ) : (
+          <div className="text-muted-foreground">No groups yet.</div>
+        )}
+      </Suspense>
     </div>
   );
 }

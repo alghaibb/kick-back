@@ -354,49 +354,7 @@ export async function resendGroupInviteAction(inviteId: string) {
   }
 }
 
-export async function getGroupInvitesAction(groupId: string) {
-  const session = await getSession();
-  if (!session?.user?.id) {
-    return { error: "Not authenticated" };
-  }
 
-  try {
-    // Check if user has permission to view invites
-    const group = await prisma.group.findFirst({
-      where: {
-        id: groupId,
-        members: {
-          some: {
-            userId: session.user.id,
-            role: { in: ["admin", "owner"] }
-          }
-        }
-      }
-    });
-
-    if (!group) {
-      return { error: "Group not found or you don't have permission to view invites" };
-    }
-
-    const invites = await prisma.groupInvite.findMany({
-      where: {
-        groupId,
-        status: "pending"
-      },
-      include: {
-        inviter: {
-          select: { firstName: true, email: true }
-        }
-      },
-      orderBy: { createdAt: "desc" }
-    });
-
-    return { success: true, invites };
-  } catch (error) {
-    console.error("Get invites error:", error);
-    return { error: "Failed to fetch invitations" };
-  }
-}
 
 export async function updateGroupMemberRoleAction({ groupId, memberId, newRole }: { groupId: string; memberId: string; newRole: string }) {
   const session = await getSession();

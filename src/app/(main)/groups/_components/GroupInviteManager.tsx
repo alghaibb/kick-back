@@ -1,12 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import {
-  getGroupInvitesAction,
-  cancelGroupInviteAction,
-  resendGroupInviteAction,
-} from "../actions";
+import { cancelGroupInviteAction, resendGroupInviteAction } from "../actions";
 import {
   Card,
   CardContent,
@@ -23,6 +19,8 @@ import { format } from "date-fns";
 interface GroupInviteManagerProps {
   groupId: string;
   groupName: string;
+  initialInvites: Invite[];
+  onInvitesUpdate: () => void;
 }
 
 interface Invite {
@@ -40,43 +38,11 @@ interface Invite {
 export function GroupInviteManager({
   groupId,
   groupName,
+  initialInvites,
+  onInvitesUpdate,
 }: GroupInviteManagerProps) {
-  const [invites, setInvites] = useState<Invite[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [invites, setInvites] = useState<Invite[]>(initialInvites);
   const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    loadInvites();
-  }, [groupId]);
-
-  async function loadInvites() {
-    try {
-      const result = await getGroupInvitesAction(groupId);
-      if (result?.success) {
-        setInvites(
-          result.invites.map((invite) => ({
-            id: invite.id,
-            email: invite.email,
-            status: invite.status,
-            createdAt: invite.createdAt.toString(),
-            expiresAt: invite.expiresAt.toString(),
-            inviter: {
-              firstName: invite.inviter.firstName,
-              email: invite.inviter.email,
-            },
-          }))
-        );
-      } else {
-        toast.error("Failed to load invitations");
-      }
-    } catch (error) {
-      console.error("Faile to load invitations:", error);
-      toast.error("Failed to load invitations");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleCancelInvite(inviteId: string) {
     try {
@@ -84,6 +50,7 @@ export function GroupInviteManager({
       if (result?.success) {
         toast.success("Invitation cancelled");
         setInvites((prev) => prev.filter((invite) => invite.id !== inviteId));
+        onInvitesUpdate();
       } else {
         toast.error(result?.error || "Failed to cancel invitation");
       }
@@ -99,7 +66,7 @@ export function GroupInviteManager({
       const result = await resendGroupInviteAction(inviteId);
       if (result?.success) {
         toast.success("Invitation resent successfully");
-        await loadInvites(); // Refresh to get updated expiration
+        onInvitesUpdate();
       } else {
         toast.error(result?.error || "Failed to resend invitation");
       }
@@ -141,20 +108,6 @@ export function GroupInviteManager({
     return new Date(expiresAt) < new Date();
   }
 
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            Group Invitations
-          </CardTitle>
-          <CardDescription>Loading invitations...</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
   const pendingInvites = invites.filter(
     (invite) => invite.status === "pending"
   );
@@ -176,7 +129,7 @@ export function GroupInviteManager({
           <Button
             variant="outline"
             size="sm"
-            onClick={loadInvites}
+            onClick={onInvitesUpdate}
             disabled={refreshing}
           >
             <RefreshCw
@@ -202,44 +155,47 @@ export function GroupInviteManager({
                     key={invite.id}
                     className="flex items-center justify-between p-3 border rounded-lg"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center space-x-3">
                       {getStatusIcon(invite.status)}
                       <div>
                         <p className="font-medium">{invite.email}</p>
                         <p className="text-sm text-muted-foreground">
-                          Invited by{" "}
-                          {invite.inviter.firstName || invite.inviter.email}
+                          Invited by {invite.inviter.firstName} on{" "}
+                          {format(new Date(invite.createdAt), "MMM d, yyyy")}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(
-                            new Date(invite.createdAt),
-                            "MMM d, yyyy 'at' h:mm a"
-                          )}
-                        </p>
+                        {isExpired(invite.expiresAt) && (
+                          <p className="text-sm text-red-500">
+                            Expired on{" "}
+                            {format(new Date(invite.expiresAt), "MMM d, yyyy")}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center space-x-2">
                       {getStatusBadge(invite.status)}
-                      {isExpired(invite.expiresAt) && (
-                        <Badge variant="destructive">Expired</Badge>
+                      {!isExpired(invite.expiresAt) && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleResendInvite(invite.id)}
+                            disabled={refreshing}
+                          >
+                            <RefreshCw
+                              className={`h-3 w-3 ${
+                                refreshing ? "animate-spin" : ""
+                              }`}
+                            />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCancelInvite(invite.id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </>
                       )}
-                      <div className="flex gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleResendInvite(invite.id)}
-                          disabled={refreshing}
-                        >
-                          <RefreshCw className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCancelInvite(invite.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
                     </div>
                   </div>
                 ))}
@@ -256,23 +212,17 @@ export function GroupInviteManager({
                       key={invite.id}
                       className="flex items-center justify-between p-3 border rounded-lg"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center space-x-3">
                         {getStatusIcon(invite.status)}
                         <div>
                           <p className="font-medium">{invite.email}</p>
                           <p className="text-sm text-muted-foreground">
-                            Invited by{" "}
-                            {invite.inviter.firstName || invite.inviter.email}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(
-                              new Date(invite.createdAt),
-                              "MMM d, yyyy 'at' h:mm a"
-                            )}
+                            Invited by {invite.inviter.firstName} on{" "}
+                            {format(new Date(invite.createdAt), "MMM d, yyyy")}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center space-x-2">
                         {getStatusBadge(invite.status)}
                       </div>
                     </div>
