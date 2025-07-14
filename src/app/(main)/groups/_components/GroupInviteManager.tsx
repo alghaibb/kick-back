@@ -12,15 +12,17 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { CheckCircle, Clock, Mail, RefreshCw, X, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { cancelGroupInviteAction, resendGroupInviteAction } from "../actions";
+import {
+  cancelGroupInviteAction,
+  getGroupInvitesAction,
+  resendGroupInviteAction,
+} from "../actions";
 
 interface GroupInviteManagerProps {
   groupId: string;
   groupName: string;
-  initialInvites: Invite[];
-  onInvitesUpdate: () => void;
 }
 
 interface Invite {
@@ -38,16 +40,39 @@ interface Invite {
 export function GroupInviteManager({
   groupId,
   groupName,
-  initialInvites,
-  onInvitesUpdate,
 }: GroupInviteManagerProps) {
-  const [invites, setInvites] = useState<Invite[]>(initialInvites);
+  const [invites, setInvites] = useState<Invite[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Log component initialization for debugging
-  console.log(
-    `GroupInviteManager initialized for group ${groupId} with ${initialInvites.length} invites`
-  );
+  console.log(`GroupInviteManager initialized for group ${groupId}`);
+
+  // Fetch invites on component mount
+  useEffect(() => {
+    fetchInvites();
+  }, [groupId]);
+
+  async function fetchInvites() {
+    try {
+      setLoading(true);
+      const result = await getGroupInvitesAction(groupId);
+      if (result.success) {
+        setInvites(result.invites);
+      } else {
+        console.error(
+          `Failed to fetch invites for group ${groupId}:`,
+          result.error
+        );
+        toast.error(result.error || "Failed to fetch invites");
+      }
+    } catch (error) {
+      console.error(`Failed to fetch invites for group ${groupId}:`, error);
+      toast.error("Failed to fetch invites");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleCancelInvite(inviteId: string) {
     try {
@@ -64,7 +89,7 @@ export function GroupInviteManager({
       if (result?.success) {
         toast.success("Invitation cancelled");
         setInvites((prev) => prev.filter((invite) => invite.id !== inviteId));
-        onInvitesUpdate();
+        fetchInvites();
       } else {
         console.error(
           `Failed to cancel invite ${inviteId} for group ${groupId}:`,
@@ -97,7 +122,7 @@ export function GroupInviteManager({
       const result = await resendGroupInviteAction(inviteId);
       if (result?.success) {
         toast.success("Invitation resent successfully");
-        onInvitesUpdate();
+        fetchInvites();
       } else {
         console.error(
           `Failed to resend invite ${inviteId} for group ${groupId}:`,
@@ -123,7 +148,7 @@ export function GroupInviteManager({
       case "accepted":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case "cancelled":
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       default:
         return <Clock className="h-4 w-4 text-gray-500" />;
     }
@@ -167,8 +192,8 @@ export function GroupInviteManager({
           <Button
             variant="outline"
             size="sm"
-            onClick={onInvitesUpdate}
-            disabled={refreshing}
+            onClick={fetchInvites}
+            disabled={refreshing || loading}
           >
             <RefreshCw
               className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
@@ -177,7 +202,12 @@ export function GroupInviteManager({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {pendingInvites.length === 0 && otherInvites.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <RefreshCw className="h-8 w-8 mx-auto mb-4 animate-spin" />
+            <p>Loading invitations...</p>
+          </div>
+        ) : pendingInvites.length === 0 && otherInvites.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No invitations found</p>

@@ -1,11 +1,11 @@
 "use server";
 import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limiter";
 import { getSession } from "@/lib/sessions";
-import { serverCreateGroupSchema } from "@/validations/group/createGroupSchema";
-import { serverInviteGroupSchema, acceptInviteSchema } from "@/validations/group/inviteGroupSchema";
 import { sendGroupInviteEmail } from "@/utils/sendEmails";
 import { generateToken } from "@/utils/tokens";
-import { rateLimit } from "@/lib/rate-limiter";
+import { serverCreateGroupSchema } from "@/validations/group/createGroupSchema";
+import { acceptInviteSchema, serverInviteGroupSchema } from "@/validations/group/inviteGroupSchema";
 import { revalidatePath } from "next/cache";
 
 export async function createGroupAction(formData: FormData) {
@@ -467,4 +467,59 @@ export async function editGroupAction(groupId: string, values: { name: string; d
     console.error("Error editing group:", error);
     return { error: "An error occurred while editing the group." };
   }
-} 
+}
+
+export async function getGroupInvitesAction(groupId: string) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    return { error: "Not authenticated", invites: [] };
+  }
+
+  try {
+    // Check if user has permission to view invites (must be admin or owner)
+    const group = await prisma.group.findFirst({
+      where: {
+        id: groupId,
+        members: {
+          some: {
+            userId: session.user.id,
+            role: { in: ["admin", "owner"] },
+          },
+        },
+      },
+    });
+
+    if (!group) {
+      return { error: "Not authorized to view group invites", invites: [] };
+    }
+
+    const invites = await prisma.groupInvite.findMany({
+      where: {
+        groupId,
+      },
+      include: {
+        inviter: {
+          select: { firstName: true, email: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const formattedInvites = invites.map((invite) => ({
+      id: invite.id,
+      email: invite.email,
+      status: invite.status,
+      createdAt: invite.createdAt.toString(),
+      expiresAt: invite.expiresAt.toString(),
+      inviter: {
+        firstName: invite.inviter.firstName,
+        email: invite.inviter.email,
+      },
+    }));
+
+    return { success: true, invites: formattedInvites };
+  } catch (error) {
+    console.error("Error fetching group invites:", error);
+    return { error: "Failed to fetch group invites", invites: [] };
+  }
+}

@@ -68,11 +68,6 @@ export function GroupsClientContent({
     setModalOpen(true);
   };
 
-  const handleInvitesUpdate = () => {
-    // This will trigger a re-render of the parent component
-    window.location.reload();
-  };
-
   return (
     <div className="space-y-8">
       {/* Groups You Own */}
@@ -208,8 +203,6 @@ export function GroupsClientContent({
           key={groupInvite.groupId}
           groupId={groupInvite.groupId}
           groupName={groupInvite.groupName}
-          initialInvites={groupInvite.invites}
-          onInvitesUpdate={handleInvitesUpdate}
         />
       ))}
 
