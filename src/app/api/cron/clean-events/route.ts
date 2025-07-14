@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { env } from "@/lib/env";
+import prisma from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get("Authorization");
@@ -32,4 +32,9 @@ export async function GET(req: Request) {
   });
 
   return NextResponse.json({ deleted: deleted.count });
+}
+
+// Add POST handler for Vercel cron jobs (Vercel sends POST requests to cron endpoints)
+export async function POST(req: Request) {
+  return GET(req);
 }

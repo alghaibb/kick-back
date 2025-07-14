@@ -15,7 +15,6 @@ import { format as formatTz, toZonedTime } from "date-fns-tz";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  // Verify CRON_SECRET for additional security
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
     return new Response("Unauthorized", {
@@ -390,4 +389,9 @@ export async function GET(request: Request) {
     smsSent,
     errors,
   });
+}
+
+// Add POST handler for Vercel cron jobs (Vercel sends POST requests to cron endpoints)
+export async function POST(request: Request) {
+  return GET(request);
 }

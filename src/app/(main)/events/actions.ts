@@ -14,19 +14,30 @@ export async function createEventAction(values: CreateEventValues) {
     const validatedValues = createEventSchema.parse(values);
     const { date, name, description, groupId, location, time } = validatedValues;
 
+    // Parse the time input (HH:mm format)
     const [hours, minutes] = time.split(":").map(Number);
-    const dateWithTime = new Date(date);
-    dateWithTime.setHours(hours);
-    dateWithTime.setMinutes(minutes);
-    dateWithTime.setSeconds(0);
-    dateWithTime.setMilliseconds(0);
+
+    // Create date/time combination properly
+    // The date from the calendar picker might be in UTC, so we need to use its components
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+
+    // Create a new date with the selected date and time
+    const eventDateTime = new Date(year, month, day, hours, minutes, 0, 0);
+
+    console.log(`Creating event: ${name}`);
+    console.log(`Selected date from calendar: ${date.toISOString()}`);
+    console.log(`Selected time: ${time}`);
+    console.log(`Final event date/time: ${eventDateTime.toISOString()}`);
+    console.log(`Local timezone offset: ${eventDateTime.getTimezoneOffset()} minutes`);
 
     const event = await prisma.event.create({
       data: {
         name,
         description: description || null,
         location: location || null,
-        date: dateWithTime,
+        date: eventDateTime,
         groupId: groupId || null,
         createdBy: session.user.id,
       }
@@ -113,12 +124,22 @@ export async function editEventAction(eventId: string, values: CreateEventValues
     const validatedValues = createEventSchema.parse(values);
     const { date, name, description, groupId, location, time } = validatedValues;
 
+    // Parse the time input (HH:mm format)
     const [hours, minutes] = time.split(":").map(Number);
-    const dateWithTime = new Date(date);
-    dateWithTime.setHours(hours);
-    dateWithTime.setMinutes(minutes);
-    dateWithTime.setSeconds(0);
-    dateWithTime.setMilliseconds(0);
+
+    // Create date/time combination properly
+    // The date from the calendar picker might be in UTC, so we need to use its components
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+
+    // Create a new date with the selected date and time
+    const eventDateTime = new Date(year, month, day, hours, minutes, 0, 0);
+
+    console.log(`Editing event: ${name}`);
+    console.log(`Selected date from calendar: ${date.toISOString()}`);
+    console.log(`Selected time: ${time}`);
+    console.log(`Final event date/time: ${eventDateTime.toISOString()}`);
 
     // Update the event fields
     const updatedEvent = await prisma.event.update({
@@ -127,7 +148,7 @@ export async function editEventAction(eventId: string, values: CreateEventValues
         name,
         description: description || null,
         location: location || null,
-        date: dateWithTime,
+        date: eventDateTime,
         groupId: groupId || null,
       },
     });
