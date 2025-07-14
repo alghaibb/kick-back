@@ -11,7 +11,7 @@ import {
   startOfDay,
   subMinutes,
 } from "date-fns";
-import { format as formatTz, toZonedTime } from "date-fns-tz";
+import { format as formatTz, toZonedTime, fromZonedTime } from "date-fns-tz";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -189,17 +189,23 @@ export async function GET(request: Request) {
       }
 
       // Check if reminder was already sent today to prevent duplicates
-      const today = startOfDay(userNow);
-      if (attendee.lastReminderSent && attendee.lastReminderSent >= today) {
+      // Convert user's "today" to UTC for proper comparison with lastReminderSent (which is in UTC)
+      const todayInUserTz = startOfDay(userNow);
+      const todayStartUTC = fromZonedTime(todayInUserTz, userTimezone);
+      
+      if (attendee.lastReminderSent && attendee.lastReminderSent >= todayStartUTC) {
         console.log(`✅ Reminder already sent today for ${user.email}`);
         console.log(`   📅 Last sent: ${attendee.lastReminderSent.toISOString()}`);
-        console.log(`   📅 Today starts: ${today.toISOString()}`);
+        console.log(`   📅 Today starts (UTC): ${todayStartUTC.toISOString()}`);
+        console.log(`   📅 Today starts (${userTimezone}): ${formatTz(todayInUserTz, "yyyy-MM-dd HH:mm:ss", { timeZone: userTimezone })}`);
         continue;
       }
 
       console.log(`🚀 PROCEEDING TO SEND REMINDER to ${user.email}`);
       console.log(`   📧 Reminder type: ${user.reminderType}`);
       console.log(`   📱 Phone number: ${user.phoneNumber || 'N/A'}`);
+
+      let reminderSent = false;
 
       if (user.reminderType === "email" || user.reminderType === "both") {
         try {
@@ -214,12 +220,7 @@ export async function GET(request: Request) {
             attendees
           );
           emailsSent++;
-
-          // Update lastReminderSent timestamp
-          await prisma.eventAttendee.update({
-            where: { id: attendee.id },
-            data: { lastReminderSent: new Date() },
-          });
+          reminderSent = true;
         } catch (error) {
           console.error(`❌ Email failed for ${user.email}:`, error);
           errors++;
@@ -268,17 +269,23 @@ export async function GET(request: Request) {
             fallbackCountry: "AU"
           });
           smsSent++;
-
-          // Update lastReminderSent timestamp if not already updated by email
-          if (user.reminderType === "sms") {
-            await prisma.eventAttendee.update({
-              where: { id: attendee.id },
-              data: { lastReminderSent: new Date() },
-            });
-          }
+          reminderSent = true;
         } catch (error) {
           console.error(`❌ SMS failed for ${user.phoneNumber}:`, error);
           errors++;
+        }
+      }
+
+      // Update lastReminderSent timestamp once if any reminder was sent successfully
+      if (reminderSent) {
+        try {
+          await prisma.eventAttendee.update({
+            where: { id: attendee.id },
+            data: { lastReminderSent: new Date() },
+          });
+          console.log(`✅ Updated lastReminderSent timestamp for ${user.email}`);
+        } catch (error) {
+          console.error(`❌ Failed to update lastReminderSent for ${user.email}:`, error);
         }
       }
     }
