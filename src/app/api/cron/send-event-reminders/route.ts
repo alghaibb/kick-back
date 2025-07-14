@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { sendEventReminderEmail } from "@/utils/sendEmails";
 import { sendSMS } from "@/utils/sendSMS";
 import { formatToE164 } from "@/utils/formatPhoneNumber";
+import { env } from "@/lib/env";
 import {
   addDays,
   startOfDay,
@@ -13,7 +14,15 @@ import {
 } from "date-fns";
 import { toZonedTime, format as formatTz } from "date-fns-tz";
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Verify CRON_SECRET for additional security
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
+    return new Response("Unauthorized", {
+      status: 401,
+    });
+  }
+
   console.log("🔐 Vercel Cron job triggered for event reminders");
 
   // Get events for the next 2 days to account for timezone differences
