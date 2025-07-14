@@ -12,9 +12,6 @@ const isWithinReminderWindow = (
   userTime: Date,
   reminderTime: string
 ): boolean => {
-  const currentHour = userTime.getHours();
-  const currentMinute = userTime.getMinutes();
-
   // Parse reminder time
   const [reminderHour, reminderMinute] = reminderTime.split(":").map(Number);
 

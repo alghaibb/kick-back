@@ -14,7 +14,7 @@ import {
 import { toZonedTime, format as formatTz } from "date-fns-tz";
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 
-async function handleReminderRequest(request: Request) {
+async function handleReminderRequest() {
   // QStash signature verification is handled by the verifySignatureAppRouter wrapper
   console.log("🔐 Authorized QStash cron job triggered.");
 
@@ -79,9 +79,6 @@ async function handleReminderRequest(request: Request) {
     userTime: Date,
     reminderTime: string
   ): boolean => {
-    const currentHour = userTime.getHours();
-    const currentMinute = userTime.getMinutes();
-
     // Parse reminder time
     const [reminderHour, reminderMinute] = reminderTime.split(":").map(Number);
 

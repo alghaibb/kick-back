@@ -13,7 +13,10 @@ async function updateReminderSchedule() {
       await client.schedules.delete("reminders-every-5-min");
       console.log("🗑️ Deleted old 5-minute schedule");
     } catch (error) {
-      console.log("ℹ️ Old 5-minute schedule doesn't exist or already deleted");
+      console.log(
+        "ℹ️ Old 5-minute schedule doesn't exist or already deleted:",
+        error
+      );
     }
 
     // Try to delete existing 1-minute schedule to avoid conflicts
@@ -21,7 +24,7 @@ async function updateReminderSchedule() {
       await client.schedules.delete("reminders-every-minute");
       console.log("🗑️ Deleted existing 1-minute schedule");
     } catch (error) {
-      console.log("ℹ️ 1-minute schedule doesn't exist");
+      console.log("ℹ️ 1-minute schedule doesn't exist:", error);
     }
 
     // Create new schedule
