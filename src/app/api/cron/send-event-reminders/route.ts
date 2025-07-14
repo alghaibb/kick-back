@@ -11,7 +11,7 @@ import {
   startOfDay,
   subMinutes,
 } from "date-fns";
-import { format as formatTz, toZonedTime, fromZonedTime } from "date-fns-tz";
+import { format as formatTz, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -192,7 +192,7 @@ export async function GET(request: Request) {
       // Convert user's "today" to UTC for proper comparison with lastReminderSent (which is in UTC)
       const todayInUserTz = startOfDay(userNow);
       const todayStartUTC = fromZonedTime(todayInUserTz, userTimezone);
-      
+
       if (attendee.lastReminderSent && attendee.lastReminderSent >= todayStartUTC) {
         console.log(`✅ Reminder already sent today for ${user.email}`);
         console.log(`   📅 Last sent: ${attendee.lastReminderSent.toISOString()}`);
