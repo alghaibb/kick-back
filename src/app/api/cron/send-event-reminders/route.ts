@@ -16,7 +16,7 @@ import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 
 async function handleReminderRequest(request: Request) {
   // QStash signature verification is handled by the verifySignatureAppRouter wrapper
-  console.log("🔐 Authorized QStash cron job triggered.", {
+  console.log("🔐 Authorized QStash cron job triggered - v2.", {
     method: request.method,
     url: request.url,
   });
