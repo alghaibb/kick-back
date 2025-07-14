@@ -15,13 +15,8 @@ import { toZonedTime, format as formatTz } from "date-fns-tz";
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 
 async function handleReminderRequest(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    console.log("❌ Unauthorized QStash call.");
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  console.log("🔐 Authorized cron job triggered.");
+  // QStash signature verification is handled by the verifySignatureAppRouter wrapper
+  console.log("🔐 Authorized QStash cron job triggered.");
 
   // Get events for the next 2 days to account for timezone differences
   const today = new Date();
@@ -354,4 +349,4 @@ async function handleReminderRequest(request: Request) {
   });
 }
 
-export const POST = handleReminderRequest;
+export const POST = verifySignatureAppRouter(handleReminderRequest);

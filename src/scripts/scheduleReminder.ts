@@ -11,9 +11,6 @@ async function scheduleReminderJob() {
     destination: `${env.NEXT_PUBLIC_BASE_URL}/api/cron/send-event-reminders`,
     scheduleId: "reminders-every-minute",
     cron: "* * * * *", // every minute (UTC)
-    headers: {
-      Authorization: `Bearer ${env.CRON_SECRET}`,
-    },
   });
 
   console.log("✅ Reminder schedule created:", result);
