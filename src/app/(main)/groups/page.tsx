@@ -9,13 +9,13 @@ import { PageHeader } from "../_components/PageHeader";
 import GroupsClient from "./_components/GroupsClient";
 import { GroupsSkeleton } from "./_components/GroupsSkeleton";
 
-export default async function Page() {
+async function GroupsData() {
   const session = await getSession();
   const userId = session?.user?.id;
 
   if (!userId) {
     return (
-      <div className="container py-8">
+      <div className="text-muted-foreground">
         You must be logged in to view your groups.
       </div>
     );
@@ -48,6 +48,25 @@ export default async function Page() {
 
   const hasGroups = groupsOwned.length > 0 || groupsIn.length > 0;
 
+  return hasGroups ? (
+    <GroupsClient
+      groupsOwned={groupsOwned}
+      groupsIn={groupsIn}
+      currentUser={{
+        ...session!.user,
+        firstName: session!.user.firstName ?? undefined,
+        lastName: session!.user.lastName ?? undefined,
+        image: session!.user.image ?? undefined,
+      }}
+    />
+  ) : (
+    <div className="text-muted-foreground">No groups yet.</div>
+  );
+}
+
+export default async function Page() {
+  const session = await getSession();
+
   return (
     <div className="container py-8">
       <PageHeader
@@ -59,20 +78,7 @@ export default async function Page() {
         }
       />
       <Suspense fallback={<GroupsSkeleton />}>
-        {hasGroups ? (
-          <GroupsClient
-            groupsOwned={groupsOwned}
-            groupsIn={groupsIn}
-            currentUser={{
-              ...session.user,
-              firstName: session.user.firstName ?? undefined,
-              lastName: session.user.lastName ?? undefined,
-              image: session.user.image ?? undefined,
-            }}
-          />
-        ) : (
-          <div className="text-muted-foreground">No groups yet.</div>
-        )}
+        <GroupsData />
       </Suspense>
     </div>
   );

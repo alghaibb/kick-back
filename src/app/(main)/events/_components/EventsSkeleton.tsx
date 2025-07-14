@@ -1,97 +1,24 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export function EventsSkeleton() {
   return (
     <div className="space-y-8">
-      {/* Today's Events Skeleton */}
+      {/* Today's Events Section */}
       <div>
-        <Skeleton className="h-7 w-32 mb-4" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="space-y-2">
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Skeleton className="h-4 w-full" />
-                <div className="flex items-center space-x-2">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-32" />
-                </div>
-                <div className="flex space-x-2 pt-2">
-                  <Skeleton className="h-8 w-20" />
-                  <Skeleton className="h-8 w-20" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Skeleton className="h-7 w-32 mb-4" /> {/* "Today's Events" title */}
+        <Skeleton className="h-5 w-36" /> {/* "No events today." */}
       </div>
 
-      {/* Upcoming Events Skeleton */}
+      {/* Upcoming Events Section */}
       <div>
-        <Skeleton className="h-7 w-40 mb-4" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="space-y-2">
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Skeleton className="h-4 w-full" />
-                <div className="flex items-center space-x-2">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-32" />
-                </div>
-                <div className="flex space-x-2 pt-2">
-                  <Skeleton className="h-8 w-20" />
-                  <Skeleton className="h-8 w-20" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Skeleton className="h-7 w-40 mb-4" /> {/* "Upcoming Events" title */}
+        <Skeleton className="h-5 w-44" /> {/* "No upcoming events." */}
       </div>
 
-      {/* Past Events Skeleton */}
+      {/* Past Events Section */}
       <div>
-        <Skeleton className="h-7 w-28 mb-4" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 1 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="space-y-2">
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Skeleton className="h-4 w-full" />
-                <div className="flex items-center space-x-2">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-32" />
-                </div>
-                <div className="flex space-x-2 pt-2">
-                  <Skeleton className="h-8 w-20" />
-                  <Skeleton className="h-8 w-20" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Skeleton className="h-7 w-28 mb-4" /> {/* "Past Events" title */}
+        <Skeleton className="h-5 w-36" /> {/* "No past events." */}
       </div>
     </div>
   );
