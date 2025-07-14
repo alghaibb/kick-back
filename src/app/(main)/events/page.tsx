@@ -86,11 +86,12 @@ export default async function Page() {
                     id={event.id}
                     name={event.name}
                     description={event.description || undefined}
-                    date={format(event.date, "yyyy-MM-dd")}
+                    date={event.date.toISOString()}
                     time={format(event.date, "HH:mm")}
                     location={event.location || undefined}
                     groupId={event.groupId || undefined}
                     groups={groups}
+                    timezone={session.user.timezone || "UTC"}
                     createdByCurrentUser={event.createdBy === session.user.id}
                   />
                 ))}
@@ -111,11 +112,12 @@ export default async function Page() {
                     id={event.id}
                     name={event.name}
                     description={event.description || undefined}
-                    date={format(event.date, "yyyy-MM-dd")}
+                    date={event.date.toISOString()}
                     time={format(event.date, "HH:mm")}
                     location={event.location || undefined}
                     groupId={event.groupId || undefined}
                     groups={groups}
+                    timezone={session.user.timezone || "UTC"}
                     createdByCurrentUser={event.createdBy === session.user.id}
                   />
                 ))}
@@ -136,11 +138,12 @@ export default async function Page() {
                     id={event.id}
                     name={event.name}
                     description={event.description || undefined}
-                    date={format(event.date, "yyyy-MM-dd")}
+                    date={event.date.toISOString()}
                     time={format(event.date, "HH:mm")}
                     location={event.location || undefined}
                     groupId={event.groupId || undefined}
                     groups={groups}
+                    timezone={session.user.timezone || "UTC"}
                     createdByCurrentUser={event.createdBy === session.user.id}
                     disabled={true}
                   />

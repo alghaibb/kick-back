@@ -1,11 +1,11 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
-import { format } from "date-fns";
-import { Pencil, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatInTimeZone } from "date-fns-tz";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface EventCardProps {
   id: string;
@@ -16,6 +16,7 @@ interface EventCardProps {
   location?: string;
   groupId?: string;
   groups: { id: string; name: string }[];
+  timezone?: string;
   createdByCurrentUser: boolean;
   disabled?: boolean;
 }
@@ -29,12 +30,16 @@ export function EventCard({
   location,
   groupId,
   groups,
+  timezone = "UTC",
   createdByCurrentUser,
   disabled,
 }: EventCardProps) {
   const { open } = useModal();
-  const formattedDate = format(
+
+  // Format the date in the user's timezone to ensure correct display
+  const formattedDate = formatInTimeZone(
     new Date(date),
+    timezone,
     "eeee, MMMM do yyyy \u2022 h:mm a"
   );
 

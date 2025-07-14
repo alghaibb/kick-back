@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   // Check if this is a Vercel cron job (has upstash headers)
   const isVercelCron = request.headers.get("upstash-signature");
   const authHeader = request.headers.get("authorization");
-  
+
   // Allow either Vercel cron (upstash-signature) or manual trigger with CRON_SECRET
   if (!isVercelCron && authHeader !== `Bearer ${env.CRON_SECRET}`) {
     console.log("❌ Authorization failed - neither Vercel cron nor valid CRON_SECRET");
