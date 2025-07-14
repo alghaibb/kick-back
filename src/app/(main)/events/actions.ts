@@ -51,26 +51,30 @@ export async function createEventAction(values: CreateEventValues) {
       }
     });
 
+    // Always add the creator as an attendee
+    const attendeesToAdd = [{ userId: session.user.id, eventId: event.id }];
+
     if (groupId) {
       const groupMembers = await prisma.groupMember.findMany({
         where: { groupId },
         select: { userId: true },
       });
 
-      await prisma.eventAttendee.createMany({
-        data: [
-          ...groupMembers
-            .filter((m) => m.userId !== session.user.id)
-            .map((m) => ({
-              userId: m.userId,
-              eventId: event.id,
-            })),
-          { userId: session.user.id, eventId: event.id },
-        ],
-        skipDuplicates: true,
-      });
-
+      // Add group members (excluding the creator since they're already added)
+      attendeesToAdd.push(
+        ...groupMembers
+          .filter((m) => m.userId !== session.user.id)
+          .map((m) => ({
+            userId: m.userId,
+            eventId: event.id,
+          }))
+      );
     }
+
+    await prisma.eventAttendee.createMany({
+      data: attendeesToAdd,
+      skipDuplicates: true,
+    });
 
 
     revalidatePath("/events")

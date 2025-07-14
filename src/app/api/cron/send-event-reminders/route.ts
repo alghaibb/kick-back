@@ -263,7 +263,10 @@ export async function GET(request: Request) {
             .join("\n");
 
           console.log(`📱 Sending SMS to ${formattedPhone}`);
-          await sendSMS(formattedPhone, smsBody);
+          await sendSMS(formattedPhone, smsBody, {
+            timezone: userTimezone,
+            fallbackCountry: "AU"
+          });
           smsSent++;
 
           // Update lastReminderSent timestamp if not already updated by email
@@ -358,7 +361,10 @@ export async function GET(request: Request) {
                 .join("\n");
 
               console.log(`📱 Sending SMS to creator ${formattedPhone}`);
-              await sendSMS(formattedPhone, smsBody);
+              await sendSMS(formattedPhone, smsBody, {
+                timezone: creatorTimezone,
+                fallbackCountry: "AU"
+              });
               smsSent++;
             }
           } catch (error) {
