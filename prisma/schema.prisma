@@ -192,12 +192,13 @@ model Event {
 }
 
 model EventAttendee {
-  id          String    @id @default(cuid())
-  eventId     String
-  event       Event     @relation(fields: [eventId], references: [id])
-  userId      String
-  status      String?
-  invitedAt   DateTime  @default(now())
-  respondedAt DateTime?
-  user        User      @relation(fields: [userId], references: [id])
+  id                String    @id @default(cuid())
+  eventId           String
+  event             Event     @relation(fields: [eventId], references: [id])
+  userId            String
+  status            String?
+  invitedAt         DateTime  @default(now())
+  respondedAt       DateTime?
+  lastReminderSent  DateTime?
+  user              User      @relation(fields: [userId], references: [id])
 }
