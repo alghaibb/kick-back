@@ -65,8 +65,6 @@ async function GroupsData() {
 }
 
 export default async function Page() {
-  const session = await getSession();
-
   return (
     <div className="container py-8">
       <PageHeader

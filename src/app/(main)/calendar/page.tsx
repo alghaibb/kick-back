@@ -1,14 +1,14 @@
 export const dynamic = "force-dynamic";
 
-import { Suspense } from "react";
-import { getSession } from "@/lib/sessions";
-import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { getSession } from "@/lib/sessions";
 import { CalendarEvent } from "@/types/calender";
-import { CalendarPageClient } from "./_components/CalendarPageClient";
 import { CalendarDays } from "lucide-react";
-import { PageHeader } from "../_components/PageHeader";
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { PageHeader } from "../_components/PageHeader";
+import { CalendarPageClient } from "./_components/CalendarPageClient";
 import { CalendarSkeleton } from "./_components/CalendarSkeleton";
 
 export const metadata: Metadata = {

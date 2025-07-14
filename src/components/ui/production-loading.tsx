@@ -12,10 +12,10 @@ interface ProductionLoadingProps {
  * A component that ensures loading states are visible for a minimum duration
  * This is particularly useful in production where server components render quickly
  */
-export function ProductionLoading({ 
-  children, 
-  fallback, 
-  minDelay = 300 
+export function ProductionLoading({
+  children,
+  fallback,
+  minDelay = 300,
 }: ProductionLoadingProps) {
   const [showLoading, setShowLoading] = useState(true);
   const [contentReady, setContentReady] = useState(false);

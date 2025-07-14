@@ -10,12 +10,14 @@ interface StreamingWrapperProps {
  * A wrapper component that ensures Suspense boundaries work effectively
  * for showing loading states in both development and production
  */
-export function StreamingWrapper({ children, fallback, className }: StreamingWrapperProps) {
+export function StreamingWrapper({
+  children,
+  fallback,
+  className,
+}: StreamingWrapperProps) {
   return (
     <div className={className}>
-      <Suspense fallback={fallback}>
-        {children}
-      </Suspense>
+      <Suspense fallback={fallback}>{children}</Suspense>
     </div>
   );
 }
@@ -29,11 +31,11 @@ export function withLoadingState<T extends Record<string, any>>(
 ) {
   return function ComponentWithLoading(props: T & { isLoading?: boolean }) {
     const { isLoading, ...componentProps } = props;
-    
+
     if (isLoading) {
       return <LoadingComponent />;
     }
-    
+
     return <Component {...(componentProps as T)} />;
   };
 }
