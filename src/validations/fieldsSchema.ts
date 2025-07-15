@@ -21,3 +21,10 @@ export const lastNameField = z
   .trim()
   .or(z.literal(""))
   .optional();
+
+export const nicknameField = z
+  .string()
+  .max(30, { message: "Nickname is too long" })
+  .trim()
+  .optional()
+  .or(z.literal(""));

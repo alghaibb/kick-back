@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
 import { getSession } from "@/lib/sessions";
+import { put } from "@vercel/blob";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,8 +32,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "File too large" }, { status: 400 });
     }
 
-    const blob = await put(file.name, file, {
+    // Create a unique filename with user ID and timestamp
+    const fileExtension = file.name.split('.').pop() || 'jpg';
+    const timestamp = Date.now();
+    const uniqueFilename = `profile/${session.user.id}/${timestamp}.${fileExtension}`;
+
+    const blob = await put(uniqueFilename, file, {
       access: "public",
+      addRandomSuffix: true,
     });
 
     return NextResponse.json({ url: blob.url });
