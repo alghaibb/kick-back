@@ -10,10 +10,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    // Enable better streaming for loading states
-    serverComponentsExternalPackages: ['@prisma/client'],
-  },
 };
 
 export default nextConfig;
