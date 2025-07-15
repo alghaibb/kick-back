@@ -100,15 +100,15 @@ export async function GET(request: Request) {
     const reminderDateTime = new Date(userTime);
     reminderDateTime.setHours(reminderHour, reminderMinute, 0, 0);
 
-    // Create a 15-minute window around the reminder time to account for cron frequency
-    const windowStart = subMinutes(reminderDateTime, 7);
-    const windowEnd = addMinutes(reminderDateTime, 8);
+    // Create a narrow 3-minute window around the reminder time (2min before, 1min after)
+    const windowStart = subMinutes(reminderDateTime, 2);
+    const windowEnd = addMinutes(reminderDateTime, 1);
 
     const isInWindow = userTime >= windowStart && userTime <= windowEnd;
 
     if (isInWindow) {
       console.log(
-        `⏰ Within reminder window: ${formatTz(userTime, "HH:mm:ss", { timeZone: "UTC" })} vs ${reminderTime} (±2-3min)`
+        `⏰ Within reminder window: ${formatTz(userTime, "HH:mm:ss", { timeZone: "UTC" })} vs ${reminderTime} (±1-2min)`
       );
     }
 
@@ -307,76 +307,106 @@ export async function GET(request: Request) {
         console.log(`   📅 Event date in creator TZ: ${formatTz(toZonedTime(event.date, creatorTimezone), "yyyy-MM-dd HH:mm", { timeZone: creatorTimezone })}`);
         console.log(`   📅 Tomorrow range: ${formatTz(startOfDay(addDays(creatorNow, 1)), "yyyy-MM-dd", { timeZone: creatorTimezone })} to ${formatTz(endOfDay(addDays(creatorNow, 1)), "yyyy-MM-dd", { timeZone: creatorTimezone })}`);
       } else if (isWithinReminderWindow(creatorNow, creatorInfo.reminderTime)) {
-        console.log(`🚀 PROCEEDING TO SEND REMINDER to creator ${creatorInfo.email}`);
 
-        if (
-          creatorInfo.reminderType === "email" ||
-          creatorInfo.reminderType === "both"
-        ) {
-          try {
-            console.log(`📧 Sending email to creator ${creatorInfo.email}`);
-            await sendEventReminderEmail(
-              creatorInfo.email,
-              event.name,
-              event.description,
-              event.date,
-              event.location,
-              creatorName,
-              attendees
-            );
-            emailsSent++;
-          } catch (error) {
-            console.error(`❌ Creator email failed:`, error);
-            errors++;
-          }
-        }
-        if (
-          (creatorInfo.reminderType === "sms" ||
-            creatorInfo.reminderType === "both") &&
-          creatorInfo.phoneNumber
-        ) {
-          try {
-            const formattedPhone = formatToE164(creatorInfo.phoneNumber);
-            if (!formattedPhone) {
-              console.warn(
-                `⚠️ Invalid creator phone: ${creatorInfo.phoneNumber}`
-              );
-              errors++;
-            } else {
-              const eventDateInCreatorTz = toZonedTime(
+        // Check if creator already received reminder today (DUPLICATE PROTECTION)
+        const todayInCreatorTz = startOfDay(creatorNow);
+        const todayStartUTC = fromZonedTime(todayInCreatorTz, creatorTimezone);
+
+        // Check if creator is also an attendee and already got a reminder
+        const creatorAsAttendee = event.attendees.find(attendee => attendee.user.email === creatorInfo.email);
+        if (creatorAsAttendee?.lastReminderSent && creatorAsAttendee.lastReminderSent >= todayStartUTC) {
+          console.log(`✅ Creator reminder already sent today as attendee for ${creatorInfo.email}`);
+          console.log(`   📅 Last sent: ${creatorAsAttendee.lastReminderSent.toISOString()}`);
+        } else {
+          console.log(`🚀 PROCEEDING TO SEND REMINDER to creator ${creatorInfo.email}`);
+
+          // Add a flag to track if reminder was sent for this creator
+          let creatorReminderSent = false;
+
+          if (
+            creatorInfo.reminderType === "email" ||
+            creatorInfo.reminderType === "both"
+          ) {
+            try {
+              console.log(`📧 Sending email to creator ${creatorInfo.email}`);
+              await sendEventReminderEmail(
+                creatorInfo.email,
+                event.name,
+                event.description,
                 event.date,
-                creatorTimezone
+                event.location,
+                creatorName,
+                attendees
               );
-              const formattedDate = format(
-                eventDateInCreatorTz,
-                "EEEE, MMMM d, yyyy 'at' h:mm a"
-              );
-
-              const attendeeNames = attendees
-                .map((a) => a.nickname || a.firstName)
-                .join(", ");
-              const smsBody = [
-                `Event Reminder: ${event.name}`,
-                `Date: ${formattedDate} (${creatorTimezone})`,
-                event.location ? `Location: ${event.location}` : null,
-                event.group?.name ? `Group: ${event.group.name}` : null,
-                `Host: ${creatorName}`,
-                attendeeNames ? `Attendees: ${attendeeNames}` : null,
-                event.description ? `Details: ${event.description}` : null,
-              ]
-                .filter(Boolean)
-                .join("\n");
-
-              console.log(`📱 Sending SMS to creator ${formattedPhone}`);
-              await sendSMS(formattedPhone, smsBody, {
-                timezone: creatorTimezone,
-                fallbackCountry: "AU"
-              });
-              smsSent++;
+              emailsSent++;
+              creatorReminderSent = true;
+            } catch (error) {
+              console.error(`❌ Creator email failed:`, error);
+              errors++;
             }
-          } catch (error) {
-            console.error(`❌ Creator SMS failed:`, error);
-            errors++;
+          }
+          if (
+            (creatorInfo.reminderType === "sms" ||
+              creatorInfo.reminderType === "both") &&
+            creatorInfo.phoneNumber
+          ) {
+            try {
+              const formattedPhone = formatToE164(creatorInfo.phoneNumber);
+              if (!formattedPhone) {
+                console.warn(
+                  `⚠️ Invalid creator phone: ${creatorInfo.phoneNumber}`
+                );
+                errors++;
+              } else {
+                const eventDateInCreatorTz = toZonedTime(
+                  event.date,
+                  creatorTimezone
+                );
+                const formattedDate = format(
+                  eventDateInCreatorTz,
+                  "EEEE, MMMM d, yyyy 'at' h:mm a"
+                );
+
+                const attendeeNames = attendees
+                  .map((a) => a.nickname || a.firstName)
+                  .join(", ");
+                const smsBody = [
+                  `Event Reminder: ${event.name}`,
+                  `Date: ${formattedDate} (${creatorTimezone})`,
+                  event.location ? `Location: ${event.location}` : null,
+                  event.group?.name ? `Group: ${event.group.name}` : null,
+                  `Host: ${creatorName}`,
+                  attendeeNames ? `Attendees: ${attendeeNames}` : null,
+                  event.description ? `Details: ${event.description}` : null,
+                ]
+                  .filter(Boolean)
+                  .join("\n");
+
+                console.log(`📱 Sending SMS to creator ${formattedPhone}`);
+                await sendSMS(formattedPhone, smsBody, {
+                  timezone: creatorTimezone,
+                  fallbackCountry: "AU"
+                });
+                smsSent++;
+                creatorReminderSent = true;
+              }
+            } catch (error) {
+              console.error(`❌ Creator SMS failed:`, error);
+              errors++;
+            }
+          }
+
+          // If creator got a reminder as attendee, update their attendee record
+          if (creatorAsAttendee && creatorReminderSent) {
+            try {
+              await prisma.eventAttendee.update({
+                where: { id: creatorAsAttendee.id },
+                data: { lastReminderSent: new Date() },
+              });
+              console.log(`✅ Updated lastReminderSent timestamp for creator as attendee ${creatorInfo.email}`);
+            } catch (error) {
+              console.error(`❌ Failed to update lastReminderSent for creator as attendee ${creatorInfo.email}:`, error);
+            }
           }
         }
       } else {
