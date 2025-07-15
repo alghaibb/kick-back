@@ -22,6 +22,7 @@ import {
   deleteGroupAction,
   leaveGroupAction,
 } from "../actions";
+import Image from "next/image";
 
 interface GroupMembersModalProps {
   open: boolean;
@@ -140,10 +141,10 @@ export function GroupMembersModal({
               className="flex items-center justify-between gap-2 border-b pb-2"
             >
               <div className="flex items-center gap-2">
-                <img
+                <Image
                   src={m.user?.image ?? "/placeholder-avatar.jpg"}
                   alt={m.user?.firstName || ""}
-                  className="w-8 h-8 rounded-full object-cover"
+                  className="size-8 rounded-full object-cover"
                 />
                 <div>
                   <div className="font-medium">{m.user?.firstName}</div>
