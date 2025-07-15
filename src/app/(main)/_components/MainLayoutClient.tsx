@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { MainSidebar } from "./MainSidebar";
-import { MainHeader } from "./MainHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
 import { UserProvider } from "../../../providers/UserContext";
+import { MainHeader } from "./MainHeader";
+import { MainSidebar } from "./MainSidebar";
 
 interface MainLayoutClientProps {
   children: React.ReactNode;

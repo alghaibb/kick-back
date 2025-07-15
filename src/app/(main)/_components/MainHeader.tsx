@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Bell, Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { ModeToggle } from "@/components/ui/mode-toggle";
 import {
   ResponsiveModal,
   ResponsiveModalContent,
@@ -17,9 +17,11 @@ import {
   ResponsiveModalTitle,
   ResponsiveModalTrigger,
 } from "@/components/ui/responsive-modal";
-import { navigation } from "./constants";
-import { ModeToggle } from "@/components/ui/mode-toggle";
+import { Bell, LogOut, Menu, Search } from "lucide-react";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
+import { useState } from "react";
+import { navigation } from "./constants";
 
 interface MainHeaderProps {
   user: {
@@ -36,11 +38,18 @@ interface MainHeaderProps {
 
 export function MainHeader({ onMenuClick }: MainHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Implement search functionality
     console.log("Searching for:", searchQuery);
+  };
+
+  const handleSignOut = () => {
+    setIsSigningOut(true);
+    // Simple sign out without complex async handling
+    signOut();
   };
 
   return (
@@ -112,6 +121,15 @@ export function MainHeader({ onMenuClick }: MainHeaderProps) {
                   <Link href={item.href}>{item.name}</Link>
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+                className="text-destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {isSigningOut ? "Signing out..." : "Sign Out"}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
