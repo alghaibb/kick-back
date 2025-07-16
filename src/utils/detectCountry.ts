@@ -91,26 +91,23 @@ export function detectCountryForSMS(
     const cleanedNumber = phoneNumber.replace(/\s+/g, "").replace(/[-()]/g, "");
     const parsed = parsePhoneNumberWithError(cleanedNumber);
     if (parsed && parsed.country) {
-      console.log(`📱 Detected country from phone number: ${parsed.country}`);
       return parsed.country;
     }
   } catch (error) {
-    // Phone number parsing failed, continue to next strategy
-    console.error(`❌ Phone number parsing failed: ${error instanceof Error ? error.message : String(error)}`);
-    
-    console.log(`📱 Phone number parsing failed for ${phoneNumber}, trying timezone...`);
+    // Only log if it's not INVALID_COUNTRY, otherwise silently continue
+    if (error instanceof Error && error.message !== "INVALID_COUNTRY") {
+      console.error(`❌ Phone number parsing failed: ${error.message}`);
+    }
+    // Continue to next strategy
   }
 
   // Strategy 2: Use timezone to guess country
   if (timezone && TIMEZONE_TO_COUNTRY[timezone]) {
-    const countryFromTimezone = TIMEZONE_TO_COUNTRY[timezone];
-    console.log(`🌍 Detected country from timezone ${timezone}: ${countryFromTimezone}`);
-    return countryFromTimezone;
+    return TIMEZONE_TO_COUNTRY[timezone];
   }
 
   // Strategy 3: Fall back to default
-  console.log(`🏳️ Using fallback country: ${fallbackCountry}`);
-  return fallbackCountry;
+  return fallbackCountry || "AU";
 }
 
 /**

@@ -3,8 +3,6 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import {
-  changePasswordSchema,
-  ChangePasswordValues,
   updateProfileSchema,
   UpdateProfileValues,
 } from "@/validations/profile/profileSchema";
@@ -74,50 +72,3 @@ export async function updateProfileAction(values: UpdateProfileValues) {
   }
 }
 
-export async function changePasswordAction(values: ChangePasswordValues) {
-  try {
-    const session = await getSession();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
-
-    // Validate the input
-    const validatedFields = changePasswordSchema.safeParse(values);
-    if (!validatedFields.success) {
-      return { error: "Invalid fields" };
-    }
-
-    const { currentPassword, newPassword } = validatedFields.data;
-
-    // Get user with password
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-    });
-
-    if (!user || !user.password) {
-      return { error: "You cannot change password. Your account uses social login (Google/Facebook) or magic link authentication." };
-    }
-
-    // Verify current password
-    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
-    if (!isValidPassword) {
-      return { error: "Current password is incorrect" };
-    }
-
-    // Hash new password
-    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
-
-    // Update password
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        password: hashedNewPassword,
-      },
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error("Password change error:", error);
-    return { error: "Failed to change password" };
-  }
-}

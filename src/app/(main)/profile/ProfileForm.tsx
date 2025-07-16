@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, LoadingButton } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -11,10 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/ui/password-input";
 import {
-  changePasswordSchema,
-  ChangePasswordValues,
   updateProfileSchema,
   UpdateProfileValues,
 } from "@/validations/profile/profileSchema";
@@ -23,7 +20,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ImageUpload } from "./_components/ImageUpload";
-import { changePasswordAction, updateProfileAction } from "./actions";
+import { updateProfileAction } from "./actions";
 
 interface ProfileFormProps {
   user: {
@@ -39,8 +36,6 @@ interface ProfileFormProps {
 
 export function ProfileForm({ user, hasPassword }: ProfileFormProps) {
   const [isPendingProfile, startProfileTransition] = useTransition();
-  const [isPendingPassword, startPasswordTransition] = useTransition();
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(user.image);
 
   // Profile form
@@ -53,21 +48,16 @@ export function ProfileForm({ user, hasPassword }: ProfileFormProps) {
       email: user.email,
       image: user.image,
     },
+    mode: "onChange",
   });
 
-  // Password form
-  const passwordForm = useForm<ChangePasswordValues>({
-    resolver: zodResolver(changePasswordSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmNewPassword: "",
-    },
-  });
+  const initialImage = user.image;
+  const isImageDirty = imageUrl !== initialImage;
+  const isFormDirty = profileForm.formState.isDirty;
+  const canSubmit = isFormDirty || isImageDirty;
 
   function onProfileSubmit(values: UpdateProfileValues) {
     startProfileTransition(async () => {
-      // Include the current image URL in the submission
       const submitValues = { ...values, image: imageUrl };
       const res = await updateProfileAction(submitValues);
 
@@ -80,24 +70,8 @@ export function ProfileForm({ user, hasPassword }: ProfileFormProps) {
     });
   }
 
-  function onPasswordSubmit(values: ChangePasswordValues) {
-    startPasswordTransition(async () => {
-      const res = await changePasswordAction(values);
-
-      if (res?.error) {
-        toast.error(res.error);
-        return;
-      }
-
-      toast.success("Password changed successfully!");
-      passwordForm.reset();
-      setShowPasswordForm(false);
-    });
-  }
-
   return (
     <div className="space-y-6">
-      {/* Profile Avatar Section */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Profile Picture</CardTitle>
@@ -112,7 +86,6 @@ export function ProfileForm({ user, hasPassword }: ProfileFormProps) {
         </CardContent>
       </Card>
 
-      {/* Profile Information Form */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Personal Information</CardTitle>
@@ -188,6 +161,7 @@ export function ProfileForm({ user, hasPassword }: ProfileFormProps) {
                 type="submit"
                 loading={isPendingProfile}
                 className="w-full"
+                disabled={!canSubmit}
               >
                 Update Profile
               </LoadingButton>
@@ -195,109 +169,6 @@ export function ProfileForm({ user, hasPassword }: ProfileFormProps) {
           </Form>
         </CardContent>
       </Card>
-
-      {/* Password Change Section - Only show for users with passwords */}
-      {hasPassword && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Password</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Change your account password for enhanced security.
-            </p>
-
-            {!showPasswordForm ? (
-              <Button
-                variant="outline"
-                onClick={() => setShowPasswordForm(true)}
-                className="w-full"
-              >
-                Change Password
-              </Button>
-            ) : (
-              <Form {...passwordForm}>
-                <form
-                  onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={passwordForm.control}
-                    name="currentPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Current Password</FormLabel>
-                        <FormControl>
-                          <PasswordInput
-                            placeholder="Enter current password"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={passwordForm.control}
-                    name="newPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                          <PasswordInput
-                            placeholder="Enter new password"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={passwordForm.control}
-                    name="confirmNewPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
-                        <FormControl>
-                          <PasswordInput
-                            placeholder="Confirm new password"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex gap-2">
-                    <LoadingButton
-                      type="submit"
-                      loading={isPendingPassword}
-                      className="flex-1"
-                    >
-                      Change Password
-                    </LoadingButton>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowPasswordForm(false);
-                        passwordForm.reset();
-                      }}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
