@@ -31,10 +31,9 @@ interface ProfileFormProps {
     nickname: string | null;
     image: string | null;
   };
-  hasPassword: boolean;
 }
 
-export function ProfileForm({ user, hasPassword }: ProfileFormProps) {
+export function ProfileForm({ user }: ProfileFormProps) {
   const [isPendingProfile, startProfileTransition] = useTransition();
   const [imageUrl, setImageUrl] = useState<string | null>(user.image);
 

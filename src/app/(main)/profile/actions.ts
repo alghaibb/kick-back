@@ -7,7 +7,6 @@ import {
   UpdateProfileValues,
 } from "@/validations/profile/profileSchema";
 import { del } from "@vercel/blob";
-import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
 export async function updateProfileAction(values: UpdateProfileValues) {
