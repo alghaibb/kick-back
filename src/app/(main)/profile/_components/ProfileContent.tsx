@@ -19,7 +19,6 @@ export async function ProfileContent() {
       email: true,
       nickname: true,
       image: true,
-      password: true, // Check if user has a password
     },
   });
 
@@ -27,8 +26,5 @@ export async function ProfileContent() {
     redirect("/login");
   }
 
-  // Check if user has a password (for showing password change section)
-  const hasPassword = !!user.password;
-
-  return <ProfileForm user={user} hasPassword={hasPassword} />;
+  return <ProfileForm user={user} />;
 }
