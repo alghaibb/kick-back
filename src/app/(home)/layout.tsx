@@ -1,7 +1,14 @@
+import Header from "@/components/header/Header";
+
 export default function HomeLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <>
+      <Header />
+      {children}
+    </>
+  );
 }
