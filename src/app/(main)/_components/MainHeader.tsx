@@ -11,9 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { LogOut, Menu } from "lucide-react";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
-import { useState } from "react";
 import { navigation } from "./constants";
 
 interface MainHeaderProps {
@@ -30,13 +28,6 @@ interface MainHeaderProps {
 }
 
 export function MainHeader({ onMenuClick }: MainHeaderProps) {
-  const [isSigningOut, setIsSigningOut] = useState(false);
-
-  const handleSignOut = () => {
-    setIsSigningOut(true);
-    signOut(); // NextAuth handles the redirect internally
-  };
-
   return (
     <header className="bg-card border-b border-border px-6 py-8">
       <div className="flex items-center justify-between">
