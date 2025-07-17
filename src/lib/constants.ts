@@ -4,3 +4,8 @@ export const navLinks = [
   { href: "/pricing", label: "Pricing" },
   { href: "/dashboard", label: "Dashboard" },
 ];
+
+export const userMenuLinks = [
+  { href: "/profile", label: "Profile" },
+  { href: "/settings", label: "Settings" },
+];

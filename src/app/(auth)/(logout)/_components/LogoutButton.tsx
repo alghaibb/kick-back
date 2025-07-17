@@ -1,31 +1,36 @@
-'use client';
+"use client";
 
-import { LoadingButton } from '@/components/ui/button';
-import { useTransition } from 'react';
-import { logout } from '../actions';
+import { LoadingButton } from "@/components/ui/button";
+import { useTransition } from "react";
+import { logout } from "../actions";
 
 type ButtonVariants =
-  | 'default'
-  | 'destructive'
-  | 'outline'
-  | 'outlineSecondary'
-  | 'secondary'
-  | 'ghost'
-  | 'link'
-  | 'expandIcon'
-  | 'ringHover'
-  | 'shine'
-  | 'gooeyRight'
-  | 'gooeyLeft'
-  | 'linkHover1'
-  | 'modernHover';
+  | "default"
+  | "destructive"
+  | "outline"
+  | "outlineSecondary"
+  | "secondary"
+  | "ghost"
+  | "link"
+  | "expandIcon"
+  | "ringHover"
+  | "shine"
+  | "gooeyRight"
+  | "gooeyLeft"
+  | "linkHover1"
+  | "modernHover";
 
 interface LogoutProps {
   className?: string;
   variant?: ButtonVariants;
+  children?: React.ReactNode;
 }
 
-export default function LogoutButton({ className, variant }: LogoutProps) {
+export default function LogoutButton({
+  className,
+  variant,
+  children,
+}: LogoutProps) {
   const [isPending, startTransition] = useTransition();
 
   function handleClick() {
@@ -42,7 +47,7 @@ export default function LogoutButton({ className, variant }: LogoutProps) {
       className={className}
       variant={variant}
     >
-      {isPending ? 'Logging out' : 'Logout'}
+      {isPending ? "Logging out..." : children || "Log out"}
     </LoadingButton>
   );
 }

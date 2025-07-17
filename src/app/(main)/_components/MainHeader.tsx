@@ -1,5 +1,6 @@
 "use client";
 
+import LogoutButton from "@/app/(auth)/(logout)/_components/LogoutButton";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,16 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { ModeToggle } from "@/components/ui/mode-toggle";
-import {
-  ResponsiveModal,
-  ResponsiveModalContent,
-  ResponsiveModalHeader,
-  ResponsiveModalTitle,
-  ResponsiveModalTrigger,
-} from "@/components/ui/responsive-modal";
-import { Bell, LogOut, Menu, Search } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
@@ -37,73 +30,31 @@ interface MainHeaderProps {
 }
 
 export function MainHeader({ onMenuClick }: MainHeaderProps) {
-  const [searchQuery, setSearchQuery] = useState("");
   const [isSigningOut, setIsSigningOut] = useState(false);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement search functionality
-    console.log("Searching for:", searchQuery);
-  };
 
   const handleSignOut = () => {
     setIsSigningOut(true);
-    // Simple sign out without complex async handling
-    signOut();
+    signOut(); // NextAuth handles the redirect internally
   };
 
   return (
-    <header className="bg-card border-b border-border px-6 py-5">
+    <header className="bg-card border-b border-border px-6 py-8">
       <div className="flex items-center justify-between">
-        {/* Left side - Search */}
-        <div className="flex items-center space-x-4 flex-1 max-w-md">
-          {/* Desktop Search */}
-          <div className="relative flex-1 hidden md:block">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input placeholder="Search events, friends..." className="pl-10" />
-          </div>
-
-          {/* Mobile Search Modal */}
-          <ResponsiveModal>
-            <ResponsiveModalTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Search className="h-5 w-5" />
-              </Button>
-            </ResponsiveModalTrigger>
-            <ResponsiveModalContent>
-              <ResponsiveModalHeader>
-                <ResponsiveModalTitle className="mb-4">
-                  Search
-                </ResponsiveModalTitle>
-              </ResponsiveModalHeader>
-              <form onSubmit={handleSearch} className="space-y-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search events, groups..."
-                    className="pl-10"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    autoFocus
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  Search
-                </Button>
-              </form>
-            </ResponsiveModalContent>
-          </ResponsiveModal>
+        {/* Left: Logo (mobile only) */}
+        <div className="flex-1">
+          <Link href="/" className="flex items-center space-x-2 md:hidden">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">
+                KB
+              </span>
+            </div>
+            <span className="font-bold text-xl text-foreground">Kick Back</span>
+          </Link>
         </div>
 
-        {/* Right side - Actions */}
+        {/* Right: Actions */}
         <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <Button variant="ghost" size="icon">
-            <Bell className="h-5 w-5" />
-          </Button>
           <ModeToggle />
-
-          {/* Mobile menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -122,13 +73,14 @@ export function MainHeader({ onMenuClick }: MainHeaderProps) {
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleSignOut}
-                disabled={isSigningOut}
-                className="text-destructive"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                {isSigningOut ? "Signing out..." : "Sign Out"}
+              <DropdownMenuItem asChild>
+                <LogoutButton
+                  variant="ghost"
+                  className="w-full justify-start flex items-center gap-3"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Log out</span>
+                </LogoutButton>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

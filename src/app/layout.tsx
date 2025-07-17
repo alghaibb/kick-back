@@ -1,9 +1,9 @@
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
+import { ThemeProvider } from "next-themes";
 import { Poppins } from "next/font/google";
 import { PageTracker } from "react-page-tracker";
 import "./globals.css";
-import { ThemeProvider } from "next-themes";
 
 export const metadata: Metadata = {
   title: {
@@ -32,8 +32,7 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
           disableTransitionOnChange
         >
           <PageTracker />

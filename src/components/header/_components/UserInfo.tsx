@@ -11,7 +11,7 @@ export default function UserInfo({ firstName, nickname, email, image }: Props) {
   const displayName = nickname || firstName || "Guest";
 
   return (
-    <div className="flex items-center gap-3 p-4 border-b">
+    <div className="flex items-center gap-3 border border-border bg-muted rounded-lg p-3">
       {image ? (
         <Image
           src={image}
@@ -22,7 +22,7 @@ export default function UserInfo({ firstName, nickname, email, image }: Props) {
           loading="lazy"
         />
       ) : (
-        <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs font-medium uppercase">
+        <div className="w-9 h-9 rounded-full bg-muted-foreground/10 flex items-center justify-center text-xs font-medium uppercase">
           {firstName?.charAt(0) || "?"}
         </div>
       )}
@@ -33,3 +33,4 @@ export default function UserInfo({ firstName, nickname, email, image }: Props) {
     </div>
   );
 }
+

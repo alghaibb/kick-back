@@ -1,10 +1,11 @@
 "use client";
 
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserProvider } from "../../../providers/UserContext";
 import { MainHeader } from "./MainHeader";
 import { MainSidebar } from "./MainSidebar";
+import { cn } from "@/lib/utils";
 
 interface MainLayoutClientProps {
   children: React.ReactNode;
@@ -22,23 +23,33 @@ export function MainLayoutClient({ children, user }: MainLayoutClientProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
 
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-zinc-50/50 dark:to-zinc-900/50">
       <div className="flex h-screen">
         {/* Sidebar - Hidden on mobile unless open */}
-        <div
-          className={`
-          ${isMobile ? "fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out" : "relative"}
-          ${isMobile && !sidebarOpen ? "-translate-x-full" : "translate-x-0"}
-          ${!isMobile ? "w-64" : "w-64"}
-        `}
-        >
-          <MainSidebar
-            user={user}
-            onClose={() => setSidebarOpen(false)}
-            isMobile={isMobile}
-          />
-        </div>
+        {isHydrated && (
+          <div
+            className={cn(
+              isMobile
+                ? "fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out"
+                : "relative",
+              isMobile && !sidebarOpen ? "-translate-x-full" : "translate-x-0",
+              "w-64"
+            )}
+          >
+            <MainSidebar
+              user={user}
+              onClose={() => setSidebarOpen(false)}
+              isMobile={isMobile}
+            />
+          </div>
+        )}
 
         {/* Overlay for mobile */}
         {isMobile && sidebarOpen && (

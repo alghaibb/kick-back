@@ -1,5 +1,6 @@
 "use client";
 
+import LogoutButton from "@/app/(auth)/(logout)/_components/LogoutButton";
 import {
   Sheet,
   SheetClose,
@@ -9,43 +10,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { navLinks } from "@/lib/constants";
+import { useUser } from "@/providers/UserContext";
 import { Menu } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Suspense } from "react";
-import { Skeleton } from "../ui/skeleton";
+import UserInfo from "./_components/UserInfo";
 
-const UserInfo = dynamic(() => import("./_components/UserInfo"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center gap-3 p-4 border-b">
-      <Skeleton className="w-9 h-9 rounded-full" />
-      <div className="flex flex-col gap-1">
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-2 w-16" />
-      </div>
-    </div>
-  ),
-});
+export default function MobileNav() {
+  const user = useUser();
 
-const LogoutButton = dynamic(
-  () => import("@/app/(auth)/(logout)/_components/LogoutButton"),
-  {
-    ssr: false,
-    loading: () => <Skeleton className="w-full h-10" />,
-  }
-);
-
-interface MobileNavProps {
-  user: {
-    nickname?: string | null;
-    firstName?: string | null;
-    email?: string | null;
-    image?: string | null;
-  } | null;
-}
-
-export default function MobileNav({ user }: MobileNavProps) {
   return (
     <Sheet>
       <SheetTrigger className="sm:hidden p-2 rounded-md hover:bg-muted">
@@ -57,25 +29,17 @@ export default function MobileNav({ user }: MobileNavProps) {
           <SheetTitle className="sr-only">Menu</SheetTitle>
         </SheetHeader>
 
-        {/* User Info */}
         {user && (
-          <Suspense
-            fallback={
-              <div className="p-4 border-b text-sm text-muted-foreground">
-                Loading...
-              </div>
-            }
-          >
+          <div className="px-4">
             <UserInfo
               firstName={user.firstName}
               nickname={user.nickname}
               email={user.email}
               image={user.image}
             />
-          </Suspense>
+          </div>
         )}
 
-        {/* Nav Links */}
         <nav className="flex flex-col gap-4 p-4">
           {navLinks.map((link) => (
             <SheetClose asChild key={link.href}>
@@ -89,18 +53,9 @@ export default function MobileNav({ user }: MobileNavProps) {
           ))}
         </nav>
 
-        {/* Footer */}
         <div className="mt-auto p-4 border-t">
           {user ? (
-            <Suspense
-              fallback={
-                <div className="text-sm text-muted-foreground">
-                  Logging out...
-                </div>
-              }
-            >
-              <LogoutButton variant="outline" className="w-full" />
-            </Suspense>
+            <LogoutButton variant="outline" className="w-full" />
           ) : (
             <SheetClose asChild>
               <Link

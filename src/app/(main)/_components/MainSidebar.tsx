@@ -1,12 +1,12 @@
 "use client";
 
+import LogoutButton from "@/app/(auth)/(logout)/_components/LogoutButton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { LogOut, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, X } from "lucide-react";
-import { signOut } from "next-auth/react";
 import { navigation } from "./constants";
 
 interface MainSidebarProps {
@@ -77,10 +77,7 @@ export function MainSidebar({ user, onClose, isMobile }: MainSidebarProps) {
                 isActive && "bg-primary text-primary-foreground"
               )}
             >
-              <Link
-                href={item.href}
-                onClick={handleNavigation}
-              >
+              <Link href={item.href} onClick={handleNavigation}>
                 <item.icon className="mr-3 h-4 w-4" />
                 {item.name}
               </Link>
@@ -106,15 +103,13 @@ export function MainSidebar({ user, onClose, isMobile }: MainSidebarProps) {
           </div>
         </div>
 
-        <Button
+        <LogoutButton
           variant="ghost"
-          size="sm"
-          className="w-full justify-start text-muted-foreground hover:text-foreground"
-          onClick={() => signOut()}
+          className="w-full justify-start flex items-center gap-3"
         >
-          <LogOut className="mr-3 h-4 w-4" />
-          Sign Out
-        </Button>
+          <LogOut className="h-4 w-4" />
+          <span>Log out</span>
+        </LogoutButton>
       </div>
     </div>
   );
