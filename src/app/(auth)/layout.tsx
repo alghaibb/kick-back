@@ -1,19 +1,11 @@
-import { getSession } from "@/lib/sessions";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 export default async function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
-
-  if (session?.user.id) {
-    redirect("/dashboard");
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 dark:from-background dark:via-background dark:to-muted/10">
       {/* Background Pattern */}
