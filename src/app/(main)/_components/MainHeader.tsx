@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import { ThemeSelector } from "@/components/ui/theme-selector";
 import { LogOut, Menu } from "lucide-react";
 import Link from "next/link";
 import { navigation } from "./constants";
@@ -46,6 +47,7 @@ export function MainHeader({ onMenuClick }: MainHeaderProps) {
         {/* Right: Actions */}
         <div className="flex items-center space-x-4">
           <ModeToggle />
+          <ThemeSelector />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

@@ -1,7 +1,7 @@
-import { Bell, Calendar, Clock, Smartphone, ArrowRight } from "lucide-react";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ArrowRight, Bell, Calendar, Clock, Smartphone } from "lucide-react";
+import Link from "next/link";
 
 export default function HeroMobile() {
   return (
@@ -17,14 +17,15 @@ export default function HeroMobile() {
           </Badge>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-transparent">
-              Stay
-            </span>
+            <span className="bg-clip-text">Stay</span>
+
             <div className="h-[56px] md:h-[88px] lg:h-[96px] flex justify-center items-center">
               <span className="text-primary font-bold">organized</span>
             </div>
             <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-muted-foreground font-normal">
-              with Kick Back
+              <span className="bg-gradient-to-r from-primary/80 to-primary text-transparent bg-clip-text">
+                with Kick Back
+              </span>
             </span>
           </h1>
 

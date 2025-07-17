@@ -5,6 +5,7 @@ import { ModeToggle } from "@/components/ui/mode-toggle";
 import { navLinks } from "@/lib/constants";
 import { UserProvider } from "@/providers/UserContext";
 import Link from "next/link";
+import { ThemeSelector } from "../ui/theme-selector";
 import { UserDropdown } from "../UserDropdown";
 import { Logo } from "./_components/Logo";
 import MobileNav from "./MobileNav";
@@ -45,6 +46,7 @@ export default function Navbar({ user }: NavbarProps) {
           {/* Right Section */}
           <div className="flex items-center gap-4">
             <ModeToggle />
+            <ThemeSelector />
 
             {user ? (
               <div className="hidden sm:flex">

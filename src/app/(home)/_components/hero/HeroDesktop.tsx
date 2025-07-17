@@ -1,17 +1,11 @@
 "use client";
 
-import {
-  LazyMotion,
-  domAnimation,
-  easeInOut,
-  easeOut,
-  m,
-} from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { Bell, Calendar, Clock, Smartphone, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LazyMotion, domAnimation, easeInOut, easeOut, m } from "framer-motion";
+import { ArrowRight, Bell, Calendar, Clock, Smartphone } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 
 export default function HeroDesktop() {
   const titles = useMemo(
@@ -64,9 +58,7 @@ export default function HeroDesktop() {
             </Badge>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-transparent">
-                Stay
-              </span>
+              <span className="bg-clip-text">Stay</span>
 
               <div className="relative h-[56px] md:h-[88px] lg:h-[96px] overflow-hidden flex justify-center items-center">
                 {titles.map((title, index) => (
@@ -91,7 +83,10 @@ export default function HeroDesktop() {
               </div>
 
               <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-muted-foreground font-normal">
-                with Kick Back
+                with{" "}
+                <span className="bg-gradient-to-r from-primary/80 to-primary text-transparent bg-clip-text font-bold">
+                  Kick Back
+                </span>
               </span>
             </h1>
 
