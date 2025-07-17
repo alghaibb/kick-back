@@ -7,64 +7,53 @@ import {
   easeOut,
   m,
 } from "framer-motion";
-import { ArrowRight, Bell, Calendar, Clock, Smartphone } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-
+import Link from "next/link";
+import { Bell, Calendar, Clock, Smartphone, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
 
-export default function Hero() {
-  const isMobile = useIsMobile();
-
-  const [titleNumber, setTitleNumber] = useState(0);
+export default function HeroDesktop() {
   const titles = useMemo(
     () => ["organized", "connected", "prepared", "reminded", "stress-free"],
     []
   );
+  const [titleNumber, setTitleNumber] = useState(0);
 
   useEffect(() => {
-    if (isMobile) return;
-    const timeoutId = setTimeout(() => {
-      setTitleNumber((prev) =>
-        prev === titles.length - 1 ? 0 : prev + 1
-      );
+    const timeout = setTimeout(() => {
+      setTitleNumber((prev) => (prev === titles.length - 1 ? 0 : prev + 1));
     }, 2500);
-    return () => clearTimeout(timeoutId);
-  }, [titleNumber, titles, isMobile]);
+    return () => clearTimeout(timeout);
+  }, [titleNumber, titles]);
 
   return (
     <LazyMotion features={domAnimation}>
       <section className="relative w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
-        {/* Background Orbs — disabled on mobile */}
-        {!isMobile && (
-          <div className="absolute inset-0 hidden md:block">
-            <m.div
-              className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl"
-              whileInView={{ y: [-10, 10, -10], opacity: [0.3, 0.5, 0.3] }}
-              transition={{ duration: 8, repeat: Infinity, ease: easeInOut }}
-            />
-            <m.div
-              className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/10 rounded-full blur-3xl"
-              whileInView={{ y: [-15, 15, -15], opacity: [0.2, 0.4, 0.2] }}
-              transition={{
-                duration: 10,
-                repeat: Infinity,
-                ease: easeInOut,
-                delay: 2,
-              }}
-            />
-          </div>
-        )}
+        <div className="absolute inset-0 hidden md:block">
+          <m.div
+            className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl"
+            whileInView={{ y: [-10, 10, -10], opacity: [0.3, 0.5, 0.3] }}
+            transition={{ duration: 8, repeat: Infinity, ease: easeInOut }}
+          />
+          <m.div
+            className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/10 rounded-full blur-3xl"
+            whileInView={{ y: [-15, 15, -15], opacity: [0.2, 0.4, 0.2] }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: easeInOut,
+              delay: 2,
+            }}
+          />
+        </div>
 
         <m.div
-          initial={isMobile ? false : { opacity: 0, y: 30 }}
-          animate={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: easeOut }}
           className="relative z-10 max-w-6xl mx-auto flex flex-col items-center text-center gap-8 md:gap-12 px-4 py-16 md:py-24"
         >
-          {/* Badge + Title */}
           <div className="space-y-4 md:space-y-6">
             <Badge
               variant="outline"
@@ -80,31 +69,25 @@ export default function Hero() {
               </span>
 
               <div className="relative h-[56px] md:h-[88px] lg:h-[96px] overflow-hidden flex justify-center items-center">
-                {isMobile ? (
-                  <span className="text-primary font-bold">
-                    {titles[0]}
-                  </span>
-                ) : (
-                  titles.map((title, index) => (
-                    <m.span
-                      key={index}
-                      className="absolute left-1/2 -translate-x-1/2 font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent leading-tight"
-                      initial={{ opacity: 0, y: 50 }}
-                      animate={
-                        titleNumber === index
-                          ? { opacity: 1, y: 0 }
-                          : { opacity: 0, y: -50 }
-                      }
-                      transition={{
-                        type: "spring",
-                        stiffness: 120,
-                        damping: 20,
-                      }}
-                    >
-                      {title}
-                    </m.span>
-                  ))
-                )}
+                {titles.map((title, index) => (
+                  <m.span
+                    key={index}
+                    className="absolute left-1/2 -translate-x-1/2 font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent leading-tight"
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={
+                      titleNumber === index
+                        ? { opacity: 1, y: 0 }
+                        : { opacity: 0, y: -50 }
+                    }
+                    transition={{
+                      type: "spring",
+                      stiffness: 120,
+                      damping: 20,
+                    }}
+                  >
+                    {title}
+                  </m.span>
+                ))}
               </div>
 
               <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-muted-foreground font-normal">
@@ -118,7 +101,6 @@ export default function Hero() {
             </p>
           </div>
 
-          {/* Features */}
           <div className="flex flex-wrap justify-center gap-4 md:gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" />
@@ -134,14 +116,9 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* CTA */}
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center w-full max-w-md">
             <div className="flex-1">
-              <Button
-                asChild
-                size="lg"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
-              >
+              <Button asChild size="lg" className="w-full">
                 <Link href="/create-account">
                   Get Started Free
                   <ArrowRight className="ml-2 w-4 h-4" />
@@ -153,7 +130,7 @@ export default function Hero() {
                 asChild
                 variant="outline"
                 size="lg"
-                className="w-full border-border hover:bg-muted transition-all duration-300 backdrop-blur-sm"
+                className="w-full border-border hover:bg-muted"
               >
                 <Link href="/learn-more">See How It Works</Link>
               </Button>
@@ -166,7 +143,6 @@ export default function Hero() {
           </div>
         </m.div>
 
-        {/* Bottom gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
       </section>
     </LazyMotion>
