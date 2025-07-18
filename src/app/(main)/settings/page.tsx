@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Suspense } from "react";
 import { SettingsContent } from "./_components/SettingsContent";
 import { SettingsSkeleton } from "./_components/SettingsSkeleton";
