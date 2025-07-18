@@ -11,11 +11,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { userMenuLinks } from "@/lib/constants";
-import { useUser } from "@/providers/UserContext";
+import { useSession } from "@/providers/SessionProvider";
 import Link from "next/link";
 
 export function UserDropdown() {
-  const user = useUser();
+  const { user } = useSession();
 
   if (!user) return null;
 

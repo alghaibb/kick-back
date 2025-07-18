@@ -151,12 +151,6 @@
   }
 }
 
-/* ✅ Inherits Zinc-based theme from :root and .dark */
-.theme-default,
-.theme-default-scaled {
-  /* Inherit from base theme – no overrides */
-}
-
 /* Optional other themes */
 .theme-blue,
 .theme-blue-scaled {

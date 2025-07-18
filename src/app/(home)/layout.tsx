@@ -1,4 +1,5 @@
 import Header from "@/components/header/Header";
+import { SessionProvider } from "@/providers/SessionProvider";
 
 export default function HomeLayout({
   children,
@@ -6,9 +7,9 @@ export default function HomeLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <SessionProvider>
       <Header />
       {children}
-    </>
+    </SessionProvider>
   );
 }

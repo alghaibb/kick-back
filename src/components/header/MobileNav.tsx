@@ -12,13 +12,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { navLinks } from "@/lib/constants";
-import { useUser } from "@/providers/UserContext";
+import { useSession } from "@/providers/SessionProvider"; // ← Use your custom hook
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import UserInfo from "./_components/UserInfo";
 
 export default function MobileNav() {
-  const user = useUser();
+  const { user } = useSession(); // ← Use your custom hook
 
   return (
     <Sheet>
@@ -72,7 +72,7 @@ export default function MobileNav() {
             ))}
           </div>
         </nav>
-          <Separator />
+        <Separator />
 
         {/* Bottom Section */}
         <div className="p-6 pt-0">
@@ -85,14 +85,12 @@ export default function MobileNav() {
             <div className="space-y-2">
               <SheetClose asChild>
                 <Button asChild variant="outline" className="w-full h-10">
-                  <Link href="/login">
-                  Log in
-                  </Link>
+                  <Link href="/login">Log in</Link>
                 </Button>
               </SheetClose>
               <SheetClose asChild>
                 <Button asChild className="w-full h-10">
-                  <Link href="/create-account">Get Started</Link>
+                  <Link href="/create-account">Create Account</Link>
                 </Button>
               </SheetClose>
             </div>
