@@ -15,7 +15,6 @@ import { navLinks } from "@/lib/constants";
 import { useUser } from "@/providers/UserContext";
 import { Menu } from "lucide-react";
 import Link from "next/link";
-import { Logo } from "./_components/Logo";
 import UserInfo from "./_components/UserInfo";
 
 export default function MobileNav() {
