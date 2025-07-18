@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export default function middleware(request: NextRequest) {
-  const sessionToken = request.cookies.get("authjs.session-token")?.value;
+  const sessionToken =
+    request.cookies.get("__Secure-authjs.session-token")?.value ||
+    request.cookies.get("authjs.session-token")?.value;
 
   const isLoggedIn = Boolean(sessionToken);
 
@@ -23,14 +25,3 @@ export default function middleware(request: NextRequest) {
 
   return NextResponse.next();
 }
-
-export const config = {
-  matcher: [
-    "/login",
-    "/create-account",
-    "/verify-account",
-    "/magic-link-verify",
-    "/magic-link-create",
-    "/magic-link-login",
-  ],
-};
