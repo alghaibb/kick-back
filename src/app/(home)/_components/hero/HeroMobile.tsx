@@ -23,8 +23,9 @@ export default function HeroMobile() {
               <span className="text-primary font-bold">organized</span>
             </div>
             <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-muted-foreground font-normal">
+              with{" "}
               <span className="bg-gradient-to-r from-primary/80 to-primary text-transparent bg-clip-text">
-                with Kick Back
+                Kick Back
               </span>
             </span>
           </h1>

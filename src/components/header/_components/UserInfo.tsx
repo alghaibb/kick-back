@@ -18,8 +18,8 @@ export default function UserInfo({ firstName, nickname, email, image }: Props) {
           alt="Profile"
           width={36}
           height={36}
-          className="object-cover rounded-full"
-          loading="lazy"
+          className="rounded-full object-cover"
+          priority
         />
       ) : (
         <div className="w-9 h-9 rounded-full bg-muted-foreground/10 flex items-center justify-center text-xs font-medium uppercase">
