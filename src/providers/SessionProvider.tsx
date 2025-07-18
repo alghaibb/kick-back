@@ -50,6 +50,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       }
     } catch (error) {
+      console.error("Error fetching user session:", error);
       setStatus("unauthenticated");
       setUser(null);
     }
