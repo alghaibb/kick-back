@@ -1,4 +1,4 @@
-import Header from "@/components/header/Header";
+import Navbar from "@/components/navbar/Navbar";
 
 export default function HomeLayout({
   children,
@@ -7,7 +7,7 @@ export default function HomeLayout({
 }) {
   return (
     <>
-      <Header />
+      <Navbar />
       {children}
     </>
   );
