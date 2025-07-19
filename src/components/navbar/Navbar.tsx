@@ -38,28 +38,30 @@ export default function Navbar() {
           <ModeToggle />
           <ThemeSelector />
 
-          {status === "loading" ? (
-            <div className="w-8 h-8 animate-pulse bg-muted rounded-full"></div>
-          ) : user ? (
-            <div className="hidden sm:flex">
-              <UserDropdown />
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Button
-                asChild
-                size="sm"
-                variant="ghost"
-                className="hidden sm:inline-flex"
-              >
-                <Link href="/login">Log in</Link>
-              </Button>
+          <div className="hidden sm:block">
+            {status === "loading" ? (
+              <div className="w-8 h-8 animate-pulse bg-muted rounded-full"></div>
+            ) : user ? (
+              <div className="hidden sm:flex">
+                <UserDropdown />
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button
+                  asChild
+                  size="sm"
+                  variant="ghost"
+                  className="hidden sm:inline-flex"
+                >
+                  <Link href="/login">Log in</Link>
+                </Button>
 
-              <Button asChild size="sm" className="hidden sm:inline-flex">
-                <Link href="/create-account">Create Account</Link>
-              </Button>
-            </div>
-          )}
+                <Button asChild size="sm" className="hidden sm:inline-flex">
+                  <Link href="/create-account">Create Account</Link>
+                </Button>
+              </div>
+            )}
+          </div>
 
           {/* Mobile Nav */}
           <div className="sm:hidden">
