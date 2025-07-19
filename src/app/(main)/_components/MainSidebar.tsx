@@ -4,26 +4,22 @@ import LogoutButton from "@/app/(auth)/(logout)/_components/LogoutButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/providers/SessionProvider";
 import { LogOut, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { navigation } from "./constants";
 
 interface MainSidebarProps {
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string | null;
-    email: string;
-    nickname: string | null;
-    image: string | null;
-  };
   onClose?: () => void;
   isMobile?: boolean;
 }
 
-export function MainSidebar({ user, onClose, isMobile }: MainSidebarProps) {
+export function MainSidebar({ onClose, isMobile }: MainSidebarProps) {
+  const { user } = useSession();
   const pathname = usePathname();
+
+  if (!user) return null;
 
   const getInitials = () => {
     const firstName = user.firstName || "";

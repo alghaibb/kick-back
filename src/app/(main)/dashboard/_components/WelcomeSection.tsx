@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "../../../../providers/UserContext";
+import { useSession } from "@/providers/SessionProvider";
 
 interface WelcomeSectionProps {
   subtitle?: string;
@@ -9,7 +9,7 @@ interface WelcomeSectionProps {
 export function WelcomeSection({
   subtitle = "Ready to plan your next amazing event?",
 }: WelcomeSectionProps) {
-  const user = useUser();
+  const { user } = useSession();
   const name = user?.nickname || user?.firstName || "back";
   return (
     <div className="space-y-2">

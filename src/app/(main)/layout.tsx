@@ -1,13 +1,13 @@
+import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { redirect } from "next/navigation";
 import { MainLayoutClient } from "./_components/MainLayoutClient";
-import { InviteGroupModal } from "./groups/_components/InviteGroupModal";
 import { CreateEventModal } from "./events/_components/CreateEventModal";
-import prisma from "@/lib/prisma";
-import { CreateGroupModal } from "./groups/_components/CreateGroupModal";
 import { DeleteEventModal } from "./events/_components/DeleteEventModal";
-import EditGroupModal from "./groups/_components/EditGroupModal";
 import EditEventModal from "./events/_components/EditEventModal";
+import { CreateGroupModal } from "./groups/_components/CreateGroupModal";
+import EditGroupModal from "./groups/_components/EditGroupModal";
+import { InviteGroupModal } from "./groups/_components/InviteGroupModal";
 
 export default async function MainLayout({
   children,
@@ -30,7 +30,7 @@ export default async function MainLayout({
 
   return (
     <>
-      <MainLayoutClient user={session.user}>{children}</MainLayoutClient>
+      <MainLayoutClient>{children}</MainLayoutClient>
       <CreateGroupModal />
       <InviteGroupModal />
       <CreateEventModal groups={groups} />

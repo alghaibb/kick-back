@@ -9,7 +9,6 @@ export async function ProfileContent() {
     redirect("/login");
   }
 
-  // Get fresh user data from database instead of session
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {

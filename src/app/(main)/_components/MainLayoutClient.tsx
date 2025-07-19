@@ -1,36 +1,49 @@
 "use client";
 
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { useSession } from "@/providers/SessionProvider";
 import { useEffect, useState } from "react";
-import { UserProvider } from "../../../providers/UserContext";
 import { MainHeader } from "./MainHeader";
 import { MainSidebar } from "./MainSidebar";
-import { cn } from "@/lib/utils";
+import { useThemeConfig } from "@/providers/ActiveThemeProvider";
 
 interface MainLayoutClientProps {
   children: React.ReactNode;
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string | null;
-    email: string;
-    nickname: string | null;
-    image: string | null;
-  };
 }
 
-export function MainLayoutClient({ children, user }: MainLayoutClientProps) {
+export function MainLayoutClient({ children }: MainLayoutClientProps) {
+  const { user } = useSession();
+  const { activeTheme } = useThemeConfig();
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isMobile = useIsMobile();
-
   const [isHydrated, setIsHydrated] = useState(false);
+  
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     setIsHydrated(true);
   }, []);
 
+  if (!user) {
+    return null;
+  }
+
+   const getThemeBackground = () => {
+    switch (activeTheme) {
+      case "blue":
+        return "bg-gradient-to-br from-background via-background to-blue-50/30 dark:to-blue-950/30";
+      case "green":
+        return "bg-gradient-to-br from-background via-background to-green-50/30 dark:to-green-950/30";
+      case "amber":
+        return "bg-gradient-to-br from-background via-background to-amber-50/30 dark:to-amber-950/30";
+      default:
+        return "bg-gradient-to-br from-background via-background to-muted/20";
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-zinc-50/50 dark:to-zinc-900/50">
+    <div className={cn("min-h-screen", getThemeBackground())}>
       <div className="flex h-screen">
         {/* Sidebar - Hidden on mobile unless open */}
         {isHydrated && (
@@ -44,7 +57,6 @@ export function MainLayoutClient({ children, user }: MainLayoutClientProps) {
             )}
           >
             <MainSidebar
-              user={user}
               onClose={() => setSidebarOpen(false)}
               isMobile={isMobile}
             />
@@ -60,17 +72,15 @@ export function MainLayoutClient({ children, user }: MainLayoutClientProps) {
         )}
 
         {/* Main Content */}
-        <UserProvider user={user}>
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Header */}
-            <MainHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+          <MainHeader onMenuClick={() => setSidebarOpen(true)} />
 
-            {/* Page Content */}
-            <main className="flex-1 overflow-y-auto p-6">
-              <div className="mx-auto max-w-5xl">{children}</div>
-            </main>
-          </div>
-        </UserProvider>
+          {/* Page Content */}
+          <main className="flex-1 overflow-y-auto p-6">
+            <div className="mx-auto max-w-5xl">{children}</div>
+          </main>
+        </div>
       </div>
     </div>
   );

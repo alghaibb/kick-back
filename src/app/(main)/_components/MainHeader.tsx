@@ -11,24 +11,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { ThemeSelector } from "@/components/ui/theme-selector";
+import { useSession } from "@/providers/SessionProvider";
 import { LogOut, Menu } from "lucide-react";
 import Link from "next/link";
 import { navigation } from "./constants";
 
 interface MainHeaderProps {
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string | null;
-    email: string;
-    nickname: string | null;
-    image: string | null;
-  };
   onMenuClick?: () => void;
   isMobile?: boolean;
 }
 
 export function MainHeader({ onMenuClick }: MainHeaderProps) {
+  const { user } = useSession();
+
+  if (!user) return null;
+
   return (
     <header className="bg-card border-b border-border px-6 py-8">
       <div className="flex items-center justify-between">

@@ -11,17 +11,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { navLinks } from "@/lib/constants";
-import { useSession } from "@/providers/SessionProvider"; // ← Use your custom hook
+import { useSession } from "@/providers/SessionProvider";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import UserInfo from "./_components/UserInfo";
 
 export default function MobileNav() {
-  const { user } = useSession(); // ← Use your custom hook
+  const { user } = useSession();
+  const isMobile = useIsMobile();
 
   return (
-    <Sheet>
+    <Sheet key={`mobile-nav-${isMobile}`}>
       <SheetTrigger asChild>
         <Button
           variant="ghost"
