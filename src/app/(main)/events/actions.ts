@@ -6,11 +6,9 @@ import { createEventSchema, CreateEventValues } from "@/validations/events/creat
 import { fromZonedTime } from "date-fns-tz";
 import { revalidatePath } from "next/cache";
 
-// Helper function to ensure date consistency across timezones
 function createEventDateTime(date: Date, time: string, userTimezone: string): Date {
-  // Extract date components from the selected date (these are already in the user's local context)
   const year = date.getFullYear();
-  const month = date.getMonth() + 1; // Convert from 0-based to 1-based
+  const month = date.getMonth() + 1; 
   const day = date.getDate();
 
   // Parse time components
@@ -42,10 +40,8 @@ export async function createEventAction(values: CreateEventValues) {
     const validatedValues = createEventSchema.parse(values);
     const { date, name, description, groupId, location, time } = validatedValues;
 
-    // Get user's timezone from session
     const userTimezone = session.user.timezone || 'UTC';
 
-    // Use helper function for consistent date handling
     const eventDateTime = createEventDateTime(date, time, userTimezone);
 
     console.log(`Creating event: ${name}`);

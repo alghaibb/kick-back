@@ -7,25 +7,28 @@ import {
   ResponsiveModalTitle,
   ResponsiveModalFooter,
 } from "@/components/ui/responsive-modal";
-import { Button } from "@/components/ui/button";
+import { Button, LoadingButton } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
 import { deleteEventAction } from "../actions";
 import { toast } from "sonner";
+import { useTransition } from "react";
 
 export function DeleteEventModal() {
+  const [isPending, startTransition] = useTransition();
   const { isOpen, type, close, data } = useModal();
   const isDeleteModal = type === "delete-event";
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!data?.eventId) return;
-
-    const res = await deleteEventAction(data.eventId);
-    if (res?.error) {
-      toast.error(res.error);
-    } else {
-      toast.success("Event deleted");
-      close();
-    }
+    startTransition(async () => {
+      const res = await deleteEventAction(data.eventId!);
+      if (res?.error) {
+        toast.error(res.error);
+      } else {
+        toast.success("Event deleted");
+        close();
+      }
+    });
   };
 
   if (!isDeleteModal) return null;
@@ -41,13 +44,17 @@ export function DeleteEventModal() {
           <span className="font-semibold">{data?.eventName}</span>? This action
           cannot be undone.
         </p>
-        <ResponsiveModalFooter>
-          <Button variant="outline" onClick={close}>
+        <ResponsiveModalFooter className="flex flex-col md:flex-row space-y-4 md:space-y-0">
+          <Button onClick={close}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            Delete
-          </Button>
+           <LoadingButton
+            variant="destructive"
+            onClick={handleDelete}
+            loading={isPending}
+          >
+            {isPending ? "Deleting..." : "Delete Event"}
+          </LoadingButton>
         </ResponsiveModalFooter>
       </ResponsiveModalContent>
     </ResponsiveModal>

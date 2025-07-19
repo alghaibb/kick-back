@@ -7,6 +7,12 @@ export type DashboardStat = {
 
 export const dashboardStatsTemplate: DashboardStat[] = [
   {
+    title: "Today's Events",
+    value: 0,
+    change: "",
+    icon: "Calendar",
+  },
+  {
     title: "Upcoming Events",
     value: 0,
     change: "",

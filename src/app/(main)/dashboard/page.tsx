@@ -24,13 +24,19 @@ async function DashboardStats() {
   const dashboardStats = [
     {
       ...dashboardStatsTemplate[0],
+      title: stats?.todaysEventsLabel ?? dashboardStatsTemplate[0].title,
+      value: stats?.todaysEventsCount ?? 0,
+      change: <span className="block mt-2">{stats?.nextTodayEventText}</span>,
+    },
+    {
+      ...dashboardStatsTemplate[1],
       value: stats?.upcomingEvents ?? 0,
       change: (
         <span className="block mt-2">{stats?.nextEventDateFormatted}</span>
       ),
     },
     {
-      ...dashboardStatsTemplate[1],
+      ...dashboardStatsTemplate[2],
       value: stats?.groups ?? 0,
       change: (
         <span className="block mt-2">
@@ -39,7 +45,7 @@ async function DashboardStats() {
       ),
     },
     {
-      ...dashboardStatsTemplate[2],
+      ...dashboardStatsTemplate[3],
       value: stats?.eventsCreated ?? 0,
       change: (
         <span className="block mt-2">{stats?.upcomingCreatedEventsText}</span>

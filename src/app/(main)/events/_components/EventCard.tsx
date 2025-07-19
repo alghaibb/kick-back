@@ -3,8 +3,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
+import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
-import { formatInTimeZone } from "date-fns-tz";
 import { Pencil, Trash2 } from "lucide-react";
 
 interface EventCardProps {
@@ -36,12 +36,12 @@ export function EventCard({
 }: EventCardProps) {
   const { open } = useModal();
 
-  // Format the date in the user's timezone to ensure correct display
-  const formattedDate = formatInTimeZone(
-    new Date(date),
-    timezone,
-    "eeee, MMMM do yyyy \u2022 h:mm a"
-  );
+  const eventDate = new Date(date);
+  const formattedDate = formatDate(eventDate, {
+    includeWeekday: true,
+    includeTime: true,
+    timeZone: timezone,
+  }); 
 
   return (
     <div
