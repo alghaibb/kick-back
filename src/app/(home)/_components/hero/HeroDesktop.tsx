@@ -23,7 +23,7 @@ export default function HeroDesktop() {
 
   return (
     <LazyMotion features={domAnimation}>
-      <section className="relative w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
+      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 hidden md:block">
           <m.div
             className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl"

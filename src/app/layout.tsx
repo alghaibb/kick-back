@@ -32,7 +32,11 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} antialiased min-h-screen bg-background`}
       >
-        <ThemeProvider attribute="class" defaultTheme="light">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          disableTransitionOnChange
+        >
           <ActiveThemeProvider>
             <SessionProvider>
               <PageTracker />
