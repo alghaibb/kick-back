@@ -23,7 +23,8 @@ export default function HeroDesktop() {
 
   return (
     <LazyMotion features={domAnimation}>
-      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden py-24">
+        {/* Background Glow */}
         <div className="absolute inset-0 hidden md:block">
           <m.div
             className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl"
@@ -42,11 +43,12 @@ export default function HeroDesktop() {
           />
         </div>
 
+        {/* Hero Content */}
         <m.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: easeOut }}
-          className="relative z-10 max-w-6xl mx-auto flex flex-col items-center text-center gap-8 md:gap-12 px-4 py-16 md:py-24"
+          className="relative z-10 max-w-6xl mx-auto flex flex-col items-center text-center gap-8 md:gap-12 px-4"
         >
           <div className="space-y-4 md:space-y-6">
             <Badge
@@ -59,7 +61,6 @@ export default function HeroDesktop() {
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight">
               <span className="bg-clip-text">Stay</span>
-
               <div className="relative h-[56px] md:h-[88px] lg:h-[96px] overflow-hidden flex justify-center items-center">
                 {titles.map((title, index) => (
                   <m.span
@@ -81,7 +82,6 @@ export default function HeroDesktop() {
                   </m.span>
                 ))}
               </div>
-
               <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-muted-foreground font-normal">
                 with{" "}
                 <span className="bg-gradient-to-r from-primary/80 to-primary text-transparent bg-clip-text font-bold">
@@ -112,24 +112,20 @@ export default function HeroDesktop() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center w-full max-w-md">
-            <div className="flex-1">
-              <Button asChild size="lg" className="w-full">
-                <Link href="/create-account">
-                  Get Started Free
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Link>
-              </Button>
-            </div>
-            <div className="flex-1">
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="w-full border-border hover:bg-muted"
-              >
-                <Link href="/learn-more">See How It Works</Link>
-              </Button>
-            </div>
+            <Button asChild size="lg" className="w-full">
+              <Link href="/create-account">
+                Get Started Free
+                <ArrowRight className="ml-2 w-4 h-4" />
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="w-full border-border hover:bg-muted"
+            >
+              <Link href="/learn-more">See How It Works</Link>
+            </Button>
           </div>
 
           <div className="text-sm text-muted-foreground/70">

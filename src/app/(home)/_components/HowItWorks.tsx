@@ -8,13 +8,13 @@ const features = howItWorks;
 export default function HowItWorks() {
   return (
     <LazyMotion features={domAnimation}>
-      <section className="relative w-full pt-20 pb-20 px-4">
+      <section className="relative w-full pt-24 pb-24 px-4">
         <m.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: easeOut }}
           viewport={{ once: true }}
-          className="max-w-6xl mx-auto text-center  space-y-6 md:space-y-8"
+          transition={{ duration: 0.7, ease: easeOut }}
+          className="max-w-6xl mx-auto text-center space-y-6 md:space-y-8"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
             How It Works
@@ -31,12 +31,12 @@ export default function HowItWorks() {
                 key={index}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
                 transition={{
                   duration: 0.5,
                   ease: easeOut,
                   delay: index * 0.15,
                 }}
-                viewport={{ once: true }}
                 className="flex flex-col items-center text-center p-6 border border-border bg-card hover:shadow-md rounded-xl min-h-[240px] transition-all"
               >
                 <div className="w-12 h-12 flex items-center justify-center rounded-lg border border-primary/10 bg-primary/10 mb-4">

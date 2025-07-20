@@ -1,4 +1,4 @@
-import { CalendarDays, Send, UserCheck } from "lucide-react";
+import { Bell, CalendarDays, Clock, Send, Smartphone, UserCheck, Users } from "lucide-react";
 
 export const navLinks = [
   { href: "/", label: "Home" },
@@ -30,5 +30,38 @@ export const howItWorks = [
     title: "Get Timely Reminders",
     description:
       "You'll receive reminders exactly when you chose — no missed moments, no extra effort.",
+  },
+];
+
+export const coreFeatures = [
+  {
+    icon: CalendarDays,
+    title: "Effortless Event Creation",
+    description: "Create events in seconds and manage them from anywhere.",
+  },
+  {
+    icon: Bell,
+    title: "Smart Reminders",
+    description: "Get SMS or email reminders exactly when you need them.",
+  },
+  {
+    icon: Users,
+    title: "Group Scheduling",
+    description: "Coordinate plans easily with group invites and responses.",
+  },
+  {
+    icon: Smartphone,
+    title: "Mobile-Optimized",
+    description: "Designed to work seamlessly on all your devices.",
+  },
+  {
+    icon: Clock,
+    title: "Time Zone Support",
+    description: "Schedule across time zones without confusion.",
+  },
+  {
+    icon: Send,
+    title: "Notifications That Work",
+    description: "Reliable delivery via your chosen channel: SMS, email, or both.",
   },
 ];
