@@ -3,29 +3,20 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { createEventSchema, CreateEventValues } from "@/validations/events/createEventSchema";
-import { fromZonedTime } from "date-fns-tz";
+import { fromZonedTime, } from "date-fns-tz";
 import { revalidatePath } from "next/cache";
 
 function createEventDateTime(date: Date, time: string, userTimezone: string): Date {
   const year = date.getFullYear();
-  const month = date.getMonth() + 1; 
+  const month = date.getMonth() + 1;
   const day = date.getDate();
 
-  // Parse time components
   const [hours, minutes] = time.split(":").map(Number);
 
-  // Create date string in ISO format (without timezone)
   const dateTimeString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
 
-  // Convert from user's timezone to UTC for storage
+  // ✅ This converts the user's local date+time into a UTC JS Date object
   const eventDateTime = fromZonedTime(dateTimeString, userTimezone);
-
-  console.log(`📅 Date conversion debug:`);
-  console.log(`   Input date: ${date.toDateString()}`);
-  console.log(`   Input time: ${time}`);
-  console.log(`   User timezone: ${userTimezone}`);
-  console.log(`   Constructed string: ${dateTimeString}`);
-  console.log(`   Final UTC date: ${eventDateTime.toISOString()}`);
 
   return eventDateTime;
 }

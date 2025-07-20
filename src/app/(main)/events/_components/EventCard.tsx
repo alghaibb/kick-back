@@ -41,28 +41,56 @@ export function EventCard({
     includeWeekday: true,
     includeTime: true,
     timeZone: timezone,
-  }); 
+  });
 
   return (
     <div
       className={cn(
-        "p-4 border rounded-xl bg-card space-y-1 shadow-sm transition",
-        !disabled && "hover:shadow-md",
+        "p-4 rounded-xl border bg-card shadow-sm group transition-all",
+        !disabled && "hover:shadow-md hover:border-muted-foreground/30",
         disabled && "opacity-50 cursor-not-allowed pointer-events-none"
       )}
     >
-      <div className="flex items-center justify-between">
-        <div className="font-semibold text-base">{name}</div>
-        <Badge variant="outline" className="text-xs font-normal">
-          {createdByCurrentUser ? "Created by you" : "Invited"}
-        </Badge>
-      </div>
-      {description && (
-        <div className="text-sm text-muted-foreground">{description}</div>
-      )}
-      <div className="text-xs text-muted-foreground">{formattedDate}</div>
+      <header className="flex items-start justify-between mb-2">
+        <div className="flex flex-col gap-2">
+          <h3 className="font-semibold text-base text-foreground">{name}</h3>
+          <Badge
+            variant="outline"
+            className="self-start px-2 py-0.5 text-xs font-medium rounded-full border-muted-foreground/20 text-muted-foreground bg-muted"
+          >
+            {createdByCurrentUser ? "Created by you" : "Invited"}
+          </Badge>
+        </div>
+      </header>
 
-      <div className="flex justify-end mt-2 gap-2">
+      {description && (
+        <section className="mb-1">
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {description}
+          </p>
+        </section>
+      )}
+
+      <section className="space-y-1 text-sm text-muted-foreground mb-3">
+        <p>
+          <span className="font-medium text-foreground">Date:</span>{" "}
+          {formattedDate}
+        </p>
+        {location && (
+          <p>
+            <span className="font-medium text-foreground">Location:</span>{" "}
+            {location}
+          </p>
+        )}
+        {groupId && (
+          <p>
+            <span className="font-medium text-foreground">Group:</span>{" "}
+            {groups.find((g) => g.id === groupId)?.name ?? "N/A"}
+          </p>
+        )}
+      </section>
+
+      <footer className="flex justify-end gap-1 border-t pt-2 mt-2">
         {createdByCurrentUser && !disabled && (
           <Button
             variant="ghost"
@@ -79,7 +107,7 @@ export function EventCard({
                 groups,
               })
             }
-            className="text-primary hover:bg-primary/10"
+            className="text-muted-foreground hover:text-primary"
             aria-label="Edit Event"
           >
             <Pencil className="w-4 h-4" />
@@ -89,12 +117,13 @@ export function EventCard({
           variant="ghost"
           size="icon"
           onClick={() => open("delete-event", { eventId: id, eventName: name })}
-          className="text-destructive hover:bg-destructive/10"
+          className="text-muted-foreground hover:text-destructive"
           disabled={disabled}
+          aria-label="Delete Event"
         >
           <Trash2 className="w-4 h-4" />
         </Button>
-      </div>
+      </footer>
     </div>
   );
 }
