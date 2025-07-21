@@ -4,25 +4,26 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model User {
-  id            String    @id @default(cuid())
-  firstName     String
-  lastName      String?
-  email         String    @unique
-  nickname      String?
-  password      String?
-  emailVerified DateTime?
-  image         String?
-  hasOnboarded  Boolean   @default(false)
-  phoneNumber   String?   @unique
-  reminderType  String    @default("email")
-  reminderTime  String    @default("09:00")
-  timezone      String?
-  notificationOptIn Boolean @default(true)
+  id                String    @id @default(cuid())
+  firstName         String
+  lastName          String?
+  email             String    @unique
+  nickname          String?
+  password          String?
+  emailVerified     DateTime?
+  image             String?
+  hasOnboarded      Boolean   @default(false)
+  phoneNumber       String?   @unique
+  reminderType      String    @default("email")
+  reminderTime      String    @default("09:00")
+  timezone          String?
+  notificationOptIn Boolean   @default(true)
 
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -193,13 +194,13 @@ model Event {
 }
 
 model EventAttendee {
-  id                String    @id @default(cuid())
-  eventId           String
-  event             Event     @relation(fields: [eventId], references: [id])
-  userId            String
-  status            String?
-  invitedAt         DateTime  @default(now())
-  respondedAt       DateTime?
-  lastReminderSent  DateTime?
-  user              User      @relation(fields: [userId], references: [id])
+  id               String    @id @default(cuid())
+  eventId          String
+  event            Event     @relation(fields: [eventId], references: [id])
+  userId           String
+  status           String?
+  invitedAt        DateTime  @default(now())
+  respondedAt      DateTime?
+  lastReminderSent DateTime?
+  user             User      @relation(fields: [userId], references: [id])
 }

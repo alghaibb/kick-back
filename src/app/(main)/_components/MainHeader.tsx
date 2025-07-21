@@ -27,7 +27,7 @@ export function MainHeader({ onMenuClick }: MainHeaderProps) {
   if (!user) return null;
 
   return (
-    <header className="bg-card border-b border-border px-6 py-8">
+    <header className="bg-card border-b border-border px-6 py-5.5">
       <div className="flex items-center justify-between">
         {/* Left: Logo (mobile only) */}
         <div className="flex-1">

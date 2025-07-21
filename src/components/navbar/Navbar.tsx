@@ -53,11 +53,11 @@ export default function Navbar() {
                   variant="ghost"
                   className="hidden sm:inline-flex"
                 >
-                  <Link href="/login">Log in</Link>
+                  <Link href="/login">Log In</Link>
                 </Button>
 
                 <Button asChild size="sm" className="hidden sm:inline-flex">
-                  <Link href="/create-account">Create Account</Link>
+                  <Link href="/create-account">Get Started</Link>
                 </Button>
               </div>
             )}
