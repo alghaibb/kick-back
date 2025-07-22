@@ -1,3 +1,5 @@
+import CallToAction from "./_components/CallToAction";
+import Content from "./_components/Content";
 import Features from "./_components/Features";
 import Hero from "./_components/Hero";
 
@@ -6,6 +8,8 @@ export default function Home() {
     <>
       <Hero />
       <Features />
+      <Content />
+      <CallToAction />
     </>
   );
 }

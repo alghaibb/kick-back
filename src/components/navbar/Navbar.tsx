@@ -7,7 +7,7 @@ import { useSession } from "@/providers/SessionProvider";
 import Link from "next/link";
 import { ThemeSelector } from "../ui/theme-selector";
 import { UserDropdown } from "../UserDropdown";
-import { Logo } from "./_components/Logo";
+import { Logo } from "../Logo";
 import MobileNav from "./MobileNav";
 
 export default function Navbar() {
