@@ -76,6 +76,8 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+  --primary-8: oklch(0.21 0.006 285.885 / 8%);
+  --primary-50: oklch(0.21 0.006 285.885 / 50%);
 }
 
 .dark {
@@ -110,6 +112,8 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+  --primary-8: oklch(0.92 0.004 286.32 / 8%);
+  --primary-50: oklch(0.92 0.004 286.32 / 50%);
 }
 
 @layer base {
@@ -156,10 +160,14 @@
 .theme-blue-scaled {
   --primary: var(--color-blue-600);
   --primary-foreground: var(--color-blue-50);
+  --primary-8: color-mix(in oklab, var(--color-blue-600) 8%, transparent);
+  --primary-50: color-mix(in oklab, var(--color-blue-600) 50%, transparent);
 
   @variant dark {
     --primary: var(--color-blue-500);
     --primary-foreground: var(--color-blue-50);
+    --primary-8: color-mix(in oklab, var(--color-blue-500) 8%, transparent);
+    --primary-50: color-mix(in oklab, var(--color-blue-500) 50%, transparent);
   }
 }
 
@@ -167,10 +175,14 @@
 .theme-green-scaled {
   --primary: var(--color-lime-600);
   --primary-foreground: var(--color-lime-50);
+  --primary-8: color-mix(in oklab, var(--color-lime-600) 8%, transparent);
+  --primary-50: color-mix(in oklab, var(--color-lime-600) 50%, transparent);
 
   @variant dark {
     --primary: var(--color-lime-600);
     --primary-foreground: var(--color-lime-50);
+    --primary-8: color-mix(in oklab, var(--color-lime-600) 8%, transparent);
+    --primary-50: color-mix(in oklab, var(--color-lime-600) 50%, transparent);
   }
 }
 
@@ -178,9 +190,41 @@
 .theme-amber-scaled {
   --primary: var(--color-amber-600);
   --primary-foreground: var(--color-amber-50);
+  --primary-8: color-mix(in oklab, var(--color-amber-600) 8%, transparent);
+  --primary-50: color-mix(in oklab, var(--color-amber-600) 50%, transparent);
 
   @variant dark {
     --primary: var(--color-amber-500);
     --primary-foreground: var(--color-amber-50);
+    --primary-8: color-mix(in oklab, var(--color-amber-500) 8%, transparent);
+    --primary-50: color-mix(in oklab, var(--color-amber-500) 50%, transparent);
   }
+}
+
+.theme-default {
+  --color-border: #4b5563; /* zinc-950 */
+}
+.theme-default:hover {
+  --color-border: #374151; /* darker shade on hover */
+}
+
+.theme-blue {
+  --color-border: #3b82f6; /* blue-500 */
+}
+.theme-blue:hover {
+  --color-border: #2563eb; /* darker blue on hover */
+}
+
+.theme-green {
+  --color-border: #22c55e; /* green-500 */
+}
+.theme-green:hover {
+  --color-border: #16a34a; /* darker green */
+}
+
+.theme-amber {
+  --color-border: #f59e0b; /* amber-500 */
+}
+.theme-amber:hover {
+  --color-border: #d97706; /* darker amber */
 }

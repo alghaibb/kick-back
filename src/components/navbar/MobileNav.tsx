@@ -80,14 +80,13 @@ export default function MobileNav() {
         <div className="p-6 pt-0">
           {user ? (
             <LogoutButton
-              variant="outline"
               className="w-full h-10 font-medium"
             />
           ) : (
             <div className="space-y-2">
               <SheetClose asChild>
                 <Button asChild variant="outline" className="w-full h-10">
-                  <Link href="/login">Log in</Link>
+                  <Link href="/login">Log In</Link>
                 </Button>
               </SheetClose>
               <SheetClose asChild>

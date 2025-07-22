@@ -14,7 +14,7 @@ export default function Navbar() {
   const { user, status } = useSession();
 
   return (
-    <header className="w-full border-b border-border bg-background/70 backdrop-blur-sm sticky top-0 z-50">
+    <header className="w-full border-b border-border bg-background/90 backdrop-blur-md shadow-lg sticky top-0 z-50">
       <div className="mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Logo />
 
@@ -57,7 +57,7 @@ export default function Navbar() {
                 </Button>
 
                 <Button asChild size="sm" className="hidden sm:inline-flex">
-                  <Link href="/create-account">Get Started</Link>
+                  <Link href="/create-account">Create Account</Link>
                 </Button>
               </div>
             )}
