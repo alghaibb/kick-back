@@ -8,7 +8,6 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { useThemeConfig } from "@/providers/ActiveThemeProvider";
 import { Paintbrush } from "lucide-react";
