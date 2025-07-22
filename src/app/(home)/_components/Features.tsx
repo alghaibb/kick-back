@@ -2,9 +2,9 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useThemeConfig } from "@/providers/ActiveThemeProvider";
-import { motion, useInView, Variants } from "framer-motion";
+import { motion, useAnimation, useInView, Variants } from "framer-motion";
 import { Bell, CalendarClock, Users } from "lucide-react";
-import { ReactNode, useRef } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 
 const headingVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -41,16 +41,21 @@ const cardVariants: Variants = {
 };
 
 export default function Features() {
+  const controls = useAnimation();
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50% 0px" });
   const { activeTheme } = useThemeConfig();
+
+  useEffect(() => {
+    if (isInView) controls.start("visible");
+  }, [isInView, controls]);
 
   return (
     <section className="bg-transparent py-16 md:py-32" ref={ref}>
       <div className="@container mx-auto max-w-5xl px-6">
         <motion.div
           initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
+          animate={controls}
           variants={headingVariants}
           className="text-center"
         >
@@ -65,7 +70,7 @@ export default function Features() {
 
         <motion.div
           initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
+          animate={controls}
           variants={cardsContainerVariants}
         >
           <Card
@@ -87,6 +92,7 @@ export default function Features() {
             <motion.div
               className={`group theme-${activeTheme}`}
               variants={cardVariants}
+              style={{ willChange: "opacity, transform, filter" }}
             >
               <CardHeader className="pb-3">
                 <CardDecorator theme={activeTheme}>
@@ -107,6 +113,7 @@ export default function Features() {
             <motion.div
               className={`group theme-${activeTheme}`}
               variants={cardVariants}
+              style={{ willChange: "opacity, transform, filter" }}
             >
               <CardHeader className="pb-3">
                 <CardDecorator theme={activeTheme}>
@@ -127,6 +134,7 @@ export default function Features() {
             <motion.div
               className={`group theme-${activeTheme}`}
               variants={cardVariants}
+              style={{ willChange: "opacity, transform, filter" }}
             >
               <CardHeader className="pb-3">
                 <CardDecorator theme={activeTheme}>

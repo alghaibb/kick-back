@@ -154,6 +154,9 @@ export default function Hero() {
                   alt="app screen"
                   width="2700"
                   height="1440"
+                  placeholder="blur"
+                  priority
+                  blurDataURL="/dashboard-blur-dark.png"
                 />
                 <Image
                   className="z-2 border-border/25 aspect-15/8 relative rounded-2xl border dark:hidden"
@@ -161,6 +164,9 @@ export default function Hero() {
                   alt="app screen"
                   width="2700"
                   height="1440"
+                  placeholder="blur"
+                  priority
+                  blurDataURL="/dashboard-blur-light.png"
                 />
               </div>
             </div>
