@@ -10,5 +10,5 @@ export async function logout() {
     throw new Error("Unauthorized");
   }
 
-  await authSignOut({ redirect: true, redirectTo: "/login" });
+  await authSignOut({ redirect: false });
 }

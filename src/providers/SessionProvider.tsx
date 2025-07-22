@@ -14,11 +14,13 @@ export interface User {
 interface SessionContextType {
   user: User | null;
   status: "loading" | "authenticated" | "unauthenticated";
+  fetchUser: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextType>({
   user: null,
   status: "loading",
+  fetchUser: async () => {},
 });
 
 export const useSession = () => {
@@ -61,7 +63,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <SessionContext.Provider value={{ user, status }}>
+    <SessionContext.Provider value={{ user, status, fetchUser }}>
       {children}
     </SessionContext.Provider>
   );

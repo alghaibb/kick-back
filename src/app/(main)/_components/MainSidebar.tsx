@@ -104,7 +104,7 @@ export function MainSidebar({ onClose, isMobile }: MainSidebarProps) {
           className="w-full justify-start flex items-center gap-3"
         >
           <LogOut className="h-4 w-4" />
-          <span>Log out</span>
+          Log Out
         </LogoutButton>
       </div>
     </div>

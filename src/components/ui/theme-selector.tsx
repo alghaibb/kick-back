@@ -36,18 +36,14 @@ export function ThemeSelector() {
       <Select value={activeTheme} onValueChange={setActiveTheme}>
         <SelectTrigger
           id="theme-selector"
-          className="h-10 w-10 sm:w-auto px-0 sm:px-3 sm:min-w-[150px] flex items-center justify-center sm:justify-start gap-2 rounded-md border border-input bg-transparent transition-colors focus:outline-none focus:ring-1 focus:ring-ring [&>svg:last-child]:hidden"
+          className="
+            h-9 w-9 p-0 border-none bg-transparent shadow-none
+            flex items-center justify-center gap-2 rounded-md
+            transition-colors focus:outline-none focus:ring-1 focus:ring-ring
+            [&>svg:last-child]:hidden
+          "
         >
-          {/* Desktop: Text and value */}
-          <span className="hidden sm:block text-muted-foreground text-sm">
-            Select Theme:
-          </span>
-          <span className="hidden sm:block">
-            <SelectValue placeholder="Select a theme" />
-          </span>
-
-          {/* Mobile: Centered Paintbrush */}
-          <Paintbrush className="sm:hidden w-4 h-4 text-muted-foreground mx-auto" />
+          <Paintbrush className="w-5 h-5 text-muted-foreground mx-auto" />
         </SelectTrigger>
         <SelectContent align="end">
           {THEMES.map((group) => (
