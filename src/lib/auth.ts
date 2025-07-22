@@ -32,7 +32,8 @@ const authConfig: NextAuthConfig = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const { email, password } = credentials as { email: string; password?: string };
+        try {
+          const { email, password } = credentials as { email: string; password?: string };
 
         if (!email) {
           throw new Error("Email is required.");
@@ -67,6 +68,10 @@ const authConfig: NextAuthConfig = {
           emailVerified: user.emailVerified,
           image: user.image
         };
+        } catch (error) {
+          console.error("[NextAuth][credentials] Error:", error);
+          throw new Error("Invalid credentials.");
+        }
       }
     }),
   ],
@@ -113,15 +118,19 @@ const authConfig: NextAuthConfig = {
   },
   jwt: {
     encode: async function (params) {
+      console.log("[NextAuth][jwt.encode] params.token:", params.token);
+
       if (params.token?.credentials) {
         const sessionToken = uuid();
 
         if (!params.token.sub) {
+          console.error("[NextAuth][jwt.encode] No user ID found in token");
           throw new Error("No user ID found in token");
         }
 
         const userId = params.token.sub;
         if (!adapter.createSession) {
+          console.error("[NextAuth][jwt.encode] createSession method is not defined on the adapter");
           throw new Error("createSession method is not defined on the adapter");
         }
         const createdSession = await adapter.createSession({
@@ -131,9 +140,11 @@ const authConfig: NextAuthConfig = {
         });
 
         if (!createdSession) {
+          console.error("[NextAuth][jwt.encode] Failed to create session");
           throw new Error("Failed to create session");
         }
 
+        console.log("[NextAuth][jwt.encode] Created session:", createdSession);
         return sessionToken;
       }
       return defaultEncode(params);
