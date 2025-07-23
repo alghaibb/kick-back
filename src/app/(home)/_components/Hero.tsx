@@ -1,41 +1,32 @@
 "use client";
 
-import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Button } from "@/components/ui/button";
-import type { Transition, Variants } from "framer-motion";
-import { motion } from "framer-motion";
+import { TextEffect } from "@/components/ui/text-effect";
+import { containerVariants, itemVariants } from "@/lib/animationVariants";
+import { useSectionAnimation } from "@/providers/SectionAnimationProvider";
+import { motion, useAnimation, useInView } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-
-const transitionVariants: { item: Variants } = {
-  item: {
-    hidden: {
-      opacity: 0,
-      filter: "blur(12px)",
-      y: 12,
-    },
-    visible: {
-      opacity: 1,
-      filter: "blur(0px)",
-      y: 0,
-      transition: {
-        type: "spring" as const,
-        bounce: 0.3,
-        duration: 1.5,
-      } as Transition,
-    },
-  },
-};
-
-const headlineWords = [
-  { text: "Plan,", className: "" },
-  { text: "Connect,", className: "text-primary" },
-  { text: "Celebrate.", className: "" },
-];
+import { useEffect, useRef, useState } from "react";
 
 export default function Hero() {
+  const ref = useRef(null);
+  const controls = useAnimation();
+  const isInView = useInView(ref, { once: true, margin: "-50% 0px" });
+  const { unlocked, unlockNext } = useSectionAnimation();
+  const myIndex = 0;
+  const [hasTriggered, setHasTriggered] = useState(false);
+
+  useEffect(() => {
+    if (isInView && unlocked >= myIndex && !hasTriggered) {
+      controls.start("visible");
+      setHasTriggered(true);
+      setTimeout(unlockNext, 300);
+    }
+  }, [isInView, unlocked, controls, unlockNext, hasTriggered]);
+
   return (
-    <main className="overflow-hidden">
+    <main className="overflow-hidden" ref={ref}>
       <div
         aria-hidden
         className="absolute inset-0 isolate hidden contain-strict lg:block"
@@ -46,131 +37,96 @@ export default function Hero() {
       </div>
       <section>
         <div className="relative pt-24">
-          <div className="absolute inset-0 -z-10 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--color-background)_75%)]"></div>
-          <div className="mx-auto max-w-5xl px-6">
+          <motion.div
+            className="mx-auto max-w-5xl px-6"
+            initial="hidden"
+            animate={controls}
+            variants={containerVariants}
+          >
             <div className="sm:mx-auto lg:mr-auto lg:mt-0">
-              <motion.h1
-                className="mt-8 max-w-2xl text-balance text-5xl font-medium md:text-6xl lg:mt-16 flex flex-wrap gap-x-3"
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  visible: { transition: { staggerChildren: 0.13 } },
-                }}
+              <TextEffect
+                per="word"
+                as="h1"
+                className="mt-8 max-w-2xl text-balance text-5xl font-medium md:text-6xl lg:mt-16"
+                preset="fade-in-blur"
+                trigger={hasTriggered}
+                speedReveal={2}
               >
-                {headlineWords.map((word, idx) => (
-                  <motion.span
-                    key={word.text + idx}
-                    className={word.className}
-                    variants={{
-                      hidden: { opacity: 0, y: 24, filter: "blur(8px)" },
-                      visible: {
-                        opacity: 1,
-                        y: 0,
-                        filter: "blur(0px)",
-                        transition: {
-                          type: "spring",
-                          duration: 1,
-                          bounce: 0.28,
-                        },
-                      },
-                    }}
-                  >
-                    {word.text}
-                  </motion.span>
-                ))}
-              </motion.h1>
+                Plan, <span className="text-primary font-bold">Connect</span>,
+                Celebrate.
+              </TextEffect>
 
-              {/* Subheadline example (optional, can use block fade-in) */}
-              <motion.p
-                initial={{ opacity: 0, y: 28, filter: "blur(6px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0)" }}
-                transition={{ delay: 0.6, duration: 1.1, type: "spring" }}
+              <TextEffect
+                per="word"
+                as="p"
                 className="mt-8 max-w-2xl text-pretty text-lg"
+                preset="fade-in-blur"
+                delay={0.3}
+                trigger={hasTriggered}
+                speedReveal={2}
               >
                 Organize events and groups with ease.{" "}
                 <span className="font-bold text-primary">Kick Back</span> is
                 your modern dashboard for every occasion—simple, beautiful, and
                 powerful.
-              </motion.p>
+              </TextEffect>
 
-              <AnimatedGroup
-                variants={{
-                  container: {
-                    visible: {
-                      transition: {
-                        staggerChildren: 0.05,
-                        delayChildren: 0.75,
-                      },
-                    },
-                  },
-                  ...transitionVariants,
-                }}
+              <motion.div
                 className="mt-12 flex gap-2 flex-col sm:flex-row sm:justify-start sm:gap-4"
+                variants={itemVariants}
               >
-                <div key={1}>
-                  <Button
-                    asChild
-                    size="lg"
-                    className="text-base w-full sm:w-auto"
-                  >
-                    <Link href="/create-account">Get Started</Link>
-                  </Button>
-                </div>
-                <div key={2} className="w-full sm:w-auto">
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    className="text-base w-full sm:w-auto"
-                  >
-                    <Link href="#features">Learn More</Link>
-                  </Button>
-                </div>
-              </AnimatedGroup>
+                <Button
+                  asChild
+                  size="lg"
+                  className="text-base w-full sm:w-auto"
+                >
+                  <Link href="/create-account">Get Started</Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="text-base w-full sm:w-auto"
+                >
+                  <Link href="#features">Learn More</Link>
+                </Button>
+              </motion.div>
             </div>
-          </div>
-          <AnimatedGroup
-            variants={{
-              container: {
-                visible: {
-                  transition: {
-                    staggerChildren: 0.05,
-                    delayChildren: 0.75,
-                  },
-                },
-              },
-              ...transitionVariants,
-            }}
-          >
-            <div className="relative -mr-56 mt-8 overflow-hidden px-2 sm:mr-0 sm:mt-12 md:mt-20">
-              <div
-                aria-hidden
-                className="bg-linear-to-b to-background absolute inset-0 z-10 from-transparent from-35%"
-              />
+
+            <motion.div
+              className="relative -mr-56 mt-8 overflow-hidden px-2 sm:mr-0 sm:mt-12 md:mt-20"
+              variants={itemVariants}
+            >
               <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 bg-background relative mx-auto max-w-5xl overflow-hidden rounded-2xl border p-4 shadow-lg shadow-zinc-950/15 ring-1">
-                <Image
-                  className="bg-background aspect-15/8 relative hidden rounded-2xl dark:block"
-                  src="/dashboard-dark.png"
-                  alt="app screen"
-                  width="2700"
-                  height="1440"
-                  placeholder="blur"
-                  priority
-                  blurDataURL="/dashboard-blur-dark.png"
-                />
-                <Image
-                  className="z-2 border-border/25 aspect-15/8 relative rounded-2xl border dark:hidden"
-                  src="/dashboard-light.png"
-                  alt="app screen"
-                  width="2700"
-                  height="1440"
-                  placeholder="blur"
-                  priority
-                  blurDataURL="/dashboard-blur-light.png"
-                />
+                <div className="relative">
+                  <Image
+                    className="bg-background aspect-15/8 relative hidden rounded-2xl dark:block"
+                    src="/dashboard-dark.png"
+                    alt="app screen"
+                    width="2700"
+                    height="1440"
+                    placeholder="blur"
+                    priority
+                    blurDataURL="/dashboard-blur-dark.png"
+                  />
+                  <Image
+                    className="z-2 border-border/25 aspect-15/8 relative rounded-2xl border dark:hidden"
+                    src="/dashboard-light.png"
+                    alt="app screen"
+                    width="2700"
+                    height="1440"
+                    placeholder="blur"
+                    priority
+                    blurDataURL="/dashboard-blur-light.png"
+                  />
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background from-40% via-70% to-100% pointer-events-none rounded-2xl"
+                  />
+                </div>
               </div>
-            </div>
-          </AnimatedGroup>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
     </main>

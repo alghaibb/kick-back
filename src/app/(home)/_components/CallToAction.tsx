@@ -1,70 +1,66 @@
 "use client";
 
-import { useThemeConfig } from "@/providers/ActiveThemeProvider";
-import { motion, useAnimation, useInView, Variants } from "framer-motion";
-import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { TextEffect } from "@/components/ui/text-effect";
+import { containerVariants, itemVariants } from "@/lib/animationVariants";
+import { useThemeConfig } from "@/providers/ActiveThemeProvider";
+import { useSectionAnimation } from "@/providers/SectionAnimationProvider";
+import { motion, useAnimation, useInView } from "framer-motion";
 import Link from "next/link";
-
-const containerVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      staggerChildren: 0.07,
-      delayChildren: 0.15,
-      when: "beforeChildren",
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: {
-      type: "spring",
-      bounce: 0.3,
-      duration: 0.8,
-    },
-  },
-};
+import { useEffect, useRef, useState } from "react";
 
 export default function CallToAction() {
   const ref = useRef(null);
   const controls = useAnimation();
   const isInView = useInView(ref, { once: true, margin: "-50% 0px" });
+  const { unlocked, unlockNext } = useSectionAnimation();
+  const myIndex = 3;
   const { activeTheme } = useThemeConfig();
+  const [hasTriggered, setHasTriggered] = useState(false);
 
   useEffect(() => {
-    if (isInView) controls.start("visible");
-  }, [isInView, controls]);
+    if (isInView && unlocked >= myIndex && !hasTriggered) {
+      controls.start("visible");
+      setHasTriggered(true);
+      setTimeout(unlockNext, 300);
+    }
+  }, [isInView, unlocked, controls, unlockNext, hasTriggered]);
 
   return (
     <section className={`py-16 md:py-32 theme-${activeTheme}`} ref={ref}>
       <motion.div
         className="mx-auto max-w-5xl px-6 text-center"
         initial="hidden"
-        animate={controls}
+        animate={isInView && unlocked >= myIndex ? controls : "hidden"}
         variants={containerVariants}
       >
-        <motion.h2
+        <TextEffect
+          per="word"
+          as="h2"
           className="text-balance text-4xl font-semibold lg:text-5xl"
-          variants={itemVariants}
+          preset="fade-in-blur"
+          trigger={hasTriggered}
+          speedReveal={2}
         >
-          Ready to make event planning effortless?
-        </motion.h2>
+          Ready to make event planning{" "}
+          <span className="text-primary font-bold">effortless</span>?
+        </TextEffect>
 
-        <motion.p
+        <TextEffect
+          per="word"
+          as="p"
           className="mt-4 text-muted-foreground text-lg max-w-xl mx-auto"
-          variants={itemVariants}
+          preset="fade-in-blur"
+          delay={0.3}
+          trigger={hasTriggered}
+          speedReveal={2}
         >
-          Join your family and friends in creating unforgettable moments. Start
-          planning today with easy-to-use tools designed just for you.
-        </motion.p>
+          Join your{" "}
+          <span className="font-bold text-primary">family and friends</span> in
+          creating{" "}
+          <span className="font-bold text-primary">unforgettable moments</span>.
+          Start planning today with easy-to-use tools designed just for you.
+        </TextEffect>
 
         <motion.div
           className="mt-12 flex flex-wrap justify-center gap-4"

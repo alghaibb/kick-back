@@ -1,61 +1,50 @@
 "use client";
 
+import { TextEffect } from "@/components/ui/text-effect";
+import { containerVariants, itemVariants } from "@/lib/animationVariants";
 import { useThemeConfig } from "@/providers/ActiveThemeProvider";
-import { motion, useAnimation, useInView, Variants } from "framer-motion";
+import { useSectionAnimation } from "@/providers/SectionAnimationProvider";
+import { motion, useAnimation, useInView } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
-
-const containerVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      staggerChildren: 0.07,
-      delayChildren: 0.15,
-      when: "beforeChildren",
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: {
-      type: "spring",
-      bounce: 0.3,
-      duration: 0.8,
-    },
-  },
-};
+import { useEffect, useRef, useState } from "react";
 
 export default function Content() {
   const ref = useRef(null);
   const controls = useAnimation();
   const isInView = useInView(ref, { once: true, margin: "-50% 0px" });
+  const { unlocked, unlockNext } = useSectionAnimation();
+  const myIndex = 2;
   const { activeTheme } = useThemeConfig();
+  const [hasTriggered, setHasTriggered] = useState(false);
 
   useEffect(() => {
-    if (isInView) controls.start("visible");
-  }, [isInView, controls]);
+    if (isInView && unlocked >= myIndex && !hasTriggered) {
+      controls.start("visible");
+      setHasTriggered(true);
+      setTimeout(unlockNext, 300);
+    }
+  }, [isInView, unlocked, controls, unlockNext, hasTriggered]);
 
   return (
     <section className={`py-16 md:py-32 theme-${activeTheme}`} ref={ref}>
       <motion.div
         className="mx-auto max-w-5xl space-y-8 px-6 md:space-y-16"
         initial="hidden"
-        animate={controls}
+        animate={isInView && unlocked >= myIndex ? controls : "hidden"}
         variants={containerVariants}
       >
-        <motion.h2
+        <TextEffect
+          per="word"
+          as="h2"
           className="relative z-10 max-w-xl text-4xl font-medium lg:text-5xl"
-          variants={itemVariants}
+          preset="fade-in-blur"
+          trigger={hasTriggered}
+          speedReveal={2}
         >
-          Bringing your family and friends together effortlessly.
-        </motion.h2>
+          Bringing your{" "}
+          <span className="text-primary font-bold">family and friends</span>{" "}
+          together effortlessly.
+        </TextEffect>
 
         <div className="grid gap-6 sm:grid-cols-2 md:gap-12 lg:gap-24">
           <motion.div
@@ -75,28 +64,66 @@ export default function Content() {
             </div>
           </motion.div>
 
-          <motion.div className="relative space-y-4" variants={itemVariants}>
-            <p className="text-muted-foreground">
-              Plan memorable events with ease and joy.{" "}
-              <span className="text-accent-foreground font-bold">
-                <span className="text-primary">Connect</span>,{" "}
-                <span className="text-primary">organize</span>, and{" "}
-                <span className="text-primary">celebrate</span>
+          <div className="relative space-y-4">
+            <TextEffect
+              per="word"
+              as="p"
+              className="text-muted-foreground"
+              preset="fade-in-blur"
+              delay={0.2}
+              trigger={hasTriggered}
+              speedReveal={2}
+            >
+              Plan{" "}
+              <span className="font-bold text-primary">memorable events</span>{" "}
+              with ease and joy.{" "}
+              <span className="font-bold text-primary">
+                Connect, organize, and celebrate
               </span>{" "}
               with those who matter most.
-            </p>
-            <p className="text-muted-foreground">
-              From intimate gatherings to big celebrations, manage invites,
-              schedules, and reminders — all in one place.
-            </p>
-            <p className="text-muted-foreground">
-              Automated reminders help ensure everyone stays informed and on
-              time.
-            </p>
-            <p className="text-muted-foreground">
-              Simplify your event planning so you can focus on making memories.
-            </p>
-          </motion.div>
+            </TextEffect>
+            <TextEffect
+              per="word"
+              as="p"
+              className="text-muted-foreground"
+              preset="fade-in-blur"
+              delay={0.4}
+              trigger={hasTriggered}
+              speedReveal={2}
+            >
+              From intimate gatherings to big celebrations, manage{" "}
+              <span className="font-bold text-primary">
+                invites, schedules, and reminders
+              </span>{" "}
+              — all in one place.
+            </TextEffect>
+            <TextEffect
+              per="word"
+              as="p"
+              className="text-muted-foreground"
+              preset="fade-in-blur"
+              delay={0.6}
+              trigger={hasTriggered}
+              speedReveal={2}
+            >
+              <span className="font-bold text-primary">
+                Automated reminders
+              </span>{" "}
+              help ensure everyone stays informed and on time.
+            </TextEffect>
+            <TextEffect
+              per="word"
+              as="p"
+              className="text-muted-foreground"
+              preset="fade-in-blur"
+              delay={0.8}
+              trigger={hasTriggered}
+              speedReveal={2}
+            >
+              Simplify your event planning so you can focus on{" "}
+              <span className="font-bold text-primary">making memories</span>.
+            </TextEffect>
+          </div>
         </div>
       </motion.div>
     </section>

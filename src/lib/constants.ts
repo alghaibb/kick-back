@@ -1,4 +1,4 @@
-import { Bell, CalendarDays, Clock, Send, Smartphone, UserCheck, Users } from "lucide-react";
+import { Bell, CalendarClock, Users } from "lucide-react";
 
 export const navLinks = [
   { href: "/", label: "Home" },
@@ -12,56 +12,23 @@ export const userMenuLinks = [
   { href: "/settings", label: "Settings" },
 ];
 
-export const howItWorks = [
-  {
-    icon: UserCheck,
-    title: "Set Your Preferences",
-    description:
-      "During onboarding, choose how you want to be reminded — via SMS, email, or both — and what time works best for you.",
-  },
-  {
-    icon: CalendarDays,
-    title: "Create Events",
-    description:
-      "Plan your important moments anytime. Add events from your dashboard and manage them easily.",
-  },
-  {
-    icon: Send,
-    title: "Get Timely Reminders",
-    description:
-      "You'll receive reminders exactly when you chose — no missed moments, no extra effort.",
-  },
-];
-
-export const coreFeatures = [
-  {
-    icon: CalendarDays,
-    title: "Effortless Event Creation",
-    description: "Create events in seconds and manage them from anywhere.",
-  },
+export const features = [
   {
     icon: Bell,
-    title: "Smart Reminders",
-    description: "Get SMS or email reminders exactly when you need them.",
+    title: "Automated Reminders",
+    description:
+      "SMS, email, or both: reminders sent automatically at the time you set during onboarding.",
   },
   {
     icon: Users,
-    title: "Group Scheduling",
-    description: "Coordinate plans easily with group invites and responses.",
+    title: "Groups & Events",
+    description:
+      "Create groups, invite friends, manage all your events—keep everything organized in one place.",
   },
   {
-    icon: Smartphone,
-    title: "Mobile-Optimized",
-    description: "Designed to work seamlessly on all your devices.",
-  },
-  {
-    icon: Clock,
-    title: "Time Zone Support",
-    description: "Schedule across time zones without confusion.",
-  },
-  {
-    icon: Send,
-    title: "Notifications That Work",
-    description: "Reliable delivery via your chosen channel: SMS, email, or both.",
+    icon: CalendarClock,
+    title: "Smart Scheduling",
+    description:
+      "Find the perfect time for everyone, sync with your calendar, and avoid double bookings.",
   },
 ];
