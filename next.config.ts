@@ -8,6 +8,17 @@ const nextConfig: NextConfig = {
         hostname: "**.vercel-storage.com",
         pathname: "/**"
       },
+      // Google Images (for profile pictures)
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        pathname: "/**"
+      },
+      {
+        protocol: "https",
+        hostname: "*.googleusercontent.com",
+        pathname: "/**"
+      },
     ],
   },
   devIndicators: false,

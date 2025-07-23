@@ -11,24 +11,28 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { navLinks } from "@/lib/constants";
-import { useSession } from "@/providers/SessionProvider";
 import { Menu } from "lucide-react";
 import Link from "next/link";
+import { memo } from "react";
 import UserInfo from "./_components/UserInfo";
 
-export default function MobileNav() {
-  const { user } = useSession();
+function MobileNav() {
+  const { user, isLoading, isAuthenticated } = useAuth();
   const isMobile = useIsMobile();
 
+  // Only render on mobile devices
+  if (!isMobile) return null;
+
   return (
-    <Sheet key={`mobile-nav-${isMobile}`}>
+    <Sheet>
       <SheetTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
-          className="sm:hidden h-9 w-9 hover:bg-muted/50"
+          className="h-9 w-9 hover:bg-muted/50"
         >
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle menu</span>
@@ -36,25 +40,22 @@ export default function MobileNav() {
       </SheetTrigger>
 
       <SheetContent side="right" className="w-[300px] flex flex-col p-0">
-        {/* Header */}
         <SheetHeader className="flex flex-row items-center justify-start">
           <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
         </SheetHeader>
 
         {/* User Section */}
         {user && (
-          <>
-            <div className="px-6 pb-4">
-              <div className="rounded-lg bg-muted/30 p-4">
-                <UserInfo
-                  firstName={user.firstName}
-                  nickname={user.nickname}
-                  email={user.email}
-                  image={user.image}
-                />
-              </div>
+          <div className="px-6 pb-4">
+            <div className="rounded-lg bg-muted/30 p-4">
+              <UserInfo
+                firstName={user.firstName}
+                nickname={user.nickname}
+                email={user.email}
+                image={user.image}
+              />
             </div>
-          </>
+          </div>
         )}
 
         <Separator />
@@ -74,14 +75,15 @@ export default function MobileNav() {
             ))}
           </div>
         </nav>
+
         <Separator />
 
-        {/* Bottom Section */}
+        {/* Authentication Section */}
         <div className="p-6 pt-0">
-          {user ? (
-            <LogoutButton
-              className="w-full h-10 font-medium"
-            />
+          {isLoading ? (
+            <div className="w-full h-10 animate-pulse bg-muted rounded"></div>
+          ) : isAuthenticated ? (
+            <LogoutButton className="w-full h-10 font-medium" />
           ) : (
             <div className="space-y-2">
               <SheetClose asChild>
@@ -101,3 +103,5 @@ export default function MobileNav() {
     </Sheet>
   );
 }
+
+export default memo(MobileNav);

@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import { useAuth } from "@/hooks/use-auth";
 import { navLinks } from "@/lib/constants";
-import { useSession } from "@/providers/SessionProvider";
 import Link from "next/link";
 import { ThemeSelector } from "../ui/theme-selector";
 import { UserDropdown } from "../UserDropdown";
@@ -11,7 +11,7 @@ import { Logo } from "../Logo";
 import MobileNav from "./MobileNav";
 
 export default function Navbar() {
-  const { user, status } = useSession();
+  const { isLoading, isAuthenticated } = useAuth();
 
   return (
     <header className="w-full border-b border-border bg-background/90 backdrop-blur-md shadow-lg sticky top-0 z-50">
@@ -38,25 +38,19 @@ export default function Navbar() {
           <ModeToggle />
           <ThemeSelector />
 
+          {/* Desktop Auth */}
           <div className="hidden sm:block">
-            {status === "loading" ? (
+            {isLoading ? (
               <div className="w-8 h-8 animate-pulse bg-muted rounded-full"></div>
-            ) : user ? (
-              <div className="hidden sm:flex">
-                <UserDropdown />
-              </div>
+            ) : isAuthenticated ? (
+              <UserDropdown />
             ) : (
               <div className="flex items-center gap-2">
-                <Button
-                  asChild
-                  size="sm"
-                  variant="ghost"
-                  className="hidden sm:inline-flex"
-                >
+                <Button asChild size="sm" variant="ghost">
                   <Link href="/login">Log In</Link>
                 </Button>
 
-                <Button asChild size="sm" className="hidden sm:inline-flex">
+                <Button asChild size="sm">
                   <Link href="/create-account">Create Account</Link>
                 </Button>
               </div>
