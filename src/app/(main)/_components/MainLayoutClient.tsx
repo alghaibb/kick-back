@@ -1,24 +1,24 @@
 "use client";
 
+import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { useSession } from "@/providers/SessionProvider";
+import { useThemeConfig } from "@/providers/ActiveThemeProvider";
 import { useEffect, useState } from "react";
 import { MainHeader } from "./MainHeader";
 import { MainSidebar } from "./MainSidebar";
-import { useThemeConfig } from "@/providers/ActiveThemeProvider";
 
 interface MainLayoutClientProps {
   children: React.ReactNode;
 }
 
 export function MainLayoutClient({ children }: MainLayoutClientProps) {
-  const { user } = useSession();
+  const { user } = useAuth();
   const { activeTheme } = useThemeConfig();
-  
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
-  
+
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
     return null;
   }
 
-   const getThemeBackground = () => {
+  const getThemeBackground = () => {
     switch (activeTheme) {
       case "blue":
         return "bg-gradient-to-br from-background via-background to-blue-50/30 dark:to-blue-950/30";
@@ -42,39 +42,56 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
     }
   };
 
+  const toggleMobileSidebar = () => {
+    if (isMobile) {
+      setMobileSidebarOpen(!mobileSidebarOpen);
+    }
+  };
+
   return (
     <div className={cn("min-h-screen", getThemeBackground())}>
       <div className="flex h-screen">
-        {/* Sidebar - Hidden on mobile unless open */}
+        {/* Sidebar - Always visible on desktop, collapsible on mobile */}
         {isHydrated && (
-          <div
-            className={cn(
-              isMobile
-                ? "fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out"
-                : "relative",
-              isMobile && !sidebarOpen ? "-translate-x-full" : "translate-x-0",
-              "w-64"
+          <>
+            {isMobile ? (
+              // Mobile: Full width sidebar
+              <div
+                className={cn(
+                  "transition-all duration-300 ease-in-out",
+                  mobileSidebarOpen ? "w-full" : "w-0"
+                )}
+              >
+                <div
+                  className={cn(
+                    "w-full h-full bg-card transition-opacity duration-300",
+                    mobileSidebarOpen ? "opacity-100" : "opacity-0"
+                  )}
+                >
+                  <MainSidebar
+                    isCollapsed={!mobileSidebarOpen}
+                    isMobile={isMobile}
+                    onNavigate={() => setMobileSidebarOpen(false)}
+                  />
+                </div>
+              </div>
+            ) : (
+              // Desktop: Always visible sidebar
+              <div className="w-64 bg-card border-r border-border">
+                <MainSidebar isCollapsed={false} isMobile={false} />
+              </div>
             )}
-          >
-            <MainSidebar
-              onClose={() => setSidebarOpen(false)}
-              isMobile={isMobile}
-            />
-          </div>
+          </>
         )}
 
-        {/* Overlay for mobile */}
-        {isMobile && sidebarOpen && (
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setSidebarOpen(false)}
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          {/* Header with Toggle (only on mobile) */}
+          <MainHeader
+            onToggleSidebar={isMobile ? toggleMobileSidebar : undefined}
+            sidebarOpen={isMobile ? mobileSidebarOpen : true}
+            showToggle={isMobile}
           />
-        )}
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header */}
-          <MainHeader onMenuClick={() => setSidebarOpen(true)} />
 
           {/* Page Content */}
           <main className="flex-1 overflow-y-auto p-6">

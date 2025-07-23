@@ -10,12 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/use-auth";
 import { userMenuLinks } from "@/lib/constants";
-import { useSession } from "@/providers/SessionProvider";
 import Link from "next/link";
 
 export function UserDropdown() {
-  const { user } = useSession();
+  const { user } = useAuth();
 
   if (!user) return null;
 

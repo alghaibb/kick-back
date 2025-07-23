@@ -1,80 +1,98 @@
 "use client";
 
-import LogoutButton from "@/app/(auth)/(logout)/_components/LogoutButton";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { ThemeSelector } from "@/components/ui/theme-selector";
-import { useSession } from "@/providers/SessionProvider";
-import { LogOut, Menu } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
-import { navigation } from "./constants";
+import { cn } from "@/lib/utils";
 
 interface MainHeaderProps {
-  onMenuClick?: () => void;
-  isMobile?: boolean;
+  onToggleSidebar?: () => void;
+  sidebarOpen?: boolean;
+  showToggle?: boolean;
 }
 
-export function MainHeader({ onMenuClick }: MainHeaderProps) {
-  const { user } = useSession();
+export function MainHeader({
+  onToggleSidebar,
+  sidebarOpen,
+  showToggle,
+}: MainHeaderProps) {
+  const { user } = useAuth();
 
   if (!user) return null;
 
-  return (
-    <header className="bg-card border-b border-border px-6 py-5.5">
-      <div className="flex items-center justify-between">
-        {/* Left: Logo (mobile only) */}
-        <div className="flex-1">
-          <Link href="/" className="flex items-center space-x-2 md:hidden">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">
-                KB
-              </span>
-            </div>
-            <span className="font-bold text-xl text-foreground">Kick Back</span>
-          </Link>
-        </div>
+  const handleToggleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
+    if (onToggleSidebar) {
+      onToggleSidebar();
+    }
+  };
 
-        {/* Right: Actions */}
-        <div className="flex items-center space-x-4">
-          <ModeToggle />
-          <ThemeSelector />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+  const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    console.log("Logo clicked - this should navigate");
+  };
+
+  return (
+    <header
+      className={cn(
+        "bg-card border-b border-border py-5 sm:py-5",
+        showToggle && sidebarOpen ? "px-4" : "px-6"
+      )}
+    >
+      <div className="relative flex items-center justify-between h-10">
+        {/* Left: Toggle Button */}
+        <div className="flex items-center h-full flex-shrink-0">
+          {showToggle && (
+            <div className="relative z-10">
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden"
-                onClick={onMenuClick}
+                onClick={handleToggleClick}
+                className="h-10 w-10"
+                type="button"
+                aria-label="Toggle sidebar"
               >
-                <Menu className="h-5 w-5" />
+                {sidebarOpen ? (
+                  <PanelLeftClose className="h-5 w-5" />
+                ) : (
+                  <PanelLeftOpen className="h-5 w-5" />
+                )}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {navigation.map((item) => (
-                <DropdownMenuItem asChild key={item.name}>
-                  <Link href={item.href}>{item.name}</Link>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <LogoutButton
-                  variant="ghost"
-                  className="w-full justify-start flex items-center gap-3"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Log out</span>
-                </LogoutButton>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </div>
+          )}
         </div>
+
+        {/* Center: Logo - Absolutely centered */}
+        {showToggle && !sidebarOpen && (
+          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0">
+            <Link
+              href="/"
+              className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+              onClick={handleLogoClick}
+            >
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">
+                  KB
+                </span>
+              </div>
+              <span className="font-bold text-xl text-foreground whitespace-nowrap">
+                Kick Back
+              </span>
+            </Link>
+          </div>
+        )}
+
+        {/* Right: Theme Controls - Only on desktop */}
+        {!showToggle && (
+          <div className="flex items-center gap-3 h-full flex-shrink-0">
+            <ModeToggle />
+            <ThemeSelector />
+          </div>
+        )}
       </div>
     </header>
   );

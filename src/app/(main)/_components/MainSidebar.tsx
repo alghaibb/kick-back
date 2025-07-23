@@ -3,20 +3,27 @@
 import LogoutButton from "@/app/(auth)/(logout)/_components/LogoutButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ModeToggle } from "@/components/ui/mode-toggle";
+import { ThemeSelector } from "@/components/ui/theme-selector";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { useSession } from "@/providers/SessionProvider";
-import { LogOut, X } from "lucide-react";
+import { LogOut, PanelLeftClose } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { navigation } from "./constants";
 
 interface MainSidebarProps {
-  onClose?: () => void;
+  isCollapsed?: boolean;
   isMobile?: boolean;
+  onNavigate?: () => void;
 }
 
-export function MainSidebar({ onClose, isMobile }: MainSidebarProps) {
-  const { user } = useSession();
+export function MainSidebar({
+  isCollapsed,
+  isMobile,
+  onNavigate,
+}: MainSidebarProps) {
+  const { user } = useAuth();
   const pathname = usePathname();
 
   if (!user) return null;
@@ -27,40 +34,63 @@ export function MainSidebar({ onClose, isMobile }: MainSidebarProps) {
     return (firstName[0] || nickname[0] || "U").toUpperCase();
   };
 
-  const handleNavigation = () => {
-    if (isMobile && onClose) {
-      onClose();
+  const handleNavClick = () => {
+    if (isMobile && onNavigate) {
+      onNavigate();
+    }
+  };
+
+  const handleClose = () => {
+    if (isMobile && onNavigate) {
+      onNavigate();
     }
   };
 
   return (
-    <div className="w-64 bg-card border-r border-border flex flex-col h-full">
-      {/* Logo/Brand */}
-      <div className="p-6 border-b border-border flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">
-              KB
-            </span>
-          </div>
-          <span className="font-bold text-xl">Kick Back</span>
-        </Link>
-
-        {/* Close button for mobile */}
-        {isMobile && onClose && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="md:hidden"
+    <div className="h-full flex flex-col bg-card">
+      {/* Header with Logo and Close Button */}
+      <div className="p-6 border-b border-border">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center space-x-2"
+            onClick={handleNavClick}
           >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">
+                KB
+              </span>
+            </div>
+            <span className="font-bold text-xl">Kick Back</span>
+          </Link>
+
+          {/* Close Button - Only on mobile */}
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClose}
+              className="h-10 w-10"
+              aria-label="Close sidebar"
+            >
+              <PanelLeftClose className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
       </div>
 
+      {/* Theme Controls - Only on mobile */}
+      {isMobile && (
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center justify-center gap-4">
+            <ModeToggle />
+            <ThemeSelector />
+          </div>
+        </div>
+      )}
+
       {/* Navigation */}
-      <nav className="flex-1 p-4 flex flex-col space-y-4">
+      <nav className="flex-1 p-4 space-y-2">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -73,7 +103,7 @@ export function MainSidebar({ onClose, isMobile }: MainSidebarProps) {
                 isActive && "bg-primary text-primary-foreground"
               )}
             >
-              <Link href={item.href} onClick={handleNavigation}>
+              <Link href={item.href} onClick={handleNavClick}>
                 <item.icon className="mr-3 h-4 w-4" />
                 {item.name}
               </Link>

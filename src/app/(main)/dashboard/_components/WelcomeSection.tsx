@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "@/providers/SessionProvider";
+import { useAuth } from "@/hooks/use-auth";
 
 interface WelcomeSectionProps {
   subtitle?: string;
@@ -9,7 +9,7 @@ interface WelcomeSectionProps {
 export function WelcomeSection({
   subtitle = "Ready to plan your next amazing event?",
 }: WelcomeSectionProps) {
-  const { user } = useSession();
+  const { user } = useAuth();
   const name = user?.nickname || user?.firstName || "back";
   return (
     <div className="space-y-2">
