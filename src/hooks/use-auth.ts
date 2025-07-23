@@ -12,5 +12,6 @@ export function useAuth() {
     isUnauthenticated: status === "unauthenticated",
   }), [user, status]);
 
-  return authState;
+  // Memoize the entire hook return to prevent object recreation
+  return useMemo(() => authState, [authState]);
 } 

@@ -20,8 +20,18 @@ const nextConfig: NextConfig = {
         pathname: "/**"
       },
     ],
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 60,
   },
   devIndicators: false,
+  // Performance optimizations
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
+  },
+  // Compress responses
+  compress: true,
+  // Enable SWC minification
+  swcMinify: true,
 };
 
 export default nextConfig;

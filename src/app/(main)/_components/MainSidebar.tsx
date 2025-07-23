@@ -13,13 +13,11 @@ import { usePathname } from "next/navigation";
 import { navigation } from "./constants";
 
 interface MainSidebarProps {
-  isCollapsed?: boolean;
   isMobile?: boolean;
   onNavigate?: () => void;
 }
 
 export function MainSidebar({
-  isCollapsed,
   isMobile,
   onNavigate,
 }: MainSidebarProps) {

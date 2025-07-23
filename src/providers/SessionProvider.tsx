@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 
 export interface User {
   id: string;
@@ -37,10 +43,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     "loading" | "authenticated" | "unauthenticated"
   >("loading");
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/me", {
         credentials: "include",
+        // Add caching headers
+        cache: "no-store",
+        next: { revalidate: 0 },
       });
 
       if (response.ok) {
@@ -56,11 +65,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setStatus("unauthenticated");
       setUser(null);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
   return (
     <SessionContext.Provider value={{ user, status, fetchUser }}>

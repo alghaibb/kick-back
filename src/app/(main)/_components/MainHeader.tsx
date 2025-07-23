@@ -32,7 +32,7 @@ export function MainHeader({
     }
   };
 
-  const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleLogoClick = () => {
     console.log("Logo clicked - this should navigate");
   };
 

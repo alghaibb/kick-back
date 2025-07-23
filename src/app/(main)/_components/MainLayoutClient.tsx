@@ -69,7 +69,6 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
                   )}
                 >
                   <MainSidebar
-                    isCollapsed={!mobileSidebarOpen}
                     isMobile={isMobile}
                     onNavigate={() => setMobileSidebarOpen(false)}
                   />
@@ -78,7 +77,7 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
             ) : (
               // Desktop: Always visible sidebar
               <div className="w-64 bg-card border-r border-border">
-                <MainSidebar isCollapsed={false} isMobile={false} />
+                <MainSidebar isMobile={false} />
               </div>
             )}
           </>
