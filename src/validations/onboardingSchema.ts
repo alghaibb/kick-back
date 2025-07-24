@@ -13,16 +13,6 @@ export const onboardingSchema = z.object({
     .or(z.literal("")),
   image: z
     .custom<File | undefined>()
-    .refine(
-      (file) => !file || (file instanceof File && file.type.startsWith('image/')),
-      {
-        message: 'Please upload a valid image file (JPEG, PNG, GIF, etc.)',
-      }
-    )
-    .refine(
-      (file) => !file || file.size <= 4 * 1024 * 1024,
-      "Image must be less than 4MB"
-    )
     .optional(),
   reminderType: z.enum(["email", "sms", "both"]),
   phoneNumber: z

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
 import * as z from "zod";
 
 import {
@@ -29,6 +30,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { onboarding } from "./actions";
 import { TimezoneCombobox } from "@/components/ui/timezone-combobox";
+import { useImageUpload } from "@/hooks/mutations/useFileUpload";
 
 type OnboardingUser = {
   id: string;
@@ -41,7 +43,6 @@ type OnboardingUser = {
 };
 
 export default function OnboardingForm({ user }: { user: OnboardingUser }) {
-  const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const imageRef = useRef<HTMLInputElement>(null);
@@ -50,6 +51,33 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
     user.image ?? null
   );
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+
+  const { uploadAsync, isUploading } = useImageUpload({
+    showToasts: false,
+    onProgress: (progress) => setUploadProgress(progress),
+  });
+
+  const onboardingMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await onboarding(data);
+      if (res?.error) {
+        throw new Error(
+          typeof res.error === "string" ? res.error : "Failed to update profile"
+        );
+      }
+      return res;
+    },
+    onSuccess: (res) => {
+      if (res?.success) {
+        toast.success("Profile updated successfully!");
+        router.push("/dashboard");
+      }
+    },
+    onError: (error: Error) => {
+      console.error("Onboarding error:", error);
+      toast.error(error.message);
+    },
+  });
 
   const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -82,19 +110,8 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size
-      if (file.size > 4 * 1024 * 1024) {
-        toast.error("Image must be less than 4MB");
-        return;
-      }
-
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please select a valid image file");
-        return;
-      }
-
       setCurrentFile(file);
+      form.setValue("image", file);
     }
   };
 
@@ -106,65 +123,31 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
     }
   };
 
-  function onSubmit(values: z.infer<typeof onboardingSchema>) {
-    startTransition(async () => {
-      try {
-        let imageUrl = user.image ?? null;
+  async function onSubmit(values: z.infer<typeof onboardingSchema>) {
+    try {
+      let imageUrl = user.image ?? null;
 
-        if (currentFile) {
-          setUploadProgress(0);
-          const formData = new FormData();
-          const ext = currentFile.name.split(".").pop();
-          const base = currentFile.name.replace(/\.[^/.]+$/, "");
-          const uniqueName = `${base}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-          const renamedFile = new File([currentFile], uniqueName, {
-            type: currentFile.type,
-          });
-
-          formData.append("file", renamedFile);
-
-          const uploadRes = await fetch("/api/blob/upload", {
-            method: "POST",
-            body: formData,
-          });
-
-          if (!uploadRes.ok) {
-            const errorData = await uploadRes.json();
-            toast.error(errorData.error || "Image upload failed");
-            return;
-          }
-
-          const { url } = await uploadRes.json();
-          if (!url) {
-            toast.error("No URL returned from upload");
-            return;
-          }
-
-          imageUrl = url;
+      if (currentFile) {
+        setUploadProgress(0);
+        try {
+          imageUrl = await uploadAsync(currentFile);
           setUploadProgress(100);
+        } catch (error) {
+          console.error("Failed to upload image:", error);
+          toast.error("Image upload failed");
+          return;
         }
-
-        const res = await onboarding({
-          ...values,
-          image: imageUrl,
-          previousImage: user.image,
-        });
-
-        if (res?.error) {
-          toast.error(
-            typeof res.error === "string"
-              ? res.error
-              : "Failed to update profile"
-          );
-        } else if (res?.success) {
-          toast.success("Profile updated successfully!");
-          router.push("/dashboard");
-        }
-      } catch (error) {
-        console.error("Onboarding error:", error);
-        toast.error("Something went wrong. Please try again.");
       }
-    });
+
+      onboardingMutation.mutate({
+        ...values,
+        image: imageUrl,
+        previousImage: user.image,
+      });
+    } catch (error) {
+      console.error("Onboarding error:", error);
+      toast.error("Something went wrong. Please try again.");
+    }
   }
 
   const getInitials = () => {
@@ -194,7 +177,7 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
             <button
               type="button"
               onClick={() => imageRef.current?.click()}
-              disabled={isPending}
+              disabled={isUploading}
               className="absolute -bottom-2 -right-2 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               <Camera className="size-4" />
@@ -205,7 +188,7 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
             <input
               type="file"
               accept="image/*"
-              disabled={isPending}
+              disabled={onboardingMutation.isPending}
               ref={imageRef}
               onChange={handleImageChange}
               className="hidden"
@@ -224,7 +207,7 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
                 <button
                   type="button"
                   onClick={removeImage}
-                  disabled={isPending}
+                  disabled={onboardingMutation.isPending}
                   className="p-1 text-muted-foreground hover:text-destructive transition-colors"
                 >
                   <X className="size-4" />
@@ -255,7 +238,7 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
                   <Input
                     placeholder="Enter your first name"
                     {...field}
-                    disabled={isPending}
+                    disabled={onboardingMutation.isPending}
                   />
                 </FormControl>
                 <FormMessage />
@@ -273,7 +256,7 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
                   <Input
                     placeholder="Enter your last name"
                     {...field}
-                    disabled={isPending}
+                    disabled={onboardingMutation.isPending}
                   />
                 </FormControl>
                 <FormMessage />
@@ -291,7 +274,7 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
                   <Input
                     placeholder="What should we call you?"
                     {...field}
-                    disabled={isPending}
+                    disabled={onboardingMutation.isPending}
                   />
                 </FormControl>
                 <FormMessage />
@@ -363,7 +346,7 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
                     <Input
                       placeholder="Your phone number"
                       {...field}
-                      disabled={isPending}
+                      disabled={onboardingMutation.isPending}
                     />
                   </FormControl>
                   <FormMessage />
@@ -379,7 +362,11 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
               <FormItem>
                 <FormLabel>Reminder Time</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} disabled={isPending} />
+                  <Input
+                    type="time"
+                    {...field}
+                    disabled={onboardingMutation.isPending}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -396,7 +383,7 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
                   <TimezoneCombobox
                     value={field.value}
                     onChange={field.onChange}
-                    disabled={isPending}
+                    disabled={onboardingMutation.isPending}
                   />
                 </FormControl>
                 <FormMessage />
@@ -409,10 +396,12 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
         <LoadingButton
           type="submit"
           className="w-full"
-          loading={isPending}
-          disabled={isPending}
+          loading={onboardingMutation.isPending}
+          disabled={onboardingMutation.isPending}
         >
-          {isPending ? "Setting up your profile..." : "Complete Setup"}
+          {onboardingMutation.isPending
+            ? "Setting up your profile..."
+            : "Complete Setup"}
         </LoadingButton>
       </form>
     </Form>

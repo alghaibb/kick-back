@@ -16,8 +16,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button, LoadingButton } from "@/components/ui/button";
-import { useTransition, useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
 import { createGroupAction } from "../actions";
 import { AutosizeTextarea } from "@/components/ui/textarea";
 import { useModal } from "@/hooks/use-modal";
@@ -29,7 +30,6 @@ interface CreateGroupFormProps {
 }
 
 export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
-  const [isPending, startTransition] = useTransition();
   const [currentFile, setCurrentFile] = useState<File | undefined>(undefined);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const imageRef = useRef<HTMLInputElement>(null);
@@ -41,6 +41,35 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
     error: uploadError,
   } = useImageUpload({
     showToasts: false, // We'll handle success/error in the form submission
+  });
+
+  const createGroupMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const res = await createGroupAction(formData);
+      if (res?.error) {
+        throw new Error(
+          typeof res.error === "string" ? res.error : "Failed to create group"
+        );
+      }
+      return res;
+    },
+    onSuccess: (res) => {
+      if (res?.success && res.group) {
+        toast.success("Group created!");
+        form.reset();
+        setCurrentFile(undefined);
+        setPreviewUrl(null);
+        onSuccess?.();
+        openModal("invite-group", {
+          groupId: res.group.id,
+          groupName: res.group.name,
+        });
+      }
+    },
+    onError: (error: Error) => {
+      console.error("Failed to create group:", error);
+      toast.error(error.message);
+    },
   });
 
   const form = useForm<CreateGroupValues>({
@@ -86,37 +115,20 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
     }
   }
 
-  function onSubmit(values: CreateGroupValues) {
-    startTransition(async () => {
-      let imageUrl: string | undefined = undefined;
-      if (currentFile) {
-        imageUrl = (await handleImageUpload(currentFile)) || undefined;
-        if (!imageUrl) {
-          return;
-        }
+  async function onSubmit(values: CreateGroupValues) {
+    let imageUrl: string | undefined = undefined;
+    if (currentFile) {
+      imageUrl = (await handleImageUpload(currentFile)) || undefined;
+      if (!imageUrl) {
+        return;
       }
-      const formData = new FormData();
-      formData.append("name", values.name);
-      if (values.description)
-        formData.append("description", values.description);
-      if (imageUrl) formData.append("image", imageUrl);
-      const res = await createGroupAction(formData);
-      if (res?.error) {
-        toast.error(
-          typeof res.error === "string" ? res.error : "Failed to create group"
-        );
-      } else if (res?.success && res.group) {
-        toast.success("Group created!");
-        form.reset();
-        setCurrentFile(undefined);
-        setPreviewUrl(null);
-        onSuccess?.();
-        openModal("invite-group", {
-          groupId: res.group.id,
-          groupName: res.group.name,
-        });
-      }
-    });
+    }
+    const formData = new FormData();
+    formData.append("name", values.name);
+    if (values.description) formData.append("description", values.description);
+    if (imageUrl) formData.append("image", imageUrl);
+
+    createGroupMutation.mutate(formData);
   }
 
   return (
@@ -166,14 +178,14 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
                     accept="image/*"
                     ref={imageRef}
                     onChange={handleImageChange}
-                    disabled={isPending || uploading}
+                    disabled={createGroupMutation.isPending || uploading}
                     className="hidden"
                   />
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"
                       onClick={() => imageRef.current?.click()}
-                      disabled={isPending || uploading}
+                      disabled={createGroupMutation.isPending || uploading}
                     >
                       {currentFile ? "Change Image" : "Upload Image"}
                     </Button>
@@ -181,7 +193,7 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
                       <button
                         type="button"
                         onClick={removeImage}
-                        disabled={isPending || uploading}
+                        disabled={createGroupMutation.isPending || uploading}
                         className="p-1 text-muted-foreground hover:text-destructive transition-colors"
                       >
                         Remove
@@ -218,10 +230,12 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
         <LoadingButton
           type="submit"
           className="w-full"
-          loading={isPending || uploading}
+          loading={createGroupMutation.isPending || uploading}
           disabled={uploading}
         >
-          {isPending || uploading ? "Creating..." : "Create Group"}
+          {createGroupMutation.isPending || uploading
+            ? "Creating..."
+            : "Create Group"}
         </LoadingButton>
       </form>
     </Form>

@@ -85,6 +85,7 @@ async function uploadFile(
           }
           resolve(response.url);
         } catch (error) {
+          console.error("Failed to parse upload response:", error);
           reject(new Error("Invalid response format"));
         }
       } else {
@@ -92,6 +93,7 @@ async function uploadFile(
           const errorResponse: UploadError = JSON.parse(xhr.responseText);
           reject(new Error(errorResponse.error || "Upload failed"));
         } catch (error) {
+          console.error("Failed to parse error response:", error);
           reject(new Error(`Upload failed with status ${xhr.status}`));
         }
       }

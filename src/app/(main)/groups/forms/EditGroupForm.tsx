@@ -16,8 +16,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button, LoadingButton } from "@/components/ui/button";
-import { useTransition, useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
 import { editGroupAction } from "../actions";
 import { AutosizeTextarea } from "@/components/ui/textarea";
 import { useImageUpload } from "@/hooks/mutations/useFileUpload";
@@ -35,7 +36,6 @@ export default function EditGroupForm({
   initialValues,
   onSuccess,
 }: EditGroupFormProps) {
-  const [isPending, startTransition] = useTransition();
   const [currentFile, setCurrentFile] = useState<File | undefined>(undefined);
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     initialValues.imageUrl || null
@@ -48,6 +48,32 @@ export default function EditGroupForm({
     error: uploadError,
   } = useImageUpload({
     showToasts: false, // We'll handle success/error in the form submission
+  });
+
+  const editGroupMutation = useMutation({
+    mutationFn: async (data: {
+      name: string;
+      description: string;
+      image: string | null | undefined;
+    }) => {
+      const res = await editGroupAction(groupId, data);
+      if (res?.error) {
+        throw new Error(
+          typeof res.error === "string" ? res.error : "Failed to update group"
+        );
+      }
+      return res;
+    },
+    onSuccess: (res) => {
+      if (res?.success) {
+        toast.success("Group updated successfully!");
+        onSuccess?.();
+      }
+    },
+    onError: (error: Error) => {
+      console.error("Failed to update group:", error);
+      toast.error(error.message);
+    },
   });
 
   const form = useForm<CreateGroupValues>({
@@ -92,28 +118,19 @@ export default function EditGroupForm({
     }
   }
 
-  function onSubmit(values: CreateGroupValues) {
-    startTransition(async () => {
-      let imageUrl: string | null | undefined = previewUrl;
-      if (currentFile) {
-        imageUrl = (await handleImageUpload(currentFile)) || undefined;
-        if (!imageUrl) {
-          return;
-        }
+  async function onSubmit(values: CreateGroupValues) {
+    let imageUrl: string | null | undefined = previewUrl;
+    if (currentFile) {
+      imageUrl = (await handleImageUpload(currentFile)) || undefined;
+      if (!imageUrl) {
+        return;
       }
-      const res = await editGroupAction(groupId, {
-        name: values.name,
-        description: values.description,
-        image: imageUrl === null ? null : imageUrl,
-      });
-      if (res?.error) {
-        toast.error(
-          typeof res.error === "string" ? res.error : "Failed to update group"
-        );
-      } else if (res?.success && res.group) {
-        toast.success("Group updated!");
-        onSuccess?.();
-      }
+    }
+
+    editGroupMutation.mutate({
+      name: values.name,
+      description: values.description || "",
+      image: imageUrl === null ? null : imageUrl,
     });
   }
 
@@ -214,8 +231,11 @@ export default function EditGroupForm({
             </FormItem>
           )}
         />
-        <LoadingButton type="submit" loading={isPending || uploading}>
-          {isPending ? "Saving..." : "Save Changes"}
+        <LoadingButton
+          type="submit"
+          loading={editGroupMutation.isPending || uploading}
+        >
+          {editGroupMutation.isPending ? "Saving..." : "Save Changes"}
         </LoadingButton>
       </form>
     </Form>
