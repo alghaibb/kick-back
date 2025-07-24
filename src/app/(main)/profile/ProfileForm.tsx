@@ -16,12 +16,10 @@ import {
   UpdateProfileValues,
 } from "@/validations/profile/profileSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { ImageUpload } from "./_components/ImageUpload";
-import { updateProfileAction } from "./actions";
-import { useAuth } from "@/hooks/use-auth";
+import { useProfileMutation } from "@/hooks/mutations/useProfileMutation";
 
 interface ProfileFormProps {
   user: {
@@ -35,9 +33,8 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ user }: ProfileFormProps) {
-  const [isPendingProfile, startProfileTransition] = useTransition();
   const [imageUrl, setImageUrl] = useState<string | null>(user.image);
-  const { refreshUser } = useAuth();
+  const profileMutation = useProfileMutation();
 
   const profileForm = useForm<UpdateProfileValues>({
     resolver: zodResolver(updateProfileSchema),
@@ -57,19 +54,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const canSubmit = isFormDirty || isImageDirty;
 
   function onProfileSubmit(values: UpdateProfileValues) {
-    startProfileTransition(async () => {
-      const submitValues = { ...values, image: imageUrl };
-      const res = await updateProfileAction(submitValues);
-
-      if (res?.error) {
-        toast.error(res.error);
-        return;
-      }
-
-      toast.success("Profile updated successfully!");
-
-      await refreshUser();
-    });
+    const submitValues = { ...values, image: imageUrl };
+    profileMutation.mutate(submitValues);
   }
 
   return (
@@ -161,7 +147,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
               <LoadingButton
                 type="submit"
-                loading={isPendingProfile}
+                loading={profileMutation.isPending}
                 className="w-full"
                 disabled={!canSubmit}
               >
