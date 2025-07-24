@@ -69,7 +69,12 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
   const phoneNumberValue = settingsForm.watch("phoneNumber");
   const timezoneValue = settingsForm.watch("timezone");
   let phoneError: string | null = null;
-  if ((reminderType === "sms" || reminderType === "both") && phoneNumberValue) {
+  if (
+    (reminderType === "sms" || reminderType === "both") &&
+    phoneNumberValue &&
+    phoneNumberValue.trim() !== "" &&
+    phoneNumberValue.replace(/[\s\-\(\)\+]/g, "").length >= 8
+  ) {
     let country = detectCountryForSMS(phoneNumberValue, timezoneValue);
     // Defensive: ensure country is a valid 2-letter code
     if (!country || typeof country !== "string" || country.length !== 2) {

@@ -70,17 +70,41 @@ export function detectCountryForSMS(
     return "AU";
   }
 
-  if (phoneNumber) {
+  if (phoneNumber && phoneNumber.trim() !== "") {
     try {
-      const cleaned = phoneNumber.replace(/[\s\-\(\)\+]/g, "");
-      const parsed = parsePhoneNumberWithError(`+${cleaned.startsWith("+") ? cleaned.slice(1) : cleaned}`);
+      // First, try to parse as international number (with + prefix)
+      if (phoneNumber.startsWith("+")) {
+        const parsed = parsePhoneNumberWithError(phoneNumber);
+        if (parsed.country) {
+          return parsed.country;
+        }
+      }
 
-      if (parsed.country) {
-        return parsed.country;
+      // For numbers without +, try parsing with timezone country as default
+      if (timezone && TIMEZONE_TO_COUNTRY[timezone]) {
+        const defaultCountry = TIMEZONE_TO_COUNTRY[timezone];
+        try {
+          const parsed = parsePhoneNumberWithError(phoneNumber, defaultCountry);
+          if (parsed.country) {
+            return parsed.country;
+          }
+        } catch (error) {
+          // If parsing with timezone country fails, continue to fallback
+          console.error("Failed to parse with timezone country:", error);
+        }
+      }
+
+      // Last resort: try parsing as Australian number (since that's your app's primary market)
+      try {
+        const parsed = parsePhoneNumberWithError(phoneNumber, "AU");
+        if (parsed.country) {
+          return parsed.country;
+        }
+      } catch (error) {
+        console.error("Failed to parse as AU number:", error);
       }
     } catch (error) {
       console.error("Failed to parse phone number:", error);
-
     }
   }
 

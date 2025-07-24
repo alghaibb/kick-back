@@ -17,13 +17,17 @@ export const onboardingSchema = z.object({
   reminderType: z.enum(["email", "sms", "both"]),
   phoneNumber: z
     .string()
-    .regex(/^(\+61|0)[2-478]\d{8}$/, "Please enter a valid Australian phone number")
     .trim()
-    .optional(),
+    .refine(
+      (val) => !val || val === "" || /^(\+61|0)[2-478]\d{8}$/.test(val),
+      "Please enter a valid phone number"
+    )
+    .optional()
+    .or(z.literal("")),
   reminderTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)"),
   timezone: z.string().min(1, "Timezone is required"),
 }).refine((data) => {
-  if ((data.reminderType === "sms" || data.reminderType === "both") && !data.phoneNumber) {
+  if ((data.reminderType === "sms" || data.reminderType === "both") && (!data.phoneNumber || data.phoneNumber.trim() === "")) {
     return false;
   }
   return true;
