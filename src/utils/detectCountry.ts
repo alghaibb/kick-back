@@ -1,8 +1,6 @@
-import { CountryCode, parsePhoneNumberWithError } from "libphonenumber-js";
+import { parsePhoneNumber, CountryCode } from "libphonenumber-js";
 
-// Mapping of common timezones to countries for SMS fallback
 const TIMEZONE_TO_COUNTRY: Record<string, CountryCode> = {
-  // Australia
   "Australia/Sydney": "AU",
   "Australia/Melbourne": "AU",
   "Australia/Brisbane": "AU",
@@ -10,104 +8,86 @@ const TIMEZONE_TO_COUNTRY: Record<string, CountryCode> = {
   "Australia/Adelaide": "AU",
   "Australia/Darwin": "AU",
   "Australia/Hobart": "AU",
+  "Australia/Canberra": "AU",
+  "Australia/Lord_Howe": "AU",
+  "Australia/Eucla": "AU",
+  "Australia/Broken_Hill": "AU",
+  "Australia/Currie": "AU",
 
-  // United States
   "America/New_York": "US",
   "America/Chicago": "US",
   "America/Denver": "US",
   "America/Los_Angeles": "US",
   "America/Phoenix": "US",
   "America/Anchorage": "US",
-  "America/Honolulu": "US",
+  "Pacific/Honolulu": "US",
 
-  // Canada
   "America/Toronto": "CA",
   "America/Vancouver": "CA",
-  "America/Montreal": "CA",
   "America/Edmonton": "CA",
   "America/Winnipeg": "CA",
   "America/Halifax": "CA",
+  "America/St_Johns": "CA",
 
-  // United Kingdom
   "Europe/London": "GB",
+  "Europe/Belfast": "GB",
 
-  // Germany
   "Europe/Berlin": "DE",
 
-  // France
   "Europe/Paris": "FR",
 
-  // Italy
   "Europe/Rome": "IT",
 
-  // Spain
   "Europe/Madrid": "ES",
 
-  // Netherlands
   "Europe/Amsterdam": "NL",
 
-  // Japan
   "Asia/Tokyo": "JP",
 
-  // South Korea
   "Asia/Seoul": "KR",
 
-  // China
   "Asia/Shanghai": "CN",
+  "Asia/Hong_Kong": "CN",
 
-  // India
   "Asia/Kolkata": "IN",
 
-  // Singapore
   "Asia/Singapore": "SG",
 
-  // New Zealand
   "Pacific/Auckland": "NZ",
 
-  // South Africa
   "Africa/Johannesburg": "ZA",
 
-  // Brazil
   "America/Sao_Paulo": "BR",
 
-  // Mexico
   "America/Mexico_City": "MX",
 };
 
-/**
- * Attempts to detect the country code for a phone number using multiple strategies:
- * 1. Parse the phone number directly (if it's in international format)
- * 2. Use timezone to guess country
- * 3. Fall back to default
- */
 export function detectCountryForSMS(
-  phoneNumber: string,
-  timezone?: string,
-  fallbackCountry: CountryCode = "AU"
+  phoneNumber?: string | null,
+  timezone?: string | null
 ): CountryCode {
-  // Strategy 1: Try to parse phone number directly (works if it's in international format)
-  try {
-    // Clean the phone number first
-    const cleanedNumber = phoneNumber.replace(/\s+/g, "").replace(/[-()]/g, "");
-    const parsed = parsePhoneNumberWithError(cleanedNumber);
-    if (parsed && parsed.country) {
-      return parsed.country;
-    }
-  } catch (error) {
-    // Only log if it's not INVALID_COUNTRY, otherwise silently continue
-    if (error instanceof Error && error.message !== "INVALID_COUNTRY") {
-      console.error(`❌ Phone number parsing failed: ${error.message}`);
-    }
-    // Continue to next strategy
+  if (!phoneNumber && !timezone) {
+    return "AU";
   }
 
-  // Strategy 2: Use timezone to guess country
+  if (phoneNumber) {
+    try {
+      const cleaned = phoneNumber.replace(/[\s\-\(\)\+]/g, "");
+      const parsed = parsePhoneNumber(`+${cleaned.startsWith("+") ? cleaned.slice(1) : cleaned}`);
+
+      if (parsed.country && parsed.country !== "INVALID_COUNTRY") {
+        return parsed.country;
+      }
+    } catch (error) {
+      // Continue to next strategy
+    }
+  }
+
   if (timezone && TIMEZONE_TO_COUNTRY[timezone]) {
     return TIMEZONE_TO_COUNTRY[timezone];
   }
 
-  // Strategy 3: Fall back to default
-  return fallbackCountry || "AU";
+  return "AU";
 }
 
 /**

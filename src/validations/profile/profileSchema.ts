@@ -7,7 +7,6 @@ import {
   passwordField,
 } from "../fieldsSchema";
 
-// Profile update schema (without password change)
 export const updateProfileSchema = z.object({
   firstName: firstNameField,
   lastName: lastNameField,
@@ -16,18 +15,14 @@ export const updateProfileSchema = z.object({
   image: z.string().optional().nullable(),
 });
 
-// Password change schema (only for users with passwords)
-export const changePasswordSchema = z
-  .object({
-    currentPassword: passwordField,
-    newPassword: passwordField,
-    confirmNewPassword: passwordField,
-  })
-  .refine((data) => data.newPassword === data.confirmNewPassword, {
-    message: "New passwords do not match",
-    path: ["confirmNewPassword"],
-  });
+export const changePasswordSchema = z.object({
+  currentPassword: passwordField,
+  newPassword: passwordField,
+  confirmPassword: passwordField,
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
-// Type exports
 export type UpdateProfileValues = z.infer<typeof updateProfileSchema>;
 export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;

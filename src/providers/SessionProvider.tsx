@@ -47,7 +47,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch("/api/auth/me", {
         credentials: "include",
-        // Add caching headers
         cache: "no-store",
         next: { revalidate: 0 },
       });

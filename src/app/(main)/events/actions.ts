@@ -15,7 +15,6 @@ function createEventDateTime(date: Date, time: string, userTimezone: string): Da
 
   const dateTimeString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
 
-  // ✅ This converts the user's local date+time into a UTC JS Date object
   const eventDateTime = fromZonedTime(dateTimeString, userTimezone);
 
   return eventDateTime;
@@ -35,12 +34,7 @@ export async function createEventAction(values: CreateEventValues) {
 
     const eventDateTime = createEventDateTime(date, time, userTimezone);
 
-    console.log(`Creating event: ${name}`);
-    console.log(`Selected date from calendar: ${date.toISOString()}`);
-    console.log(`Selected time: ${time}`);
-    console.log(`User timezone: ${userTimezone}`);
-    console.log(`Final event date/time (UTC): ${eventDateTime.toISOString()}`);
-    console.log(`Timezone offset: ${eventDateTime.getTimezoneOffset()} minutes`);
+
 
     const event = await prisma.event.create({
       data: {
@@ -53,7 +47,6 @@ export async function createEventAction(values: CreateEventValues) {
       }
     });
 
-    // Always add the creator as an attendee
     const attendeesToAdd = [{ userId: session.user.id, eventId: event.id }];
 
     if (groupId) {
@@ -62,7 +55,6 @@ export async function createEventAction(values: CreateEventValues) {
         select: { userId: true },
       });
 
-      // Add group members (excluding the creator since they're already added)
       attendeesToAdd.push(
         ...groupMembers
           .filter((m) => m.userId !== session.user.id)
@@ -138,19 +130,10 @@ export async function editEventAction(eventId: string, values: CreateEventValues
     const validatedValues = createEventSchema.parse(values);
     const { date, name, description, groupId, location, time } = validatedValues;
 
-    // Get user's timezone from session
     const userTimezone = session.user.timezone || 'UTC';
 
-    // Use helper function for consistent date handling
     const eventDateTime = createEventDateTime(date, time, userTimezone);
 
-    console.log(`Editing event: ${name}`);
-    console.log(`Selected date from calendar: ${date.toISOString()}`);
-    console.log(`Selected time: ${time}`);
-    console.log(`User timezone: ${userTimezone}`);
-    console.log(`Final event date/time (UTC): ${eventDateTime.toISOString()}`);
-
-    // Update the event fields
     const updatedEvent = await prisma.event.update({
       where: { id: eventId },
       data: {
@@ -162,9 +145,7 @@ export async function editEventAction(eventId: string, values: CreateEventValues
       },
     });
 
-    // Update attendees only if groupId changed
     if (existingEvent.groupId !== groupId) {
-      // Delete old attendees (but keep the creator)
       await prisma.eventAttendee.deleteMany({
         where: {
           eventId,

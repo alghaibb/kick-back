@@ -123,4 +123,3 @@ export async function cleanupExpiredCounters() {
     console.error('Error cleaning up expired counters:', error);
   }
 }
-

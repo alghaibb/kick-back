@@ -14,7 +14,6 @@ import { Resend } from "resend";
 const resend = new Resend(env.RESEND_API_KEY);
 const defaultFrom = "Kick Back <noreply@codewithmj.com>";
 
-// 📨 Shared email sender
 async function sendEmail(
   to: string,
   subject: string,
@@ -29,18 +28,16 @@ async function sendEmail(
       react: reactComponent,
     });
   } catch (error) {
-    console.error(`❌ Failed to send email to ${to}:`, error);
+    console.error(`Failed to send email to ${to}:`, error);
     throw new Error("Email sending failed.");
   }
 }
 
-// 🧠 Get user's first name by email
 async function getUserFirstNameByEmail(email: string) {
   const user = await prisma.user.findUnique({ where: { email } });
   return user?.firstName ?? "there";
 }
 
-// ✅ Send verification email
 export async function sendVerifyAccountEmail(email: string, otp: string) {
   const firstName = await getUserFirstNameByEmail(email);
 
@@ -51,7 +48,6 @@ export async function sendVerifyAccountEmail(email: string, otp: string) {
   );
 }
 
-// 🔁 Resend OTP email
 export async function sendResendOTPEmail(email: string, otp: string) {
   const firstName = await getUserFirstNameByEmail(email);
 
@@ -62,7 +58,6 @@ export async function sendResendOTPEmail(email: string, otp: string) {
   );
 }
 
-// 🔐 Reset password email
 export async function sendResetPasswordEmail(
   email: string,
   fallbackName: string,
@@ -82,7 +77,6 @@ export async function sendResetPasswordEmail(
   );
 }
 
-// 🔑 Magic link sign-in
 export async function sendMagicLinkEmail(email: string, magicLink: string) {
   const firstName = await getUserFirstNameByEmail(email);
 
@@ -94,7 +88,6 @@ export async function sendMagicLinkEmail(email: string, magicLink: string) {
   );
 }
 
-// 👥 Group invite email
 export async function sendGroupInviteEmail(
   email: string,
   inviterName: string,
@@ -116,7 +109,6 @@ export async function sendGroupInviteEmail(
   );
 }
 
-// 📅 Event reminder email
 export async function sendEventReminderEmail(
   email: string,
   eventName: string,

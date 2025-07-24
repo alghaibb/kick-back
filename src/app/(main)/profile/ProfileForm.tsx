@@ -21,6 +21,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ImageUpload } from "./_components/ImageUpload";
 import { updateProfileAction } from "./actions";
+import { useSession } from "@/providers/SessionProvider";
 
 interface ProfileFormProps {
   user: {
@@ -36,8 +37,8 @@ interface ProfileFormProps {
 export function ProfileForm({ user }: ProfileFormProps) {
   const [isPendingProfile, startProfileTransition] = useTransition();
   const [imageUrl, setImageUrl] = useState<string | null>(user.image);
+  const { fetchUser } = useSession();
 
-  // Profile form
   const profileForm = useForm<UpdateProfileValues>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
@@ -66,6 +67,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
       }
 
       toast.success("Profile updated successfully!");
+
+      await fetchUser();
     });
   }
 
