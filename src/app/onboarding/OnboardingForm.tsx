@@ -58,7 +58,12 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
   });
 
   const onboardingMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (
+      data: Omit<OnboardingValues, "image"> & {
+        image: string | null;
+        previousImage: string | null;
+      }
+    ) => {
       const res = await onboarding(data);
       if (res?.error) {
         throw new Error(
@@ -96,6 +101,13 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
 
   // Watch reminder type to conditionally show phone number
   const reminderType = form.watch("reminderType");
+
+  // Clear phone number when switching to email-only
+  useEffect(() => {
+    if (reminderType === "email") {
+      form.setValue("phoneNumber", "");
+    }
+  }, [reminderType, form]);
 
   // Handle image preview cleanup
   useEffect(() => {

@@ -51,3 +51,5 @@ export const serverOnboardingSchema = z.object({
   reminderTime: z.string().default("09:00"),
   timezone: z.string().min(1, "Timezone is required"),
 });
+
+export type ServerOnboardingValues = z.infer<typeof serverOnboardingSchema>;
