@@ -8,6 +8,7 @@ export function formatToE164(
     const parsed = parsePhoneNumberWithError(phoneNumber, countryCode);
     return parsed.format("E.164");
   } catch (error) {
+    console.error(error);
     return fallbackFormatting(phoneNumber, countryCode);
   }
 }

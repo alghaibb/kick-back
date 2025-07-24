@@ -1,17 +1,113 @@
-import { useSession } from "@/providers/SessionProvider";
-import { useMemo } from "react";
+"use client";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+export interface User {
+  id: string;
+  firstName: string;
+  lastName: string | null;
+  email: string;
+  nickname: string | null;
+  image: string | null;
+  timezone: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+async function fetchUser(): Promise<User> {
+  const response = await fetch("/api/auth/me", {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("UNAUTHORIZED");
+    }
+    throw new Error("Failed to fetch user");
+  }
+
+  return response.json();
+}
+
+async function logoutUser(): Promise<void> {
+  const response = await fetch("/api/auth/logout", {
+    method: "POST",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to logout");
+  }
+}
 
 export function useAuth() {
-  const { user, status } = useSession();
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
-  const authState = useMemo(() => ({
-    user,
+  const {
+    data: user,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["user"],
+    queryFn: fetchUser,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error) => {
+      // Don't retry on 401 (unauthorized)
+      if (error?.message === "UNAUTHORIZED") {
+        return false;
+      }
+      return failureCount < 1;
+    },
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: logoutUser,
+    onSuccess: () => {
+      // Clear all cached data
+      queryClient.clear();
+      // Redirect to login
+      router.push("/login");
+      toast.success("Logged out successfully");
+    },
+    onError: (error) => {
+      console.error("Logout error:", error);
+      // Even if logout fails, clear cache and redirect
+      queryClient.clear();
+      router.push("/login");
+    },
+  });
+
+  const refreshUser = () => {
+    return refetch();
+  };
+
+  const logout = () => {
+    logoutMutation.mutate();
+  };
+
+  // Determine status based on query state
+  const status = isLoading
+    ? "loading"
+    : user
+      ? "authenticated"
+      : "unauthenticated";
+
+  return {
+    user: user || null,
     status,
-    isLoading: status === "loading",
-    isAuthenticated: status === "authenticated" && !!user,
-    isUnauthenticated: status === "unauthenticated",
-  }), [user, status]);
-
-  // Memoize the entire hook return to prevent object recreation
-  return useMemo(() => authState, [authState]);
+    isLoading,
+    isAuthenticated: !!user && !isLoading,
+    isUnauthenticated: !user && !isLoading,
+    error,
+    refreshUser,
+    logout,
+    isLoggingOut: logoutMutation.isPending,
+  };
 } 

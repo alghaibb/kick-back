@@ -1,10 +1,7 @@
 "use client";
 
 import { LoadingButton } from "@/components/ui/button";
-import { useSession } from "@/providers/SessionProvider";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { logout } from "../actions";
+import { useAuth } from "@/hooks/use-auth";
 
 type ButtonVariants =
   | "default"
@@ -33,27 +30,17 @@ export default function LogoutButton({
   variant,
   children,
 }: LogoutProps) {
-  const [isPending, startTransition] = useTransition();
-  const { fetchUser } = useSession();
-  const router = useRouter();
-
-  function handleClick() {
-    startTransition(async () => {
-      await logout();
-      await fetchUser();
-      router.push("/login");
-    });
-  }
+  const { logout, isLoggingOut } = useAuth();
 
   return (
     <LoadingButton
-      onClick={handleClick}
-      loading={isPending}
-      disabled={isPending}
+      onClick={logout}
+      loading={isLoggingOut}
+      disabled={isLoggingOut}
       className={className}
       variant={variant}
     >
-      {isPending ? "Logging Out..." : children || "Log Out"}
+      {isLoggingOut ? "Logging Out..." : children || "Log Out"}
     </LoadingButton>
   );
 }

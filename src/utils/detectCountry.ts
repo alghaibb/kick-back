@@ -1,4 +1,4 @@
-import { parsePhoneNumber, CountryCode } from "libphonenumber-js";
+import { parsePhoneNumberWithError, CountryCode } from "libphonenumber-js";
 
 const TIMEZONE_TO_COUNTRY: Record<string, CountryCode> = {
   "Australia/Sydney": "AU",
@@ -73,13 +73,14 @@ export function detectCountryForSMS(
   if (phoneNumber) {
     try {
       const cleaned = phoneNumber.replace(/[\s\-\(\)\+]/g, "");
-      const parsed = parsePhoneNumber(`+${cleaned.startsWith("+") ? cleaned.slice(1) : cleaned}`);
+      const parsed = parsePhoneNumberWithError(`+${cleaned.startsWith("+") ? cleaned.slice(1) : cleaned}`);
 
-      if (parsed.country && parsed.country !== "INVALID_COUNTRY") {
+      if (parsed.country) {
         return parsed.country;
       }
     } catch (error) {
-      // Continue to next strategy
+      console.error("Failed to parse phone number:", error);
+
     }
   }
 

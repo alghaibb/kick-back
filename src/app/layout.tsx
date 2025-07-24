@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { ActiveThemeProvider } from "@/providers/ActiveThemeProvider";
+import { QueryProvider } from "@/providers/QueryProvider";
 import { SessionProvider } from "@/providers/SessionProvider";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
@@ -37,13 +38,15 @@ export default function RootLayout({
           defaultTheme="light"
           disableTransitionOnChange
         >
-          <ActiveThemeProvider>
-            <SessionProvider>
-              <PageTracker />
-              <main className="min-h-screen flex flex-col">{children}</main>
-              <Toaster richColors closeButton theme="light" />
-            </SessionProvider>
-          </ActiveThemeProvider>
+          <QueryProvider>
+            <ActiveThemeProvider>
+              <SessionProvider>
+                <PageTracker />
+                <main className="min-h-screen flex flex-col">{children}</main>
+                <Toaster richColors closeButton theme="light" />
+              </SessionProvider>
+            </ActiveThemeProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
