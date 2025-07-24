@@ -24,7 +24,6 @@ export function GroupInviteManager({
   groupName,
 }: GroupInviteManagerProps) {
   const {
-    invites,
     pendingInvites,
     otherInvites,
     isLoading,
