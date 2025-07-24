@@ -71,7 +71,7 @@ export function GroupsClientContent({
         {groupsOwned.length === 0 ? (
           <div className="bg-card border border-border rounded-2xl p-8 text-center">
             <p className="text-muted-foreground">
-              You don't own any groups yet. Create your first group to get
+              You don&apos;t own any groups yet. Create your first group to get
               started!
             </p>
           </div>
@@ -185,7 +185,7 @@ export function GroupsClientContent({
           </div>
           <div>
             <h2 className="text-2xl font-bold tracking-tight">
-              Groups You're In
+              Groups You&apos;re In
             </h2>
             <p className="text-muted-foreground text-sm">
               {groupsIn.length} {groupsIn.length === 1 ? "group" : "groups"}
@@ -196,7 +196,7 @@ export function GroupsClientContent({
         {groupsIn.length === 0 ? (
           <div className="bg-card border border-border rounded-2xl p-8 text-center">
             <p className="text-muted-foreground">
-              You haven't joined any groups yet. Ask for an invitation or find
+              You haven&apos;t joined any groups yet. Ask for an invitation or find
               groups to join!
             </p>
           </div>
