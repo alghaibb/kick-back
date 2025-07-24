@@ -20,6 +20,7 @@ import { useTransition, useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { editGroupAction } from "../actions";
 import { AutosizeTextarea } from "@/components/ui/textarea";
+import { useImageUpload } from "@/hooks/mutations/useFileUpload";
 import Image from "next/image";
 import { X } from "lucide-react";
 
@@ -35,13 +36,19 @@ export default function EditGroupForm({
   onSuccess,
 }: EditGroupFormProps) {
   const [isPending, startTransition] = useTransition();
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [currentFile, setCurrentFile] = useState<File | undefined>(undefined);
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     initialValues.imageUrl || null
   );
   const imageRef = useRef<HTMLInputElement>(null);
+
+  const {
+    uploadAsync,
+    isUploading: uploading,
+    error: uploadError,
+  } = useImageUpload({
+    showToasts: false, // We'll handle success/error in the form submission
+  });
 
   const form = useForm<CreateGroupValues>({
     resolver: zodResolver(createGroupSchema),
@@ -62,15 +69,6 @@ export default function EditGroupForm({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 4 * 1024 * 1024) {
-        setUploadError("Image must be less than 4MB");
-        return;
-      }
-      if (!file.type.startsWith("image/")) {
-        setUploadError("Please select a valid image file");
-        return;
-      }
-      setUploadError(null);
       setCurrentFile(file);
       form.setValue("image", file);
     }
@@ -79,7 +77,6 @@ export default function EditGroupForm({
   const removeImage = () => {
     setCurrentFile(undefined);
     setPreviewUrl(null);
-    setUploadError(null);
     if (imageRef.current) {
       imageRef.current.value = "";
     }
@@ -87,36 +84,11 @@ export default function EditGroupForm({
   };
 
   async function handleImageUpload(file: File): Promise<string | null> {
-    setUploading(true);
-    setUploadError(null);
     try {
-      const ext = file.name.split(".").pop();
-      const base = file.name.replace(/\.[^/.]+$/, "");
-      const uniqueName = `${base}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const renamedFile = new File([file], uniqueName, { type: file.type });
-      const formData = new FormData();
-      formData.append("file", renamedFile);
-      const uploadRes = await fetch("/api/blob/upload", {
-        method: "POST",
-        body: formData,
-      });
-      if (!uploadRes.ok) {
-        const errorData = await uploadRes.json();
-        setUploadError(errorData.error || "Image upload failed");
-        return null;
-      }
-      const { url } = await uploadRes.json();
-      if (!url) {
-        setUploadError("No URL returned from upload");
-        return null;
-      }
-      return url;
+      return await uploadAsync(file);
     } catch (error) {
-      console.error("Failed to upload image", error);
-      setUploadError("Failed to upload image");
+      console.error("Failed to upload image:", error);
       return null;
-    } finally {
-      setUploading(false);
     }
   }
 

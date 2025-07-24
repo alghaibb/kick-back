@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useAvatarUpload } from "@/hooks/mutations/useFileUpload";
 import { Camera, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -19,66 +20,27 @@ export function ImageUpload({
   fallbackText,
   className = "w-24 h-24",
 }: ImageUploadProps) {
-  const [isUploading, setIsUploading] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(
     currentImage || null
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select a valid image file");
-      return;
-    }
-
-    // Validate file size (4MB limit)
-    if (file.size > 4 * 1024 * 1024) {
-      toast.error("File size must be less than 4MB");
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      // Upload file
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/blob/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Upload failed");
-      }
-
-      const { url } = await response.json();
-
-      // Update state and notify parent
+  const { upload, isUploading } = useAvatarUpload({
+    onSuccess: (url) => {
       setCurrentImageUrl(url);
       onImageChange(url);
-
-      toast.success("Image uploaded successfully!");
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to upload image"
-      );
-    } finally {
-      setIsUploading(false);
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-    }
+    },
+  });
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    upload(file);
   };
 
   const handleRemoveImage = () => {
