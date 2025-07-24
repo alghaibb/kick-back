@@ -16,9 +16,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/ui/button";
-import { useTransition, useState } from "react";
-import { toast } from "sonner";
-import { inviteToGroupAction } from "../actions";
+import { useState } from "react";
+import { useInviteToGroup } from "@/hooks/mutations/useGroupMutations";
 import {
   Select,
   SelectContent,
@@ -38,8 +37,8 @@ export function InviteGroupForm({
   groupName,
   onSuccess,
 }: InviteGroupFormProps) {
-  const [isPending, startTransition] = useTransition();
   const [invitedEmails, setInvitedEmails] = useState<string[]>([]);
+  const inviteToGroupMutation = useInviteToGroup();
 
   const form = useForm<InviteGroupValues>({
     resolver: zodResolver(inviteGroupSchema),
@@ -51,26 +50,20 @@ export function InviteGroupForm({
   });
 
   function onSubmit(values: InviteGroupValues) {
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.append("groupId", values.groupId);
-      formData.append("email", values.email);
-      formData.append("role", values.role);
-
-      const res = await inviteToGroupAction(formData);
-      if (res?.error) {
-        toast.error(
-          typeof res.error === "string"
-            ? res.error
-            : "Failed to send invitation"
-        );
-      } else {
-        toast.success(`Invitation sent to ${values.email}!`);
-        setInvitedEmails((prev) => [...prev, values.email]);
-        form.reset({ groupId, email: "", role: "member" });
-        onSuccess?.();
+    inviteToGroupMutation.mutate(
+      {
+        groupId: values.groupId,
+        email: values.email,
+        role: values.role,
+      },
+      {
+        onSuccess: () => {
+          setInvitedEmails((prev) => [...prev, values.email]);
+          form.reset({ groupId, email: "", role: "member" });
+          onSuccess?.();
+        },
       }
-    });
+    );
   }
 
   return (
@@ -78,8 +71,8 @@ export function InviteGroupForm({
       <div>
         <h3 className="text-lg font-medium">Invite to {groupName}</h3>
         <p className="text-sm text-muted-foreground">
-          Send an invitation to join your group. They&apos;ll receive an email with a
-          link to accept.
+          Send an invitation to join your group. They&apos;ll receive an email
+          with a link to accept.
         </p>
       </div>
 
@@ -128,8 +121,14 @@ export function InviteGroupForm({
             )}
           />
 
-          <LoadingButton type="submit" className="w-full" loading={isPending}>
-            {isPending ? "Sending Invitation..." : "Send Invitation"}
+          <LoadingButton
+            type="submit"
+            className="w-full"
+            loading={inviteToGroupMutation.isPending}
+          >
+            {inviteToGroupMutation.isPending
+              ? "Sending Invitation..."
+              : "Send Invitation"}
           </LoadingButton>
         </form>
       </Form>

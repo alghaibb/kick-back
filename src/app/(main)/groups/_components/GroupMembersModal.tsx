@@ -15,13 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
 import {
-  updateGroupMemberRoleAction,
-  removeGroupMemberAction,
-  deleteGroupAction,
-  leaveGroupAction,
-} from "../actions";
+  useDeleteGroup,
+  useLeaveGroup,
+  useUpdateGroupMemberRole,
+  useRemoveGroupMember,
+} from "@/hooks/mutations/useGroupMutations";
 import Image from "next/image";
 
 interface GroupMembersModalProps {
@@ -64,68 +63,56 @@ export function GroupMembersModal({
   );
 
   const [members, setMembers] = useState(group.members);
-  const [loading, setLoading] = useState(false);
+
+  const deleteGroupMutation = useDeleteGroup();
+  const leaveGroupMutation = useLeaveGroup();
+  const updateMemberRoleMutation = useUpdateGroupMemberRole();
+  const removeMemberMutation = useRemoveGroupMember();
 
   useEffect(() => {
     setMembers(group.members);
   }, [group.members]);
 
-  const handleRoleChange = async (memberId: string, newRole: string) => {
-    setLoading(true);
-    const res = await updateGroupMemberRoleAction({
-      groupId: group.id,
-      memberId,
-      newRole,
+  const handleRoleChange = (memberId: string, newRole: string) => {
+    updateMemberRoleMutation.mutate(
+      { groupId: group.id, memberId, newRole },
+      {
+        onSuccess: () => {
+          setMembers((members) =>
+            members.map((m) =>
+              m.userId === memberId ? { ...m, role: newRole } : m
+            )
+          );
+        },
+      }
+    );
+  };
+
+  const handleRemove = (memberId: string) => {
+    removeMemberMutation.mutate(
+      { groupId: group.id, memberId },
+      {
+        onSuccess: () => {
+          setMembers((members) => members.filter((m) => m.userId !== memberId));
+        },
+      }
+    );
+  };
+
+  const handleDisband = () => {
+    deleteGroupMutation.mutate(group.id, {
+      onSuccess: () => {
+        onOpenChange(false);
+      },
     });
-    if (res?.success) {
-      setMembers((members) =>
-        members.map((m) =>
-          m.userId === memberId ? { ...m, role: newRole } : m
-        )
-      );
-      toast.success("Role updated");
-    } else {
-      toast.error(res?.error || "Failed to update role");
-    }
-    setLoading(false);
   };
 
-  const handleRemove = async (memberId: string) => {
-    setLoading(true);
-    const res = await removeGroupMemberAction({ groupId: group.id, memberId });
-    if (res?.success) {
-      setMembers((members) => members.filter((m) => m.userId !== memberId));
-      toast.success("Member removed");
-    } else {
-      toast.error(res?.error || "Failed to remove member");
-    }
-    setLoading(false);
-  };
-
-  const handleDisband = async () => {
-    setLoading(true);
-    const res = await deleteGroupAction(group.id);
-    if (res?.success) {
-      toast.success("Group disbanded");
-      onOpenChange(false);
-      // Optionally refresh the page or redirect
-    } else {
-      toast.error(res?.error || "Failed to disband group");
-    }
-    setLoading(false);
-  };
-
-  const handleLeave = async () => {
-    setLoading(true);
-    const res = await leaveGroupAction(group.id);
-    if (res?.success) {
-      toast.success("You left the group");
-      onOpenChange(false);
-      // Optionally refresh the page or redirect
-    } else {
-      toast.error(res?.error || "Failed to leave group");
-    }
-    setLoading(false);
+  const handleLeave = () => {
+    leaveGroupMutation.mutate(group.id, {
+      onSuccess: () => {
+        onOpenChange(false);
+      },
+    });
   };
 
   return (
@@ -162,7 +149,7 @@ export function GroupMembersModal({
                   <Select
                     value={m.role}
                     onValueChange={(role) => handleRoleChange(m.userId, role)}
-                    disabled={loading}
+                    disabled={updateMemberRoleMutation.isPending}
                   >
                     <SelectTrigger className="w-24">
                       <SelectValue />
@@ -182,7 +169,7 @@ export function GroupMembersModal({
                       size="sm"
                       variant="destructive"
                       onClick={() => handleRemove(m.userId)}
-                      disabled={loading}
+                      disabled={removeMemberMutation.isPending}
                     >
                       Remove
                     </Button>
@@ -206,12 +193,16 @@ export function GroupMembersModal({
             <Button
               variant="destructive"
               onClick={handleDisband}
-              disabled={loading}
+              disabled={deleteGroupMutation.isPending}
             >
               Disband Group
             </Button>
           ) : (
-            <Button variant="outline" onClick={handleLeave} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={handleLeave}
+              disabled={leaveGroupMutation.isPending}
+            >
               Leave Group
             </Button>
           )}

@@ -22,6 +22,7 @@ import { useMutation } from "@tanstack/react-query";
 import { editGroupAction } from "../actions";
 import { AutosizeTextarea } from "@/components/ui/textarea";
 import { useImageUpload } from "@/hooks/mutations/useFileUpload";
+import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
 import Image from "next/image";
 import { X } from "lucide-react";
 
@@ -41,6 +42,7 @@ export default function EditGroupForm({
     initialValues.imageUrl || null
   );
   const imageRef = useRef<HTMLInputElement>(null);
+  const { invalidateDashboard } = useDashboardInvalidation();
 
   const {
     uploadAsync,
@@ -67,6 +69,8 @@ export default function EditGroupForm({
     onSuccess: (res) => {
       if (res?.success) {
         toast.success("Group updated successfully!");
+        // Invalidate dashboard stats in case group name/details changed
+        invalidateDashboard();
         onSuccess?.();
       }
     },

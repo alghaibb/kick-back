@@ -23,6 +23,7 @@ import { createGroupAction } from "../actions";
 import { AutosizeTextarea } from "@/components/ui/textarea";
 import { useModal } from "@/hooks/use-modal";
 import { useImageUpload } from "@/hooks/mutations/useFileUpload";
+import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
 import Image from "next/image";
 
 interface CreateGroupFormProps {
@@ -34,6 +35,7 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const imageRef = useRef<HTMLInputElement>(null);
   const { open: openModal } = useModal();
+  const { invalidateDashboard } = useDashboardInvalidation();
 
   const {
     uploadAsync,
@@ -59,6 +61,8 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
         form.reset();
         setCurrentFile(undefined);
         setPreviewUrl(null);
+        // Invalidate dashboard stats to show new group count
+        invalidateDashboard();
         onSuccess?.();
         openModal("invite-group", {
           groupId: res.group.id,
