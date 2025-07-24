@@ -30,8 +30,6 @@ const nextConfig: NextConfig = {
   },
   // Compress responses
   compress: true,
-  // Enable SWC minification
-  swcMinify: true,
 };
 
 export default nextConfig;

@@ -2,6 +2,47 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { NextResponse } from "next/server";
 
+// Type for formatted member
+interface FormattedMember {
+  userId: string;
+  role: string;
+  user: {
+    id: string;
+    firstName: string | null;
+    email: string;
+    image: string | null;
+  };
+}
+
+// Type for formatted group
+interface FormattedGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  image: string | null;
+  createdBy: string;
+  members: FormattedMember[];
+}
+
+// Type for group with members from Prisma query
+interface GroupWithMembers {
+  id: string;
+  name: string;
+  description: string | null;
+  image: string | null;
+  createdBy: string;
+  members: Array<{
+    userId: string;
+    role: string;
+    user: {
+      id: string;
+      firstName: string | null;
+      email: string;
+      image: string | null;
+    };
+  }>;
+}
+
 export async function GET() {
   try {
     const session = await getSession();
@@ -41,13 +82,13 @@ export async function GET() {
     });
 
     // Format the data for client consumption
-    const formatGroup = (group: any) => ({
+    const formatGroup = (group: GroupWithMembers): FormattedGroup => ({
       id: group.id,
       name: group.name,
       description: group.description,
       image: group.image,
       createdBy: group.createdBy,
-      members: group.members.map((member: any) => ({
+      members: group.members.map((member) => ({
         userId: member.userId,
         role: member.role,
         user: {
