@@ -6,6 +6,7 @@ import { EventsSkeleton } from "./EventsSkeleton";
 import { endOfDay, format, startOfDay } from "date-fns";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { Calendar, Clock, History, AlertCircle } from "lucide-react";
 
 export function EventsClient() {
   const { data, isLoading, error } = useEvents();
@@ -44,10 +45,16 @@ export function EventsClient() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">
-          Failed to load events. Please try again.
-        </p>
+      <div className="flex items-center justify-center py-16">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 border border-destructive/20 mx-auto">
+            <AlertCircle className="w-8 h-8 text-destructive" />
+          </div>
+          <h3 className="text-xl font-semibold">Unable to load events</h3>
+          <p className="text-muted-foreground">
+            Failed to load events. Please try again.
+          </p>
+        </div>
       </div>
     );
   }
@@ -59,86 +66,89 @@ export function EventsClient() {
   const { todayEvents, upcomingEvents, pastEvents } = categorizedEvents;
   const { groups, userTimezone } = data;
 
-  return (
-    <div className="space-y-8">
-      {/* Today's Events */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Today&apos;s Events</h2>
-        {todayEvents.length === 0 ? (
-          <p className="text-muted-foreground">No events today.</p>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {todayEvents.map((event) => (
-              <EventCard
-                key={event.id}
-                id={event.id}
-                name={event.name}
-                description={event.description || undefined}
-                date={event.date}
-                time={format(new Date(event.date), "HH:mm")}
-                location={event.location || undefined}
-                groupId={event.groupId || undefined}
-                groups={groups}
-                timezone={userTimezone}
-                createdByCurrentUser={event.createdBy === user?.id}
-              />
-            ))}
-          </div>
-        )}
+  const EventSection = ({
+    title,
+    icon: Icon,
+    events,
+    emptyMessage,
+    iconColor,
+  }: {
+    title: string;
+    icon: any;
+    events: any[];
+    emptyMessage: string;
+    iconColor: string;
+  }) => (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br ${iconColor} border border-current/20`}
+        >
+          <Icon className="w-5 h-5" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+          <p className="text-muted-foreground text-sm">
+            {events.length} {events.length === 1 ? "event" : "events"}
+          </p>
+        </div>
       </div>
+
+      {events.length === 0 ? (
+        <div className="bg-card border border-border rounded-2xl p-8 text-center">
+          <p className="text-muted-foreground">{emptyMessage}</p>
+        </div>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {events.map((event) => (
+            <EventCard
+              key={event.id}
+              id={event.id}
+              name={event.name}
+              description={event.description || undefined}
+              date={event.date}
+              time={format(new Date(event.date), "HH:mm")}
+              location={event.location || undefined}
+              groupId={event.groupId || undefined}
+              groups={groups}
+              timezone={userTimezone}
+              createdByCurrentUser={event.createdBy === user?.id}
+              disabled={title === "Past Events"}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-12">
+      {/* Today's Events */}
+      <EventSection
+        title="Today's Events"
+        icon={Clock}
+        events={todayEvents}
+        emptyMessage="No events scheduled for today. Why not create one?"
+        iconColor="from-primary/20 to-primary/30 text-primary"
+      />
 
       {/* Upcoming Events */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
-        {upcomingEvents.length === 0 ? (
-          <p className="text-muted-foreground">No upcoming events.</p>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {upcomingEvents.map((event) => (
-              <EventCard
-                key={event.id}
-                id={event.id}
-                name={event.name}
-                description={event.description || undefined}
-                date={event.date}
-                time={format(new Date(event.date), "HH:mm")}
-                location={event.location || undefined}
-                groupId={event.groupId || undefined}
-                groups={groups}
-                timezone={userTimezone}
-                createdByCurrentUser={event.createdBy === user?.id}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <EventSection
+        title="Upcoming Events"
+        icon={Calendar}
+        events={upcomingEvents}
+        emptyMessage="No upcoming events. Start planning your next gathering!"
+        iconColor="from-primary/20 to-primary/30 text-primary"
+      />
 
       {/* Past Events */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Past Events</h2>
-        {pastEvents.length === 0 ? (
-          <p className="text-muted-foreground">No past events.</p>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {pastEvents.map((event) => (
-              <EventCard
-                key={event.id}
-                id={event.id}
-                name={event.name}
-                description={event.description || undefined}
-                date={event.date}
-                time={format(new Date(event.date), "HH:mm")}
-                location={event.location || undefined}
-                groupId={event.groupId || undefined}
-                groups={groups}
-                timezone={userTimezone}
-                createdByCurrentUser={event.createdBy === user?.id}
-                disabled={true}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <EventSection
+        title="Past Events"
+        icon={History}
+        events={pastEvents}
+        emptyMessage="No past events to show."
+        iconColor="from-muted/20 to-muted/30 text-muted-foreground"
+      />
     </div>
   );
 }
