@@ -1,4 +1,3 @@
-import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { redirect } from "next/navigation";
 import { MainLayoutClient } from "./_components/MainLayoutClient";
@@ -17,23 +16,12 @@ export default async function MainLayout({
   const session = await getSession();
   if (!session?.user?.id) redirect("/login");
 
-  const groups = await prisma.group.findMany({
-    where: {
-      OR: [
-        { createdBy: session.user.id },
-        { members: { some: { userId: session.user.id } } },
-      ],
-    },
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
-
   return (
     <>
       <MainLayoutClient>{children}</MainLayoutClient>
       <CreateGroupModal />
       <InviteGroupModal />
-      <CreateEventModal groups={groups} />
+      <CreateEventModal />
       <DeleteEventModal />
       <EditGroupModal />
       <EditEventModal />

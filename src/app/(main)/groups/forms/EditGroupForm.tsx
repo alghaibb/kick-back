@@ -23,6 +23,7 @@ import { editGroupAction } from "../actions";
 import { AutosizeTextarea } from "@/components/ui/textarea";
 import { useImageUpload } from "@/hooks/mutations/useFileUpload";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { X } from "lucide-react";
 
@@ -43,6 +44,7 @@ export default function EditGroupForm({
   );
   const imageRef = useRef<HTMLInputElement>(null);
   const { invalidateDashboard } = useDashboardInvalidation();
+  const queryClient = useQueryClient();
 
   const {
     uploadAsync,
@@ -71,6 +73,8 @@ export default function EditGroupForm({
         toast.success("Group updated successfully!");
         // Invalidate dashboard stats in case group name/details changed
         invalidateDashboard();
+        // Invalidate groups data to show updated group
+        queryClient.invalidateQueries({ queryKey: ["groups"] });
         onSuccess?.();
       }
     },

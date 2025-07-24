@@ -24,6 +24,7 @@ import { AutosizeTextarea } from "@/components/ui/textarea";
 import { useModal } from "@/hooks/use-modal";
 import { useImageUpload } from "@/hooks/mutations/useFileUpload";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 
 interface CreateGroupFormProps {
@@ -36,6 +37,7 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
   const imageRef = useRef<HTMLInputElement>(null);
   const { open: openModal } = useModal();
   const { invalidateDashboard } = useDashboardInvalidation();
+  const queryClient = useQueryClient();
 
   const {
     uploadAsync,
@@ -63,6 +65,8 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
         setPreviewUrl(null);
         // Invalidate dashboard stats to show new group count
         invalidateDashboard();
+        // Invalidate groups data to show new group
+        queryClient.invalidateQueries({ queryKey: ["groups"] });
         onSuccess?.();
         openModal("invite-group", {
           groupId: res.group.id,

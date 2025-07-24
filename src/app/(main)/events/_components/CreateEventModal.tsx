@@ -9,13 +9,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
 import { CreateEventForm } from "../forms/CreateEventForm";
+import { useEvents } from "@/hooks/queries/useEvents";
 
-export function CreateEventModal({
-  groups,
-}: {
-  groups: { id: string; name: string }[];
-}) {
+export function CreateEventModal() {
   const { type, isOpen, close } = useModal();
+  const { data } = useEvents();
+
   if (type !== "create-event") return null;
 
   return (
@@ -24,7 +23,7 @@ export function CreateEventModal({
         <ResponsiveModalHeader>
           <ResponsiveModalTitle>Create New Event</ResponsiveModalTitle>
         </ResponsiveModalHeader>
-        <CreateEventForm groups={groups} onSuccess={close} />
+        <CreateEventForm groups={data?.groups || []} onSuccess={close} />
         <ResponsiveModalFooter>
           <Button variant="outline" onClick={close}>
             Cancel

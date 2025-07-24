@@ -23,11 +23,10 @@ import {
   createEventSchema,
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
-import { toast } from "sonner";
-import { useTransition, useState } from "react";
-import { createEventAction } from "../actions";
+import { useState } from "react";
 import { LoadingButton } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
+import { useCreateEvent } from "@/hooks/mutations/useEventMutations";
 
 interface CreateEventFormProps {
   groups: { id: string; name: string }[];
@@ -38,9 +37,9 @@ export function CreateEventForm({
   groups: initialGroups,
   onSuccess,
 }: CreateEventFormProps) {
-  const [isPending, startTransition] = useTransition();
   const [groups] = useState(initialGroups);
   const modal = useModal();
+  const createEventMutation = useCreateEvent();
 
   const form = useForm<CreateEventValues>({
     resolver: zodResolver(createEventSchema),
@@ -55,17 +54,11 @@ export function CreateEventForm({
   });
 
   function onSubmit(values: CreateEventValues) {
-    startTransition(async () => {
-      const res = await createEventAction(values);
-
-      if (res?.error) {
-        toast.error(res.error);
-        return;
-      }
-
-      toast.success("Event created successfully!");
-      form.reset();
-      onSuccess?.();
+    createEventMutation.mutate(values, {
+      onSuccess: () => {
+        form.reset();
+        onSuccess?.();
+      },
     });
   }
 
@@ -180,8 +173,8 @@ export function CreateEventForm({
           )}
         />
 
-        <LoadingButton type="submit" loading={isPending}>
-          {isPending ? "Creating Event..." : "Create Event"}
+        <LoadingButton type="submit" loading={createEventMutation.isPending}>
+          {createEventMutation.isPending ? "Creating Event..." : "Create Event"}
         </LoadingButton>
       </form>
     </Form>

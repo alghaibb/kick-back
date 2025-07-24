@@ -3,16 +3,31 @@
 import { useState, useMemo } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { format, isSameDay, startOfDay } from "date-fns";
-import { CalendarEvent } from "@/types/calender";
+import { useCalendar } from "@/hooks/queries/useCalendar";
+import { CalendarSkeleton } from "./CalendarSkeleton";
 
-export function CalendarPageClient({ events }: { events: CalendarEvent[] }) {
+export function CalendarPageClient() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const { data, isLoading, error } = useCalendar();
 
   const eventsForDay = useMemo(() => {
-    return events.filter((event) =>
+    if (!data?.events) return [];
+    return data.events.filter((event) =>
       isSameDay(startOfDay(new Date(event.date)), startOfDay(selectedDate))
     );
-  }, [events, selectedDate]);
+  }, [data?.events, selectedDate]);
+
+  if (isLoading) {
+    return <CalendarSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <div className="text-muted-foreground">
+        Failed to load calendar events. Please try again.
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row gap-8">

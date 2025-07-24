@@ -9,25 +9,19 @@ import {
 } from "@/components/ui/responsive-modal";
 import { Button, LoadingButton } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
-import { deleteEventAction } from "../actions";
-import { toast } from "sonner";
-import { useTransition } from "react";
+import { useDeleteEvent } from "@/hooks/mutations/useEventMutations";
 
 export function DeleteEventModal() {
-  const [isPending, startTransition] = useTransition();
   const { isOpen, type, close, data } = useModal();
   const isDeleteModal = type === "delete-event";
+  const deleteEventMutation = useDeleteEvent();
 
   const handleDelete = () => {
     if (!data?.eventId) return;
-    startTransition(async () => {
-      const res = await deleteEventAction(data.eventId!);
-      if (res?.error) {
-        toast.error(res.error);
-      } else {
-        toast.success("Event deleted");
+    deleteEventMutation.mutate(data.eventId, {
+      onSuccess: () => {
         close();
-      }
+      },
     });
   };
 
@@ -45,15 +39,13 @@ export function DeleteEventModal() {
           cannot be undone.
         </p>
         <ResponsiveModalFooter className="flex flex-col md:flex-row space-y-4 md:space-y-0">
-          <Button onClick={close}>
-            Cancel
-          </Button>
-           <LoadingButton
+          <Button onClick={close}>Cancel</Button>
+          <LoadingButton
             variant="destructive"
             onClick={handleDelete}
-            loading={isPending}
+            loading={deleteEventMutation.isPending}
           >
-            {isPending ? "Deleting..." : "Delete Event"}
+            {deleteEventMutation.isPending ? "Deleting..." : "Delete Event"}
           </LoadingButton>
         </ResponsiveModalFooter>
       </ResponsiveModalContent>

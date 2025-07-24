@@ -23,10 +23,8 @@ import {
   createEventSchema,
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
-import { toast } from "sonner";
-import { useTransition } from "react";
-import { editEventAction } from "../actions";
 import { LoadingButton } from "@/components/ui/button";
+import { useEditEvent } from "@/hooks/mutations/useEventMutations";
 
 interface EditEventFormProps {
   eventId: string;
@@ -41,7 +39,7 @@ export default function EditEventForm({
   groups,
   onSuccess,
 }: EditEventFormProps) {
-  const [isPending, startTransition] = useTransition();
+  const editEventMutation = useEditEvent();
 
   const form = useForm<CreateEventValues>({
     resolver: zodResolver(createEventSchema),
@@ -49,15 +47,14 @@ export default function EditEventForm({
   });
 
   function onSubmit(values: CreateEventValues) {
-    startTransition(async () => {
-      const res = await editEventAction(eventId, values);
-      if (res?.error) {
-        toast.error(res.error);
-        return;
+    editEventMutation.mutate(
+      { eventId, values },
+      {
+        onSuccess: () => {
+          onSuccess?.();
+        },
       }
-      toast.success("Event updated successfully!");
-      onSuccess?.();
-    });
+    );
   }
 
   return (
@@ -163,8 +160,8 @@ export default function EditEventForm({
             </FormItem>
           )}
         />
-        <LoadingButton type="submit" loading={isPending}>
-          {isPending ? "Saving..." : "Save Changes"}
+        <LoadingButton type="submit" loading={editEventMutation.isPending}>
+          {editEventMutation.isPending ? "Saving..." : "Save Changes"}
         </LoadingButton>
       </form>
     </Form>
