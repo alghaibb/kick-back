@@ -144,6 +144,8 @@ export function GroupMembersModal({
                 <Image
                   src={m.user?.image ?? "/placeholder-avatar.jpg"}
                   alt={m.user?.firstName || ""}
+                  width={32}
+                  height={32}
                   className="size-8 rounded-full object-cover"
                 />
                 <div>

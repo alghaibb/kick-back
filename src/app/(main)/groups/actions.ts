@@ -128,14 +128,28 @@ export async function inviteToGroupAction(formData: FormData) {
     const token = generateToken();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    // Create invite
-    const invite = await prisma.groupInvite.create({
-      data: {
+    // Create or update invite (handles cancelled invites)
+    const invite = await prisma.groupInvite.upsert({
+      where: {
+        groupId_email: {
+          groupId,
+          email
+        }
+      },
+      create: {
         groupId,
         email,
         invitedBy: session.user.id,
         token,
         expiresAt,
+        status: "pending"
+      },
+      update: {
+        invitedBy: session.user.id,
+        token,
+        expiresAt,
+        status: "pending",
+        updatedAt: new Date()
       }
     });
 

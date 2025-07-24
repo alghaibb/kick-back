@@ -12,131 +12,41 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { CheckCircle, Clock, Mail, RefreshCw, X, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { cancelGroupInviteAction, resendGroupInviteAction } from "../actions";
+import { useGroupInvites } from "@/hooks/queries/useGroupInvites";
 
 interface GroupInviteManagerProps {
   groupId: string;
   groupName: string;
 }
 
-interface Invite {
-  id: string;
-  email: string;
-  status: string;
-  createdAt: string;
-  expiresAt: string;
-  inviter: {
-    firstName: string;
-    email: string;
-  };
-}
-
 export function GroupInviteManager({
   groupId,
   groupName,
 }: GroupInviteManagerProps) {
-  const [invites, setInvites] = useState<Invite[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const {
+    invites,
+    pendingInvites,
+    otherInvites,
+    isLoading,
+    isCanceling,
+    isResending,
+    error,
+    cancelInvite,
+    resendInvite,
+    refetchInvites,
+  } = useGroupInvites(groupId);
 
   // Log component initialization for debugging
   console.log(`GroupInviteManager initialized for group ${groupId}`);
 
-  // Fetch invites on component mount
-  useEffect(() => {
-    fetchInvites();
-  }, [groupId]);
-
-  async function fetchInvites() {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/groups/${groupId}/invites`);
-      const result = await response.json();
-
-      if (result.success) {
-        setInvites(result.invites);
-      } else {
-        console.error(
-          `Failed to fetch invites for group ${groupId}:`,
-          result.error
-        );
-        toast.error(result.error || "Failed to fetch invites");
-      }
-    } catch (error) {
-      console.error(`Failed to fetch invites for group ${groupId}:`, error);
-      toast.error("Failed to fetch invites");
-    } finally {
-      setLoading(false);
-    }
+  function handleCancelInvite(inviteId: string) {
+    console.log(`Cancelling invite ${inviteId} for group ${groupId}`);
+    cancelInvite(inviteId);
   }
 
-  async function handleCancelInvite(inviteId: string) {
-    try {
-      // Additional validation: ensure invite belongs to this group
-      const inviteToCancel = invites.find((invite) => invite.id === inviteId);
-      if (!inviteToCancel) {
-        console.error(`Invite ${inviteId} not found in group ${groupId}`);
-        toast.error("Invitation not found");
-        return;
-      }
-
-      console.log(`Cancelling invite ${inviteId} for group ${groupId}`);
-      const result = await cancelGroupInviteAction(inviteId);
-      if (result?.success) {
-        toast.success("Invitation cancelled");
-        setInvites((prev) => prev.filter((invite) => invite.id !== inviteId));
-        fetchInvites();
-      } else {
-        console.error(
-          `Failed to cancel invite ${inviteId} for group ${groupId}:`,
-          result?.error
-        );
-        toast.error(result?.error || "Failed to cancel invitation");
-      }
-    } catch (error) {
-      console.error(
-        `Failed to cancel invitation ${inviteId} for group ${groupId}:`,
-        error
-      );
-      toast.error("Failed to cancel invitation");
-    }
-  }
-
-  async function handleResendInvite(inviteId: string) {
-    setRefreshing(true);
-    try {
-      // Additional validation: ensure invite belongs to this group
-      const inviteToResend = invites.find((invite) => invite.id === inviteId);
-      if (!inviteToResend) {
-        console.error(`Invite ${inviteId} not found in group ${groupId}`);
-        toast.error("Invitation not found");
-        setRefreshing(false);
-        return;
-      }
-
-      console.log(`Resending invite ${inviteId} for group ${groupId}`);
-      const result = await resendGroupInviteAction(inviteId);
-      if (result?.success) {
-        toast.success("Invitation resent successfully");
-        fetchInvites();
-      } else {
-        console.error(
-          `Failed to resend invite ${inviteId} for group ${groupId}:`,
-          result?.error
-        );
-        toast.error(result?.error || "Failed to resend invitation");
-      }
-    } catch (error) {
-      console.error(
-        `Failed to resend invitation ${inviteId} for group ${groupId}:`,
-        error
-      );
-      toast.error("Failed to resend invitation");
-    } finally {
-      setRefreshing(false);
-    }
+  function handleResendInvite(inviteId: string) {
+    console.log(`Resending invite ${inviteId} for group ${groupId}`);
+    resendInvite(inviteId);
   }
 
   function getStatusIcon(status: string) {
@@ -169,11 +79,6 @@ export function GroupInviteManager({
     return new Date(expiresAt) < new Date();
   }
 
-  const pendingInvites = invites.filter(
-    (invite) => invite.status === "pending"
-  );
-  const otherInvites = invites.filter((invite) => invite.status !== "pending");
-
   return (
     <Card>
       <CardHeader>
@@ -190,17 +95,30 @@ export function GroupInviteManager({
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchInvites}
-            disabled={refreshing || loading}
+            onClick={() => refetchInvites()}
+            disabled={isLoading || isCanceling || isResending}
           >
             <RefreshCw
-              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
             />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {loading ? (
+        {error && (
+          <div className="text-center py-4 text-destructive">
+            <p>Error loading invitations: {error.message}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchInvites()}
+              className="mt-2"
+            >
+              Try Again
+            </Button>
+          </div>
+        )}
+        {isLoading ? (
           <div className="text-center py-8 text-muted-foreground">
             <RefreshCw className="h-8 w-8 mx-auto mb-4 animate-spin" />
             <p>Loading invitations...</p>
@@ -245,11 +163,11 @@ export function GroupInviteManager({
                             variant="outline"
                             size="sm"
                             onClick={() => handleResendInvite(invite.id)}
-                            disabled={refreshing}
+                            disabled={isResending}
                           >
                             <RefreshCw
                               className={`h-3 w-3 ${
-                                refreshing ? "animate-spin" : ""
+                                isResending ? "animate-spin" : ""
                               }`}
                             />
                           </Button>
