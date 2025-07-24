@@ -15,7 +15,7 @@ export async function sendSMS(
     fallbackCountry?: CountryCode;
   } = {}
 ) {
-  const { country, timezone, fallbackCountry = "AU" } = options;
+  const { country, timezone } = options;
 
   // Use provided country or detect it from phone number/timezone
   const detectedCountry = country || detectCountryForSMS(to, timezone);
