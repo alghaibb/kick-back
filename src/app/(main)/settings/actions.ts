@@ -30,7 +30,7 @@ export async function updateSettingsAction(values: SettingsValues) {
     // Validate and format phone number using utils
     let formattedPhone: string | null = null;
     if (reminderType === "sms" || reminderType === "both") {
-      const country = detectCountryForSMS(phoneNumber || "", timezone, "AU");
+      const country = detectCountryForSMS(phoneNumber || "", timezone);
       formattedPhone = formatToE164(phoneNumber || "", country);
       if (!formattedPhone) {
         return { error: "Invalid phone number for your country" };

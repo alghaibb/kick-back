@@ -1,5 +1,6 @@
 import { env } from "@/lib/env";
 import prisma from "@/lib/prisma";
+import { detectCountryForSMS } from "@/utils/detectCountry";
 import { formatToE164 } from "@/utils/formatPhoneNumber";
 import { sendEventReminderEmail } from "@/utils/sendEmails";
 import { sendSMS } from "@/utils/sendSMS";
@@ -232,7 +233,8 @@ export async function GET(request: Request) {
         user.phoneNumber
       ) {
         try {
-          const formattedPhone = formatToE164(user.phoneNumber);
+          const country = detectCountryForSMS(user.phoneNumber, user.timezone);
+          const formattedPhone = formatToE164(user.phoneNumber, country);
           if (!formattedPhone) {
             console.warn(
               `⚠️ Invalid phone for ${user.email}: ${user.phoneNumber}`
@@ -351,7 +353,8 @@ export async function GET(request: Request) {
             creatorInfo.phoneNumber
           ) {
             try {
-              const formattedPhone = formatToE164(creatorInfo.phoneNumber);
+              const country = detectCountryForSMS(creatorInfo.phoneNumber, creatorInfo.timezone);
+              const formattedPhone = formatToE164(creatorInfo.phoneNumber, country);
               if (!formattedPhone) {
                 console.warn(
                   `⚠️ Invalid creator phone: ${creatorInfo.phoneNumber}`

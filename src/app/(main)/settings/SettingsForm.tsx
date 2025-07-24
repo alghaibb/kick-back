@@ -70,7 +70,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
   const timezoneValue = settingsForm.watch("timezone");
   let phoneError: string | null = null;
   if ((reminderType === "sms" || reminderType === "both") && phoneNumberValue) {
-    let country = detectCountryForSMS(phoneNumberValue, timezoneValue, "AU");
+    let country = detectCountryForSMS(phoneNumberValue, timezoneValue);
     // Defensive: ensure country is a valid 2-letter code
     if (!country || typeof country !== "string" || country.length !== 2) {
       country = "AU";
@@ -85,7 +85,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
     defaultValues: {
       currentPassword: "",
       newPassword: "",
-      confirmNewPassword: "",
+      confirmPassword: "",
     },
     mode: "onChange",
   });
@@ -307,7 +307,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                 />
                 <FormField
                   control={passwordForm.control}
-                  name="confirmNewPassword"
+                  name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Confirm New Password</FormLabel>
