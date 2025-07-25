@@ -9,7 +9,7 @@ const rsvpSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
     const session = await getSession();
@@ -17,7 +17,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { eventId } = params;
+    const { eventId } = await params;
     const body = await request.json();
     const { status } = rsvpSchema.parse(body);
 
@@ -73,8 +73,8 @@ export async function POST(
 }
 
 export async function GET(
-  _: NextRequest,
-  { params }: { params: { eventId: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
     const session = await getSession();
@@ -82,7 +82,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { eventId } = params;
+    const { eventId } = await params;
 
     // Get user's RSVP status for this event
     const attendee = await prisma.eventAttendee.findFirst({
