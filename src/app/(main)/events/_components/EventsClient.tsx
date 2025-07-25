@@ -1,6 +1,6 @@
 "use client";
 
-import { useEvents } from "@/hooks/queries/useEvents";
+import { useEvents, EventData } from "@/hooks/queries/useEvents";
 import { EventCard } from "./EventCard";
 import { EventsSkeleton } from "./EventsSkeleton";
 import { endOfDay, format, startOfDay } from "date-fns";
@@ -75,16 +75,7 @@ export function EventsClient() {
   }: {
     title: string;
     icon: React.ComponentType<{ className?: string }>;
-    events: Array<{
-      id: string;
-      title: string;
-      description: string | null;
-      date: string;
-      time: string;
-      location: string | null;
-      group: { id: string; name: string; image: string | null } | null;
-      createdByCurrentUser: boolean;
-    }>;
+    events: EventData[];
     emptyMessage: string;
     iconColor: string;
   }) => (
