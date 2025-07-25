@@ -6,6 +6,7 @@ import { useModal } from "@/hooks/use-modal";
 import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { Pencil, Trash2 } from "lucide-react";
+import { RSVPButtons } from "@/components/RSVPButtons";
 
 interface EventCardProps {
   id: string;
@@ -89,6 +90,13 @@ export function EventCard({
           </p>
         )}
       </section>
+
+      {/* RSVP Section */}
+      {!disabled && (
+        <section className="mt-4 mb-3">
+          <RSVPButtons eventId={id} size="sm" />
+        </section>
+      )}
 
       <footer className="flex justify-end gap-1 border-t pt-2 mt-2">
         {createdByCurrentUser && !disabled && (

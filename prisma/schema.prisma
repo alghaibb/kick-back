@@ -4,8 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL")
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
 }
 
 model User {
@@ -197,9 +197,14 @@ model EventAttendee {
   eventId          String
   event            Event     @relation(fields: [eventId], references: [id])
   userId           String
-  status           String?
+  status           String? 
+  rsvpStatus       String    @default("pending") 
+  rsvpAt           DateTime? 
   invitedAt        DateTime  @default(now())
   respondedAt      DateTime?
   lastReminderSent DateTime?
   user             User      @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+  @@map("event_attendees")
 }

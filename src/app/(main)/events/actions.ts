@@ -43,28 +43,38 @@ export async function createEventAction(values: CreateEventValues) {
       }
     });
 
-    const attendeesToAdd = [{ userId: session.user.id, eventId: event.id }];
+    // Create creator as confirmed attendee
+    await prisma.eventAttendee.create({
+      data: {
+        userId: session.user.id,
+        eventId: event.id,
+        rsvpStatus: "yes", // Creator automatically says yes
+        rsvpAt: new Date()
+      }
+    });
 
+    // Add group members as pending attendees
     if (groupId) {
       const groupMembers = await prisma.groupMember.findMany({
         where: { groupId },
         select: { userId: true },
       });
 
-      attendeesToAdd.push(
-        ...groupMembers
-          .filter((m) => m.userId !== session.user.id)
-          .map((m) => ({
-            userId: m.userId,
-            eventId: event.id,
-          }))
-      );
-    }
+      const groupAttendees = groupMembers
+        .filter((m) => m.userId !== session.user.id)
+        .map((m) => ({
+          userId: m.userId,
+          eventId: event.id,
+          rsvpStatus: "pending", 
+        }));
 
-    await prisma.eventAttendee.createMany({
-      data: attendeesToAdd,
-      skipDuplicates: true,
-    });
+      if (groupAttendees.length > 0) {
+        await prisma.eventAttendee.createMany({
+          data: groupAttendees,
+          skipDuplicates: true,
+        });
+      }
+    }
 
 
     return { success: true, event };

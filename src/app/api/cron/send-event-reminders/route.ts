@@ -158,10 +158,17 @@ export async function GET(request: Request) {
 
     for (const attendee of event.attendees) {
       const user = attendee.user;
+
+      // 🚨 NEW: Only send reminders to confirmed attendees
+      if (attendee.rsvpStatus !== 'yes') {
+        console.log(`⏭️ Skipping ${user.email} - RSVP status: ${attendee.rsvpStatus}`);
+        continue;
+      }
+
       const userTimezone = user.timezone || "UTC";
       const userNow = toZonedTime(new Date(), userTimezone);
 
-      console.log(`👤 Checking ${user.email} | Timezone: ${userTimezone}`);
+      console.log(`👤 Checking ${user.email} | Timezone: ${userTimezone} | RSVP: ${attendee.rsvpStatus}`);
       console.log(
         `⏰ User time: ${formatTz(userNow, "HH:mm", { timeZone: userTimezone })} | Reminder time: ${user.reminderTime}`
       );
@@ -314,9 +321,13 @@ export async function GET(request: Request) {
         const todayInCreatorTz = startOfDay(creatorNow);
         const todayStartUTC = fromZonedTime(todayInCreatorTz, creatorTimezone);
 
-        // Check if creator is also an attendee and already got a reminder
+        // Check if creator is also an attendee and their RSVP status
         const creatorAsAttendee = event.attendees.find(attendee => attendee.user.email === creatorInfo.email);
-        if (creatorAsAttendee?.lastReminderSent && creatorAsAttendee.lastReminderSent >= todayStartUTC) {
+
+        // NEW: Only send creator reminders if they confirmed attendance
+        if (creatorAsAttendee && creatorAsAttendee.rsvpStatus !== 'yes') {
+          console.log(`⏭️ Skipping creator ${creatorInfo.email} - RSVP status: ${creatorAsAttendee.rsvpStatus}`);
+        } else if (creatorAsAttendee?.lastReminderSent && creatorAsAttendee.lastReminderSent >= todayStartUTC) {
           console.log(`✅ Creator reminder already sent today as attendee for ${creatorInfo.email}`);
           console.log(`   📅 Last sent: ${creatorAsAttendee.lastReminderSent.toISOString()}`);
         } else {
