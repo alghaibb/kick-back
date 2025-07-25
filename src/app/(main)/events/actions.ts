@@ -3,28 +3,23 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { createEventSchema, CreateEventValues } from "@/validations/events/createEventSchema";
+import { zonedTimeToUtc } from "date-fns-tz";
 
-
-
-function createEventDateTime(dateStr: string, time: string): Date {
-  // Parse date string as YYYY-MM-DD format to avoid timezone issues
-  const [year, month, day] = dateStr.split('-').map(Number);
+function createEventDateTime(dateStr: string, time: string, timezone: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number);
   const [hours, minutes] = time.split(":").map(Number);
 
-  // Create the event date/time using the date components directly
-  // Note: month is 0-indexed in Date constructor
-  const eventDateTime = new Date(year, month - 1, day, hours, minutes);
+  const localDateTime = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
 
-  // Debug logging for production issues
-  console.log('createEventDateTime debug:', {
-    input: { dateStr, time },
-    parsed: { year, month: month - 1, day, hours, minutes },
-    result: eventDateTime.toISOString(),
-    localString: eventDateTime.toString(),
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+  const utcDate = zonedTimeToUtc(localDateTime, timezone);
+
+  console.log("createEventDateTime debug:", {
+    input: { dateStr, time, timezone },
+    localDateTime,
+    utcDate: utcDate.toISOString(),
   });
 
-  return eventDateTime;
+  return utcDate;
 }
 
 export async function createEventAction(values: CreateEventValues) {
@@ -36,10 +31,9 @@ export async function createEventAction(values: CreateEventValues) {
 
     const validatedValues = createEventSchema.parse(values);
     const { date, name, description, groupId, location, time } = validatedValues;
-
-    const eventDateTime = createEventDateTime(date, time);
-
-
+    
+    const timezone = session.user.timezone || "UTC";
+    const eventDateTime = createEventDateTime(date, time, timezone);
 
     const event = await prisma.event.create({
       data: {
@@ -148,7 +142,8 @@ export async function editEventAction(eventId: string, values: CreateEventValues
     const validatedValues = createEventSchema.parse(values);
     const { date, name, description, groupId, location, time } = validatedValues;
 
-    const eventDateTime = createEventDateTime(date, time);
+    const timezone = session.user.timezone || "UTC";
+    const eventDateTime = createEventDateTime(date, time, timezone);
 
     const updatedEvent = await prisma.event.update({
       where: { id: eventId },
