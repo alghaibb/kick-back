@@ -8,39 +8,42 @@ function createEventDateTime(dateStr: string, time: string, timezone: string): D
   const [year, month, day] = dateStr.split("-").map(Number);
   const [hours, minutes] = time.split(":").map(Number);
 
-  // Create naive wall-time date in UTC (just for calculation)
-  const naiveUtcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+  // This creates a UTC date from the given local components
+  const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
 
-  // Use Intl to get the correct UTC offset at that wall time in that time zone
-  const formatter = new Intl.DateTimeFormat("en-US", {
+  // Use Intl API to shift the UTC date into the user's real timezone
+  const formatter = new Intl.DateTimeFormat("en-AU", {
     timeZone: timezone,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
   });
 
-  const parts = formatter.formatToParts(naiveUtcDate);
-  const values: Record<string, string> = {};
-  for (const part of parts) values[part.type] = part.value;
+  const parts = formatter.formatToParts(utcDate);
+  const obj: Record<string, string> = {};
+  for (const part of parts) {
+    if (part.type !== "literal") {
+      obj[part.type] = part.value;
+    }
+  }
 
-  // This represents the exact wall time in that time zone
-  const localTimeString = `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`;
+  // Now we construct a string in the user's local time and interpret that as UTC
+  const localTimeString = `${obj.year}-${obj.month}-${obj.day}T${obj.hour}:${obj.minute}:${obj.second}Z`;
+  const finalDate = new Date(localTimeString);
 
-  // Convert it back to a Date by appending Z to force UTC
-  const utcDate = new Date(localTimeString + "Z");
-
-  console.log("createEventDateTime debug:", {
+  console.log("✅ DEBUG", {
     input: { dateStr, time, timezone },
-    naiveUtcDate: naiveUtcDate.toISOString(),
-    interpretedLocalTime: localTimeString,
-    finalUtc: utcDate.toISOString(),
+    utcDate: utcDate.toISOString(),
+    formattedParts: obj,
+    localTimeString,
+    finalDate: finalDate.toISOString()
   });
 
-  return utcDate;
+  return finalDate;
 }
 
 export async function createEventAction(values: CreateEventValues) {
