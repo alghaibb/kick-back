@@ -73,7 +73,7 @@ export async function POST(
 }
 
 export async function GET(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { eventId: string } }
 ) {
   try {
