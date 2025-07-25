@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { format, isSameDay, startOfDay } from "date-fns";
 import { useCalendar } from "@/hooks/queries/useCalendar";
+import { formatDate } from "@/lib/date-utils";
 import { CalendarSkeleton } from "./CalendarSkeleton";
 
 export function CalendarPageClient() {
@@ -58,7 +59,10 @@ export function CalendarPageClient() {
                 <div className="font-bold text-lg">{event.name}</div>
 
                 <div className="text-xs text-muted-foreground">
-                  {format(new Date(event.date), "eeee, MMMM do yyyy • h:mm a")}
+                  {formatDate(new Date(event.date), {
+                    includeWeekday: true,
+                    includeTime: true,
+                  })}
                 </div>
 
                 <div className="text-xs mt-1">

@@ -4,6 +4,7 @@ import { useEvents, EventData } from "@/hooks/queries/useEvents";
 import { EventCard } from "./EventCard";
 import { EventsSkeleton } from "./EventsSkeleton";
 import { endOfDay, format, startOfDay } from "date-fns";
+import { formatDate } from "@/lib/date-utils";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Calendar, Clock, History, AlertCircle } from "lucide-react";
@@ -107,7 +108,9 @@ export function EventsClient() {
               name={event.name}
               description={event.description || undefined}
               date={event.date}
-              time={format(new Date(event.date), "HH:mm")}
+              time={formatDate(new Date(event.date), { includeTime: true })
+                .split(" ")
+                .pop()}
               location={event.location || undefined}
               groupId={event.groupId || undefined}
               groups={groups}

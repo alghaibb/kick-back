@@ -52,6 +52,13 @@ export async function createEventAction(values: CreateEventValues) {
       }
     });
 
+    // Return debug info for client-side logging (temporary)
+    console.log('Event created with date:', {
+      originalInput: { date, time },
+      processedDateTime: eventDateTime.toISOString(),
+      savedDate: event.date.toISOString()
+    });
+
     // Create creator as confirmed attendee
     await prisma.eventAttendee.create({
       data: {
