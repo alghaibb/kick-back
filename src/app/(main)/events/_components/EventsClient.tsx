@@ -108,7 +108,7 @@ export function EventsClient() {
               name={event.name}
               description={event.description || undefined}
               date={event.date}
-              time={formatDate(new Date(event.date), { includeTime: true })
+              time={formatDate(new Date(event.date), { includeTime: true, timeZone: userTimezone })
                 .split(" ")
                 .pop()}
               location={event.location || undefined}
