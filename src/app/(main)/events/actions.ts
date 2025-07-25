@@ -3,19 +3,19 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { createEventSchema, CreateEventValues } from "@/validations/events/createEventSchema";
-import { fromZonedTime, } from "date-fns-tz";
+
 import { revalidatePath } from "next/cache";
 
 function createEventDateTime(date: Date, time: string, userTimezone: string): Date {
+  // Get the date components in the user's timezone (already local from client)
   const year = date.getFullYear();
-  const month = date.getMonth() + 1;
+  const month = date.getMonth();
   const day = date.getDate();
 
   const [hours, minutes] = time.split(":").map(Number);
 
-  const dateTimeString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
-
-  const eventDateTime = fromZonedTime(dateTimeString, userTimezone);
+  // Create the event date/time in the user's local timezone
+  const eventDateTime = new Date(year, month, day, hours, minutes);
 
   return eventDateTime;
 }
