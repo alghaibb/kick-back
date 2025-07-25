@@ -8,6 +8,8 @@ import { CreateGroupModal } from "./groups/_components/CreateGroupModal";
 import EditGroupModal from "./groups/_components/EditGroupModal";
 import { InviteGroupModal } from "./groups/_components/InviteGroupModal";
 
+export const dynamic = "force-dynamic";
+
 export default async function MainLayout({
   children,
 }: {
