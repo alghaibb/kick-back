@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { createEventSchema, CreateEventValues } from "@/validations/events/createEventSchema";
-import { zonedTimeToUtc } from "date-fns-tz";
+import zonedTimeToUtc from "date-fns-tz/zonedTimeToUtc";
 
 function createEventDateTime(dateStr: string, time: string, timezone: string): Date {
   const [year, month, day] = dateStr.split("-").map(Number);
