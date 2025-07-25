@@ -6,16 +6,14 @@ import { createEventSchema, CreateEventValues } from "@/validations/events/creat
 
 
 
-function createEventDateTime(date: Date, time: string): Date {
-  // Get the date components (already local from client)
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
-
+function createEventDateTime(dateStr: string, time: string): Date {
+  // Parse date string as YYYY-MM-DD format to avoid timezone issues
+  const [year, month, day] = dateStr.split('-').map(Number);
   const [hours, minutes] = time.split(":").map(Number);
 
   // Create the event date/time using the date components directly
-  const eventDateTime = new Date(year, month, day, hours, minutes);
+  // Note: month is 0-indexed in Date constructor
+  const eventDateTime = new Date(year, month - 1, day, hours, minutes);
 
   return eventDateTime;
 }

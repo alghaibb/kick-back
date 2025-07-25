@@ -19,7 +19,7 @@ export default function EditEventModal() {
     name: data.name ?? "",
     description: data.description ?? "",
     location: data.location ?? "",
-    date: data.date ? new Date(data.date) : new Date(),
+    date: data.date ? new Date(data.date).toISOString().split('T')[0] : "",
     time: data.date ? format(new Date(data.date), "HH:mm") : "",
     groupId: data.groupId ?? undefined,
   };

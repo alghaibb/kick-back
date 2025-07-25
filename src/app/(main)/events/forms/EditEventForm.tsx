@@ -110,8 +110,21 @@ export default function EditEventForm({
               <FormLabel>Date</FormLabel>
               <FormControl>
                 <Calendar
-                  selected={field.value}
-                  onSelect={field.onChange}
+                  selected={field.value ? new Date(field.value) : undefined}
+                  onSelect={(date) => {
+                    if (date) {
+                      // Convert to YYYY-MM-DD format
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(
+                        2,
+                        "0"
+                      );
+                      const day = String(date.getDate()).padStart(2, "0");
+                      field.onChange(`${year}-${month}-${day}`);
+                    } else {
+                      field.onChange("");
+                    }
+                  }}
                   mode="single"
                 />
               </FormControl>
