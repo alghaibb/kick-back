@@ -20,7 +20,7 @@ export interface GroupData {
 export interface EventsResponse {
   events: EventData[];
   groups: GroupData[];
-  userTimezone: string;
+  userTimezone?: string;
 }
 
 async function fetchEvents(): Promise<EventsResponse> {

@@ -31,7 +31,7 @@ export function EventCard({
   location,
   groupId,
   groups,
-  timezone = "UTC",
+  timezone,
   createdByCurrentUser,
   disabled,
 }: EventCardProps) {
@@ -41,7 +41,7 @@ export function EventCard({
   const formattedDate = formatDate(eventDate, {
     includeWeekday: true,
     includeTime: true,
-    timeZone: timezone,
+    ...(timezone && { timeZone: timezone }),
   });
 
   return (

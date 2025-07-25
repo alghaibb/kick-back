@@ -56,7 +56,7 @@ export async function GET() {
         createdBy: event.createdBy,
       })),
       groups,
-      userTimezone: session.user.timezone || "UTC",
+      userTimezone: session.user.timezone,
     });
   } catch (error) {
     console.error("Events API error:", error);
