@@ -35,39 +35,39 @@ const authConfig: NextAuthConfig = {
         try {
           const { email, password } = credentials as { email: string; password?: string };
 
-        if (!email) {
-          throw new Error("Email is required.");
-        }
-
-        // Fetch the user
-        const user = await prisma.user.findUnique({
-          where: { email },
-        });
-
-        if (!user) {
-          throw new Error("No user found with this email.");
-        }
-
-        // If password is provided, validate it
-        if (password) {
-          const isPasswordValid = await bcrypt.compare(password, user.password as string);
-          if (!isPasswordValid) {
-            throw new Error("Invalid credentials.");
+          if (!email) {
+            throw new Error("Email is required.");
           }
-        }
 
-        // If no password, ensure the user is verified
-        if (!password && !user.emailVerified) {
-          throw new Error("Email is not verified. Please verify your email.");
-        }
+          // Fetch the user
+          const user = await prisma.user.findUnique({
+            where: { email },
+          });
 
-        return {
-          id: user.id,
-          name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
-          email: user.email,
-          emailVerified: user.emailVerified,
-          image: user.image
-        };
+          if (!user) {
+            throw new Error("No user found with this email.");
+          }
+
+          // If password is provided, validate it
+          if (password) {
+            const isPasswordValid = await bcrypt.compare(password, user.password as string);
+            if (!isPasswordValid) {
+              throw new Error("Invalid credentials.");
+            }
+          }
+
+          // If no password, ensure the user is verified
+          if (!password && !user.emailVerified) {
+            throw new Error("Email is not verified. Please verify your email.");
+          }
+
+          return {
+            id: user.id,
+            name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+            email: user.email,
+            emailVerified: user.emailVerified,
+            image: user.image
+          };
         } catch (error) {
           console.error("[NextAuth][credentials] Error:", error);
           throw new Error("Invalid credentials.");
@@ -153,6 +153,17 @@ const authConfig: NextAuthConfig = {
   pages: {
     signIn: "/login",
     signOut: "/login",
+  },
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}authjs.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
   trustHost: true,
   secret: env.AUTH_SECRET,
