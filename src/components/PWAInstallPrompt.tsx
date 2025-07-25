@@ -147,7 +147,7 @@ export default function PWAInstallPrompt() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>2. Select</span>
               <Plus className="h-4 w-4" />
-              <span>"Add to Home Screen"</span>
+              <span>&quot;Add to Home Screen&quot;</span>
             </div>
             <Button
               size="sm"
