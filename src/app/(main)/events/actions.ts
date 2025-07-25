@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { createEventSchema, CreateEventValues } from "@/validations/events/createEventSchema";
 
-import { revalidatePath } from "next/cache";
+
 
 function createEventDateTime(date: Date, time: string): Date {
   // Get the date components (already local from client)
@@ -69,8 +69,6 @@ export async function createEventAction(values: CreateEventValues) {
     });
 
 
-    revalidatePath("/events")
-
     return { success: true, event };
   } catch (error) {
     console.error("Error creating event:", error)
@@ -100,8 +98,6 @@ export async function deleteEventAction(eventId: string) {
   await prisma.event.delete({
     where: { id: eventId },
   });
-
-  revalidatePath("/events");
 
   return { success: true };
 }
@@ -171,7 +167,6 @@ export async function editEventAction(eventId: string, values: CreateEventValues
       }
     }
 
-    revalidatePath("/events");
     return { success: true, event: updatedEvent };
   } catch (error) {
     console.error("Error editing event:", error);
