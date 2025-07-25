@@ -15,6 +15,15 @@ function createEventDateTime(dateStr: string, time: string): Date {
   // Note: month is 0-indexed in Date constructor
   const eventDateTime = new Date(year, month - 1, day, hours, minutes);
 
+  // Debug logging for production issues
+  console.log('createEventDateTime debug:', {
+    input: { dateStr, time },
+    parsed: { year, month: month - 1, day, hours, minutes },
+    result: eventDateTime.toISOString(),
+    localString: eventDateTime.toString(),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+  });
+
   return eventDateTime;
 }
 

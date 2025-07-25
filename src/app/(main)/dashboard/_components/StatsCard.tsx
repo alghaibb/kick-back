@@ -30,22 +30,22 @@ export function StatsCard({ title, value, change, icon }: StatsCardProps) {
       <div className="absolute inset-0 bg-gradient-to-br from-border/20 via-transparent to-border/20 rounded-lg" />
 
       <div className="relative bg-card/80 backdrop-blur-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 sm:pb-4">
+          <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground tracking-wide uppercase">
             {title}
           </CardTitle>
           {IconComponent && (
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-background/50 border border-border/50">
-              <IconComponent className="h-6 w-6 text-primary" />
+            <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-background/50 border border-border/50">
+              <IconComponent className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
           )}
         </CardHeader>
-        <CardContent className="space-y-4 pb-6">
-          <div className="text-4xl font-bold tracking-tight">
+        <CardContent className="space-y-3 sm:space-y-4 pb-4 sm:pb-6">
+          <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">
             {typeof value === "number" ? `+${value}` : value}
           </div>
           {change && (
-            <div className="text-sm text-muted-foreground leading-relaxed">
+            <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
               {change}
             </div>
           )}
