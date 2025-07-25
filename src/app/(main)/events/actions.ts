@@ -3,31 +3,42 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { createEventSchema, CreateEventValues } from "@/validations/events/createEventSchema";
-import { toZonedTime } from "date-fns-tz";
 
 function createEventDateTime(dateStr: string, time: string, timezone: string): Date {
   const [year, month, day] = dateStr.split("-").map(Number);
   const [hours, minutes] = time.split(":").map(Number);
 
-  // Create ISO string as if it's local time (no timezone shift yet)
-  const localDateTime = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+  // Create a Date object in the *local time zone*
+  const localDate = new Date(year, month - 1, day, hours, minutes, 0);
 
-  // Convert to the correct time zone
-  const zoned = toZonedTime(localDateTime, timezone);
-
-  // Then convert it to a real UTC date (just return the Date object)
-  const finalDate = new Date(zoned.getTime());
-
-  console.log("createEventDateTime fallback debug:", {
-    dateStr,
-    time,
-    timezone,
-    localDateTime: localDateTime.toISOString(),
-    zoned: zoned.toString(),
-    finalDate: finalDate.toISOString(),
+  // Figure out what the offset would be in the target time zone
+  const options = { timeZone: timezone, hour12: false };
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    ...options,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
 
-  return finalDate;
+  // Format the local date as if it were in the target timezone
+  const parts = formatter.formatToParts(localDate);
+  const values: Record<string, string> = {};
+  parts.forEach((p) => (values[p.type] = p.value));
+
+  const targetTime = new Date(
+    `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}Z`
+  );
+
+  console.log("createEventDateTime debug:", {
+    input: { dateStr, time, timezone },
+    localDate: localDate.toString(),
+    targetTime: targetTime.toISOString(),
+  });
+
+  return targetTime;
 }
 
 export async function createEventAction(values: CreateEventValues) {
