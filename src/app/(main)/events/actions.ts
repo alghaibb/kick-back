@@ -4,15 +4,13 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { createEventSchema, CreateEventValues } from "@/validations/events/createEventSchema";
 
-function createEventDateTime(dateStr: string, time: string, timezone: string): Date {
+function createEventDateTime(dateStr: string, timeStr: string, timezone: string): Date {
   const [year, month, day] = dateStr.split("-").map(Number);
-  const [hours, minutes] = time.split(":").map(Number);
+  const [hour, minute] = timeStr.split(":").map(Number);
 
-  // This creates a UTC date from the given local components
-  const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+  const localDate = new Date(year, month - 1, day, hour, minute, 0);
 
-  // Use Intl API to shift the UTC date into the user's real timezone
-  const formatter = new Intl.DateTimeFormat("en-AU", {
+  const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     year: "numeric",
     month: "2-digit",
@@ -20,27 +18,23 @@ function createEventDateTime(dateStr: string, time: string, timezone: string): D
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    hourCycle: "h23",
+    hour12: false,
   });
 
-  const parts = formatter.formatToParts(utcDate);
-  const obj: Record<string, string> = {};
+  const parts = formatter.formatToParts(localDate);
+  const values: Record<string, string> = {};
   for (const part of parts) {
-    if (part.type !== "literal") {
-      obj[part.type] = part.value;
-    }
+    if (part.type !== "literal") values[part.type] = part.value;
   }
 
-  // Now we construct a string in the user's local time and interpret that as UTC
-  const localTimeString = `${obj.year}-${obj.month}-${obj.day}T${obj.hour}:${obj.minute}:${obj.second}Z`;
-  const finalDate = new Date(localTimeString);
+  const iso = `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}Z`;
 
-  console.log("✅ DEBUG", {
-    input: { dateStr, time, timezone },
-    utcDate: utcDate.toISOString(),
-    formattedParts: obj,
-    localTimeString,
-    finalDate: finalDate.toISOString()
+  const finalDate = new Date(iso);
+
+  console.log("✅ DEBUG createEventDateTime:", {
+    input: { dateStr, timeStr, timezone },
+    localDate: localDate.toString(),
+    finalDate: finalDate.toISOString(),
   });
 
   return finalDate;
