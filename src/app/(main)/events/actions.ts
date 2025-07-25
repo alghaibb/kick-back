@@ -3,23 +3,31 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { createEventSchema, CreateEventValues } from "@/validations/events/createEventSchema";
-import zonedTimeToUtc from "date-fns-tz/zonedTimeToUtc";
+import { toZonedTime } from "date-fns-tz";
 
 function createEventDateTime(dateStr: string, time: string, timezone: string): Date {
   const [year, month, day] = dateStr.split("-").map(Number);
   const [hours, minutes] = time.split(":").map(Number);
 
-  const localDateTime = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+  // Create ISO string as if it's local time (no timezone shift yet)
+  const localDateTime = new Date(Date.UTC(year, month - 1, day, hours, minutes));
 
-  const utcDate = zonedTimeToUtc(localDateTime, timezone);
+  // Convert to the correct time zone
+  const zoned = toZonedTime(localDateTime, timezone);
 
-  console.log("createEventDateTime debug:", {
-    input: { dateStr, time, timezone },
-    localDateTime,
-    utcDate: utcDate.toISOString(),
+  // Then convert it to a real UTC date (just return the Date object)
+  const finalDate = new Date(zoned.getTime());
+
+  console.log("createEventDateTime fallback debug:", {
+    dateStr,
+    time,
+    timezone,
+    localDateTime: localDateTime.toISOString(),
+    zoned: zoned.toString(),
+    finalDate: finalDate.toISOString(),
   });
 
-  return utcDate;
+  return finalDate;
 }
 
 export async function createEventAction(values: CreateEventValues) {
