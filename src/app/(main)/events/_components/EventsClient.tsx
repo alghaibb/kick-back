@@ -74,8 +74,17 @@ export function EventsClient() {
     iconColor,
   }: {
     title: string;
-    icon: any;
-    events: any[];
+    icon: React.ComponentType<{ className?: string }>;
+    events: Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      date: string;
+      time: string;
+      location: string | null;
+      group: { id: string; name: string; image: string | null } | null;
+      createdByCurrentUser: boolean;
+    }>;
     emptyMessage: string;
     iconColor: string;
   }) => (
