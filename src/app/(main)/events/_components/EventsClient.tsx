@@ -3,7 +3,7 @@
 import { useEvents, EventData } from "@/hooks/queries/useEvents";
 import { EventCard } from "./EventCard";
 import { EventsSkeleton } from "./EventsSkeleton";
-import { endOfDay, format, startOfDay } from "date-fns";
+import { endOfDay, startOfDay } from "date-fns";
 import { formatDate } from "@/lib/date-utils";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
