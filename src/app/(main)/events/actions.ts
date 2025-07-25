@@ -6,15 +6,15 @@ import { createEventSchema, CreateEventValues } from "@/validations/events/creat
 
 import { revalidatePath } from "next/cache";
 
-function createEventDateTime(date: Date, time: string, userTimezone: string): Date {
-  // Get the date components in the user's timezone (already local from client)
+function createEventDateTime(date: Date, time: string): Date {
+  // Get the date components (already local from client)
   const year = date.getFullYear();
   const month = date.getMonth();
   const day = date.getDate();
 
   const [hours, minutes] = time.split(":").map(Number);
 
-  // Create the event date/time in the user's local timezone
+  // Create the event date/time using the date components directly
   const eventDateTime = new Date(year, month, day, hours, minutes);
 
   return eventDateTime;
@@ -30,9 +30,7 @@ export async function createEventAction(values: CreateEventValues) {
     const validatedValues = createEventSchema.parse(values);
     const { date, name, description, groupId, location, time } = validatedValues;
 
-    const userTimezone = session.user.timezone || 'UTC';
-
-    const eventDateTime = createEventDateTime(date, time, userTimezone);
+    const eventDateTime = createEventDateTime(date, time);
 
 
 
@@ -130,9 +128,7 @@ export async function editEventAction(eventId: string, values: CreateEventValues
     const validatedValues = createEventSchema.parse(values);
     const { date, name, description, groupId, location, time } = validatedValues;
 
-    const userTimezone = session.user.timezone || 'UTC';
-
-    const eventDateTime = createEventDateTime(date, time, userTimezone);
+    const eventDateTime = createEventDateTime(date, time);
 
     const updatedEvent = await prisma.event.update({
       where: { id: eventId },
