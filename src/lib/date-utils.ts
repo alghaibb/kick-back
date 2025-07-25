@@ -13,7 +13,7 @@ export const formatDate = (
     includeWeekday = false,
     includeTime = false,
     weekdayFormat = "short",
-    timeZone, // Remove default UTC timezone
+    timeZone,
     locale = "en-US"
   } = options;
 
@@ -23,7 +23,6 @@ export const formatDate = (
     day: "numeric",
   };
 
-  // Only set timeZone if explicitly provided
   if (timeZone) {
     formatOptions.timeZone = timeZone;
   }

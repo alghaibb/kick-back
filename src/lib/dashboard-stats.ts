@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { endOfDay, startOfDay } from "date-fns";
 import { formatDate } from "./date-utils";
 
-export async function getDashboardStats(userId: string) {
+export async function getDashboardStats(userId: string, userTimezone?: string) {
   let upcomingEvents = 0;
   let groups = 0;
   let eventsCreated = 0;
@@ -81,7 +81,7 @@ export async function getDashboardStats(userId: string) {
     upcomingCreatedEvents,
     nextEventDateFormatted:
       upcomingEvents > 0 && nextEventDate
-        ? `Next event: ${formatDate(nextEventDate, { includeWeekday: true, includeTime: true })}`
+        ? `Next event: ${formatDate(nextEventDate, { includeWeekday: true, includeTime: true, ...(userTimezone && { timeZone: userTimezone }) })}`
         : "No upcoming events scheduled",
     upcomingCreatedEventsText:
       upcomingCreatedEvents > 0
@@ -89,7 +89,7 @@ export async function getDashboardStats(userId: string) {
         : "No upcoming events you've created",
     nextTodayEventText:
       nextTodayEvent
-        ? `Next event today: ${nextTodayEvent.name} at ${formatDate(nextTodayEvent.date, { includeTime: true, includeWeekday: true })}`
+        ? `Next event today: ${nextTodayEvent.name} at ${formatDate(nextTodayEvent.date, { includeTime: true, includeWeekday: true, ...(userTimezone && { timeZone: userTimezone }) })}`
         : todaysEventsCount > 0
           ? "All of today's events have passed"
           : "No events scheduled for today",

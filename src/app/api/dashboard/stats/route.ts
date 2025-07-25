@@ -13,7 +13,7 @@ export async function GET() {
       );
     }
 
-    const stats = await getDashboardStats(session.user.id);
+    const stats = await getDashboardStats(session.user.id, session.user.timezone || undefined);
 
     return NextResponse.json(stats);
   } catch (error) {
