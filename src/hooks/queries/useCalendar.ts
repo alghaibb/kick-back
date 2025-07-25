@@ -9,7 +9,7 @@ export interface CalendarEvent {
   location?: string;
   date: string;
   group?: { name: string };
-  attendees: { user: { id: string; nickname?: string; firstName?: string } }[];
+  attendees: { user: { id: string; nickname?: string; firstName?: string }; rsvpStatus: string }[];
 }
 
 export interface CalendarResponse {

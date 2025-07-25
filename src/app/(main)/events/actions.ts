@@ -65,7 +65,7 @@ export async function createEventAction(values: CreateEventValues) {
         .map((m) => ({
           userId: m.userId,
           eventId: event.id,
-          rsvpStatus: "pending", 
+          rsvpStatus: "pending",
         }));
 
       if (groupAttendees.length > 0) {

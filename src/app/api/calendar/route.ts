@@ -62,6 +62,7 @@ export async function GET() {
           nickname: a.user.nickname ?? undefined,
           firstName: a.user.firstName ?? undefined,
         },
+        rsvpStatus: a.rsvpStatus,
       })),
     }));
 

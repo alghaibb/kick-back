@@ -30,16 +30,17 @@ export function useRSVPMutation() {
 
       return response.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["event", variables.eventId] });
       queryClient.invalidateQueries({ queryKey: ["rsvp", variables.eventId] });
       queryClient.invalidateQueries({ queryKey: ["dashboard", "stats"] });
+      queryClient.invalidateQueries({ queryKey: ["calendar"] });
 
       // Show success message based on status
       const statusMessages = {
-        yes: "You're attending this event! 🎉",
+        yes: "You're attending this event!",
         no: "You've declined this event",
         maybe: "You've marked yourself as maybe attending",
         pending: "RSVP updated"

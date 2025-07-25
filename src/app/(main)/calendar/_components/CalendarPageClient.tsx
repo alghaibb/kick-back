@@ -83,20 +83,116 @@ export function CalendarPageClient() {
 
                 <div className="mt-2">
                   <div className="font-semibold text-xs mb-1">Attendees:</div>
-                  <ul className="flex flex-wrap gap-2">
-                    {Array.from(
-                      new Map(
-                        event.attendees.map((a) => [a.user.id, a])
-                      ).values()
-                    ).map((a) => (
-                      <li
-                        key={a.user.id}
-                        className="px-2 py-1 bg-muted rounded text-xs"
-                      >
-                        {a.user.nickname || a.user.firstName || "Unnamed"}
-                      </li>
-                    ))}
-                  </ul>
+
+                  {/* Going Attendees */}
+                  {event.attendees.filter((a) => a.rsvpStatus === "yes")
+                    .length > 0 && (
+                    <div className="mb-2">
+                      <div className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">
+                        ✓ Going (
+                        {
+                          event.attendees.filter((a) => a.rsvpStatus === "yes")
+                            .length
+                        }
+                        )
+                      </div>
+                      <ul className="flex flex-wrap gap-1">
+                        {event.attendees
+                          .filter((a) => a.rsvpStatus === "yes")
+                          .map((a) => (
+                            <li
+                              key={a.user.id}
+                              className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded text-xs"
+                            >
+                              {a.user.nickname || a.user.firstName || "Unnamed"}
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Maybe Attendees */}
+                  {event.attendees.filter((a) => a.rsvpStatus === "maybe")
+                    .length > 0 && (
+                    <div className="mb-2">
+                      <div className="text-xs text-yellow-600 dark:text-yellow-400 font-medium mb-1">
+                        ? Maybe (
+                        {
+                          event.attendees.filter(
+                            (a) => a.rsvpStatus === "maybe"
+                          ).length
+                        }
+                        )
+                      </div>
+                      <ul className="flex flex-wrap gap-1">
+                        {event.attendees
+                          .filter((a) => a.rsvpStatus === "maybe")
+                          .map((a) => (
+                            <li
+                              key={a.user.id}
+                              className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded text-xs"
+                            >
+                              {a.user.nickname || a.user.firstName || "Unnamed"}
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Pending Attendees */}
+                  {event.attendees.filter((a) => a.rsvpStatus === "pending")
+                    .length > 0 && (
+                    <div className="mb-2">
+                      <div className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">
+                        ⏳ Pending (
+                        {
+                          event.attendees.filter(
+                            (a) => a.rsvpStatus === "pending"
+                          ).length
+                        }
+                        )
+                      </div>
+                      <ul className="flex flex-wrap gap-1">
+                        {event.attendees
+                          .filter((a) => a.rsvpStatus === "pending")
+                          .map((a) => (
+                            <li
+                              key={a.user.id}
+                              className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded text-xs"
+                            >
+                              {a.user.nickname || a.user.firstName || "Unnamed"}
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Not Going - Only show if there are some */}
+                  {event.attendees.filter((a) => a.rsvpStatus === "no").length >
+                    0 && (
+                    <div className="mb-2">
+                      <div className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">
+                        ✗ Not Going (
+                        {
+                          event.attendees.filter((a) => a.rsvpStatus === "no")
+                            .length
+                        }
+                        )
+                      </div>
+                      <ul className="flex flex-wrap gap-1">
+                        {event.attendees
+                          .filter((a) => a.rsvpStatus === "no")
+                          .map((a) => (
+                            <li
+                              key={a.user.id}
+                              className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded text-xs"
+                            >
+                              {a.user.nickname || a.user.firstName || "Unnamed"}
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </li>
             ))}

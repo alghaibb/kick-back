@@ -35,21 +35,24 @@ export function RSVPButtons({
       label: "Yes",
       icon: Check,
       variant: "default" as const,
-      activeClass: "bg-green-500 hover:bg-green-600 text-white",
+      activeClass:
+        "bg-green-500 dark:bg-green-500 hover:bg-green-600 dark:hover:bg-green-600 text-background",
     },
     {
       status: "maybe" as RSVPStatus,
       label: "Maybe",
       icon: HelpCircle,
       variant: "outline" as const,
-      activeClass: "bg-yellow-500 hover:bg-yellow-600 text-white",
+      activeClass:
+        "bg-yellow-500 dark:bg-yellow-500 hover:bg-yellow-600 dark:hover:bg-yellow-600 text-text-background",
     },
     {
       status: "no" as RSVPStatus,
       label: "No",
       icon: X,
       variant: "outline" as const,
-      activeClass: "bg-red-500 hover:bg-red-600 text-white",
+      activeClass:
+        "bg-red-500 dark:bg-red-500 hover:bg-red-600 dark:hover:bg-red-600 text-backgrounde",
     },
   ];
 
