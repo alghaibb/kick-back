@@ -72,15 +72,20 @@ export function useAuth() {
     onSuccess: () => {
       // Clear all cached data
       queryClient.clear();
-      // Redirect to login
-      router.push("/login");
       toast.success("Logged out successfully");
+
+      // Use replace instead of push and add small delay for mobile
+      setTimeout(() => {
+        router.replace("/login");
+      }, 100);
     },
     onError: (error) => {
       console.error("Logout error:", error);
       // Even if logout fails, clear cache and redirect
       queryClient.clear();
-      router.push("/login");
+      setTimeout(() => {
+        router.replace("/login");
+      }, 100);
     },
   });
 
