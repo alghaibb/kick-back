@@ -206,7 +206,7 @@ export default function TermsPage() {
                         • Share inappropriate, offensive, or harmful content
                       </li>
                       <li>
-                        • Violate others' privacy or collect personal
+                        • Violate others&apos; privacy or collect personal
                         information
                       </li>
                       <li>
