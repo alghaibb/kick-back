@@ -2,42 +2,69 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
-import { createEventSchema, CreateEventValues } from "@/validations/events/createEventSchema";
+import {
+  createEventSchema,
+  CreateEventValues,
+} from "@/validations/events/createEventSchema";
 
-function createEventDateTime(dateStr: string, timeStr: string, timezone: string): Date {
+function createEventDateTime(
+  dateStr: string,
+  timeStr: string,
+  timezone: string
+): Date {
+  // Create datetime string in ISO format
+  const dateTimeString = `${dateStr}T${timeStr}:00`;
+
+  // Create a date that represents the input time in the user's timezone
+  // We'll use the opposite approach: create what we want the final time to be
+  // in the user's timezone, then find what UTC time that corresponds to
+
+  // Parse components
   const [year, month, day] = dateStr.split("-").map(Number);
   const [hour, minute] = timeStr.split(":").map(Number);
 
-  const localDate = new Date(year, month - 1, day, hour, minute, 0);
+  // Create a reference date to understand the timezone offset for this specific date/time
+  const referenceDate = new Date(year, month - 1, day, 12, 0, 0); // Use noon as reference
 
-  const formatter = new Intl.DateTimeFormat("en-US", {
+  // Get the timezone offset for this date in the user's timezone (in minutes)
+  const tempFormatter = new Intl.DateTimeFormat("en", {
     timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
+    timeZoneName: "longOffset",
   });
 
-  const parts = formatter.formatToParts(localDate);
-  const values: Record<string, string> = {};
-  for (const part of parts) {
-    if (part.type !== "literal") values[part.type] = part.value;
+  const timezoneName =
+    tempFormatter
+      .formatToParts(referenceDate)
+      .find((part) => part.type === "timeZoneName")?.value || "+00:00";
+
+  // Extract hours and minutes from timezone offset (e.g., "GMT-05:00" -> -5, 0)
+  const offsetMatch = timezoneName.match(/GMT([+-])(\d{2}):(\d{2})/);
+  let offsetHours = 0;
+  let offsetMinutes = 0;
+
+  if (offsetMatch) {
+    const sign = offsetMatch[1] === "+" ? 1 : -1;
+    offsetHours = sign * parseInt(offsetMatch[2]);
+    offsetMinutes = sign * parseInt(offsetMatch[3]);
   }
 
-  const iso = `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}Z`;
-
-  const finalDate = new Date(iso);
+  // Create the UTC date by subtracting the timezone offset
+  // If user is in GMT+5, we subtract 5 hours from their local time to get UTC
+  const utcDate = new Date(
+    Date.UTC(year, month - 1, day, hour - offsetHours, minute - offsetMinutes)
+  );
 
   console.log("✅ DEBUG createEventDateTime:", {
     input: { dateStr, timeStr, timezone },
-    localDate: localDate.toString(),
-    finalDate: finalDate.toISOString(),
+    dateTimeString,
+    timezoneName,
+    offsetHours,
+    offsetMinutes,
+    utcDate: utcDate.toISOString(),
+    verifyUserTime: utcDate.toLocaleString("en-US", { timeZone: timezone }),
   });
 
-  return finalDate;
+  return utcDate;
 }
 
 export async function createEventAction(values: CreateEventValues) {
@@ -48,8 +75,9 @@ export async function createEventAction(values: CreateEventValues) {
     }
 
     const validatedValues = createEventSchema.parse(values);
-    const { date, name, description, groupId, location, time } = validatedValues;
-    
+    const { date, name, description, groupId, location, time } =
+      validatedValues;
+
     const timezone = session.user.timezone || "UTC";
     const eventDateTime = createEventDateTime(date, time, timezone);
 
@@ -61,14 +89,14 @@ export async function createEventAction(values: CreateEventValues) {
         date: eventDateTime,
         groupId: groupId || null,
         createdBy: session.user.id,
-      }
+      },
     });
 
     // Return debug info for client-side logging (temporary)
-    console.log('Event created with date:', {
+    console.log("Event created with date:", {
       originalInput: { date, time },
       processedDateTime: eventDateTime.toISOString(),
-      savedDate: event.date.toISOString()
+      savedDate: event.date.toISOString(),
     });
 
     // Create creator as confirmed attendee
@@ -77,8 +105,8 @@ export async function createEventAction(values: CreateEventValues) {
         userId: session.user.id,
         eventId: event.id,
         rsvpStatus: "yes", // Creator automatically says yes
-        rsvpAt: new Date()
-      }
+        rsvpAt: new Date(),
+      },
     });
 
     // Add group members as pending attendees
@@ -104,10 +132,9 @@ export async function createEventAction(values: CreateEventValues) {
       }
     }
 
-
     return { success: true, event };
   } catch (error) {
-    console.error("Error creating event:", error)
+    console.error("Error creating event:", error);
     return { error: "An error occurred. Please try again." };
   }
 }
@@ -138,7 +165,10 @@ export async function deleteEventAction(eventId: string) {
   return { success: true };
 }
 
-export async function editEventAction(eventId: string, values: CreateEventValues) {
+export async function editEventAction(
+  eventId: string,
+  values: CreateEventValues
+) {
   try {
     const session = await getSession();
     if (!session?.user?.id) {
@@ -158,7 +188,8 @@ export async function editEventAction(eventId: string, values: CreateEventValues
     }
 
     const validatedValues = createEventSchema.parse(values);
-    const { date, name, description, groupId, location, time } = validatedValues;
+    const { date, name, description, groupId, location, time } =
+      validatedValues;
 
     const timezone = session.user.timezone || "UTC";
     const eventDateTime = createEventDateTime(date, time, timezone);
