@@ -17,7 +17,7 @@ import Link from "next/link";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Kick Back",
+  title: "Terms of Service",
   description:
     "Terms and conditions for using Kick Back's event management platform.",
 };
