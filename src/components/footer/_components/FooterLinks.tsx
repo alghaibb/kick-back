@@ -1,12 +1,11 @@
 import Link from "next/link";
 
 const links = [
-  { title: "Features", href: "#" },
-  { title: "Solution", href: "#" },
-  { title: "Customers", href: "#" },
-  { title: "Pricing", href: "#" },
-  { title: "Help", href: "#" },
-  { title: "About", href: "#" },
+  { title: "Dashboard", href: "/dashboard" },
+  { title: "Privacy Policy", href: "/privacy" },
+  { title: "Terms of Service", href: "/terms" },
+  { title: "Help", href: "/dashboard" },
+  { title: "Contact", href: "/dashboard" },
 ];
 
 export function FooterLinks() {

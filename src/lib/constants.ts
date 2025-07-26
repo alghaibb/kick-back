@@ -1,4 +1,11 @@
-import { Bell, CalendarClock, Users } from "lucide-react";
+import {
+  Bell,
+  CalendarClock,
+  Users,
+  FileText,
+  Shield,
+  Settings,
+} from "lucide-react";
 
 export const navLinks = [
   { href: "/", label: "Home" },
@@ -10,6 +17,17 @@ export const navLinks = [
 export const userMenuLinks = [
   { href: "/profile", label: "Profile" },
   { href: "/settings", label: "Settings" },
+];
+
+export const footerLinks = [
+  { href: "/terms", label: "Terms", icon: FileText },
+  { href: "/privacy", label: "Privacy", icon: Shield },
+  {
+    href: "/settings",
+    label: "Account Settings",
+    icon: Settings,
+    requiresAuth: true,
+  },
 ];
 
 export const features = [

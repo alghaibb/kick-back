@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { navLinks } from "@/lib/constants";
+import { navLinks, footerLinks } from "@/lib/constants";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { memo } from "react";
@@ -78,8 +78,32 @@ function MobileNav() {
 
         <Separator />
 
+        {/* Footer Links */}
+        <div className="px-6 py-3">
+          <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+            {footerLinks
+              .filter((link) => !link.requiresAuth || isAuthenticated)
+              .map((link) => {
+                const Icon = link.icon;
+                return (
+                  <SheetClose asChild key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="hover:text-foreground transition-colors text-left flex items-center gap-2"
+                    >
+                      <Icon className="h-3 w-3 flex-shrink-0" />
+                      <span>{link.label}</span>
+                    </Link>
+                  </SheetClose>
+                );
+              })}
+          </div>
+        </div>
+
+        <Separator className="mx-6" />
+
         {/* Authentication Section */}
-        <div className="p-6 pt-0">
+        <div className="p-6 pt-4">
           {isLoading ? (
             <div className="w-full h-10 animate-pulse bg-muted rounded"></div>
           ) : isAuthenticated ? (
