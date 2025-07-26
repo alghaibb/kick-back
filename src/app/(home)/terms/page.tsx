@@ -83,7 +83,7 @@ export default function TermsPage() {
                   <ul className="text-blue-800 dark:text-blue-200 space-y-1 text-sm">
                     <li>• You must be 13 years or older to use Kick Back</li>
                     <li>
-                      • You're responsible for maintaining account security
+                      • You&apos;re responsible for maintaining account security
                     </li>
                     <li>• These terms may be updated from time to time</li>
                     <li>• Continued use means acceptance of updated terms</li>
@@ -240,7 +240,7 @@ export default function TermsPage() {
                     Event & Group Content
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    When creating events and groups, you're responsible for
+                    When creating events and groups, you&apos;re responsible for
                     ensuring all content is:
                   </p>
                   <ul className="text-muted-foreground space-y-2 ml-6">
@@ -249,7 +249,7 @@ export default function TermsPage() {
                       • Appropriate for all ages (unless clearly marked
                       otherwise)
                     </li>
-                    <li>• Respectful of others' rights and privacy</li>
+                    <li>• Respectful of others&apos; rights and privacy</li>
                     <li>• Free of discriminatory or hateful language</li>
                     <li>• Compliant with local laws and regulations</li>
                   </ul>
@@ -339,9 +339,9 @@ export default function TermsPage() {
                 <div>
                   <h3 className="text-lg font-medium mb-3">Data Backup</h3>
                   <p className="text-muted-foreground">
-                    While we maintain regular backups, you're responsible for
-                    keeping your own copies of important event information and
-                    contact details.
+                    While we maintain regular backups, you&apos;re responsible
+                    for keeping your own copies of important event information
+                    and contact details.
                   </p>
                 </div>
               </div>
@@ -418,9 +418,9 @@ export default function TermsPage() {
                     Service Disclaimer
                   </h3>
                   <p className="text-muted-foreground">
-                    Kick Back is provided "as is" without warranties of any
-                    kind. We make no guarantees about the accuracy, reliability,
-                    or availability of the service.
+                    Kick Back is provided &quot;as is&quot; without warranties
+                    of any kind. We make no guarantees about the accuracy,
+                    reliability, or availability of the service.
                   </p>
                 </div>
 
