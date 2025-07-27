@@ -1,16 +1,12 @@
 "use client";
-import {
-  ResponsiveModal,
-  ResponsiveModalContent,
-  ResponsiveModalHeader,
-  ResponsiveModalTitle,
-  ResponsiveModalDescription,
-} from "@/components/ui/responsive-modal";
+import { GenericModal } from "@/components/ui/generic-modal";
 import { useModal } from "@/hooks/use-modal";
 import EditGroupForm from "../forms/EditGroupForm";
 
 export default function EditGroupModal() {
-  const { type, isOpen, close, data } = useModal();
+  const { type, close, data } = useModal();
+  
+  // Validation logic - only render if we have the required data
   if (type !== "edit-group" || !data?.groupId) return null;
 
   const initialValues = {
@@ -21,20 +17,18 @@ export default function EditGroupModal() {
   };
 
   return (
-    <ResponsiveModal open={isOpen} onOpenChange={(open) => !open && close()}>
-      <ResponsiveModalContent className="space-y-4">
-        <ResponsiveModalHeader>
-          <ResponsiveModalTitle>Edit Group</ResponsiveModalTitle>
-          <ResponsiveModalDescription>
-            Update your group details below.
-          </ResponsiveModalDescription>
-        </ResponsiveModalHeader>
-        <EditGroupForm
-          groupId={data.groupId}
-          initialValues={initialValues}
-          onSuccess={close}
-        />
-      </ResponsiveModalContent>
-    </ResponsiveModal>
+    <GenericModal 
+      type="edit-group" 
+      title="Edit Group"
+      description="Update your group details below."
+      className="space-y-4"
+      showCancel={false}
+    >
+      <EditGroupForm
+        groupId={data.groupId}
+        initialValues={initialValues}
+        onSuccess={close}
+      />
+    </GenericModal>
   );
 }

@@ -1,18 +1,13 @@
 "use client";
-import {
-  ResponsiveModal,
-  ResponsiveModalContent,
-  ResponsiveModalHeader,
-  ResponsiveModalTitle,
-  ResponsiveModalFooter,
-} from "@/components/ui/responsive-modal";
-import { Button } from "@/components/ui/button";
+import { GenericModal } from "@/components/ui/generic-modal";
 import { useModal } from "@/hooks/use-modal";
 import EditEventForm from "../forms/EditEventForm";
 import { format } from "date-fns";
 
 export default function EditEventModal() {
-  const { type, isOpen, close, data } = useModal();
+  const { type, close, data } = useModal();
+  
+  // Validation logic - only render if we have the required data
   if (type !== "edit-event" || !data?.eventId || !data?.groups) return null;
 
   const initialValues = {
@@ -25,23 +20,13 @@ export default function EditEventModal() {
   };
 
   return (
-    <ResponsiveModal open={isOpen} onOpenChange={(open) => !open && close()}>
-      <ResponsiveModalContent className="space-y-4">
-        <ResponsiveModalHeader>
-          <ResponsiveModalTitle>Edit Event</ResponsiveModalTitle>
-        </ResponsiveModalHeader>
-        <EditEventForm
-          eventId={data.eventId}
-          initialValues={initialValues}
-          groups={data.groups}
-          onSuccess={close}
-        />
-        <ResponsiveModalFooter>
-          <Button variant="outline" onClick={close}>
-            Cancel
-          </Button>
-        </ResponsiveModalFooter>
-      </ResponsiveModalContent>
-    </ResponsiveModal>
+    <GenericModal type="edit-event" title="Edit Event" className="space-y-4">
+      <EditEventForm
+        eventId={data.eventId}
+        initialValues={initialValues}
+        groups={data.groups}
+        onSuccess={close}
+      />
+    </GenericModal>
   );
 }

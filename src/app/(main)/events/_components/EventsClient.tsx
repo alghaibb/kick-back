@@ -4,42 +4,63 @@ import { useEvents, EventData } from "@/hooks/queries/useEvents";
 import { EventCard } from "./EventCard";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { endOfDay, startOfDay } from "date-fns";
-import { AnimatedList, AnimatedListItem } from "@/components/ui/list-animations";
+import {
+  AnimatedList,
+  AnimatedListItem,
+} from "@/components/ui/list-animations";
 import { formatDate } from "@/lib/date-utils";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Calendar, Clock, History, AlertCircle } from "lucide-react";
+import EventFilters from "./EventFilters";
+import { filterAndSortEvents, defaultFilters } from "@/lib/event-filters";
+import type { EventFilters as EventFiltersType } from "@/lib/event-filters";
 
 export function EventsClient() {
   const { data, isLoading, error } = useEvents();
   const { user } = useAuth();
+  const [filters, setFilters] = useState<EventFiltersType>(defaultFilters);
 
-  // Categorize events by time
-  const categorizedEvents = useMemo(() => {
+  // Apply filters and categorize events
+  const { filteredEvents, categorizedEvents } = useMemo(() => {
     if (!data?.events)
-      return { todayEvents: [], upcomingEvents: [], pastEvents: [] };
+      return {
+        filteredEvents: [],
+        categorizedEvents: {
+          todayEvents: [],
+          upcomingEvents: [],
+          pastEvents: [],
+        },
+      };
 
+    // Apply search and filters first
+    const filtered = filterAndSortEvents(data.events, filters);
+
+    // Then categorize by time for display sections
     const now = new Date();
     const todayStart = startOfDay(now);
     const todayEnd = endOfDay(now);
 
-    const todayEvents = data.events.filter((event) => {
+    const todayEvents = filtered.filter((event) => {
       const eventDate = new Date(event.date);
       return eventDate >= todayStart && eventDate <= todayEnd;
     });
 
-    const upcomingEvents = data.events.filter((event) => {
+    const upcomingEvents = filtered.filter((event) => {
       const eventDate = new Date(event.date);
       return eventDate > todayEnd;
     });
 
-    const pastEvents = data.events.filter((event) => {
+    const pastEvents = filtered.filter((event) => {
       const eventDate = new Date(event.date);
       return eventDate < todayStart;
     });
 
-    return { todayEvents, upcomingEvents, pastEvents };
-  }, [data?.events]);
+    return {
+      filteredEvents: filtered,
+      categorizedEvents: { todayEvents, upcomingEvents, pastEvents },
+    };
+  }, [data?.events, filters]);
 
   if (isLoading) {
     return <UnifiedSkeleton variant="card-list" count={3} />;
@@ -105,20 +126,20 @@ export function EventsClient() {
           {events.map((event) => (
             <AnimatedListItem key={event.id}>
               <EventCard
-              key={event.id}
-              id={event.id}
-              name={event.name}
-              description={event.description || undefined}
-              date={event.date}
-              time={formatDate(new Date(event.date), { includeTime: true })
-                .split(" ")
-                .pop()}
-              location={event.location || undefined}
-              groupId={event.groupId || undefined}
-              groups={groups}
-              timezone={userTimezone}
-              createdByCurrentUser={event.createdBy === user?.id}
-              disabled={title === "Past Events"}
+                key={event.id}
+                id={event.id}
+                name={event.name}
+                description={event.description || undefined}
+                date={event.date}
+                time={formatDate(new Date(event.date), { includeTime: true })
+                  .split(" ")
+                  .pop()}
+                location={event.location || undefined}
+                groupId={event.groupId || undefined}
+                groups={groups}
+                timezone={userTimezone}
+                createdByCurrentUser={event.createdBy === user?.id}
+                disabled={title === "Past Events"}
               />
             </AnimatedListItem>
           ))}
@@ -128,33 +149,43 @@ export function EventsClient() {
   );
 
   return (
-    <div className="space-y-12">
-      {/* Today's Events */}
-      <EventSection
-        title="Today's Events"
-        icon={Clock}
-        events={todayEvents}
-        emptyMessage="No events scheduled for today. Why not create one?"
-        iconColor="from-primary/20 to-primary/30 text-primary"
+    <div className="space-y-8">
+      {/* Search and Filters */}
+      <EventFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        groups={groups}
+        eventCount={filteredEvents.length}
       />
 
-      {/* Upcoming Events */}
-      <EventSection
-        title="Upcoming Events"
-        icon={Calendar}
-        events={upcomingEvents}
-        emptyMessage="No upcoming events. Start planning your next gathering!"
-        iconColor="from-primary/20 to-primary/30 text-primary"
-      />
+      <div className="space-y-12">
+        {/* Today's Events */}
+        <EventSection
+          title="Today's Events"
+          icon={Clock}
+          events={todayEvents}
+          emptyMessage="No events scheduled for today. Why not create one?"
+          iconColor="from-primary/20 to-primary/30 text-primary"
+        />
 
-      {/* Past Events */}
-      <EventSection
-        title="Past Events"
-        icon={History}
-        events={pastEvents}
-        emptyMessage="No past events to show."
-        iconColor="from-muted/20 to-muted/30 text-muted-foreground"
-      />
+        {/* Upcoming Events */}
+        <EventSection
+          title="Upcoming Events"
+          icon={Calendar}
+          events={upcomingEvents}
+          emptyMessage="No upcoming events. Start planning your next gathering!"
+          iconColor="from-primary/20 to-primary/30 text-primary"
+        />
+
+        {/* Past Events */}
+        <EventSection
+          title="Past Events"
+          icon={History}
+          events={pastEvents}
+          emptyMessage="No past events to show."
+          iconColor="from-muted/20 to-muted/30 text-muted-foreground"
+        />
+      </div>
     </div>
   );
 }
