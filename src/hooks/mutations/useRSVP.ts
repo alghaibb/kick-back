@@ -72,7 +72,7 @@ export function useRSVPMutation() {
           events: old.events.map((event) => {
             if (event.id === eventId) {
               // Remove user from old status arrays
-              const filteredAttendees = event.attendees.filter(
+              const filteredAttendees = (event.attendees || []).filter(
                 (attendee) => attendee.userId !== user.id
               );
 
@@ -107,7 +107,7 @@ export function useRSVPMutation() {
         return {
           events: old.events.map((event) => {
             if (event.id === eventId) {
-              const filteredAttendees = event.attendees.filter(
+              const filteredAttendees = (event.attendees || []).filter(
                 (attendee) => attendee.userId !== user.id
               );
 
