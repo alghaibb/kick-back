@@ -2,6 +2,7 @@ import { getSession } from "@/lib/sessions";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { notifyRSVPUpdate } from "@/lib/notification-triggers";
 
 const rsvpSchema = z.object({
   status: z.enum(["yes", "no", "maybe"]),
@@ -59,6 +60,31 @@ export async function POST(
       },
     });
 
+    // Send notification to event creator
+    try {
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
+        select: {
+          name: true,
+          createdBy: true,
+        },
+      });
+
+      if (event && event.createdBy !== session.user.id) {
+        await notifyRSVPUpdate({
+          eventId,
+          eventName: event.name,
+          attendeeName:
+            updatedAttendee.user.nickname || updatedAttendee.user.firstName,
+          rsvpStatus: status,
+          eventCreatorId: event.createdBy,
+        });
+      }
+    } catch (notificationError) {
+      console.error("Failed to send RSVP notification:", notificationError);
+      // Don't fail the RSVP if notification fails
+    }
+
     return NextResponse.json({
       success: true,
       attendee: updatedAttendee,
@@ -114,4 +140,4 @@ export async function GET(
       { status: 500 }
     );
   }
-} 
+}

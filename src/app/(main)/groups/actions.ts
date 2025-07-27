@@ -5,8 +5,12 @@ import { getSession } from "@/lib/sessions";
 import { sendGroupInviteEmail } from "@/utils/sendEmails";
 import { generateToken } from "@/utils/tokens";
 import { serverCreateGroupSchema } from "@/validations/group/createGroupSchema";
-import { acceptInviteSchema, serverInviteGroupSchema } from "@/validations/group/inviteGroupSchema";
+import {
+  acceptInviteSchema,
+  serverInviteGroupSchema,
+} from "@/validations/group/inviteGroupSchema";
 import { revalidatePath } from "next/cache";
+import { notifyGroupInvite } from "@/lib/notification-triggers";
 
 export async function createGroupAction(formData: FormData) {
   const session = await getSession();
@@ -17,8 +21,9 @@ export async function createGroupAction(formData: FormData) {
   const raw = Object.fromEntries(formData.entries());
   const parsed = serverCreateGroupSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.flatten().formErrors.join(", ") || "Invalid input" };
-
+    return {
+      error: parsed.error.flatten().formErrors.join(", ") || "Invalid input",
+    };
   }
 
   const { name, description, image } = parsed.data;
@@ -39,7 +44,7 @@ export async function createGroupAction(formData: FormData) {
       },
     });
 
-    revalidatePath("/dashboard")
+    revalidatePath("/dashboard");
 
     return { success: true, group };
   } catch (error) {
@@ -57,7 +62,7 @@ export async function inviteToGroupAction(formData: FormData) {
   // Rate limiting
   const limiter = rateLimit({ interval: 3600000 }); // 1 hour
   try {
-    await limiter.check(10, 'email', session.user.id);
+    await limiter.check(10, "email", session.user.id);
   } catch (error) {
     console.error("Rate limit error:", error);
     return { error: "Too many invite requests. Please try again later." };
@@ -66,8 +71,9 @@ export async function inviteToGroupAction(formData: FormData) {
   const raw = Object.fromEntries(formData.entries());
   const parsed = serverInviteGroupSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.flatten().formErrors.join(", ") || "Invalid input" };
-
+    return {
+      error: parsed.error.flatten().formErrors.join(", ") || "Invalid input",
+    };
   }
 
   const { groupId, email } = parsed.data;
@@ -80,27 +86,31 @@ export async function inviteToGroupAction(formData: FormData) {
         members: {
           some: {
             userId: session.user.id,
-            role: { in: ["admin", "owner"] }
-          }
-        }
+            role: { in: ["admin", "owner"] },
+          },
+        },
       },
       include: {
         members: {
           include: {
             user: {
-              select: { email: true }
-            }
-          }
-        }
-      }
+              select: { email: true },
+            },
+          },
+        },
+      },
     });
 
     if (!group) {
-      return { error: "Group not found or you don't have permission to invite members" };
+      return {
+        error: "Group not found or you don't have permission to invite members",
+      };
     }
 
     // Check if user is already a member
-    const existingMember = group.members.find(member => member.user.email === email);
+    const existingMember = group.members.find(
+      (member) => member.user.email === email
+    );
     if (existingMember) {
       return { error: "User is already a member of this group" };
     }
@@ -116,8 +126,8 @@ export async function inviteToGroupAction(formData: FormData) {
       where: {
         groupId,
         email,
-        status: "pending"
-      }
+        status: "pending",
+      },
     });
 
     if (existingInvite) {
@@ -133,8 +143,8 @@ export async function inviteToGroupAction(formData: FormData) {
       where: {
         groupId_email: {
           groupId,
-          email
-        }
+          email,
+        },
       },
       create: {
         groupId,
@@ -142,15 +152,15 @@ export async function inviteToGroupAction(formData: FormData) {
         invitedBy: session.user.id,
         token,
         expiresAt,
-        status: "pending"
+        status: "pending",
       },
       update: {
         invitedBy: session.user.id,
         token,
         expiresAt,
         status: "pending",
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     // Send email
@@ -166,6 +176,25 @@ export async function inviteToGroupAction(formData: FormData) {
       await prisma.groupInvite.delete({ where: { id: invite.id } });
       console.error("Failed to send invite email:", emailError);
       return { error: "Failed to send invitation email. Please try again." };
+    }
+
+    // Send in-app notification to invited user
+    try {
+      if (invitedUser) {
+        await notifyGroupInvite({
+          userId: invitedUser.id,
+          groupId: group.id,
+          groupName: group.name,
+          inviterName: session.user.firstName || session.user.email,
+          inviteId: token,
+        });
+      }
+    } catch (notificationError) {
+      console.error(
+        "Failed to send group invite notification:",
+        notificationError
+      );
+      // Don't fail the invite if notification fails
     }
 
     revalidatePath("/groups");
@@ -185,8 +214,9 @@ export async function acceptGroupInviteAction(formData: FormData) {
   const raw = Object.fromEntries(formData.entries());
   const parsed = acceptInviteSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.flatten().formErrors.join(", ") || "Invalid input" };
-
+    return {
+      error: parsed.error.flatten().formErrors.join(", ") || "Invalid input",
+    };
   }
 
   const { token } = parsed.data;
@@ -198,9 +228,9 @@ export async function acceptGroupInviteAction(formData: FormData) {
       include: {
         group: true,
         inviter: {
-          select: { firstName: true, email: true }
-        }
-      }
+          select: { firstName: true, email: true },
+        },
+      },
     });
 
     if (!invite) {
@@ -224,16 +254,16 @@ export async function acceptGroupInviteAction(formData: FormData) {
       where: {
         groupId_userId: {
           groupId: invite.groupId,
-          userId: session.user.id
-        }
-      }
+          userId: session.user.id,
+        },
+      },
     });
 
     if (existingMember) {
       // Mark invite as accepted even though user is already a member
       await prisma.groupInvite.update({
         where: { id: invite.id },
-        data: { status: "accepted" }
+        data: { status: "accepted" },
       });
       return { error: "You are already a member of this group" };
     }
@@ -244,13 +274,13 @@ export async function acceptGroupInviteAction(formData: FormData) {
         data: {
           groupId: invite.groupId,
           userId: session.user.id,
-          role: "member"
-        }
+          role: "member",
+        },
       }),
       prisma.groupInvite.update({
         where: { id: invite.id },
-        data: { status: "accepted" }
-      })
+        data: { status: "accepted" },
+      }),
     ]);
 
     revalidatePath("/groups");
@@ -262,7 +292,15 @@ export async function acceptGroupInviteAction(formData: FormData) {
   }
 }
 
-export async function updateGroupMemberRoleAction({ groupId, memberId, newRole }: { groupId: string; memberId: string; newRole: string }) {
+export async function updateGroupMemberRoleAction({
+  groupId,
+  memberId,
+  newRole,
+}: {
+  groupId: string;
+  memberId: string;
+  newRole: string;
+}) {
   const session = await getSession();
   if (!session?.user?.id) return { error: "Not authenticated" };
 
@@ -272,8 +310,13 @@ export async function updateGroupMemberRoleAction({ groupId, memberId, newRole }
     include: { members: true },
   });
   if (!group) return { error: "Group not found" };
-  const actingMember = await prisma.groupMember.findUnique({ where: { groupId_userId: { groupId, userId: session.user.id } } });
-  if (!actingMember || (actingMember.role !== "admin" && group.createdBy !== session.user.id)) {
+  const actingMember = await prisma.groupMember.findUnique({
+    where: { groupId_userId: { groupId, userId: session.user.id } },
+  });
+  if (
+    !actingMember ||
+    (actingMember.role !== "admin" && group.createdBy !== session.user.id)
+  ) {
     return { error: "You do not have permission to update roles" };
   }
   // Prevent owner from being demoted
@@ -284,25 +327,38 @@ export async function updateGroupMemberRoleAction({ groupId, memberId, newRole }
     where: { groupId_userId: { groupId, userId: memberId } },
     data: { role: newRole },
   });
-  revalidatePath("/groups")
+  revalidatePath("/groups");
   return { success: true };
 }
 
-export async function removeGroupMemberAction({ groupId, memberId }: { groupId: string; memberId: string }) {
+export async function removeGroupMemberAction({
+  groupId,
+  memberId,
+}: {
+  groupId: string;
+  memberId: string;
+}) {
   const session = await getSession();
   if (!session?.user?.id) return { error: "Not authenticated" };
   const group = await prisma.group.findUnique({ where: { id: groupId } });
   if (!group) return { error: "Group not found" };
-  const actingMember = await prisma.groupMember.findUnique({ where: { groupId_userId: { groupId, userId: session.user.id } } });
-  if (!actingMember || (actingMember.role !== "admin" && group.createdBy !== session.user.id)) {
+  const actingMember = await prisma.groupMember.findUnique({
+    where: { groupId_userId: { groupId, userId: session.user.id } },
+  });
+  if (
+    !actingMember ||
+    (actingMember.role !== "admin" && group.createdBy !== session.user.id)
+  ) {
     return { error: "You do not have permission to remove members" };
   }
   // Prevent owner from being removed
   if (group.createdBy === memberId) {
     return { error: "Cannot remove the group owner" };
   }
-  await prisma.groupMember.delete({ where: { groupId_userId: { groupId, userId: memberId } } });
-  revalidatePath("/groups")
+  await prisma.groupMember.delete({
+    where: { groupId_userId: { groupId, userId: memberId } },
+  });
+  revalidatePath("/groups");
   return { success: true };
 }
 
@@ -315,7 +371,7 @@ export async function deleteGroupAction(groupId: string) {
     return { error: "Only the group owner can delete the group" };
   }
   await prisma.group.delete({ where: { id: groupId } });
-  revalidatePath("/groups")
+  revalidatePath("/groups");
   return { success: true };
 }
 
@@ -325,14 +381,21 @@ export async function leaveGroupAction(groupId: string) {
   const group = await prisma.group.findUnique({ where: { id: groupId } });
   if (!group) return { error: "Group not found" };
   if (group.createdBy === session.user.id) {
-    return { error: "Owner cannot leave the group. Disband the group instead." };
+    return {
+      error: "Owner cannot leave the group. Disband the group instead.",
+    };
   }
-  await prisma.groupMember.delete({ where: { groupId_userId: { groupId, userId: session.user.id } } });
-  revalidatePath("/groups")
+  await prisma.groupMember.delete({
+    where: { groupId_userId: { groupId, userId: session.user.id } },
+  });
+  revalidatePath("/groups");
   return { success: true };
 }
 
-export async function editGroupAction(groupId: string, values: { name: string; description?: string; image?: string | null }) {
+export async function editGroupAction(
+  groupId: string,
+  values: { name: string; description?: string; image?: string | null }
+) {
   const session = await getSession();
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
@@ -341,7 +404,9 @@ export async function editGroupAction(groupId: string, values: { name: string; d
   // Validate input
   const parsed = serverCreateGroupSchema.safeParse(values);
   if (!parsed.success) {
-    return { error: parsed.error.flatten().formErrors.join(", ") || "Invalid input" };
+    return {
+      error: parsed.error.flatten().formErrors.join(", ") || "Invalid input",
+    };
   }
 
   try {
@@ -356,7 +421,10 @@ export async function editGroupAction(groupId: string, values: { name: string; d
     const actingMember = await prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId: session.user.id } },
     });
-    if (!actingMember || (actingMember.role !== "admin" && group.createdBy !== session.user.id)) {
+    if (
+      !actingMember ||
+      (actingMember.role !== "admin" && group.createdBy !== session.user.id)
+    ) {
       return { error: "You do not have permission to edit this group" };
     }
     const updatedGroup = await prisma.group.update({
@@ -364,7 +432,7 @@ export async function editGroupAction(groupId: string, values: { name: string; d
       data: {
         name: parsed.data.name,
         description: parsed.data.description,
-        image: values.image === null ? null : parsed.data.image ?? undefined,
+        image: values.image === null ? null : (parsed.data.image ?? undefined),
       },
     });
     revalidatePath("/groups");

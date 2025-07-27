@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rate-limiter";
 import { sendGroupInviteEmail } from "@/utils/sendEmails";
+import { notifyGroupInvite } from "@/lib/notification-triggers";
 
 const limiter = rateLimit({ interval: 3600000 }); // 1 hour
 
@@ -13,15 +14,12 @@ export async function POST(
   try {
     const session = await getSession();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Not authenticated" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
     // Rate limiting for resend
     try {
-      await limiter.check(5, 'email', session.user.id);
+      await limiter.check(5, "email", session.user.id);
     } catch (error) {
       console.error("Rate limit error:", error);
       return NextResponse.json(
@@ -37,19 +35,22 @@ export async function POST(
       where: {
         id: inviteId,
         invitedBy: session.user.id,
-        status: "pending"
+        status: "pending",
       },
       include: {
         group: true,
         inviter: {
-          select: { firstName: true, email: true }
-        }
-      }
+          select: { firstName: true, email: true },
+        },
+      },
     });
 
     if (!invite) {
       return NextResponse.json(
-        { error: "Invitation not found or you don't have permission to resend it" },
+        {
+          error:
+            "Invitation not found or you don't have permission to resend it",
+        },
         { status: 404 }
       );
     }
@@ -67,7 +68,7 @@ export async function POST(
 
     await prisma.groupInvite.update({
       where: { id: inviteId },
-      data: { expiresAt: newExpiryDate }
+      data: { expiresAt: newExpiryDate },
     });
 
     // Resend the email
@@ -78,6 +79,26 @@ export async function POST(
       invite.token
     );
 
+    // Send in-app notification to invited user
+    try {
+      const invitedUser = await prisma.user.findUnique({
+        where: { email: invite.email }
+      });
+
+      if (invitedUser) {
+        await notifyGroupInvite({
+          userId: invitedUser.id,
+          groupId: invite.group.id,
+          groupName: invite.group.name,
+          inviterName: invite.inviter.firstName || invite.inviter.email,
+          inviteId: invite.token,
+        });
+      }
+    } catch (notificationError) {
+      console.error("Failed to send group invite notification:", notificationError);
+      // Don't fail the resend if notification fails
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Resend invite error:", error);
@@ -86,4 +107,4 @@ export async function POST(
       { status: 500 }
     );
   }
-} 
+}

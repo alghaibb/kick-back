@@ -82,6 +82,9 @@ export function useCreateComment() {
       // Invalidate related data
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["calendar"] });
+
+      // Invalidate notifications so attendees get comment notifications immediately
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: Error, variables, context) => {
       // Rollback optimistic update
@@ -145,6 +148,9 @@ export function useDeleteComment() {
       // Invalidate related data
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["calendar"] });
+
+      // Invalidate notifications so attendees get comment notifications immediately
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: Error, variables, context) => {
       // Rollback optimistic update

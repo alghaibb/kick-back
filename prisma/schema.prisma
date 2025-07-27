@@ -37,6 +37,8 @@ model User {
   eventComments       EventComment[]
   eventPhotos         EventPhoto[]
   photoLikes          EventPhotoLike[]
+  notifications       Notification[]
+  pushSubscriptions  PushSubscription[]
 
   @@map("users")
 }
@@ -276,4 +278,48 @@ model EventPhotoLike {
   @@index([photoId])
   @@index([userId])
   @@map("event_photo_likes")
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json? // Additional data (eventId, groupId, etc.)
+  read      Boolean             @default(false)
+  createdAt DateTime            @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model PushSubscription {
+  id       String @id @default(cuid())
+  userId   String
+  endpoint String @unique
+  p256dh   String
+  auth     String
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+enum NotificationType {
+  GROUP_INVITE
+  EVENT_REMINDER
+  EVENT_COMMENT
+  EVENT_PHOTO
+  EVENT_CREATED
+  EVENT_UPDATED
+  GROUP_EVENT_CREATED
+  RSVP_UPDATE
 }

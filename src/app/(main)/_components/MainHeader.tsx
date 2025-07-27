@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import NotificationBell from "@/components/ui/notification-bell";
 
 interface MainHeaderProps {
   onToggleSidebar?: () => void;
@@ -86,13 +87,16 @@ export function MainHeader({
           </div>
         )}
 
-        {/* Right: Theme Controls - Only on desktop */}
-        {!showToggle && (
-          <div className="flex items-center gap-3 h-full flex-shrink-0">
-            <ModeToggle />
-            <ThemeSelector />
-          </div>
-        )}
+        {/* Right: Notifications & Theme Controls */}
+        <div className="flex items-center gap-3 h-full flex-shrink-0">
+          <NotificationBell />
+          {!showToggle && (
+            <>
+              <ModeToggle />
+              <ThemeSelector />
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

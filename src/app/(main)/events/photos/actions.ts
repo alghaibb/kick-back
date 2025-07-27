@@ -8,6 +8,7 @@ import {
   deletePhotoSchema,
 } from "@/validations/photos/uploadPhotoSchema";
 import { revalidatePath } from "next/cache";
+import { notifyEventPhoto } from "@/lib/notification-triggers";
 
 export async function savePhotoMetadataAction(data: {
   eventId: string;
@@ -79,6 +80,29 @@ export async function savePhotoMetadataAction(data: {
       },
     });
 
+    // Send notifications to other event attendees
+    try {
+      const eventAttendees = await prisma.eventAttendee.findMany({
+        where: {
+          eventId: data.eventId,
+          userId: { not: session.user.id }, // Exclude the photo uploader
+        },
+        select: { userId: true },
+      });
+
+      if (eventAttendees.length > 0) {
+        await notifyEventPhoto({
+          eventId: data.eventId,
+          eventName: event.name,
+          photographerName: photo.user.nickname || photo.user.firstName,
+          eventAttendeeIds: eventAttendees.map((attendee) => attendee.userId),
+        });
+      }
+    } catch (notificationError) {
+      console.error("Failed to send photo notifications:", notificationError);
+      // Don't fail the photo upload if notifications fail
+    }
+
     revalidatePath(`/events`);
     return { success: true, photo };
   } catch (error) {
@@ -114,12 +138,64 @@ export async function likePhotoAction(data: { photoId: string }) {
       });
       return { success: true, liked: false };
     } else {
+      // Get photo and event info for notification
+      const photoInfo = await prisma.eventPhoto.findUnique({
+        where: { id: data.photoId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              nickname: true,
+            },
+          },
+          event: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
       await prisma.eventPhotoLike.create({
         data: {
           photoId: data.photoId,
           userId: session.user.id,
         },
       });
+
+      // Send notification to photo owner (if not liking own photo)
+      if (photoInfo && photoInfo.userId !== session.user.id) {
+        try {
+          const currentUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { firstName: true, nickname: true },
+          });
+
+          if (currentUser) {
+            // Create a simple photo like notification
+            await prisma.notification.create({
+              data: {
+                userId: photoInfo.userId,
+                type: "EVENT_PHOTO",
+                title: "Photo Liked",
+                message: `${currentUser.nickname || currentUser.firstName} liked your photo in "${photoInfo.event.name}"`,
+                data: {
+                  eventId: photoInfo.event.id,
+                  photoId: data.photoId,
+                },
+              },
+            });
+          }
+        } catch (notificationError) {
+          console.error(
+            "Failed to send photo like notification:",
+            notificationError
+          );
+        }
+      }
+
       return { success: true, liked: true };
     }
   } catch (error) {

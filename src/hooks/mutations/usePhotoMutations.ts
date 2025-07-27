@@ -132,6 +132,9 @@ export function useUploadPhoto() {
       );
 
       toast.success("Photo uploaded successfully! 📸");
+      
+      // Invalidate notifications so attendees get photo notifications immediately
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: Error, variables, context) => {
       // Rollback on error

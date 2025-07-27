@@ -38,6 +38,11 @@ export default function EventFilters({
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   const updateFilter = (key: keyof EventFilters, value: string) => {
+    // Ensure groupId is never an empty string
+    if (key === "groupId" && (!value || value.trim() === "")) {
+      value = "all";
+    }
+
     onFiltersChange({
       ...filters,
       [key]: value,
@@ -83,11 +88,13 @@ export default function EventFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All groups</SelectItem>
-            {groups.map((group) => (
-              <SelectItem key={group.id} value={group.id}>
-                {group.name}
-              </SelectItem>
-            ))}
+            {groups
+              ?.filter((group) => group.id && group.id.trim() !== "")
+              .map((group) => (
+                <SelectItem key={group.id} value={group.id}>
+                  {group.name}
+                </SelectItem>
+              )) || []}
           </SelectContent>
         </Select>
       </div>
@@ -193,11 +200,13 @@ export default function EventFilters({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All groups</SelectItem>
-              {groups.map((group) => (
-                <SelectItem key={group.id} value={group.id}>
-                  {group.name}
-                </SelectItem>
-              ))}
+              {groups
+                ?.filter((group) => group.id && group.id.trim() !== "")
+                .map((group) => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.name}
+                  </SelectItem>
+                )) || []}
             </SelectContent>
           </Select>
 
@@ -290,7 +299,8 @@ export default function EventFilters({
           )}
           {filters.groupId && filters.groupId !== "all" && (
             <Badge variant="secondary" className="text-xs">
-              Group: {groups.find((g) => g.id === filters.groupId)?.name}
+              Group:{" "}
+              {groups?.find((g) => g.id === filters.groupId)?.name || "Unknown"}
               <button
                 onClick={() => updateFilter("groupId", "all")}
                 className="ml-2 hover:bg-destructive/20 rounded-full p-0.5"

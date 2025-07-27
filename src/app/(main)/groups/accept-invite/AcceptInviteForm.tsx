@@ -43,52 +43,61 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
 
   const validateToken = useCallback(async () => {
     try {
-      const formData = new FormData();
-      formData.append("token", token);
-      const res = await acceptGroupInviteAction(formData);
-      if (res?.error) {
+      // Just validate the token exists and is valid, don't accept it yet
+      const response = await fetch(
+        `/api/groups/invites/validate?token=${token}`
+      );
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
         setStatus("invalid");
-        setInviteData({ error: res.error });
-      } else if (res?.success) {
-        setStatus("accepted");
-        setInviteData(res.group);
-        toast.success("Successfully joined the group!");
-        setTimeout(() => {
-          router.push("/groups");
-        }, 2000);
+        setInviteData({ error: data.error || "Invalid invitation" });
+      } else {
+        setStatus("valid");
+        setInviteData(data.invite);
       }
     } catch (error) {
       console.error("Failed to validate invitation:", error);
       setStatus("error");
       setInviteData({ error: "Failed to validate invitation" });
     }
-  }, [token, router]);
+  }, [token]);
 
   useEffect(() => {
     validateToken();
   }, [validateToken]);
 
   function onSubmit(values: AcceptInviteValues) {
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.append("token", values.token);
+    // Prevent double submission
+    if (isPending || status === "accepted") return;
 
-      const res = await acceptGroupInviteAction(formData);
-      if (res?.error) {
-        toast.error(
-          typeof res.error === "string"
-            ? res.error
-            : "Failed to accept invitation"
-        );
-        setStatus("invalid");
-        setInviteData({ error: res.error });
-      } else if (res?.success) {
-        setStatus("accepted");
-        setInviteData(res.group);
-        toast.success("Successfully joined the group!");
-        setTimeout(() => {
-          router.push("/groups");
-        }, 2000);
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.append("token", values.token);
+
+        const res = await acceptGroupInviteAction(formData);
+        if (res?.error) {
+          toast.error(
+            typeof res.error === "string"
+              ? res.error
+              : "Failed to accept invitation"
+          );
+          setStatus("invalid");
+          setInviteData({ error: res.error });
+        } else if (res?.success) {
+          setStatus("accepted");
+          setInviteData(res.group);
+          toast.success("Successfully joined the group!");
+          setTimeout(() => {
+            router.push("/groups");
+          }, 2000);
+        }
+      } catch (error) {
+        console.error("Failed to accept invitation:", error);
+        toast.error("Failed to accept invitation");
+        setStatus("error");
+        setInviteData({ error: "Failed to accept invitation" });
       }
     });
   }
@@ -169,10 +178,21 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
       <CardHeader>
         <CardTitle>Accept Group Invitation</CardTitle>
         <CardDescription>
-          Click the button below to accept your invitation and join the group.
+          {inviteData && "groupName" in inviteData
+            ? `You've been invited to join "${inviteData.groupName}" by ${inviteData.inviterName}`
+            : "Click the button below to accept your invitation and join the group."}
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {inviteData &&
+          "groupDescription" in inviteData &&
+          inviteData.groupDescription && (
+            <div className="mb-4 p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                {inviteData.groupDescription}
+              </p>
+            </div>
+          )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -186,7 +206,12 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
                 </FormItem>
               )}
             />
-            <LoadingButton type="submit" className="w-full" loading={isPending}>
+            <LoadingButton
+              type="submit"
+              className="w-full"
+              loading={isPending}
+              disabled={isPending}
+            >
               {isPending ? "Accepting..." : "Accept Invitation"}
             </LoadingButton>
           </form>

@@ -54,51 +54,13 @@ export function useRSVPMutation() {
     onMutate: async ({ eventId, status }) => {
       if (!user?.id) return;
 
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["events"] });
+      // Cancel any outgoing refetches (don't cancel events - it doesn't have attendee data)
       await queryClient.cancelQueries({ queryKey: ["calendar"] });
       await queryClient.cancelQueries({ queryKey: ["rsvp", eventId] });
 
-      // Snapshot previous values
-      const previousEvents = queryClient.getQueryData(["events"]);
+      // Snapshot previous values (don't snapshot events - we're not updating it)
       const previousCalendar = queryClient.getQueryData(["calendar"]);
       const previousRSVP = queryClient.getQueryData(["rsvp", eventId]);
-
-      // Optimistically update events data
-      queryClient.setQueryData(["events"], (old: EventData | undefined) => {
-        if (!old?.events) return old;
-
-        return {
-          events: old.events.map((event) => {
-            if (event.id === eventId) {
-              // Remove user from old status arrays
-              const filteredAttendees = (event.attendees || []).filter(
-                (attendee) => attendee.userId !== user.id
-              );
-
-              // Add user to new status
-              const newAttendee = {
-                id: `temp-${user.id}-${eventId}`,
-                userId: user.id,
-                eventId,
-                rsvpStatus: status,
-                user: {
-                  id: user.id,
-                  firstName: user.firstName,
-                  nickname: user.nickname,
-                  image: user.image,
-                },
-              };
-
-              return {
-                ...event,
-                attendees: [...filteredAttendees, newAttendee],
-              };
-            }
-            return event;
-          }),
-        };
-      });
 
       // Optimistically update calendar data
       queryClient.setQueryData(["calendar"], (old: EventData | undefined) => {
@@ -137,7 +99,7 @@ export function useRSVPMutation() {
       // Optimistically update RSVP status
       queryClient.setQueryData(["rsvp", eventId], { rsvpStatus: status });
 
-      return { previousEvents, previousCalendar, previousRSVP, eventId };
+      return { previousCalendar, previousRSVP, eventId };
     },
     onSuccess: (_, variables) => {
       // Show success message based on status
@@ -157,13 +119,13 @@ export function useRSVPMutation() {
 
       // Revalidate the specific RSVP query to ensure server sync
       queryClient.invalidateQueries({ queryKey: ["rsvp", variables.eventId] });
+
+      // Invalidate notifications so event creator gets RSVP notification immediately
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: Error, variables, context) => {
       // Rollback optimistic updates
       if (context) {
-        if (context.previousEvents) {
-          queryClient.setQueryData(["events"], context.previousEvents);
-        }
         if (context.previousCalendar) {
           queryClient.setQueryData(["calendar"], context.previousCalendar);
         }

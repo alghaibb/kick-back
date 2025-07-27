@@ -7,6 +7,7 @@ import {
   CreateCommentValues,
 } from "@/validations/events/createCommentSchema";
 import { revalidatePath } from "next/cache";
+import { notifyEventComment } from "@/lib/notification-triggers";
 
 export async function createCommentAction(values: CreateCommentValues) {
   try {
@@ -72,6 +73,29 @@ export async function createCommentAction(values: CreateCommentValues) {
         },
       },
     });
+
+    // Send notifications to other event attendees
+    try {
+      const eventAttendees = await prisma.eventAttendee.findMany({
+        where: {
+          eventId,
+          userId: { not: session.user.id }, // Exclude the commenter
+        },
+        select: { userId: true },
+      });
+
+      if (eventAttendees.length > 0) {
+        await notifyEventComment({
+          eventId,
+          eventName: event.name,
+          commenterName: comment.user.nickname || comment.user.firstName,
+          eventAttendeeIds: eventAttendees.map((attendee) => attendee.userId),
+        });
+      }
+    } catch (notificationError) {
+      console.error("Failed to send comment notifications:", notificationError);
+      // Don't fail the comment creation if notifications fail
+    }
 
     revalidatePath("/events");
     revalidatePath("/calendar");

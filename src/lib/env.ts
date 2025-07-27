@@ -32,14 +32,22 @@ export const env = createEnv({
     TWILIO_ACCOUNT_SID: z.string().min(1, "TWILIO_ACCOUNT_SID is required"),
     TWILIO_AUTH_TOKEN: z.string().min(1, "TWILIO_AUTH_TOKEN is required"),
     TWILIO_PHONE_NUMBER: z.string().min(1, "TWILIO_PHONE_NUMBER is required"),
+    
+    // Push Notification VAPID Keys
+    VAPID_PRIVATE_KEY: z.string().min(1, "VAPID_PRIVATE_KEY is required"),
+    VAPID_EMAIL: z.string().min(1, "VAPID_EMAIL is required").email(),
   },
   client: {
     NEXT_PUBLIC_BASE_URL: z
       .string()
       .min(1, "A NEXT_PUBLIC_BASE_URL is required")
       .url(),
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: z
+      .string()
+      .min(1, "NEXT_PUBLIC_VAPID_PUBLIC_KEY is required"),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   },
 });

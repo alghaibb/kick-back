@@ -22,8 +22,10 @@ const CreateGroupModal = lazy(() =>
     default: m.CreateGroupModal,
   }))
 );
-const EditGroupModal = lazy(
-  () => import("./groups/_components/EditGroupModal")
+const EditGroupModal = lazy(() =>
+  import("./groups/_components/EditGroupModal").then((m) => ({
+    default: m.EditGroupModal,
+  }))
 );
 const InviteGroupModal = lazy(() =>
   import("./groups/_components/InviteGroupModal").then((m) => ({

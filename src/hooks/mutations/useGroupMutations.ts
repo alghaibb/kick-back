@@ -7,7 +7,7 @@ import {
   leaveGroupAction,
   inviteToGroupAction,
   updateGroupMemberRoleAction,
-  removeGroupMemberAction
+  removeGroupMemberAction,
 } from "@/app/(main)/groups/actions";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
 
@@ -67,7 +67,11 @@ export function useInviteToGroup() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { groupId: string; email: string; role: string }) => {
+    mutationFn: async (data: {
+      groupId: string;
+      email: string;
+      role: string;
+    }) => {
       const formData = new FormData();
       formData.append("groupId", data.groupId);
       formData.append("email", data.email);
@@ -82,7 +86,12 @@ export function useInviteToGroup() {
     onSuccess: (_, variables) => {
       toast.success(`Invitation sent to ${variables.email}!`);
       // Invalidate group invites
-      queryClient.invalidateQueries({ queryKey: ["group-invites", variables.groupId] });
+      queryClient.invalidateQueries({
+        queryKey: ["group-invites", variables.groupId],
+      });
+
+      // Invalidate notifications so invited user gets notification immediately
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: Error) => {
       console.error("Invite to group error:", error);
@@ -93,7 +102,11 @@ export function useInviteToGroup() {
 
 export function useUpdateGroupMemberRole() {
   return useMutation({
-    mutationFn: async (data: { groupId: string; memberId: string; newRole: string }) => {
+    mutationFn: async (data: {
+      groupId: string;
+      memberId: string;
+      newRole: string;
+    }) => {
       const result = await updateGroupMemberRoleAction(data);
       if (result?.error) {
         throw new Error(result.error);
@@ -127,4 +140,4 @@ export function useRemoveGroupMember() {
       toast.error(error.message || "Failed to remove member");
     },
   });
-} 
+}

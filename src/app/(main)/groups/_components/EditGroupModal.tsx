@@ -3,9 +3,9 @@ import { GenericModal } from "@/components/ui/generic-modal";
 import { useModal } from "@/hooks/use-modal";
 import EditGroupForm from "../forms/EditGroupForm";
 
-export default function EditGroupModal() {
+export function EditGroupModal() {
   const { type, close, data } = useModal();
-  
+
   // Validation logic - only render if we have the required data
   if (type !== "edit-group" || !data?.groupId) return null;
 
@@ -17,8 +17,8 @@ export default function EditGroupModal() {
   };
 
   return (
-    <GenericModal 
-      type="edit-group" 
+    <GenericModal
+      type="edit-group"
       title="Edit Group"
       description="Update your group details below."
       className="space-y-4"
