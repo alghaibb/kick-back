@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { PageHeader } from "../_components/PageHeader";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { CalendarPageClientWithComments } from "./_components/CalendarPageClientWithComments";
+import { PageErrorBoundary } from "@/components/ui/error-boundary";
 
 export const metadata: Metadata = {
   title: "Your Calendar",
@@ -21,9 +22,11 @@ export default function Page() {
         action=""
       />
 
-      <Suspense fallback={<UnifiedSkeleton variant="simple" />}>
-        <CalendarPageClientWithComments />
-      </Suspense>
+      <PageErrorBoundary title="Calendar Page">
+        <Suspense fallback={<UnifiedSkeleton variant="simple" />}>
+          <CalendarPageClientWithComments />
+        </Suspense>
+      </PageErrorBoundary>
     </div>
   );
 }

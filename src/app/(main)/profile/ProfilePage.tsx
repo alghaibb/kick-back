@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { ProfileContent } from "./_components/ProfileContent";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
+import { PageErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function ProfilePage() {
   return (
@@ -15,9 +16,11 @@ export default function ProfilePage() {
           </p>
         </div>
 
-              <Suspense fallback={<UnifiedSkeleton variant="profile" />}>
-        <ProfileContent />
-      </Suspense>
+                      <PageErrorBoundary title="Profile Page">
+          <Suspense fallback={<UnifiedSkeleton variant="profile" />}>
+            <ProfileContent />
+          </Suspense>
+        </PageErrorBoundary>
       </div>
     </div>
   );

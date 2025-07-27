@@ -4,6 +4,7 @@ import { CreateActionButton } from "../_components/CreateActionButton";
 import { PageHeader } from "../_components/PageHeader";
 import { EventsClient } from "./_components/EventsClient";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
+import { PageErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function Page() {
   return (
@@ -17,9 +18,11 @@ export default function Page() {
         }
       />
 
-      <Suspense fallback={<UnifiedSkeleton variant="card-list" count={3} />}>
-        <EventsClient />
-      </Suspense>
+      <PageErrorBoundary title="Events Page">
+        <Suspense fallback={<UnifiedSkeleton variant="card-list" count={3} />}>
+          <EventsClient />
+        </Suspense>
+      </PageErrorBoundary>
     </div>
   );
 }

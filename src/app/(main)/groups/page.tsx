@@ -4,6 +4,7 @@ import { CreateActionButton } from "../_components/CreateActionButton";
 import { PageHeader } from "../_components/PageHeader";
 import { GroupsClientNew } from "./_components/GroupsClientNew";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
+import { PageErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function Page() {
   return (
@@ -17,9 +18,11 @@ export default function Page() {
         }
       />
 
-      <Suspense fallback={<UnifiedSkeleton variant="card-list" count={2} />}>
-        <GroupsClientNew />
-      </Suspense>
+      <PageErrorBoundary title="Groups Page">
+        <Suspense fallback={<UnifiedSkeleton variant="card-list" count={2} />}>
+          <GroupsClientNew />
+        </Suspense>
+      </PageErrorBoundary>
     </div>
   );
 }

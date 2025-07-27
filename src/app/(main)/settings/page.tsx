@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import { SettingsContent } from "./_components/SettingsContent";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
+import { PageErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function SettingsPage() {
   return (
@@ -18,9 +19,11 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <Suspense fallback={<UnifiedSkeleton variant="form" count={6} />}>
-          <SettingsContent />
-        </Suspense>
+        <PageErrorBoundary title="Settings Page">
+          <Suspense fallback={<UnifiedSkeleton variant="form" count={6} />}>
+            <SettingsContent />
+          </Suspense>
+        </PageErrorBoundary>
       </div>
     </div>
   );

@@ -29,6 +29,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { MessageCircle, Trash2 } from "lucide-react";
 import { formatDate } from "@/lib/date-utils";
+import { ComponentErrorBoundary } from "@/components/ui/error-boundary";
 
 interface EventCommentsFormProps {
   eventId: string;
@@ -128,115 +129,117 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageCircle className="h-5 w-5" />
-          Discussion
-          {comments && comments.length > 0 && (
-            <span className="text-sm font-normal text-muted-foreground">
-              ({comments.length}{" "}
-              {comments.length === 1 ? "comment" : "comments"})
-            </span>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Add Comment Form */}
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="content"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Add a comment</FormLabel>
-                  <FormControl>
-                    <AutosizeTextarea
-                      placeholder="Share updates, ask questions, or coordinate details..."
-                      {...field}
-                      minHeight={80}
-                      maxHeight={200}
-                      className="resize-none"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-end">
-              <LoadingButton
-                type="submit"
-                loading={createCommentMutation.isPending}
-                disabled={!form.watch("content")?.trim()}
-                size="sm"
-              >
-                {createCommentMutation.isPending
-                  ? "Posting..."
-                  : "Post Comment"}
-              </LoadingButton>
-            </div>
-          </form>
-        </Form>
-
-        {/* Comments List */}
-        {comments && comments.length > 0 && (
-          <>
-            <Separator />
-            <div className="space-y-4">
-              {comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="flex gap-3 p-4 bg-muted/30 rounded-lg"
+    <ComponentErrorBoundary title="Event Comments">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5" />
+            Discussion
+            {comments && comments.length > 0 && (
+              <span className="text-sm font-normal text-muted-foreground">
+                ({comments.length}{" "}
+                {comments.length === 1 ? "comment" : "comments"})
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Add Comment Form */}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="content"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Add a comment</FormLabel>
+                    <FormControl>
+                      <AutosizeTextarea
+                        placeholder="Share updates, ask questions, or coordinate details..."
+                        {...field}
+                        minHeight={80}
+                        maxHeight={200}
+                        className="resize-none"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end">
+                <LoadingButton
+                  type="submit"
+                  loading={createCommentMutation.isPending}
+                  disabled={!form.watch("content")?.trim()}
+                  size="sm"
                 >
-                  <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarImage src={comment.user.image || undefined} />
-                    <AvatarFallback className="text-xs">
-                      {getUserInitials(comment.user)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">
-                          {getUserDisplayName(comment.user)}
-                        </span>
-                        <span className="text-muted-foreground text-xs">
-                          {formatDate(new Date(comment.createdAt), {
-                            includeTime: true,
-                          })}
-                        </span>
-                      </div>
-                      {user?.id === comment.userId && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteComment(comment.id)}
-                          disabled={deleteCommentMutation.isPending}
-                          className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
-                    <p className="text-sm whitespace-pre-wrap break-words">
-                      {comment.content}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                  {createCommentMutation.isPending
+                    ? "Posting..."
+                    : "Post Comment"}
+                </LoadingButton>
+              </div>
+            </form>
+          </Form>
 
-        {comments && comments.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-sm">No comments yet</p>
-            <p className="text-xs">Be the first to start the discussion!</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          {/* Comments List */}
+          {comments && comments.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                {comments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="flex gap-3 p-4 bg-muted/30 rounded-lg"
+                  >
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarImage src={comment.user.image || undefined} />
+                      <AvatarFallback className="text-xs">
+                        {getUserInitials(comment.user)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">
+                            {getUserDisplayName(comment.user)}
+                          </span>
+                          <span className="text-muted-foreground text-xs">
+                            {formatDate(new Date(comment.createdAt), {
+                              includeTime: true,
+                            })}
+                          </span>
+                        </div>
+                        {user?.id === comment.userId && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteComment(comment.id)}
+                            disabled={deleteCommentMutation.isPending}
+                            className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap break-words">
+                        {comment.content}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {comments && comments.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-sm">No comments yet</p>
+              <p className="text-xs">Be the first to start the discussion!</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </ComponentErrorBoundary>
   );
 }
