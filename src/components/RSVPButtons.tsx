@@ -34,7 +34,7 @@ export function RSVPButtons({
       status: "yes" as RSVPStatus,
       label: "Yes",
       icon: Check,
-      variant: "default" as const,
+      variant: "outline" as const,
       activeClass:
         "bg-green-500 dark:bg-green-500 hover:bg-green-600 dark:hover:bg-green-600 text-background",
     },
