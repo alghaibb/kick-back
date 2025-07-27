@@ -7,7 +7,7 @@ export interface CreateNotificationData {
   type: NotificationType;
   title: string;
   message: string;
-  data?: Record<string, any>;
+  data?: unknown;
 }
 
 export interface PushNotificationData {
@@ -15,7 +15,7 @@ export interface PushNotificationData {
   body: string;
   icon?: string;
   badge?: string;
-  data?: Record<string, any>;
+  data?: unknown;
   actions?: Array<{
     action: string;
     title: string;
@@ -90,14 +90,19 @@ export async function sendPushNotification(
           },
           payload
         );
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(
           `Failed to send push to ${subscription.endpoint}:`,
           error
         );
 
         // If subscription is invalid, remove it
-        if (error.statusCode === 404 || error.statusCode === 410) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "statusCode" in error &&
+          (error.statusCode === 404 || error.statusCode === 410)
+        ) {
           await prisma.pushSubscription.delete({
             where: { id: subscription.id },
           });
