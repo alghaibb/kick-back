@@ -173,16 +173,16 @@
 
 .theme-green,
 .theme-green-scaled {
-  --primary: var(--color-lime-600);
-  --primary-foreground: var(--color-lime-50);
-  --primary-8: color-mix(in oklab, var(--color-lime-600) 8%, transparent);
-  --primary-50: color-mix(in oklab, var(--color-lime-600) 50%, transparent);
+  --primary: #39ff14;
+  --primary-foreground: #000000;
+  --primary-8: color-mix(in oklab, #39ff14 8%, transparent);
+  --primary-50: color-mix(in oklab, #39ff14 50%, transparent);
 
   @variant dark {
-    --primary: var(--color-lime-600);
-    --primary-foreground: var(--color-lime-50);
-    --primary-8: color-mix(in oklab, var(--color-lime-600) 8%, transparent);
-    --primary-50: color-mix(in oklab, var(--color-lime-600) 50%, transparent);
+    --primary: #39ff14;
+    --primary-foreground: #000000;
+    --primary-8: color-mix(in oklab, #39ff14 8%, transparent);
+    --primary-50: color-mix(in oklab, #39ff14 50%, transparent);
   }
 }
 
@@ -216,10 +216,10 @@
 }
 
 .theme-green {
-  --color-border: #22c55e; /* green-500 */
+  --color-border: #39ff14; /* neon.tech electric green */
 }
 .theme-green:hover {
-  --color-border: #16a34a; /* darker green */
+  --color-border: #2de00f; /* slightly darker electric green */
 }
 
 .theme-amber {
