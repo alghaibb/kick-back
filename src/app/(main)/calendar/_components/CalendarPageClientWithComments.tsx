@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { format, isSameDay, startOfDay } from "date-fns";
 import { useCalendar } from "@/hooks/queries/useCalendar";
 import { formatDate } from "@/lib/date-utils";
-import { CalendarSkeleton } from "./CalendarSkeleton";
+import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import EventCommentsForm from "@/app/(main)/events/comments/_components/EventCommentsForm";
 import { MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import {
@@ -38,7 +38,7 @@ export function CalendarPageClientWithComments() {
   };
 
   if (isLoading) {
-    return <CalendarSkeleton />;
+    return <UnifiedSkeleton variant="simple" />;
   }
 
   if (error) {

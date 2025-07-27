@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
 import { SettingsContent } from "./_components/SettingsContent";
-import { SettingsSkeleton } from "./_components/SettingsSkeleton";
+import { UnifiedSkeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
   return (
@@ -18,7 +18,7 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <Suspense fallback={<SettingsSkeleton />}>
+        <Suspense fallback={<UnifiedSkeleton variant="form" count={6} />}>
           <SettingsContent />
         </Suspense>
       </div>

@@ -2,7 +2,7 @@
 
 import { useEvents, EventData } from "@/hooks/queries/useEvents";
 import { EventCard } from "./EventCard";
-import { EventsSkeleton } from "./EventsSkeleton";
+import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { endOfDay, startOfDay } from "date-fns";
 import { formatDate } from "@/lib/date-utils";
 import { useMemo } from "react";
@@ -41,7 +41,7 @@ export function EventsClient() {
   }, [data?.events]);
 
   if (isLoading) {
-    return <EventsSkeleton />;
+    return <UnifiedSkeleton variant="card-list" count={3} />;
   }
 
   if (error) {
@@ -61,7 +61,7 @@ export function EventsClient() {
   }
 
   if (!data) {
-    return <EventsSkeleton />;
+    return <UnifiedSkeleton variant="card-list" count={3} />;
   }
 
   const { todayEvents, upcomingEvents, pastEvents } = categorizedEvents;

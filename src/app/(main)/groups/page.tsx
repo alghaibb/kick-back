@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { CreateActionButton } from "../_components/CreateActionButton";
 import { PageHeader } from "../_components/PageHeader";
 import { GroupsClientNew } from "./_components/GroupsClientNew";
-import { GroupsSkeleton } from "./_components/GroupsSkeleton";
+import { UnifiedSkeleton } from "@/components/ui/skeleton";
 
 export default function Page() {
   return (
@@ -17,7 +17,7 @@ export default function Page() {
         }
       />
 
-      <Suspense fallback={<GroupsSkeleton />}>
+      <Suspense fallback={<UnifiedSkeleton variant="card-list" count={2} />}>
         <GroupsClientNew />
       </Suspense>
     </div>

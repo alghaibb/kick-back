@@ -2,14 +2,14 @@
 
 import { useGroups } from "@/hooks/queries/useGroups";
 import { GroupsClientContent } from "./GroupsClientContent";
-import { GroupsSkeleton } from "./GroupsSkeleton";
+import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Users } from "lucide-react";
 
 export function GroupsClientNew() {
   const { data, isLoading, error } = useGroups();
 
   if (isLoading) {
-    return <GroupsSkeleton />;
+    return <UnifiedSkeleton variant="card-list" count={2} />;
   }
 
   if (error) {
@@ -29,7 +29,7 @@ export function GroupsClientNew() {
   }
 
   if (!data) {
-    return <GroupsSkeleton />;
+    return <UnifiedSkeleton variant="card-list" count={2} />;
   }
 
   const { groupsOwned, groupsIn, currentUser } = data;

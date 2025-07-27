@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { ProfileContent } from "./_components/ProfileContent";
-import { ProfileSkeleton } from "./_components/ProfileSkeleton";
+import { UnifiedSkeleton } from "@/components/ui/skeleton";
 
 export default function ProfilePage() {
   return (
@@ -15,9 +15,9 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        <Suspense fallback={<ProfileSkeleton />}>
-          <ProfileContent />
-        </Suspense>
+              <Suspense fallback={<UnifiedSkeleton variant="profile" />}>
+        <ProfileContent />
+      </Suspense>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import { CalendarDays } from "lucide-react";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import { PageHeader } from "../_components/PageHeader";
-import { CalendarSkeleton } from "./_components/CalendarSkeleton";
+import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { CalendarPageClientWithComments } from "./_components/CalendarPageClientWithComments";
 
 export const metadata: Metadata = {
@@ -21,7 +21,7 @@ export default function Page() {
         action=""
       />
 
-      <Suspense fallback={<CalendarSkeleton />}>
+      <Suspense fallback={<UnifiedSkeleton variant="simple" />}>
         <CalendarPageClientWithComments />
       </Suspense>
     </div>

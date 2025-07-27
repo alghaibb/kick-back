@@ -3,14 +3,14 @@
 import { useDashboardStats } from "@/hooks/queries/useDashboardStats";
 import { dashboardStatsTemplate } from "./dashboard-data";
 import { StatsCard } from "./StatsCard";
-import { DashboardSkeleton } from "./DashboardSkeleton";
+import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 
 export function DashboardStatsClient() {
   const { data: stats, isLoading, error } = useDashboardStats();
 
   if (isLoading) {
-    return <DashboardSkeleton />;
+    return <UnifiedSkeleton variant="dashboard-stats" count={4} />;
   }
 
   if (error) {
@@ -36,7 +36,7 @@ export function DashboardStatsClient() {
   }
 
   if (!stats) {
-    return <DashboardSkeleton />;
+    return <UnifiedSkeleton variant="dashboard-stats" count={4} />;
   }
 
   const dashboardStats = [
