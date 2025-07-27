@@ -90,16 +90,18 @@ export function RSVPButtons({
             onClick={() => handleRSVP(button.status)}
             disabled={disabled || isPending}
             className={cn(
-              "min-w-[80px] transition-all",
+              "min-w-[80px] transition-all duration-200",
               isActive && button.activeClass,
-              isPending && "opacity-50"
+              isPending && rsvpMutation.variables?.status === button.status && "opacity-60"
             )}
           >
-            <Icon className="w-4 h-4 mr-1" />
-            {button.label}
-            {isPending && rsvpMutation.variables?.status === button.status && (
-              <Clock className="w-3 h-3 ml-1 animate-spin" />
+            {/* Show spinner for the button being clicked, otherwise show the regular icon */}
+            {isPending && rsvpMutation.variables?.status === button.status ? (
+              <Clock className="w-4 h-4 mr-1 animate-spin" />
+            ) : (
+              <Icon className="w-4 h-4 mr-1" />
             )}
+            {button.label}
           </Button>
         );
       })}

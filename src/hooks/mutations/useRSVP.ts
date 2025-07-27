@@ -135,7 +135,7 @@ export function useRSVPMutation() {
       });
 
       // Optimistically update RSVP status
-      queryClient.setQueryData(["rsvp", eventId], { status });
+      queryClient.setQueryData(["rsvp", eventId], { rsvpStatus: status });
 
       return { previousEvents, previousCalendar, previousRSVP, eventId };
     },
@@ -152,10 +152,11 @@ export function useRSVPMutation() {
         statusMessages[variables.status as keyof typeof statusMessages]
       );
 
-      // Refresh data to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["calendar"] });
+      // Only invalidate dashboard stats (for RSVP counts) - less aggressive than before
       queryClient.invalidateQueries({ queryKey: ["dashboard", "stats"] });
+
+      // Revalidate the specific RSVP query to ensure server sync
+      queryClient.invalidateQueries({ queryKey: ["rsvp", variables.eventId] });
     },
     onError: (error: Error, variables, context) => {
       // Rollback optimistic updates
