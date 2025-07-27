@@ -5,6 +5,7 @@ import { dashboardStatsTemplate } from "./dashboard-data";
 import { StatsCard } from "./StatsCard";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
+import { AnimatedList, AnimatedListItem } from "@/components/ui/list-animations";
 
 export function DashboardStatsClient() {
   const { data: stats, isLoading, error } = useDashboardStats();
@@ -70,10 +71,12 @@ export function DashboardStatsClient() {
   ];
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-4">
+    <AnimatedList className="grid gap-4 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr">
       {dashboardStats.map((stat) => (
-        <StatsCard key={stat.title} {...stat} />
+        <AnimatedListItem key={stat.title}>
+          <StatsCard {...stat} />
+        </AnimatedListItem>
       ))}
-    </div>
+    </AnimatedList>
   );
 }

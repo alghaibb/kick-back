@@ -4,6 +4,7 @@ import { useEvents, EventData } from "@/hooks/queries/useEvents";
 import { EventCard } from "./EventCard";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { endOfDay, startOfDay } from "date-fns";
+import { AnimatedList, AnimatedListItem } from "@/components/ui/list-animations";
 import { formatDate } from "@/lib/date-utils";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -100,9 +101,10 @@ export function EventsClient() {
           <p className="text-muted-foreground">{emptyMessage}</p>
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <AnimatedList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
-            <EventCard
+            <AnimatedListItem key={event.id}>
+              <EventCard
               key={event.id}
               id={event.id}
               name={event.name}
@@ -117,9 +119,10 @@ export function EventsClient() {
               timezone={userTimezone}
               createdByCurrentUser={event.createdBy === user?.id}
               disabled={title === "Past Events"}
-            />
+              />
+            </AnimatedListItem>
           ))}
-        </div>
+        </AnimatedList>
       )}
     </div>
   );

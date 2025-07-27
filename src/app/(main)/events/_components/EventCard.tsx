@@ -7,6 +7,8 @@ import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { Pencil, Trash2 } from "lucide-react";
 import { RSVPButtons } from "@/components/RSVPButtons";
+import { motion } from "framer-motion";
+import { cardHoverVariants } from "@/lib/animationVariants";
 
 interface EventCardProps {
   id: string;
@@ -45,10 +47,13 @@ export function EventCard({
   });
 
   return (
-    <div
+    <motion.div
+      variants={!disabled ? cardHoverVariants : undefined}
+      initial="rest"
+      whileHover={!disabled ? "hover" : undefined}
+      whileTap={!disabled ? "tap" : undefined}
       className={cn(
-        "p-4 rounded-xl border bg-card shadow-sm group transition-all",
-        !disabled && "hover:shadow-md hover:border-muted-foreground/30",
+        "p-4 rounded-xl border bg-card shadow-sm group",
         disabled && "opacity-50 cursor-not-allowed pointer-events-none"
       )}
     >
@@ -132,6 +137,6 @@ export function EventCard({
           <Trash2 className="w-4 h-4" />
         </Button>
       </footer>
-    </div>
+    </motion.div>
   );
 }
