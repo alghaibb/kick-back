@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { AutosizeTextarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import { isBefore, startOfDay } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -131,6 +132,9 @@ export function CreateEventForm({
                     }
                   }}
                   mode="single"
+                  disabled={(date) =>
+                    isBefore(startOfDay(date), startOfDay(new Date()))
+                  }
                 />
               </FormControl>
               <FormMessage />
