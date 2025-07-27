@@ -39,7 +39,7 @@ export function DeleteEventModal() {
           cannot be undone.
         </p>
         <ResponsiveModalFooter className="flex flex-col md:flex-row space-y-4 md:space-y-0">
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close} variant="outline">Cancel</Button>
           <LoadingButton
             variant="destructive"
             onClick={handleDelete}
