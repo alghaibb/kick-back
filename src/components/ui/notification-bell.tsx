@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { NotificationType } from "@/generated/prisma";
 
@@ -57,7 +57,6 @@ async function markAllAsRead(): Promise<void> {
 
 export default function NotificationBell() {
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   const { data, refetch } = useQuery({
     queryKey: ["notifications"],
