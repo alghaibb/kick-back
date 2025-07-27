@@ -4,7 +4,6 @@ import { useGroups } from "@/hooks/queries/useGroups";
 import { GroupsClientContent } from "./GroupsClientContent";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Users } from "lucide-react";
-import { AnimatedList, AnimatedListItem } from "@/components/ui/list-animations";
 
 export function GroupsClientNew() {
   const { data, isLoading, error } = useGroups();
