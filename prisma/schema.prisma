@@ -139,6 +139,7 @@ model Group {
   events  Event[]
   invites GroupInvite[]
 
+  @@index([createdBy]) 
   @@map("groups")
 }
 
@@ -153,6 +154,8 @@ model GroupMember {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId])
+  @@index([userId]) 
+  @@index([groupId]) 
   @@map("group_members")
 }
 
@@ -162,7 +165,7 @@ model GroupInvite {
   email     String
   invitedBy String
   token     String   @unique
-  status    String   @default("pending") // pending, accepted, expired, cancelled
+  status    String   @default("pending") 
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -191,6 +194,11 @@ model Event {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
+  @@index([createdBy]) 
+  @@index([date]) 
+  @@index([groupId]) 
+  @@index([date, createdBy]) 
+  @@index([groupId, date]) 
   @@map("events")
 }
 
@@ -208,6 +216,11 @@ model EventAttendee {
   user             User      @relation(fields: [userId], references: [id])
 
   @@unique([eventId, userId])
+  @@index([userId]) 
+  @@index([eventId])
+  @@index([rsvpStatus]) 
+  @@index([userId, rsvpStatus])
+  @@index([lastReminderSent]) 
   @@map("event_attendees")
 }
 
@@ -222,5 +235,8 @@ model EventComment {
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([eventId]) 
+  @@index([userId]) 
+  @@index([eventId, createdAt]) 
   @@map("event_comments")
 }
