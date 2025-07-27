@@ -39,5 +39,9 @@ export function useEventComments(eventId: string) {
     queryKey: ["event-comments", eventId],
     queryFn: () => fetchEventComments(eventId),
     enabled: !!eventId,
+    // Comments change frequently - short cache
+    staleTime: 30 * 1000,        // 30 seconds
+    gcTime: 5 * 60 * 1000,       // 5 minutes
+    refetchOnWindowFocus: true,   // Refetch when user comes back
   });
 }

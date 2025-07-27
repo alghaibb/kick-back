@@ -102,7 +102,7 @@ export function EventCard({
         {createdByCurrentUser && !disabled && (
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-responsive"
             onClick={() =>
               open("edit-event", {
                 eventId: id,
@@ -123,7 +123,7 @@ export function EventCard({
         )}
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-responsive"
           onClick={() => open("delete-event", { eventId: id, eventName: name })}
           className="text-muted-foreground hover:text-destructive"
           disabled={disabled}

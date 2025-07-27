@@ -32,7 +32,7 @@ function MobileNav() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 hover:bg-muted/50"
+          className="h-11 w-11 hover:bg-muted/50" 
         >
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle menu</span>

@@ -10,14 +10,15 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5 * 60 * 1000,
-            gcTime: 10 * 60 * 1000,
-            retry: 1,
+            // Default for frequently changing data (comments, RSVPs)
+            staleTime: 2 * 60 * 1000, // 2 minutes (was 5)
+            gcTime: 10 * 60 * 1000, // Keep 10 minutes
+            retry: 2, // Increase retry from 1 to 2
             refetchOnWindowFocus: true,
-            refetchOnReconnect: false,
+            refetchOnReconnect: true, // Enable reconnect refetch
           },
           mutations: {
-            retry: 1,
+            retry: 2, // Increase retry from 1 to 2
           },
         },
       })

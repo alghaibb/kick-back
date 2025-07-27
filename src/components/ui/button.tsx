@@ -1,30 +1,27 @@
 import { cn } from "@/lib/utils";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
 import * as React from "react";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
+  "ring-offset-background focus-visible:ring-ring inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 group/button",
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground hover:bg-primary/90 dark:text-secondary-foreground dark:bg-secondary",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 dark:text-secondary-foreground",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground dark:text-secondary-foreground",
+          "border-input bg-background hover:bg-accent hover:text-accent-foreground border",
         outlineSecondary: "border border-primary text-primary",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:text-secondary-foreground",
-        link: "text-primary underline-offset-4 hover:underline dark:text-secondary-foreground",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
         expandIcon:
-          "group relative text-primary-foreground bg-primary hover:bg-primary/90 dark:text-secondary-foreground",
+          "group relative text-primary-foreground bg-primary hover:bg-primary/90",
         ringHover:
-          "bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90 hover:ring-2 hover:ring-primary/90 hover:ring-offset-2 dark:text-secondary-foreground",
+          "bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90 hover:ring-2 hover:ring-primary/90 hover:ring-offset-2",
         shine:
           "text-primary-foreground animate-shine bg-gradient-to-r from-primary via-primary/75 to-primary bg-[length:400%_100%] dark:text-secondary-foreground ",
         gooeyRight:
@@ -44,6 +41,12 @@ const buttonVariants = cva(
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
+        // Better mobile touch targets (44px minimum)
+        "mobile-icon": "h-11 w-11", // 44px for better touch targets
+        "mobile-sm": "h-11 rounded-md px-4", // Taller for mobile
+        // Auto mobile-responsive sizes
+        "icon-responsive":
+          "h-10 w-10 sm:h-10 sm:w-10 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11", // Larger on touch devices
       },
     },
     defaultVariants: {
@@ -119,34 +122,34 @@ export interface ButtonProps
   loading?: boolean;
 }
 
-const LoadingButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      className,
-      loading = false,
-      children,
-      disabled,
-      variant,
-      size,
-      asChild = false,
-      ...props
-    },
-    ref
-  ) => {
-    const Comp = asChild ? Slot : "button";
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        disabled={loading || disabled}
-        {...props}
-      >
-        {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}
-        <Slottable>{children}</Slottable>
-      </Comp>
-    );
+// LoadingButton component with mobile-friendly sizing
+const LoadingButton = React.forwardRef<
+  HTMLButtonElement,
+  ButtonProps & {
+    loading?: boolean;
+    icon?: React.ReactNode;
   }
-);
+>(({ className, variant, size, loading, children, icon, ...props }, ref) => {
+  // Auto-adjust size for mobile on icon buttons
+  const mobileAdjustedSize = size === "icon" ? "icon-responsive" : size;
+
+  return (
+    <Button
+      className={cn(className)}
+      disabled={loading || props.disabled}
+      ref={ref}
+      variant={variant}
+      size={mobileAdjustedSize}
+      {...props}
+    >
+      {loading && (
+        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-transparent border-t-current"></div>
+      )}
+      {icon && !loading && <span className="mr-2">{icon}</span>}
+      {children}
+    </Button>
+  );
+});
 LoadingButton.displayName = "LoadingButton";
 
-export { Button, buttonVariants, LoadingButton };
+export { Button, LoadingButton, buttonVariants };
