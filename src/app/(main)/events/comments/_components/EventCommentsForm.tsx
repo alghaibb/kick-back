@@ -60,7 +60,10 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
 
   const handleDeleteComment = async (commentId: string) => {
     try {
-      await deleteCommentMutation.mutateAsync(commentId);
+      await deleteCommentMutation.mutateAsync({ 
+        commentId, 
+        eventId 
+      });
     } catch (error) {
       console.error("Failed to delete comment:", error);
     }

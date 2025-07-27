@@ -35,6 +35,8 @@ model User {
   groupInvites        GroupInvite[]        @relation("GroupInvites")
   EventAttendee       EventAttendee[]
   eventComments       EventComment[]
+  eventPhotos         EventPhoto[]
+  photoLikes          EventPhotoLike[]
 
   @@map("users")
 }
@@ -191,6 +193,7 @@ model Event {
   inviteLink  String?
   attendees   EventAttendee[]
   comments    EventComment[]
+  photos      EventPhoto[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -239,4 +242,38 @@ model EventComment {
   @@index([userId]) 
   @@index([eventId, createdAt]) 
   @@map("event_comments")
+}
+
+model EventPhoto {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  imageUrl  String
+  caption   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes EventPhotoLike[]
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([eventId, createdAt])
+  @@map("event_photos")
+}
+
+model EventPhotoLike {
+  id        String   @id @default(cuid())
+  photoId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  photo EventPhoto @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([photoId, userId])
+  @@index([photoId])
+  @@index([userId])
+  @@map("event_photo_likes")
 }

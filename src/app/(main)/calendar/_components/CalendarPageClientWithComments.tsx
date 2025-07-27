@@ -8,7 +8,10 @@ import { useCalendar } from "@/hooks/queries/useCalendar";
 import { formatDate } from "@/lib/date-utils";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import EventCommentsForm from "@/app/(main)/events/comments/_components/EventCommentsForm";
-import { MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { PhotoUploadForm } from "@/app/(main)/events/photos/_components/PhotoUploadForm";
+import { PhotoGallery } from "@/app/(main)/events/photos/_components/PhotoGallery";
+import { MessageCircle, ChevronDown, ChevronUp, Camera } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Collapsible,
   CollapsibleContent,
@@ -212,12 +215,12 @@ export function CalendarPageClientWithComments() {
                       )}
                     </div>
 
-                    {/* Comments Toggle Button */}
+                    {/* Discussion & Photos Toggle Button */}
                     <CollapsibleTrigger asChild>
                       <Button variant="ghost" size="sm" className="w-full mt-4">
                         <MessageCircle className="h-4 w-4 mr-2" />
                         {expandedEvents.has(event.id) ? "Hide" : "View"}{" "}
-                        Discussion
+                        Discussion & Photos
                         {expandedEvents.has(event.id) ? (
                           <ChevronUp className="h-4 w-4 ml-2" />
                         ) : (
@@ -227,10 +230,28 @@ export function CalendarPageClientWithComments() {
                     </CollapsibleTrigger>
                   </div>
 
-                  {/* Event Comments Section */}
+                  {/* Event Discussion & Photos Section */}
                   <CollapsibleContent>
                     <div className="border-t p-4">
-                      <EventCommentsForm eventId={event.id} />
+                      <Tabs defaultValue="comments" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="comments" className="flex items-center gap-2">
+                            <MessageCircle className="h-4 w-4" />
+                            Comments
+                          </TabsTrigger>
+                          <TabsTrigger value="photos" className="flex items-center gap-2">
+                            <Camera className="h-4 w-4" />
+                            Photos
+                          </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="comments" className="mt-4">
+                          <EventCommentsForm eventId={event.id} />
+                        </TabsContent>
+                        <TabsContent value="photos" className="mt-4 space-y-6">
+                          <PhotoUploadForm eventId={event.id} />
+                          <PhotoGallery eventId={event.id} />
+                        </TabsContent>
+                      </Tabs>
                     </div>
                   </CollapsibleContent>
                 </div>

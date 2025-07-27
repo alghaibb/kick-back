@@ -6,7 +6,8 @@ export type ModalType =
   | "edit-group"
   | "create-event"
   | "edit-event"
-  | "delete-event";
+  | "delete-event"
+  | "delete-photo";
 
 interface ModalState {
   type: ModalType | null;
@@ -25,6 +26,8 @@ interface ModalState {
     date?: string;
     time?: string;
     groups?: { id: string; name: string }[];
+    // Photo deletion fields
+    photoId?: string;
   };
   open: (
     type: ModalType,
@@ -42,6 +45,8 @@ interface ModalState {
       date?: string;
       time?: string;
       groups?: { id: string; name: string }[];
+      // Photo deletion fields
+      photoId?: string;
     }
   ) => void;
   close: () => void;
