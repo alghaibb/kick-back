@@ -2,7 +2,6 @@ import { getSession } from "@/lib/sessions";
 import { redirect } from "next/navigation";
 import { lazy, Suspense } from "react";
 import { MainLayoutClient } from "./_components/MainLayoutClient";
-import EditEventModal from "./events/_components/EditEventModal";
 
 // Lazy load modals - reduces initial bundle size
 const CreateEventModal = lazy(() =>
@@ -14,6 +13,9 @@ const DeleteEventModal = lazy(() =>
   import("./events/_components/DeleteEventModal").then((m) => ({
     default: m.DeleteEventModal,
   }))
+);
+const EditEventModal = lazy(
+  () => import("./events/_components/EditEventModal")
 );
 const CreateGroupModal = lazy(() =>
   import("./groups/_components/CreateGroupModal").then((m) => ({
@@ -58,7 +60,9 @@ export default async function MainLayout({
       <Suspense fallback={null}>
         <EditGroupModal />
       </Suspense>
-      <EditEventModal />
+      <Suspense fallback={null}>
+        <EditEventModal />
+      </Suspense>
     </>
   );
 }
