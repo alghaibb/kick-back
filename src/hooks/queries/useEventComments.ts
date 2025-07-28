@@ -62,28 +62,74 @@ async function fetchEventComments(
 export function useEventComments(eventId: string, sortBy: "newest" | "oldest" = "newest") {
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
 
+  // Smart polling that adapts to activity
+  const getPollingInterval = () => {
+    const timeSinceActivity = Date.now() - lastActivity;
+
+    // If activity within last 30 seconds: poll every 3 seconds (fast but not overwhelming)
+    if (timeSinceActivity < 30 * 1000) return 3000;
+
+    // If activity within last 2 minutes: poll every 8 seconds
+    if (timeSinceActivity < 2 * 60 * 1000) return 8000;
+
+    // If activity within last 5 minutes: poll every 15 seconds
+    if (timeSinceActivity < 5 * 60 * 1000) return 15000;
+
+    // If activity within last 10 minutes: poll every 30 seconds
+    if (timeSinceActivity < 10 * 60 * 1000) return 30000;
+
+    // Otherwise: poll every 60 seconds
+    return 60000;
+  };
+
   const query = useQuery({
     queryKey: ["event-comments", eventId, sortBy],
     queryFn: () => fetchEventComments(eventId, sortBy),
     enabled: !!eventId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 5 * 1000, // 5 seconds - fresh data for real-time feel
     gcTime: 10 * 60 * 1000,
-    refetchInterval: false, // Disable polling temporarily to test scroll issue
-    refetchOnWindowFocus: false, // Disable to prevent scroll jumps
+    refetchInterval: getPollingInterval(), // Re-enable smart polling
+    refetchOnWindowFocus: false, // Keep disabled to prevent scroll jumps
     refetchOnReconnect: true,
     placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
-    refetchIntervalInBackground: false, // Disable background refetching
+    refetchIntervalInBackground: false, // Keep disabled to prevent background scroll issues
   });
 
-  // Update activity timestamp when new comments arrive
+  // Update activity timestamp when new comments arrive or reactions change
   useEffect(() => {
     if (query.data?.comments && query.data.comments.length > 0) {
-      const latestComment = query.data.comments[0]; // Assuming sorted by newest first
-      const commentTime = new Date(latestComment.createdAt).getTime();
+      const now = Date.now();
+      let hasRecentActivity = false;
 
-      // If comment is recent (within 5 minutes), mark as activity
-      if (Date.now() - commentTime < 5 * 60 * 1000) {
-        setLastActivity(Date.now());
+      // Check for recent comments (within 2 minutes)
+      const latestComment = query.data.comments[0];
+      const commentTime = new Date(latestComment.createdAt).getTime();
+      if (now - commentTime < 2 * 60 * 1000) {
+        hasRecentActivity = true;
+      }
+
+      // Check for comments with reactions (indicates recent activity)
+      const commentsWithReactions = query.data.comments.filter(
+        comment => comment.reactions.length > 0 ||
+          comment.replies.some(reply => reply.reactions.length > 0)
+      );
+      if (commentsWithReactions.length > 0) {
+        hasRecentActivity = true;
+      }
+
+      // Check for recent replies
+      const hasRecentReplies = query.data.comments.some(comment =>
+        comment.replies.some(reply => {
+          const replyTime = new Date(reply.createdAt).getTime();
+          return now - replyTime < 2 * 60 * 1000;
+        })
+      );
+      if (hasRecentReplies) {
+        hasRecentActivity = true;
+      }
+
+      if (hasRecentActivity) {
+        setLastActivity(now);
       }
     }
   }, [query.data]);
