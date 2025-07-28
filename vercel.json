@@ -1,4 +1,14 @@
 {
+  "functions": {
+    "app/**": {
+      "includeFiles": "src/generated/prisma/**"
+    }
+  },
+  "build": {
+    "env": {
+      "PRISMA_GENERATE_SKIP_AUTOINSTALL": "true"
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/clean-events",
