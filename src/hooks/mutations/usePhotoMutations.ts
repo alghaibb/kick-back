@@ -132,7 +132,7 @@ export function useUploadPhoto() {
       );
 
       toast.success("Photo uploaded successfully! 📸");
-      
+
       // Invalidate notifications so attendees get photo notifications immediately
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
@@ -219,6 +219,12 @@ export function useLikePhoto() {
       }
       console.error("Like photo error:", error);
       toast.error(error.message || "Failed to like photo");
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate to get fresh data for all users
+      queryClient.invalidateQueries({
+        queryKey: ["event-photos", variables.eventId]
+      });
     },
   });
 }

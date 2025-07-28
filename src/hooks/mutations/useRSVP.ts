@@ -120,6 +120,12 @@ export function useRSVPMutation() {
       // Revalidate the specific RSVP query to ensure server sync
       queryClient.invalidateQueries({ queryKey: ["rsvp", variables.eventId] });
 
+      // Invalidate calendar so other users see RSVP changes
+      queryClient.invalidateQueries({ queryKey: ["calendar"] });
+
+      // Force immediate refetch of calendar for faster cross-user updates
+      queryClient.refetchQueries({ queryKey: ["calendar"] });
+
       // Invalidate notifications so event creator gets RSVP notification immediately
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },

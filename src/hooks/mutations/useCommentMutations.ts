@@ -46,10 +46,10 @@ export function useCreateComment() {
         updatedAt: new Date().toISOString(),
         user: {
           id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          nickname: user.nickname,
-          image: user.image,
+          firstName: user.firstName || "You",
+          lastName: user.lastName || null,
+          nickname: user.nickname || null,
+          image: user.image || null,
         },
       };
 
@@ -68,35 +68,28 @@ export function useCreateComment() {
       queryClient.setQueryData(
         ["event-comments", variables.eventId],
         (old: EventCommentData[] | undefined) => {
-          if (!old) return [data.comment];
+          if (!old) return [];
 
           // Remove temp comment and add real one
-          const filteredComments = old.filter(
-            (comment) => !comment.id.startsWith("temp-")
-          );
-
-          return [data.comment, ...filteredComments];
+          const withoutTemp = old.filter(comment => !comment.id.startsWith('temp-'));
+          return [data.comment, ...withoutTemp];
         }
       );
 
-      // Invalidate related data
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["calendar"] });
-
-      // Invalidate notifications so attendees get comment notifications immediately
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      // Trigger immediate refetch to get latest comments from all users
+      queryClient.invalidateQueries({
+        queryKey: ["event-comments", variables.eventId]
+      });
     },
-    onError: (error: Error, variables, context) => {
-      // Rollback optimistic update
-      if (context?.previousComments && context?.eventId) {
+    onError: (error, variables, context) => {
+      // Revert to previous state on error
+      if (context?.previousComments) {
         queryClient.setQueryData(
-          ["event-comments", context.eventId],
+          ["event-comments", variables.eventId],
           context.previousComments
         );
       }
-
-      console.error("Create comment error:", error);
-      toast.error(error.message || "Failed to add comment");
+      toast.error("Failed to add comment. Please try again.");
     },
   });
 }
