@@ -25,7 +25,7 @@ export async function updateSettingsAction(values: SettingsValues) {
       return { error: "Invalid fields" };
     }
 
-    const { reminderType, reminderTime, timezone, phoneNumber, notificationOptIn } = validatedFields.data;
+    const { reminderType, reminderTime, timezone, phoneNumber, notificationOptIn, inAppNotifications } = validatedFields.data;
 
     // Validate and format phone number using utils
     let formattedPhone: string | null = null;
@@ -46,6 +46,7 @@ export async function updateSettingsAction(values: SettingsValues) {
         timezone,
         phoneNumber: formattedPhone || null,
         notificationOptIn,
+        inAppNotifications,
       },
     });
 

@@ -43,6 +43,7 @@ interface SettingsFormProps {
     reminderTime: string;
     phoneNumber?: string | null;
     notificationOptIn?: boolean | null;
+    inAppNotifications?: boolean | null;
   };
   hasPassword: boolean;
 }
@@ -59,6 +60,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
       reminderTime: user.reminderTime,
       timezone: user.timezone || "",
       notificationOptIn: user.notificationOptIn ?? true,
+      inAppNotifications: user.inAppNotifications ?? true,
       phoneNumber: user.phoneNumber || "",
     },
     mode: "onChange",
@@ -126,7 +128,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
       {/* Reminder Settings Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Reminders</CardTitle>
+          <CardTitle className="text-lg">Notifications & Reminders</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...settingsForm}>
@@ -134,13 +136,17 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
               onSubmit={settingsForm.handleSubmit(onSettingsSubmit)}
               className="space-y-4"
             >
+              {/* SMS/Email Reminders */}
               <FormField
                 control={settingsForm.control}
                 name="notificationOptIn"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                     <div className="space-y-0.5">
-                      <FormLabel>Enable Reminders</FormLabel>
+                      <FormLabel>SMS & Email Reminders</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Receive event reminders via SMS and email
+                      </p>
                     </div>
                     <FormControl>
                       <Switch
@@ -152,6 +158,31 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                   </FormItem>
                 )}
               />
+
+              {/* In-App Notifications */}
+              <FormField
+                control={settingsForm.control}
+                name="inAppNotifications"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>In-App Notifications</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Receive notifications for comments, likes, RSVPs, and
+                        event updates
+                      </p>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isPendingSettings}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={settingsForm.control}
                 name="reminderType"

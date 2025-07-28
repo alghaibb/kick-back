@@ -10,20 +10,21 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(cuid())
-  firstName         String
-  lastName          String?
-  email             String    @unique
-  nickname          String?
-  password          String?
-  emailVerified     DateTime?
-  image             String?
-  hasOnboarded      Boolean   @default(false)
-  phoneNumber       String?   @unique
-  reminderType      String    @default("email")
-  reminderTime      String    @default("09:00")
-  timezone          String?
-  notificationOptIn Boolean   @default(true)
+  id                 String    @id @default(cuid())
+  firstName          String
+  lastName           String?
+  email              String    @unique
+  nickname           String?
+  password           String?
+  emailVerified      DateTime?
+  image              String?
+  hasOnboarded       Boolean   @default(false)
+  phoneNumber        String?   @unique
+  reminderType       String    @default("email")
+  reminderTime       String    @default("09:00")
+  timezone           String?
+  notificationOptIn  Boolean   @default(true) // For SMS/Email reminders
+  inAppNotifications Boolean   @default(true) // For in-app notifications
 
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt

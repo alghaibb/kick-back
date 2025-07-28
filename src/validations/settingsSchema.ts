@@ -6,6 +6,7 @@ export const settingsSchema = z.object({
   timezone: z.string().min(1, "Timezone is required"),
   phoneNumber: z.string().optional().or(z.literal("")),
   notificationOptIn: z.boolean(),
+  inAppNotifications: z.boolean(),
 }).refine((data) => {
   if ((data.reminderType === "sms" || data.reminderType === "both") && !data.phoneNumber) {
     return false;

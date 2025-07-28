@@ -21,6 +21,7 @@ export async function SettingsContent() {
       reminderType: true,
       phoneNumber: true,
       notificationOptIn: true,
+      inAppNotifications: true,
     },
   });
 
@@ -37,6 +38,7 @@ export async function SettingsContent() {
         reminderType: user.reminderType as "email" | "sms" | "both",
         phoneNumber: user.phoneNumber,
         notificationOptIn: user.notificationOptIn,
+        inAppNotifications: user.inAppNotifications,
       }}
       hasPassword={hasPassword}
     />
