@@ -14,17 +14,56 @@ export async function GET(
 
     const { eventId } = await params;
 
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-      include: {
-        attendees: { where: { userId: session.user.id } },
-        group: {
-          include: {
-            members: { where: { userId: session.user.id } },
+    // Single optimized query for permissions and photos
+    const [event, photos] = await Promise.all([
+      // Check permissions
+      prisma.event.findUnique({
+        where: { id: eventId },
+        select: {
+          id: true,
+          createdBy: true,
+          attendees: {
+            where: { userId: session.user.id },
+            select: { id: true },
+          },
+          group: {
+            select: {
+              members: {
+                where: { userId: session.user.id },
+                select: { id: true },
+              },
+            },
           },
         },
-      },
-    });
+      }),
+
+      // Fetch photos (optimistically - cancel if no permission)
+      prisma.eventPhoto.findMany({
+        where: { eventId },
+        select: {
+          id: true,
+          imageUrl: true,
+          caption: true,
+          createdAt: true,
+          userId: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              nickname: true,
+              image: true,
+            },
+          },
+          likes: {
+            select: { userId: true },
+          },
+          _count: {
+            select: { likes: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
@@ -38,31 +77,6 @@ export async function GET(
     if (!canView) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
-
-    const photos = await prisma.eventPhoto.findMany({
-      where: { eventId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            nickname: true,
-            image: true,
-          },
-        },
-        likes: {
-          select: {
-            userId: true,
-          },
-        },
-        _count: {
-          select: {
-            likes: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
 
     const photosWithLikeStatus = photos.map((photo) => ({
       ...photo,

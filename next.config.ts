@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 import withPWA from "next-pwa";
-import { PrismaPlugin } from '@prisma/nextjs-monorepo-workaround-plugin';
+import { PrismaPlugin } from "@prisma/nextjs-monorepo-workaround-plugin";
 
 const nextConfig: NextConfig = {
   images: {
@@ -8,32 +8,46 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "**.vercel-storage.com",
-        pathname: "/**"
+        pathname: "/**",
       },
       // Google Images (for profile pictures)
       {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
-        pathname: "/**"
+        pathname: "/**",
       },
       {
         protocol: "https",
         hostname: "*.googleusercontent.com",
-        pathname: "/**"
+        pathname: "/**",
       },
     ],
-    formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 60,
+    formats: ["image/avif", "image/webp"], // AVIF first for better compression
+    minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days instead of 60 seconds
+    dangerouslyAllowSVG: false, // Security best practice
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Better quality/size balance
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   devIndicators: false,
   // Performance optimizations
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+      "date-fns", // Tree-shake date utilities
+      "react-icons", // Tree-shake icon imports
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-select",
+      "@radix-ui/react-popover",
+    ],
   },
   // Turbopack configuration for Prisma
   turbopack: {
     resolveAlias: {
-      '@/generated/prisma': './src/generated/prisma',
+      "@/generated/prisma": "./src/generated/prisma",
     },
   },
   // Webpack configuration for Prisma
