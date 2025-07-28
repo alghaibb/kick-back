@@ -16,7 +16,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   ResponsiveModal,
   ResponsiveModalContent,
@@ -230,6 +236,11 @@ export function PhotoGallery({ eventId }: PhotoGalleryProps) {
               </DialogTrigger>
 
               <DialogContent className="max-w-7xl max-h-[95vh] p-0 flex flex-col">
+                <DialogHeader className="sr-only">
+                  <DialogTitle>
+                    Photo by {photo.user.nickname || photo.user.firstName}
+                  </DialogTitle>
+                </DialogHeader>
                 <div className="relative flex-1 flex flex-col min-h-0">
                   <div className="relative flex-1 flex items-center justify-center bg-black/95 min-h-[60vh]">
                     <Image

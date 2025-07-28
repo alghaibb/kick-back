@@ -133,7 +133,7 @@ const LoadingButton = React.forwardRef<
 
   return (
     <Button
-      className={cn(className)}
+      className={cn(className, loading && "opacity-50 cursor-not-allowed")}
       disabled={loading || props.disabled}
       ref={ref}
       variant={variant}

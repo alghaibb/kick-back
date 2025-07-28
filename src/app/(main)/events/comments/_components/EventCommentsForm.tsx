@@ -3,7 +3,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AutosizeTextarea } from "@/components/ui/textarea";
-import { LoadingButton } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,9 +59,9 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
 
   const handleDeleteComment = async (commentId: string) => {
     try {
-      await deleteCommentMutation.mutateAsync({ 
-        commentId, 
-        eventId 
+      await deleteCommentMutation.mutateAsync({
+        commentId,
+        eventId,
       });
     } catch (error) {
       console.error("Failed to delete comment:", error);
@@ -170,16 +169,23 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
                 )}
               />
               <div className="flex justify-end">
-                <LoadingButton
+                <Button
                   type="submit"
-                  loading={createCommentMutation.isPending}
-                  disabled={!form.watch("content")?.trim()}
+                  disabled={
+                    createCommentMutation.isPending ||
+                    !form.watch("content")?.trim()
+                  }
                   size="sm"
+                  className={
+                    createCommentMutation.isPending
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }
                 >
                   {createCommentMutation.isPending
                     ? "Posting..."
                     : "Post Comment"}
-                </LoadingButton>
+                </Button>
               </div>
             </form>
           </Form>
