@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { format, isSameDay, startOfDay } from "date-fns";
@@ -19,9 +20,26 @@ import {
 } from "@/components/ui/collapsible";
 
 export function CalendarPageClientWithComments() {
+  const searchParams = useSearchParams();
+  const targetEventId = searchParams.get("event");
+
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
   const { data, isLoading, error, isFetching } = useCalendar();
+
+  // Handle navigation from notifications
+  useEffect(() => {
+    if (targetEventId && data?.events) {
+      const targetEvent = data.events.find(
+        (event) => event.id === targetEventId
+      );
+      if (targetEvent) {
+        const eventDate = new Date(targetEvent.date);
+        setSelectedDate(eventDate);
+        setExpandedEvents(new Set([targetEventId]));
+      }
+    }
+  }, [targetEventId, data?.events]);
 
   const eventsForDay = useMemo(() => {
     if (!data?.events) return [];
@@ -60,6 +78,8 @@ export function CalendarPageClientWithComments() {
           selected={selectedDate}
           onSelect={setSelectedDate}
           mode="single"
+          month={selectedDate}
+          onMonthChange={setSelectedDate}
         />
       </div>
       <div className="flex-1 border-l pl-6 overflow-y-auto max-h-[800px]">
