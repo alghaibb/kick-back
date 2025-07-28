@@ -8,15 +8,5 @@
     "env": {
       "PRISMA_GENERATE_SKIP_AUTOINSTALL": "true"
     }
-  },
-  "crons": [
-    {
-      "path": "/api/cron/clean-events",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/send-event-reminders",
-      "schedule": "*/15 * * * *"
-    }
-  ]
+  }
 }

@@ -29,6 +29,12 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
+  // Turbopack configuration for Prisma
+  turbopack: {
+    resolveAlias: {
+      '@/generated/prisma': './src/generated/prisma',
+    },
+  },
   // Compress responses
   compress: true,
 };
