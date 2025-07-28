@@ -154,7 +154,9 @@ export function useRSVPStatus(eventId: string) {
       }
       return response.json();
     },
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 5 * 60 * 1000, // Increase from 30s to 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch on focus
+    refetchOnReconnect: true, // Only refetch when reconnecting
   });
 }

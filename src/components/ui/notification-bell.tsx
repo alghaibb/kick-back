@@ -61,8 +61,11 @@ export default function NotificationBell() {
   const { data, refetch } = useQuery({
     queryKey: ["notifications"],
     queryFn: fetchNotifications,
-    refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
-    staleTime: 0,
+    refetchInterval: 30 * 1000,
+    staleTime: 15 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
   });
 
   const markReadMutation = useMutation({
