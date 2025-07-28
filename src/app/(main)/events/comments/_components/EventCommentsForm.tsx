@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -48,7 +48,10 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import EmojiPicker from "emoji-picker-react";
 import type { EventCommentData } from "@/hooks/queries/useEventComments";
-import { useImageUpload } from "@/hooks/mutations/useFileUpload";
+import {
+  useImageUploadForm,
+  IMAGE_UPLOAD_PRESETS,
+} from "@/hooks/useImageUploadForm";
 import { toast } from "sonner";
 import { useModal } from "@/hooks/use-modal";
 
@@ -63,29 +66,19 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
-  const [commentImage, setCommentImage] = useState<string | null>(null);
-  const [replyImage, setReplyImage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const replyFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Image upload hooks
-  const commentImageUpload = useImageUpload({
-    maxSize: 5 * 1024 * 1024,
+  // Consolidated image upload hooks
+  const commentImageUpload = useImageUploadForm(undefined, undefined, {
+    ...IMAGE_UPLOAD_PRESETS.comment,
     showToasts: false,
-    onSuccess: (url) => {
-      setCommentImage(url);
-      toast.success("Image uploaded successfully!");
-    },
+    onSuccess: () => toast.success("Image uploaded successfully!"),
     onError: (error) => toast.error(error),
   });
 
-  const replyImageUpload = useImageUpload({
-    maxSize: 5 * 1024 * 1024,
+  const replyImageUpload = useImageUploadForm(undefined, undefined, {
+    ...IMAGE_UPLOAD_PRESETS.comment,
     showToasts: false,
-    onSuccess: (url) => {
-      setReplyImage(url);
-      toast.success("Image uploaded successfully!");
-    },
+    onSuccess: () => toast.success("Image uploaded successfully!"),
     onError: (error) => toast.error(error),
   });
 
@@ -117,12 +110,20 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
 
   const handleCommentSubmit = async (values: CreateCommentValues) => {
     try {
+      let imageUrl: string | undefined;
+      if (commentImageUpload.currentFile) {
+        imageUrl =
+          (await commentImageUpload.uploadImage(
+            commentImageUpload.currentFile
+          )) || undefined;
+        if (!imageUrl) return;
+      }
+
       await createCommentMutation.mutateAsync({
         ...values,
-        imageUrl: commentImage || undefined,
+        imageUrl,
       });
       commentForm.reset();
-      setCommentImage(null);
       commentImageUpload.reset();
     } catch (error) {
       console.error("Failed to submit comment:", error);
@@ -131,13 +132,20 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
 
   const handleReplySubmit = async (values: ReplyCommentValues) => {
     try {
+      let imageUrl: string | undefined;
+      if (replyImageUpload.currentFile) {
+        imageUrl =
+          (await replyImageUpload.uploadImage(replyImageUpload.currentFile)) ||
+          undefined;
+        if (!imageUrl) return;
+      }
+
       await createReplyMutation.mutateAsync({
         ...values,
-        imageUrl: replyImage || undefined,
+        imageUrl,
       });
       replyForm.reset();
       setReplyingTo(null);
-      setReplyImage(null);
       replyImageUpload.reset();
     } catch (error) {
       console.error("Failed to submit reply:", error);
@@ -151,20 +159,10 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
     setShowEmojiPicker(null);
   };
 
-  const handleImageUpload = (file: File, isReply = false) => {
-    if (isReply) {
-      replyImageUpload.upload(file);
-    } else {
-      commentImageUpload.upload(file);
-    }
-  };
-
   const removeImage = (isReply = false) => {
     if (isReply) {
-      setReplyImage(null);
       replyImageUpload.reset();
     } else {
-      setCommentImage(null);
       commentImageUpload.reset();
     }
   };
@@ -376,10 +374,10 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
                     />
 
                     {/* Reply image preview */}
-                    {replyImage && (
+                    {replyImageUpload.displayUrl && (
                       <div className="relative max-w-xs">
                         <Image
-                          src={replyImage}
+                          src={replyImageUpload.displayUrl}
                           alt="Reply attachment"
                           width={300}
                           height={200}
@@ -403,7 +401,9 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => replyFileInputRef.current?.click()}
+                          onClick={() =>
+                            replyImageUpload.imageRef.current?.click()
+                          }
                           disabled={replyImageUpload.isUploading}
                         >
                           <ImageIcon className="h-3 w-3 mr-1" />
@@ -448,17 +448,11 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
 
                     {/* Reply file input */}
                     <input
-                      ref={replyFileInputRef}
+                      ref={replyImageUpload.imageRef}
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleImageUpload(file, true);
-                        }
-                        e.target.value = "";
-                      }}
+                      onChange={replyImageUpload.handleImageChange}
                     />
                   </div>
                 </div>
@@ -563,10 +557,10 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
                 />
 
                 {/* Image preview */}
-                {commentImage && (
+                {commentImageUpload.displayUrl && (
                   <div className="relative max-w-xs">
                     <Image
-                      src={commentImage}
+                      src={commentImageUpload.displayUrl}
                       alt="Comment attachment"
                       width={300}
                       height={200}
@@ -589,7 +583,7 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => commentImageUpload.imageRef.current?.click()}
                     disabled={commentImageUpload.isUploading}
                     className="flex-shrink-0"
                   >
@@ -626,18 +620,11 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
               </div>
             </div>
             <input
-              ref={fileInputRef}
+              ref={commentImageUpload.imageRef}
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  handleImageUpload(file, false);
-                }
-                // Reset input so same file can be selected again
-                e.target.value = "";
-              }}
+              onChange={commentImageUpload.handleImageChange}
             />
           </form>
         </CardContent>

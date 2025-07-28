@@ -2,18 +2,28 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
-import { serverOnboardingSchema } from "@/validations/onboardingSchema";
+import { onboardingSchema } from "@/validations/onboardingSchema";
 import { del } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 
 export async function onboarding(values: unknown) {
   try {
-    const validated = serverOnboardingSchema.parse(values);
-    const { firstName, lastName, nickname, image, previousImage, reminderType, reminderTime, timezone } = validated;
+    const validated = onboardingSchema.parse(values);
+    const {
+      firstName,
+      lastName,
+      nickname,
+      image,
+      previousImage,
+      reminderType,
+      reminderTime,
+      timezone,
+    } = validated;
     let { phoneNumber } = validated;
 
-    // Normalize phone number - empty strings should be null
-    phoneNumber = phoneNumber && phoneNumber.trim() !== "" ? phoneNumber.trim() : null;
+    // Normalize phone number - empty strings should be undefined
+    phoneNumber =
+      phoneNumber && phoneNumber.trim() !== "" ? phoneNumber.trim() : undefined;
 
     const session = await getSession();
     const userId = session?.user?.id;
@@ -24,7 +34,7 @@ export async function onboarding(values: unknown) {
     // Check if user exists and hasn't already onboarded
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { hasOnboarded: true, image: true }
+      select: { hasOnboarded: true, image: true },
     });
 
     if (!existingUser) {
@@ -53,11 +63,13 @@ export async function onboarding(values: unknown) {
     if (phoneNumber) {
       const existingUser = await prisma.user.findUnique({
         where: { phoneNumber },
-        select: { id: true }
+        select: { id: true },
       });
 
       if (existingUser && existingUser.id !== userId) {
-        return { error: "This phone number is already registered by another user" };
+        return {
+          error: "This phone number is already registered by another user",
+        };
       }
     }
 
@@ -71,7 +83,7 @@ export async function onboarding(values: unknown) {
         image,
         hasOnboarded: true,
         reminderType,
-        phoneNumber,
+        phoneNumber: phoneNumber || null,
         reminderTime,
         timezone,
       },
@@ -87,8 +99,14 @@ export async function onboarding(values: unknown) {
 
     // Handle Prisma unique constraint errors
     if (error instanceof Error) {
-      if (error.message.includes('Unique constraint failed on the fields: (`phoneNumber`)')) {
-        return { error: "This phone number is already registered by another user" };
+      if (
+        error.message.includes(
+          "Unique constraint failed on the fields: (`phoneNumber`)"
+        )
+      ) {
+        return {
+          error: "This phone number is already registered by another user",
+        };
       }
       return { error: error.message };
     }

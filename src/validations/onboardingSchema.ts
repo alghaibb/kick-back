@@ -11,9 +11,8 @@ export const onboardingSchema = z.object({
     .regex(/^[a-zA-Z0-9\s\-_]+$/, "Nickname can only contain letters, numbers, spaces, hyphens, and underscores")
     .optional()
     .or(z.literal("")),
-  image: z
-    .custom<File | undefined>()
-    .optional(),
+  image: z.string().optional().nullable(),
+  previousImage: z.string().optional().nullable(),
   reminderType: z.enum(["email", "sms", "both"]),
   phoneNumber: z
     .string()
@@ -37,23 +36,3 @@ export const onboardingSchema = z.object({
 });
 
 export type OnboardingValues = z.infer<typeof onboardingSchema>;
-
-export const serverOnboardingSchema = z.object({
-  firstName: firstNameField,
-  lastName: lastNameField,
-  nickname: z
-    .string()
-    .min(1, "Nickname must be at least 1 character")
-    .max(30, "Nickname must be less than 30 characters")
-    .regex(/^[a-zA-Z0-9\s\-_]+$/, "Nickname can only contain letters, numbers, spaces, hyphens, and underscores")
-    .optional()
-    .or(z.literal("")),
-  image: z.string().url().optional().nullable(),
-  previousImage: z.string().url().optional().nullable(),
-  reminderType: z.enum(["email", "sms", "both"]).default("email"),
-  phoneNumber: z.string().trim().optional().nullable(),
-  reminderTime: z.string().default("09:00"),
-  timezone: z.string().min(1, "Timezone is required"),
-});
-
-export type ServerOnboardingValues = z.infer<typeof serverOnboardingSchema>;

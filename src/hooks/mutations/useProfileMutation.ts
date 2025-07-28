@@ -19,8 +19,11 @@ export function useProfileMutation() {
       return result;
     },
     onSuccess: () => {
-      // Invalidate and refetch user data
+      // Invalidate and refetch user data from multiple locations
       queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
+      queryClient.refetchQueries({ queryKey: ["user"] });
+
       toast.success("Profile updated successfully!");
     },
     onError: (error: Error) => {
@@ -28,4 +31,4 @@ export function useProfileMutation() {
       toast.error(error.message || "Failed to update profile");
     },
   });
-} 
+}

@@ -1,6 +1,6 @@
 import { env } from "@/lib/env";
 import prisma from "@/lib/prisma";
-import { PrismaAdapter } from '@auth/prisma-adapter';
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import type { NextAuthConfig } from "next-auth";
 import NextAuth from "next-auth";
@@ -33,7 +33,10 @@ const authConfig: NextAuthConfig = {
       },
       async authorize(credentials) {
         try {
-          const { email, password } = credentials as { email: string; password?: string };
+          const { email, password } = credentials as {
+            email: string;
+            password?: string;
+          };
 
           if (!email) {
             throw new Error("Email is required.");
@@ -50,7 +53,10 @@ const authConfig: NextAuthConfig = {
 
           // If password is provided, validate it
           if (password) {
-            const isPasswordValid = await bcrypt.compare(password, user.password as string);
+            const isPasswordValid = await bcrypt.compare(
+              password,
+              user.password as string
+            );
             if (!isPasswordValid) {
               throw new Error("Invalid credentials.");
             }
@@ -66,13 +72,13 @@ const authConfig: NextAuthConfig = {
             name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
             email: user.email,
             emailVerified: user.emailVerified,
-            image: user.image
+            image: user.image,
           };
         } catch (error) {
           console.error("[NextAuth][credentials] Error:", error);
           throw new Error("Invalid credentials.");
         }
-      }
+      },
     }),
   ],
   callbacks: {
@@ -130,7 +136,9 @@ const authConfig: NextAuthConfig = {
 
         const userId = params.token.sub;
         if (!adapter.createSession) {
-          console.error("[NextAuth][jwt.encode] createSession method is not defined on the adapter");
+          console.error(
+            "[NextAuth][jwt.encode] createSession method is not defined on the adapter"
+          );
           throw new Error("createSession method is not defined on the adapter");
         }
         const createdSession = await adapter.createSession({

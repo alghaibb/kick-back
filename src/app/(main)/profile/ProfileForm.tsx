@@ -16,10 +16,13 @@ import {
   UpdateProfileValues,
 } from "@/validations/profile/profileSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { ImageUpload } from "./_components/ImageUpload";
 import { useProfileMutation } from "@/hooks/mutations/useProfileMutation";
+import {
+  useImageUploadForm,
+  IMAGE_UPLOAD_PRESETS,
+} from "@/hooks/useImageUploadForm";
+import { AvatarUpload } from "@/components/ui/image-upload-section";
 
 interface ProfileFormProps {
   user: {
@@ -33,7 +36,6 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ user }: ProfileFormProps) {
-  const [imageUrl, setImageUrl] = useState<string | null>(user.image);
   const profileMutation = useProfileMutation();
 
   const profileForm = useForm<UpdateProfileValues>({
@@ -43,19 +45,55 @@ export function ProfileForm({ user }: ProfileFormProps) {
       lastName: user.lastName || "",
       nickname: user.nickname || "",
       email: user.email,
-      image: user.image,
+      image: user.image, // String URL, not File
     },
     mode: "onChange",
   });
 
-  const initialImage = user.image;
-  const isImageDirty = imageUrl !== initialImage;
+  // Handle file upload separately from form validation
+  const imageUpload = useImageUploadForm(undefined, undefined, {
+    ...IMAGE_UPLOAD_PRESETS.profile,
+    initialImageUrl: user.image,
+    showToasts: false,
+  });
+
+  // Fix image dirty detection for File vs string comparison
+  const isImageDirty =
+    imageUpload.isDeleted ||
+    imageUpload.currentFile !== undefined ||
+    imageUpload.displayUrl !== user.image;
   const isFormDirty = profileForm.formState.isDirty;
   const canSubmit = isFormDirty || isImageDirty;
 
-  function onProfileSubmit(values: UpdateProfileValues) {
-    const submitValues = { ...values, image: imageUrl };
+  async function onProfileSubmit(values: UpdateProfileValues) {
+    let imageUrl: string | null = user.image;
+
+    // Handle image changes - convert File to URL
+    if (imageUpload.isDeleted) {
+      imageUrl = null; // Explicitly delete the image
+    } else if (imageUpload.currentFile) {
+      imageUrl = await imageUpload.uploadImage(imageUpload.currentFile);
+      if (!imageUrl) {
+        return; // Upload failed - error already shown by toast
+      }
+    } else {
+      imageUrl = imageUpload.displayUrl; // Keep existing or no change
+    }
+
+    // Simple - just pass the URL string
+    const submitValues: UpdateProfileValues = {
+      firstName: values.firstName,
+      lastName: values.lastName,
+      nickname: values.nickname,
+      email: values.email,
+      image: imageUrl,
+    };
+
     profileMutation.mutate(submitValues);
+  }
+
+  function getInitials() {
+    return `${user.firstName.charAt(0)}${user.lastName?.charAt(0) || ""}`;
   }
 
   return (
@@ -65,12 +103,14 @@ export function ProfileForm({ user }: ProfileFormProps) {
           <CardTitle className="text-lg">Profile Picture</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center space-y-4">
-          <ImageUpload
-            currentImage={imageUrl}
-            onImageChange={setImageUrl}
-            fallbackText={`${user.firstName.charAt(0)}${user.lastName?.charAt(0) || ""}`}
+          <AvatarUpload
+            imageUpload={imageUpload}
+            fallbackText={getInitials()}
             className="w-24 h-24"
           />
+          <p className="text-xs text-muted-foreground text-center max-w-[200px]">
+            Upload a profile picture. Max size: 2MB.
+          </p>
         </CardContent>
       </Card>
 
@@ -147,11 +187,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
               <LoadingButton
                 type="submit"
-                loading={profileMutation.isPending}
+                loading={profileMutation.isPending || imageUpload.isUploading}
                 className="w-full"
-                disabled={!canSubmit}
+                disabled={!canSubmit || imageUpload.isUploading}
               >
-                Update Profile
+                {profileMutation.isPending || imageUpload.isUploading
+                  ? "Updating..."
+                  : "Update Profile"}
               </LoadingButton>
             </form>
           </Form>

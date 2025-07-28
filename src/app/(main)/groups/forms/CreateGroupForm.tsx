@@ -15,41 +15,47 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button, LoadingButton } from "@/components/ui/button";
-import { useState, useRef, useEffect } from "react";
+import { LoadingButton } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { createGroupAction } from "../actions";
 import { AutosizeTextarea } from "@/components/ui/textarea";
 import { useModal } from "@/hooks/use-modal";
-import { useImageUpload } from "@/hooks/mutations/useFileUpload";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
 import { useQueryClient } from "@tanstack/react-query";
-import Image from "next/image";
+import {
+  useImageUploadForm,
+  IMAGE_UPLOAD_PRESETS,
+} from "@/hooks/useImageUploadForm";
+import { ImageUploadSection } from "@/components/ui/image-upload-section";
 
 interface CreateGroupFormProps {
   onSuccess?: () => void;
 }
 
 export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
-  const [currentFile, setCurrentFile] = useState<File | undefined>(undefined);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const imageRef = useRef<HTMLInputElement>(null);
   const { open: openModal } = useModal();
   const { invalidateDashboard } = useDashboardInvalidation();
   const queryClient = useQueryClient();
 
-  const {
-    uploadAsync,
-    isUploading: uploading,
-    error: uploadError,
-  } = useImageUpload({
-    showToasts: false, // We'll handle success/error in the form submission
+  const form = useForm<CreateGroupValues>({
+    resolver: zodResolver(createGroupSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      // Don't include image in form validation - handle separately
+    },
+  });
+
+  // Handle file upload separately from form validation
+  const imageUpload = useImageUploadForm(undefined, undefined, {
+    ...IMAGE_UPLOAD_PRESETS.group,
+    showToasts: false,
   });
 
   const createGroupMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const res = await createGroupAction(formData);
+    mutationFn: async (values: CreateGroupValues) => {
+      const res = await createGroupAction(values);
       if (res?.error) {
         throw new Error(
           typeof res.error === "string" ? res.error : "Failed to create group"
@@ -61,8 +67,7 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
       if (res?.success && res.group) {
         toast.success("Group created!");
         form.reset();
-        setCurrentFile(undefined);
-        setPreviewUrl(null);
+        imageUpload.reset();
         // Invalidate dashboard stats to show new group count
         invalidateDashboard();
         // Invalidate groups data to show new group
@@ -80,63 +85,25 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
     },
   });
 
-  const form = useForm<CreateGroupValues>({
-    resolver: zodResolver(createGroupSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      image: undefined,
-    },
-  });
-
-  // Handle image preview cleanup
-  useEffect(() => {
-    if (!currentFile) return;
-    const objectUrl = URL.createObjectURL(currentFile);
-    setPreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [currentFile]);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCurrentFile(file);
-      form.setValue("image", file);
-    }
-  };
-
-  const removeImage = () => {
-    setCurrentFile(undefined);
-    setPreviewUrl(null);
-    if (imageRef.current) {
-      imageRef.current.value = "";
-    }
-    form.setValue("image", undefined);
-  };
-
-  async function handleImageUpload(file: File): Promise<string | null> {
-    try {
-      return await uploadAsync(file);
-    } catch (error) {
-      console.error("Failed to upload image:", error);
-      return null;
-    }
-  }
-
   async function onSubmit(values: CreateGroupValues) {
-    let imageUrl: string | undefined = undefined;
-    if (currentFile) {
-      imageUrl = (await handleImageUpload(currentFile)) || undefined;
+    let imageUrl: string | null = null;
+
+    // Handle image upload if file is selected
+    if (imageUpload.currentFile) {
+      imageUrl = await imageUpload.uploadImage(imageUpload.currentFile);
       if (!imageUrl) {
-        return;
+        return; // Upload failed
       }
     }
-    const formData = new FormData();
-    formData.append("name", values.name);
-    if (values.description) formData.append("description", values.description);
-    if (imageUrl) formData.append("image", imageUrl);
 
-    createGroupMutation.mutate(formData);
+    // Pass regular object instead of FormData
+    const submitValues: CreateGroupValues = {
+      name: values.name,
+      description: values.description,
+      image: imageUrl,
+    };
+
+    createGroupMutation.mutate(submitValues);
   }
 
   return (
@@ -173,76 +140,19 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
             </FormItem>
           )}
         />
-        <FormField
+        <ImageUploadSection
           control={form.control}
           name="image"
-          render={() => (
-            <FormItem>
-              <FormLabel>Group Image</FormLabel>
-              <FormControl>
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={imageRef}
-                    onChange={handleImageChange}
-                    disabled={createGroupMutation.isPending || uploading}
-                    className="hidden"
-                  />
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      type="button"
-                      onClick={() => imageRef.current?.click()}
-                      disabled={createGroupMutation.isPending || uploading}
-                    >
-                      {currentFile ? "Change Image" : "Upload Image"}
-                    </Button>
-                    {currentFile && (
-                      <button
-                        type="button"
-                        onClick={removeImage}
-                        disabled={createGroupMutation.isPending || uploading}
-                        className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                  {previewUrl && (
-                    <div className="mt-2">
-                      <Image
-                        src={previewUrl}
-                        alt="Preview"
-                        width={160}
-                        height={160}
-                        className="rounded-md max-h-32 object-contain border"
-                      />
-                    </div>
-                  )}
-                  {uploading && (
-                    <div className="text-xs text-muted-foreground">
-                      Uploading image...
-                    </div>
-                  )}
-                  {uploadError && (
-                    <div className="text-xs text-destructive">
-                      {uploadError}
-                    </div>
-                  )}
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Group Image"
+          imageUpload={imageUpload}
         />
         <LoadingButton
           type="submit"
           className="w-full"
-          loading={createGroupMutation.isPending || uploading}
-          disabled={uploading}
+          loading={createGroupMutation.isPending || imageUpload.isUploading}
+          disabled={imageUpload.isUploading}
         >
-          {createGroupMutation.isPending || uploading
+          {createGroupMutation.isPending || imageUpload.isUploading
             ? "Creating..."
             : "Create Group"}
         </LoadingButton>

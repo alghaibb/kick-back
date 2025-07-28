@@ -9,6 +9,7 @@ import {
 } from "@/validations/photos/uploadPhotoSchema";
 import { revalidatePath } from "next/cache";
 import { notifyEventPhoto } from "@/lib/notification-triggers";
+import { del } from "@vercel/blob";
 
 export async function savePhotoMetadataAction(data: {
   eventId: string;
@@ -218,6 +219,7 @@ export async function deletePhotoAction(data: { photoId: string }) {
 
     const photo = await prisma.eventPhoto.findUnique({
       where: { id: data.photoId },
+      select: { userId: true, imageUrl: true },
     });
 
     if (!photo) {
@@ -226,6 +228,16 @@ export async function deletePhotoAction(data: { photoId: string }) {
 
     if (photo.userId !== session.user.id) {
       return { error: "You can only delete your own photos" };
+    }
+
+    // Delete the image from Vercel blob storage
+    if (photo.imageUrl) {
+      try {
+        await del(photo.imageUrl);
+      } catch (error) {
+        console.error("Error deleting photo from blob storage:", error);
+        // Continue with database deletion even if blob deletion fails
+      }
     }
 
     await prisma.eventPhoto.delete({

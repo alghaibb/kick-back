@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -15,14 +14,16 @@ import {
 } from "@/validations/photos/uploadPhotoSchema";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import {
+  useImageUploadForm,
+  IMAGE_UPLOAD_PRESETS,
+} from "@/hooks/useImageUploadForm";
 
 interface PhotoUploadFormProps {
   eventId: string;
 }
 
 export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const uploadMutation = useUploadPhoto();
 
   const form = useForm<UploadPhotoValues>({
@@ -33,45 +34,34 @@ export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
     },
   });
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    }
-  };
-
-  const clearSelection = () => {
-    setSelectedFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
-  };
+  const imageUpload = useImageUploadForm(undefined, undefined, {
+    ...IMAGE_UPLOAD_PRESETS.eventPhoto,
+    showToasts: false,
+  });
 
   const onSubmit = async (data: UploadPhotoValues) => {
-    if (!selectedFile) {
+    if (!imageUpload.currentFile) {
       alert("Please select a photo to upload");
       return;
     }
 
     try {
       await uploadMutation.mutateAsync({
-        file: selectedFile,
+        file: imageUpload.currentFile,
         eventId: data.eventId,
         caption: data.caption,
       });
       form.reset();
-      clearSelection();
+      imageUpload.reset();
     } catch (error) {
       console.error("Upload error:", error);
       // Error handling is done in the mutation
     }
   };
 
-  const isUploading = uploadMutation.isPending;
-  const uploadProgress = uploadMutation.uploadProgress;
+  const isUploading = uploadMutation.isPending || imageUpload.isUploading;
+  const uploadProgress =
+    uploadMutation.uploadProgress || imageUpload.uploadProgress;
 
   return (
     <Card className={isUploading ? "pointer-events-none opacity-75" : ""}>
@@ -82,7 +72,7 @@ export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
           {isUploading && (
             <div className="flex items-center gap-2 ml-auto">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-              {uploadProgress > 0 && (
+              {uploadProgress && uploadProgress > 0 && (
                 <span className="text-xs text-muted-foreground">
                   {uploadProgress}%
                 </span>
@@ -96,11 +86,10 @@ export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
           <div>
             <Label>Photo</Label>
             <div className="mt-2">
-              {!selectedFile ? (
+              {!imageUpload.hasImage ? (
                 <div
                   onClick={() =>
-                    !isUploading &&
-                    document.getElementById("photo-upload")?.click()
+                    !isUploading && imageUpload.imageRef.current?.click()
                   }
                   className={cn(
                     "border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors",
@@ -120,21 +109,23 @@ export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
               ) : (
                 <div className="relative">
                   <div className="relative w-full h-48 rounded-lg overflow-hidden bg-muted">
-                    <Image
-                      src={previewUrl!}
-                      alt="Preview"
-                      fill
-                      className={cn(
-                        "object-cover",
-                        isUploading && "opacity-50"
-                      )}
-                    />
+                    {imageUpload.previewUrl && (
+                      <Image
+                        src={imageUpload.previewUrl}
+                        alt="Preview"
+                        fill
+                        className={cn(
+                          "object-cover",
+                          isUploading && "opacity-50"
+                        )}
+                      />
+                    )}
                     {isUploading && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                         <div className="text-center">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                           <p className="text-sm text-white">
-                            {uploadProgress > 0
+                            {uploadProgress && uploadProgress > 0
                               ? `${uploadProgress}%`
                               : "Uploading..."}
                           </p>
@@ -146,7 +137,7 @@ export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={clearSelection}
+                    onClick={imageUpload.removeImage}
                     disabled={isUploading}
                     className="absolute top-2 right-2"
                   >
@@ -155,12 +146,12 @@ export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
                 </div>
               )}
               <input
+                ref={imageUpload.imageRef}
                 type="file"
                 accept="image/*"
-                onChange={handleFileSelect}
+                onChange={imageUpload.handleImageChange}
                 disabled={isUploading}
                 className="hidden"
-                id="photo-upload"
               />
             </div>
           </div>
@@ -178,7 +169,7 @@ export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
 
           <Button
             type="submit"
-            disabled={!selectedFile || isUploading}
+            disabled={!imageUpload.hasImage || isUploading}
             className="w-full"
           >
             {isUploading ? (

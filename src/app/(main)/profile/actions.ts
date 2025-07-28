@@ -22,7 +22,8 @@ export async function updateProfileAction(values: UpdateProfileValues) {
       return { error: "Invalid fields" };
     }
 
-    const { firstName, lastName, nickname, email, image } = validatedFields.data;
+    const { firstName, lastName, nickname, email, image } =
+      validatedFields.data;
 
     // Get current user data to check for existing image
     const currentUser = await prisma.user.findUnique({
@@ -70,4 +71,3 @@ export async function updateProfileAction(values: UpdateProfileValues) {
     return { error: "Failed to update profile" };
   }
 }
-

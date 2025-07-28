@@ -15,14 +15,16 @@ export const updateProfileSchema = z.object({
   image: z.string().optional().nullable(),
 });
 
-export const changePasswordSchema = z.object({
-  currentPassword: passwordField,
-  newPassword: passwordField,
-  confirmPassword: passwordField,
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+export const changePasswordSchema = z
+  .object({
+    currentPassword: passwordField,
+    newPassword: passwordField,
+    confirmPassword: passwordField,
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 export type UpdateProfileValues = z.infer<typeof updateProfileSchema>;
 export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;

@@ -7,6 +7,7 @@ export interface FileUploadOptions {
   maxSize?: number; // in bytes, default 4MB
   allowedTypes?: string[]; // mime types, default: images
   generateUniqueName?: boolean; // default: true
+  folder?: string; // folder organization: profile, groups, events, comments
   onProgress?: (progress: number) => void;
   onSuccess?: (url: string) => void;
   onError?: (error: string) => void;
@@ -30,16 +31,19 @@ async function uploadFile(
     maxSize = 4 * 1024 * 1024, // 4MB default
     allowedTypes = ["image/"],
     generateUniqueName = true,
+    folder = "uploads",
     onProgress,
   } = options;
 
   // Validate file type
-  const isValidType = allowedTypes.some(type =>
+  const isValidType = allowedTypes.some((type) =>
     type.endsWith("/") ? file.type.startsWith(type) : file.type === type
   );
 
   if (!isValidType) {
-    throw new Error(`Invalid file type. Allowed types: ${allowedTypes.join(", ")}`);
+    throw new Error(
+      `Invalid file type. Allowed types: ${allowedTypes.join(", ")}`
+    );
   }
 
   // Validate file size
@@ -60,6 +64,7 @@ async function uploadFile(
   // Create FormData
   const formData = new FormData();
   formData.append("file", fileToUpload);
+  formData.append("folder", folder);
 
   // Upload with progress tracking if supported
   return new Promise<string>((resolve, reject) => {
@@ -109,11 +114,7 @@ async function uploadFile(
 }
 
 export function useFileUpload(options: FileUploadOptions = {}) {
-  const {
-    onSuccess,
-    onError,
-    showToasts = true,
-  } = options;
+  const { onSuccess, onError, showToasts = true } = options;
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) => uploadFile(file, options),
@@ -155,7 +156,9 @@ export function useFileUpload(options: FileUploadOptions = {}) {
 }
 
 // Convenience hooks for common use cases
-export function useImageUpload(options: Omit<FileUploadOptions, 'allowedTypes'> = {}) {
+export function useImageUpload(
+  options: Omit<FileUploadOptions, "allowedTypes"> = {}
+) {
   return useFileUpload({
     ...options,
     allowedTypes: ["image/"],
@@ -163,10 +166,12 @@ export function useImageUpload(options: Omit<FileUploadOptions, 'allowedTypes'> 
   });
 }
 
-export function useAvatarUpload(options: Omit<FileUploadOptions, 'allowedTypes' | 'maxSize'> = {}) {
+export function useAvatarUpload(
+  options: Omit<FileUploadOptions, "allowedTypes" | "maxSize"> = {}
+) {
   return useFileUpload({
     ...options,
     allowedTypes: ["image/"],
     maxSize: 2 * 1024 * 1024, // 2MB for avatars
   });
-} 
+}

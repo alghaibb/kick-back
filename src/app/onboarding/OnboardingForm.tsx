@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,6 @@ import {
   OnboardingValues,
 } from "@/validations/onboardingSchema";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/ui/button";
 import {
@@ -25,12 +24,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Camera, Upload, X } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { onboarding } from "./actions";
 import { TimezoneCombobox } from "@/components/ui/timezone-combobox";
-import { useImageUpload } from "@/hooks/mutations/useFileUpload";
+import {
+  useImageUploadForm,
+  IMAGE_UPLOAD_PRESETS,
+} from "@/hooks/useImageUploadForm";
+import { AvatarUpload } from "@/components/ui/image-upload-section";
 
 type OnboardingUser = {
   id: string;
@@ -44,18 +46,6 @@ type OnboardingUser = {
 
 export default function OnboardingForm({ user }: { user: OnboardingUser }) {
   const router = useRouter();
-
-  const imageRef = useRef<HTMLInputElement>(null);
-  const [currentFile, setCurrentFile] = useState<File | undefined>(undefined);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    user.image ?? null
-  );
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
-
-  const { uploadAsync, isUploading } = useImageUpload({
-    showToasts: false,
-    onProgress: (progress) => setUploadProgress(progress),
-  });
 
   const onboardingMutation = useMutation({
     mutationFn: async (
@@ -86,17 +76,25 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
 
   const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const form = useForm<OnboardingValues>({
+  const form = useForm<z.infer<typeof onboardingSchema>>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
-      firstName: user.firstName ?? "",
-      lastName: user.lastName ?? "",
-      nickname: user.nickname ?? "",
+      firstName: user.firstName,
+      lastName: user.lastName || "",
+      nickname: user.nickname || "",
+      // Don't include image in form validation - handle separately
       reminderType: "email",
       phoneNumber: "",
       reminderTime: "09:00",
       timezone: detectedTz,
     },
+  });
+
+  // Handle file upload separately from form validation
+  const imageUpload = useImageUploadForm(undefined, undefined, {
+    ...IMAGE_UPLOAD_PRESETS.profile,
+    initialImageUrl: user.image,
+    showToasts: false,
   });
 
   // Watch reminder type to conditionally show phone number
@@ -109,43 +107,17 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
     }
   }, [reminderType, form]);
 
-  // Handle image preview cleanup
-  useEffect(() => {
-    if (!currentFile) return;
-
-    const objectUrl = URL.createObjectURL(currentFile);
-    setPreviewUrl(objectUrl);
-
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [currentFile]);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCurrentFile(file);
-      form.setValue("image", file);
-    }
-  };
-
-  const removeImage = () => {
-    setCurrentFile(undefined);
-    setPreviewUrl(user.image ?? null);
-    if (imageRef.current) {
-      imageRef.current.value = "";
-    }
-  };
-
   async function onSubmit(values: z.infer<typeof onboardingSchema>) {
     try {
       let imageUrl = user.image ?? null;
 
-      if (currentFile) {
-        setUploadProgress(0);
-        try {
-          imageUrl = await uploadAsync(currentFile);
-          setUploadProgress(100);
-        } catch (error) {
-          console.error("Failed to upload image:", error);
+      if (imageUpload.isDeleted) {
+        // Explicitly delete the image
+        imageUrl = null;
+      } else if (imageUpload.currentFile) {
+        // Upload new file
+        imageUrl = await imageUpload.uploadImage(imageUpload.currentFile);
+        if (!imageUrl) {
           toast.error("Image upload failed");
           return;
         }
@@ -172,69 +144,14 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Profile Image Section */}
-        <div className="text-center space-y-4">
-          <div className="relative inline-block">
-            <Avatar className="mx-auto size-24 ring-4 ring-background">
-              <AvatarImage
-                src={previewUrl ?? undefined}
-                alt="Profile"
-                className="object-cover"
-              />
-              <AvatarFallback className="text-lg font-semibold">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
-
-            {/* Upload Button Overlay */}
-            <button
-              type="button"
-              onClick={() => imageRef.current?.click()}
-              disabled={isUploading}
-              className="absolute -bottom-2 -right-2 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              <Camera className="size-4" />
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            <input
-              type="file"
-              accept="image/*"
-              disabled={onboardingMutation.isPending}
-              ref={imageRef}
-              onChange={handleImageChange}
-              className="hidden"
-            />
-
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Upload className="size-4" />
-              <span>Click to upload image (max 4MB)</span>
-            </div>
-
-            {currentFile && (
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {currentFile.name}
-                </span>
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  disabled={onboardingMutation.isPending}
-                  className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-            )}
-
-            {uploadProgress > 0 && uploadProgress < 100 && (
-              <div className="w-full bg-secondary rounded-full h-2">
-                <div
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-            )}
+        <div className="text-center">
+          <AvatarUpload
+            imageUpload={imageUpload}
+            fallbackText={getInitials()}
+            className="size-24"
+          />
+          <div className="mt-2 text-sm text-muted-foreground">
+            Click to upload image (max 2MB)
           </div>
         </div>
 
@@ -408,10 +325,10 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
         <LoadingButton
           type="submit"
           className="w-full"
-          loading={onboardingMutation.isPending}
-          disabled={onboardingMutation.isPending}
+          loading={onboardingMutation.isPending || imageUpload.isUploading}
+          disabled={onboardingMutation.isPending || imageUpload.isUploading}
         >
-          {onboardingMutation.isPending
+          {onboardingMutation.isPending || imageUpload.isUploading
             ? "Setting up your profile..."
             : "Complete Setup"}
         </LoadingButton>

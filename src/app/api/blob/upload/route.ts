@@ -14,9 +14,14 @@ export async function POST(request: NextRequest) {
       formData = await request.formData();
     } catch (error) {
       console.error("Invalid or missing multipart/form-data:", error);
-      return NextResponse.json({ error: "Invalid or missing multipart/form-data" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid or missing multipart/form-data" },
+        { status: 400 }
+      );
     }
+
     const file = formData.get("file") as File;
+    const folder = (formData.get("folder") as string) || "uploads"; // Default to "uploads" if not specified
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -27,15 +32,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid file type" }, { status: 400 });
     }
 
-    // Validate file size (4MB limit)
-    if (file.size > 4 * 1024 * 1024) {
-      return NextResponse.json({ error: "File too large" }, { status: 400 });
+    // Dynamic file size limits based on folder type
+    const maxSizes: Record<string, number> = {
+      profile: 2 * 1024 * 1024, // 2MB for profiles/avatars
+      groups: 4 * 1024 * 1024, // 4MB for group images
+      events: 10 * 1024 * 1024, // 10MB for event photos
+      comments: 5 * 1024 * 1024, // 5MB for comment attachments
+      uploads: 4 * 1024 * 1024, // 4MB default
+    };
+
+    const maxSize = maxSizes[folder] || maxSizes.uploads;
+    if (file.size > maxSize) {
+      const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(1);
+      return NextResponse.json(
+        { error: `File too large. Max size: ${maxSizeMB}MB` },
+        { status: 400 }
+      );
     }
 
-    // Create a unique filename with user ID and timestamp
-    const fileExtension = file.name.split('.').pop() || 'jpg';
+    // Create organized folder structure
+    const fileExtension = file.name.split(".").pop() || "jpg";
     const timestamp = Date.now();
-    const uniqueFilename = `profile/${session.user.id}/${timestamp}.${fileExtension}`;
+    const uniqueFilename = `${folder}/${session.user.id}/${timestamp}.${fileExtension}`;
 
     const blob = await put(uniqueFilename, file, {
       access: "public",
@@ -50,4 +68,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

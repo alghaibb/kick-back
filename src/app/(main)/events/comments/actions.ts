@@ -14,8 +14,9 @@ import { revalidatePath } from "next/cache";
 import {
   notifyEventComment,
   notifyCommentReply,
-  notifyCommentReaction
+  notifyCommentReaction,
 } from "@/lib/notification-triggers";
+import { del } from "@vercel/blob";
 
 export async function createCommentAction(values: CreateCommentValues) {
   try {
@@ -394,7 +395,7 @@ export async function deleteCommentAction(commentId: string) {
 
     const comment = await prisma.eventComment.findUnique({
       where: { id: commentId },
-      select: { userId: true, eventId: true },
+      select: { userId: true, eventId: true, imageUrl: true },
     });
 
     if (!comment) {
@@ -403,6 +404,14 @@ export async function deleteCommentAction(commentId: string) {
 
     if (comment.userId !== session.user.id) {
       return { error: "You can only delete your own comments" };
+    }
+
+    if (comment.imageUrl) {
+      try {
+        await del(comment.imageUrl);
+      } catch (error) {
+        console.error("Error deleting image blob:", error);
+      }
     }
 
     await prisma.eventComment.delete({

@@ -4,22 +4,26 @@ import { rateLimit } from "@/lib/rate-limiter";
 import { getSession } from "@/lib/sessions";
 import { sendGroupInviteEmail } from "@/utils/sendEmails";
 import { generateToken } from "@/utils/tokens";
-import { serverCreateGroupSchema } from "@/validations/group/createGroupSchema";
+import {
+  createGroupSchema,
+  CreateGroupValues,
+} from "@/validations/group/createGroupSchema";
 import {
   acceptInviteSchema,
-  serverInviteGroupSchema,
+  inviteGroupSchema,
 } from "@/validations/group/inviteGroupSchema";
 import { revalidatePath } from "next/cache";
 import { notifyGroupInvite } from "@/lib/notification-triggers";
+import { del } from "@vercel/blob";
 
-export async function createGroupAction(formData: FormData) {
+export async function createGroupAction(values: CreateGroupValues) {
   const session = await getSession();
   if (!session?.user?.id) {
     return { error: "Not authenticated" };
   }
 
-  const raw = Object.fromEntries(formData.entries());
-  const parsed = serverCreateGroupSchema.safeParse(raw);
+  // Validate the input
+  const parsed = createGroupSchema.safeParse(values);
   if (!parsed.success) {
     return {
       error: parsed.error.flatten().formErrors.join(", ") || "Invalid input",
@@ -69,7 +73,7 @@ export async function inviteToGroupAction(formData: FormData) {
   }
 
   const raw = Object.fromEntries(formData.entries());
-  const parsed = serverInviteGroupSchema.safeParse(raw);
+  const parsed = inviteGroupSchema.safeParse(raw);
   if (!parsed.success) {
     return {
       error: parsed.error.flatten().formErrors.join(", ") || "Invalid input",
@@ -283,19 +287,19 @@ export async function acceptGroupInviteAction(formData: FormData) {
       const groupEvents = await tx.event.findMany({
         where: {
           groupId: invite.groupId,
-          date: { gte: new Date() } // Only future events
+          date: { gte: new Date() }, // Only future events
         },
-        select: { id: true }
+        select: { id: true },
       });
 
       if (groupEvents.length > 0) {
         await tx.eventAttendee.createMany({
-          data: groupEvents.map(event => ({
+          data: groupEvents.map((event) => ({
             eventId: event.id,
             userId: session.user.id,
-            rsvpStatus: "pending"
+            rsvpStatus: "pending",
           })),
-          skipDuplicates: true
+          skipDuplicates: true,
         });
       }
 
@@ -388,11 +392,27 @@ export async function removeGroupMemberAction({
 export async function deleteGroupAction(groupId: string) {
   const session = await getSession();
   if (!session?.user?.id) return { error: "Not authenticated" };
-  const group = await prisma.group.findUnique({ where: { id: groupId } });
+
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    select: { id: true, createdBy: true, image: true },
+  });
+
   if (!group) return { error: "Group not found" };
   if (group.createdBy !== session.user.id) {
     return { error: "Only the group owner can delete the group" };
   }
+
+  // Delete group image from Vercel blob storage if it exists
+  if (group.image) {
+    try {
+      await del(group.image);
+    } catch (error) {
+      console.error("Error deleting group image from blob storage:", error);
+      // Continue with group deletion even if image deletion fails
+    }
+  }
+
   await prisma.group.delete({ where: { id: groupId } });
   revalidatePath("/groups");
   return { success: true };
@@ -425,7 +445,7 @@ export async function editGroupAction(
   }
 
   // Validate input
-  const parsed = serverCreateGroupSchema.safeParse(values);
+  const parsed = createGroupSchema.safeParse(values);
   if (!parsed.success) {
     return {
       error: parsed.error.flatten().formErrors.join(", ") || "Invalid input",
@@ -450,6 +470,16 @@ export async function editGroupAction(
     ) {
       return { error: "You do not have permission to edit this group" };
     }
+
+    // Handle image deletion from Vercel blob storage
+    if (values.image === null && group.image) {
+      try {
+        await del(group.image);
+      } catch (error) {
+        console.error("Failed to delete old group image:", error);
+      }
+    }
+
     const updatedGroup = await prisma.group.update({
       where: { id: groupId },
       data: {
