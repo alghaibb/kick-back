@@ -400,20 +400,8 @@ export function useDeleteComment() {
       });
       toast.success("Comment deleted");
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to delete comment");
     },
   });
-}
-
-// Helper function to find event ID for a comment (currently unused but kept for future optimistic updates)
-async function findEventIdForComment(commentId: string): Promise<string | null> {
-  try {
-    const response = await fetch(`/api/comments/${commentId}/event`);
-    if (!response.ok) return null;
-    const data = await response.json();
-    return data.eventId;
-  } catch {
-    return null;
-  }
 }

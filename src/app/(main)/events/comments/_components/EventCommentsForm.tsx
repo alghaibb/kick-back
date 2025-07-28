@@ -30,13 +30,13 @@ import {
   SortAsc,
   SortDesc,
 } from "lucide-react";
+import Image from "next/image";
 import { useAuth } from "@/hooks/use-auth";
 import { useEventComments } from "@/hooks/queries/useEventComments";
 import {
   useCreateComment,
   useCreateReply,
   useToggleReaction,
-  useDeleteComment,
 } from "@/hooks/mutations/useCommentMutations";
 import {
   createCommentSchema,
@@ -93,7 +93,6 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
   const createCommentMutation = useCreateComment();
   const createReplyMutation = useCreateReply();
   const toggleReactionMutation = useToggleReaction();
-  const deleteCommentMutation = useDeleteComment();
   const { open: openModal } = useModal();
 
   const commentForm = useForm<CreateCommentValues>({
@@ -261,9 +260,11 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
 
             {comment.imageUrl && (
               <div className="rounded-lg overflow-hidden border max-w-full">
-                <img
+                <Image
                   src={comment.imageUrl}
                   alt="Comment attachment"
+                  width={400}
+                  height={300}
                   className="w-full max-w-xs sm:max-w-sm h-auto"
                 />
               </div>
@@ -377,9 +378,11 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
                     {/* Reply image preview */}
                     {replyImage && (
                       <div className="relative max-w-xs">
-                        <img
+                        <Image
                           src={replyImage}
                           alt="Reply attachment"
+                          width={300}
+                          height={200}
                           className="w-full h-auto rounded-lg border"
                         />
                         <Button
@@ -562,9 +565,11 @@ export default function EventCommentsForm({ eventId }: EventCommentsFormProps) {
                 {/* Image preview */}
                 {commentImage && (
                   <div className="relative max-w-xs">
-                    <img
+                    <Image
                       src={commentImage}
                       alt="Comment attachment"
+                      width={300}
+                      height={200}
                       className="w-full h-auto rounded-lg border"
                     />
                     <Button
