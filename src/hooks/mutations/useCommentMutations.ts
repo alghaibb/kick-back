@@ -232,11 +232,22 @@ export function useToggleReaction() {
 
   return useMutation({
     mutationFn: async (values: CommentReactionValues) => {
-      // Fire and forget - don't wait for server response for instant feel
-      toggleReactionAction(values).catch((error) => {
-        console.error("Reaction error (background):", error);
-      });
-      return { success: true }; // Always return success for optimistic UI
+      try {
+        // Fire and forget - don't wait for server response for instant feel
+        const result = await toggleReactionAction(values);
+
+        // If there's an error from the server, log it but don't throw
+        if (result?.error) {
+          console.error("Reaction server error:", result.error);
+          // Don't throw - let the optimistic update stay
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error("Reaction mutation error:", error);
+        // Don't throw - let the optimistic update stay
+        return { success: true };
+      }
     },
     onMutate: async ({ commentId, emoji }) => {
       if (!user?.id) return;
@@ -284,10 +295,9 @@ export function useToggleReaction() {
       });
     },
     onError: (error, _, context) => {
-      // Only rollback and show error if something went really wrong
-      console.error("Reaction error:", error);
+      // This should rarely be called now since we don't throw errors
+      console.error("Reaction onError (should be rare):", error);
       context?.rollbackFunctions?.forEach((rollback) => rollback());
-      // Don't show toast error - reactions should feel instant even if they fail
     },
   });
 }

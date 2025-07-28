@@ -147,7 +147,8 @@ export async function notifyUser(
     return notification;
   } catch (error) {
     console.error("Failed to notify user:", error);
-    throw error;
+    // Don't re-throw the error to prevent it from showing as a toast to users
+    return null;
   }
 }
 
