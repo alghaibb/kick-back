@@ -32,24 +32,24 @@ export interface CalendarResponse {
 export function useCalendar() {
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
 
-  // Ultra-fast polling for small user base (0-100 users)
+  // Lightning-fast polling for instant RSVP updates like Facebook events
   const getPollingInterval = () => {
     const timeSinceActivity = Date.now() - lastActivity;
 
-    // If activity within last 30 seconds: poll every 3 seconds (still very fast)
-    if (timeSinceActivity < 30 * 1000) return 3000;
+    // If activity within last 30 seconds: poll every 1 second (Facebook event speed)
+    if (timeSinceActivity < 30 * 1000) return 1000;
 
-    // If activity within last 2 minutes: poll every 5 seconds (ultra-aggressive)
-    if (timeSinceActivity < 2 * 60 * 1000) return 5000;
+    // If activity within last 2 minutes: poll every 2 seconds (ultra-fast)
+    if (timeSinceActivity < 2 * 60 * 1000) return 2000;
 
-    // If activity within last 5 minutes: poll every 10 seconds
-    if (timeSinceActivity < 5 * 60 * 1000) return 10000;
+    // If activity within last 5 minutes: poll every 5 seconds (still very fast)
+    if (timeSinceActivity < 5 * 60 * 1000) return 5000;
 
-    // If activity within last 15 minutes: poll every 30 seconds
-    if (timeSinceActivity < 15 * 60 * 1000) return 30000;
+    // If activity within last 15 minutes: poll every 15 seconds
+    if (timeSinceActivity < 15 * 60 * 1000) return 15000;
 
-    // Otherwise: poll every 60 seconds (still quite fast)
-    return 60000;
+    // Otherwise: poll every 30 seconds (still quite fast)
+    return 30000;
   };
 
   const query = useQuery({
@@ -62,7 +62,7 @@ export function useCalendar() {
       const data = await response.json();
       return data;
     },
-    staleTime: 5 * 1000, // 5 seconds - very fresh data
+    staleTime: 1 * 1000, // 1 second - ultra-fresh data for instant RSVP updates
     gcTime: 15 * 60 * 1000,
     refetchInterval: getPollingInterval(),
     refetchOnWindowFocus: true, // Re-enable for instant updates when switching tabs

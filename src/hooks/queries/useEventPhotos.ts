@@ -40,24 +40,24 @@ async function fetchEventPhotos(eventId: string): Promise<{ photos: EventPhotoDa
 export function useEventPhotos(eventId: string) {
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
 
-  // Ultra-fast polling for real-time photo likes like Instagram
+  // Lightning-fast polling for instant photo likes like Instagram
   const getPollingInterval = () => {
     const timeSinceActivity = Date.now() - lastActivity;
 
-    // If activity within last 30 seconds: poll every 3 seconds (Instagram-level real-time)
-    if (timeSinceActivity < 30 * 1000) return 3000;
+    // If activity within last 30 seconds: poll every 1 second (Instagram speed)
+    if (timeSinceActivity < 30 * 1000) return 1000;
 
-    // If activity within last 2 minutes: poll every 5 seconds (ultra-aggressive)
-    if (timeSinceActivity < 2 * 60 * 1000) return 5000;
+    // If activity within last 2 minutes: poll every 2 seconds (ultra-fast)
+    if (timeSinceActivity < 2 * 60 * 1000) return 2000;
 
-    // If activity within last 5 minutes: poll every 10 seconds
-    if (timeSinceActivity < 5 * 60 * 1000) return 10000;
+    // If activity within last 5 minutes: poll every 5 seconds (still very fast)
+    if (timeSinceActivity < 5 * 60 * 1000) return 5000;
 
-    // If activity within last 15 minutes: poll every 30 seconds
-    if (timeSinceActivity < 15 * 60 * 1000) return 30000;
+    // If activity within last 15 minutes: poll every 15 seconds
+    if (timeSinceActivity < 15 * 60 * 1000) return 15000;
 
-    // Otherwise: poll every 60 seconds (still quite fast)
-    return 60000;
+    // Otherwise: poll every 30 seconds (still quite fast)
+    return 30000;
   };
 
   const query = useQuery({

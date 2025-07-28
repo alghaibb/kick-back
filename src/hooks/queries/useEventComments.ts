@@ -62,31 +62,31 @@ async function fetchEventComments(
 export function useEventComments(eventId: string, sortBy: "newest" | "oldest" = "newest") {
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
 
-  // Smart polling that adapts to activity
+  // Lightning-fast polling like YouTube/Facebook
   const getPollingInterval = () => {
     const timeSinceActivity = Date.now() - lastActivity;
 
-    // If activity within last 30 seconds: poll every 3 seconds (fast but not overwhelming)
-    if (timeSinceActivity < 30 * 1000) return 3000;
+    // If activity within last 30 seconds: poll every 1 second (YouTube/Facebook speed)
+    if (timeSinceActivity < 30 * 1000) return 1000;
 
-    // If activity within last 2 minutes: poll every 8 seconds
-    if (timeSinceActivity < 2 * 60 * 1000) return 8000;
+    // If activity within last 2 minutes: poll every 2 seconds (ultra-fast)
+    if (timeSinceActivity < 2 * 60 * 1000) return 2000;
 
-    // If activity within last 5 minutes: poll every 15 seconds
-    if (timeSinceActivity < 5 * 60 * 1000) return 15000;
+    // If activity within last 5 minutes: poll every 5 seconds (still very fast)
+    if (timeSinceActivity < 5 * 60 * 1000) return 5000;
 
-    // If activity within last 10 minutes: poll every 30 seconds
-    if (timeSinceActivity < 10 * 60 * 1000) return 30000;
+    // If activity within last 10 minutes: poll every 10 seconds
+    if (timeSinceActivity < 10 * 60 * 1000) return 10000;
 
-    // Otherwise: poll every 60 seconds
-    return 60000;
+    // Otherwise: poll every 30 seconds (still quite fast)
+    return 30000;
   };
 
   const query = useQuery({
     queryKey: ["event-comments", eventId, sortBy],
     queryFn: () => fetchEventComments(eventId, sortBy),
     enabled: !!eventId,
-    staleTime: 5 * 1000, // 5 seconds - fresh data for real-time feel
+    staleTime: 1 * 1000, // 1 second - ultra-fresh data for YouTube-like speed
     gcTime: 10 * 60 * 1000,
     refetchInterval: getPollingInterval(), // Re-enable smart polling
     refetchOnWindowFocus: false, // Keep disabled to prevent scroll jumps
