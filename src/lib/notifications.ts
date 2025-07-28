@@ -26,6 +26,16 @@ export interface PushNotificationData {
 // Create in-app notification
 export async function createNotification(data: CreateNotificationData) {
   try {
+    // Check if user has in-app notifications enabled
+    const user = await prisma.user.findUnique({
+      where: { id: data.userId },
+      select: { inAppNotifications: true },
+    });
+
+    if (!user?.inAppNotifications) {
+      return null;
+    }
+
     const notification = await prisma.notification.create({
       data: {
         userId: data.userId,
@@ -261,5 +271,19 @@ export const NotificationTemplates = {
     message: `${attendeeName} ${status === "yes" ? "will attend" : status === "no" ? "declined" : "might attend"} "${eventName}"`,
     pushTitle: "RSVP Update",
     pushBody: `${attendeeName} ${status === "yes" ? "will attend" : status === "no" ? "declined" : "might attend"} "${eventName}"`,
+  }),
+
+  COMMENT_REPLY: (replierName: string, eventName: string) => ({
+    title: "Comment Reply",
+    message: `${replierName} replied to your comment on "${eventName}"`,
+    pushTitle: "New Reply",
+    pushBody: `${replierName} replied to your comment on "${eventName}". Tap to view.`,
+  }),
+
+  COMMENT_REACTION: (reactorName: string, eventName: string, emoji: string) => ({
+    title: "Comment Reaction",
+    message: `${reactorName} reacted ${emoji} to your comment on "${eventName}"`,
+    pushTitle: "New Reaction",
+    pushBody: `${reactorName} reacted ${emoji} to your comment on "${eventName}". Tap to view.`,
   }),
 };

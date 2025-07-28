@@ -41,6 +41,7 @@ model User {
   photoLikes          EventPhotoLike[]
   notifications       Notification[]
   pushSubscriptions   PushSubscription[]
+  CommentReaction     CommentReaction[]
 
   @@map("users")
 }
@@ -234,18 +235,42 @@ model EventAttendee {
 model EventComment {
   id        String   @id @default(cuid())
   content   String
+  imageUrl  String? // Optional image attachment
   eventId   String
   userId    String
+  parentId  String? // For reply threading
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event  Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent EventComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+
+  // Relations
+  replies   EventComment[]    @relation("CommentReplies")
+  reactions CommentReaction[]
 
   @@index([eventId])
   @@index([userId])
+  @@index([parentId])
   @@index([eventId, createdAt])
   @@map("event_comments")
+}
+
+model CommentReaction {
+  id        String   @id @default(cuid())
+  commentId String
+  userId    String
+  emoji     String // Store emoji as string (👍, ❤️, 😂, etc.)
+  createdAt DateTime @default(now())
+
+  comment EventComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, emoji]) // One reaction per user per emoji per comment
+  @@index([commentId])
+  @@index([userId])
+  @@map("comment_reactions")
 }
 
 model EventPhoto {
@@ -324,4 +349,6 @@ enum NotificationType {
   EVENT_UPDATED
   GROUP_EVENT_CREATED
   RSVP_UPDATE
+  COMMENT_REPLY
+  COMMENT_REACTION
 }

@@ -3,11 +3,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 
+export interface CommentReaction {
+  id: string;
+  emoji: string;
+  userId: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string | null;
+    nickname: string | null;
+  };
+}
+
 export interface EventCommentData {
   id: string;
   content: string;
+  imageUrl: string | null;
   eventId: string;
   userId: string;
+  parentId: string | null;
   createdAt: string;
   updatedAt: string;
   user: {
@@ -17,12 +31,24 @@ export interface EventCommentData {
     nickname: string | null;
     image: string | null;
   };
+  replies: EventCommentData[];
+  reactions: CommentReaction[];
+  _count: {
+    replies: number;
+    reactions: number;
+  };
+}
+
+export interface CommentsResponse {
+  comments: EventCommentData[];
+  totalCount: number;
 }
 
 async function fetchEventComments(
-  eventId: string
-): Promise<EventCommentData[]> {
-  const response = await fetch(`/api/events/${eventId}/comments`, {
+  eventId: string,
+  sortBy: "newest" | "oldest" = "newest"
+): Promise<CommentsResponse> {
+  const response = await fetch(`/api/events/${eventId}/comments?sortBy=${sortBy}`, {
     credentials: "include",
   });
 
@@ -33,7 +59,7 @@ async function fetchEventComments(
   return response.json();
 }
 
-export function useEventComments(eventId: string) {
+export function useEventComments(eventId: string, sortBy: "newest" | "oldest" = "newest") {
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
 
   // Calculate polling interval based on recent activity
@@ -51,8 +77,8 @@ export function useEventComments(eventId: string) {
   };
 
   const query = useQuery({
-    queryKey: ["event-comments", eventId],
-    queryFn: () => fetchEventComments(eventId),
+    queryKey: ["event-comments", eventId, sortBy],
+    queryFn: () => fetchEventComments(eventId, sortBy),
     enabled: !!eventId,
     staleTime: 30 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -63,8 +89,8 @@ export function useEventComments(eventId: string) {
 
   // Update activity timestamp when new comments arrive
   useEffect(() => {
-    if (query.data && query.data.length > 0) {
-      const latestComment = query.data[query.data.length - 1];
+    if (query.data?.comments && query.data.comments.length > 0) {
+      const latestComment = query.data.comments[0]; // Assuming sorted by newest first
       const commentTime = new Date(latestComment.createdAt).getTime();
 
       // If comment is recent (within 5 minutes), mark as activity

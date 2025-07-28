@@ -73,6 +73,92 @@ export async function notifyEventComment(data: {
   await Promise.all(promises);
 }
 
+// Trigger notification when someone replies to a comment
+export async function notifyCommentReply(data: {
+  parentCommentUserId: string;
+  replierId: string;
+  replierName: string;
+  eventId: string;
+  eventName: string;
+  commentId: string;
+}) {
+  // Don't notify if replying to own comment
+  if (data.parentCommentUserId === data.replierId) {
+    return;
+  }
+
+  const template = NotificationTemplates.COMMENT_REPLY(
+    data.replierName,
+    data.eventName
+  );
+
+  await notifyUser(
+    {
+      userId: data.parentCommentUserId,
+      type: "COMMENT_REPLY",
+      title: template.title,
+      message: template.message,
+      data: {
+        eventId: data.eventId,
+        commentId: data.commentId,
+      },
+    },
+    {
+      title: template.pushTitle,
+      body: template.pushBody,
+      data: {
+        eventId: data.eventId,
+        commentId: data.commentId,
+      },
+      actions: [{ action: "view", title: "View Comment" }],
+    }
+  );
+}
+
+// Trigger notification when someone reacts to a comment
+export async function notifyCommentReaction(data: {
+  commentUserId: string;
+  reactorId: string;
+  reactorName: string;
+  eventId: string;
+  eventName: string;
+  commentId: string;
+  emoji: string;
+}) {
+  // Don't notify if reacting to own comment
+  if (data.commentUserId === data.reactorId) {
+    return;
+  }
+
+  const template = NotificationTemplates.COMMENT_REACTION(
+    data.reactorName,
+    data.eventName,
+    data.emoji
+  );
+
+  await notifyUser(
+    {
+      userId: data.commentUserId,
+      type: "COMMENT_REACTION",
+      title: template.title,
+      message: template.message,
+      data: {
+        eventId: data.eventId,
+        commentId: data.commentId,
+      },
+    },
+    {
+      title: template.pushTitle,
+      body: template.pushBody,
+      data: {
+        eventId: data.eventId,
+        commentId: data.commentId,
+      },
+      actions: [{ action: "view", title: "View Comment" }],
+    }
+  );
+}
+
 // Example: Trigger notification when someone posts a photo
 export async function notifyEventPhoto(data: {
   eventId: string;

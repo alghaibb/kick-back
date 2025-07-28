@@ -17,6 +17,11 @@ const DeleteEventModal = lazy(() =>
 const EditEventModal = lazy(
   () => import("./events/_components/EditEventModal")
 );
+const DeleteCommentModal = lazy(() =>
+  import("./events/comments/_components/DeleteCommentModal").then((m) => ({
+    default: m.DeleteCommentModal,
+  }))
+);
 const CreateGroupModal = lazy(() =>
   import("./groups/_components/CreateGroupModal").then((m) => ({
     default: m.CreateGroupModal,
@@ -64,6 +69,9 @@ export default async function MainLayout({
       </Suspense>
       <Suspense fallback={null}>
         <EditEventModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <DeleteCommentModal />
       </Suspense>
     </>
   );

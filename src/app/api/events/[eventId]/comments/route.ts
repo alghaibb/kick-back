@@ -14,6 +14,8 @@ export async function GET(
     }
 
     const { eventId } = await params;
+    const url = new URL(request.url);
+    const sortBy = url.searchParams.get("sortBy") || "newest";
 
     // Check if user has access to this event (is attendee or group member)
     const event = await prisma.event.findUnique({
@@ -44,9 +46,12 @@ export async function GET(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Fetch comments
+    // Fetch top-level comments with nested replies and reactions
     const comments = await prisma.eventComment.findMany({
-      where: { eventId },
+      where: {
+        eventId,
+        parentId: null, // Only top-level comments
+      },
       include: {
         user: {
           select: {
@@ -57,11 +62,76 @@ export async function GET(
             image: true,
           },
         },
+        replies: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                nickname: true,
+                image: true,
+              },
+            },
+            reactions: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    nickname: true,
+                  },
+                },
+              },
+            },
+            _count: {
+              select: {
+                replies: true,
+                reactions: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc", // Replies always oldest first
+          },
+        },
+        reactions: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                nickname: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            replies: true,
+            reactions: true,
+          },
+        },
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: {
+        createdAt: sortBy === "oldest" ? "asc" : "desc",
+      },
     });
 
-    return NextResponse.json(comments);
+    // Get total count
+    const totalCount = await prisma.eventComment.count({
+      where: {
+        eventId,
+        parentId: null,
+      },
+    });
+
+    return NextResponse.json({
+      comments,
+      totalCount,
+    });
   } catch (error) {
     console.error("Error fetching comments:", error);
     return NextResponse.json(
