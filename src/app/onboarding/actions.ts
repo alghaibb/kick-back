@@ -9,7 +9,8 @@ import { revalidatePath } from "next/cache";
 export async function onboarding(values: unknown) {
   try {
     const validated = serverOnboardingSchema.parse(values);
-    let { firstName, lastName, nickname, image, previousImage, reminderType, phoneNumber, reminderTime, timezone } = validated;
+    const { firstName, lastName, nickname, image, previousImage, reminderType, reminderTime, timezone } = validated;
+    let { phoneNumber } = validated;
 
     // Normalize phone number - empty strings should be null
     phoneNumber = phoneNumber && phoneNumber.trim() !== "" ? phoneNumber.trim() : null;

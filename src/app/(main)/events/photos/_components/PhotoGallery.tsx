@@ -37,7 +37,7 @@ interface PhotoGalleryProps {
 
 export function PhotoGallery({ eventId }: PhotoGalleryProps) {
   const { user } = useAuth();
-  const { data, isLoading, error, isFetching } = useEventPhotos(eventId);
+  const { data, isLoading, error } = useEventPhotos(eventId);
   const likeMutation = useLikePhoto();
   const deleteMutation = useDeletePhoto();
   const modal = useModal();
