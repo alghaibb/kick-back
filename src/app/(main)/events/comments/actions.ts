@@ -284,6 +284,7 @@ export async function toggleReactionAction(values: CommentReactionValues) {
     // Validate reaction fields
     const validatedFields = commentReactionSchema.safeParse(values);
     if (!validatedFields.success) {
+      console.error("Validation error:", validatedFields.error);
       return { error: "Invalid fields" };
     }
 
@@ -360,7 +361,7 @@ export async function toggleReactionAction(values: CommentReactionValues) {
         },
       });
 
-      // Send notification to comment author
+      // Send notification to comment author (background task)
       try {
         await notifyCommentReaction({
           commentUserId: comment.userId,
@@ -373,6 +374,7 @@ export async function toggleReactionAction(values: CommentReactionValues) {
         });
       } catch (error) {
         console.error("Error sending reaction notification:", error);
+        // Don't fail the reaction if notification fails
       }
 
       return { success: true, action: "added", reaction };

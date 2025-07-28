@@ -96,7 +96,8 @@ export function useRSVPMutation() {
         };
       });
 
-      // Optimistically update RSVP status
+
+      // Optimistically update RSVP status query (this is what the buttons use!)
       queryClient.setQueryData(["rsvp", eventId], { rsvpStatus: status });
 
       return { previousCalendar, previousRSVP, eventId };
@@ -104,9 +105,9 @@ export function useRSVPMutation() {
     onSuccess: (_, variables) => {
       // Show success message based on status
       const statusMessages = {
-        yes: "You're attending this event! 🎉",
-        no: "You've declined this event",
-        maybe: "You've marked yourself as maybe attending 🤔",
+        yes: "You're attending! 🎉",
+        no: "You've declined",
+        maybe: "Maybe attending 🤔",
         pending: "RSVP updated",
       };
 
@@ -114,19 +115,10 @@ export function useRSVPMutation() {
         statusMessages[variables.status as keyof typeof statusMessages]
       );
 
-      // Only invalidate dashboard stats (for RSVP counts) - less aggressive than before
+      // Background sync - invalidate queries for fresh data
       queryClient.invalidateQueries({ queryKey: ["dashboard", "stats"] });
-
-      // Revalidate the specific RSVP query to ensure server sync
       queryClient.invalidateQueries({ queryKey: ["rsvp", variables.eventId] });
-
-      // Invalidate calendar so other users see RSVP changes
       queryClient.invalidateQueries({ queryKey: ["calendar"] });
-
-      // Force immediate refetch of calendar for faster cross-user updates
-      queryClient.refetchQueries({ queryKey: ["calendar"] });
-
-      // Invalidate notifications so event creator gets RSVP notification immediately
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: Error, variables, context) => {
@@ -144,7 +136,7 @@ export function useRSVPMutation() {
       }
 
       console.error("RSVP error:", error);
-      toast.error(error.message || "Failed to update RSVP");
+      toast.error(error.message || "Failed to update RSVP. Please try again.");
     },
   });
 }

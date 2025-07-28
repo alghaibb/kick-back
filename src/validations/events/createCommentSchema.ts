@@ -27,7 +27,7 @@ export const commentReactionSchema = z.object({
   emoji: z
     .string()
     .min(1, "Emoji is required")
-    .max(10, "Invalid emoji")
+    .max(50, "Invalid emoji")
     .describe("Reaction emoji"),
 });
 

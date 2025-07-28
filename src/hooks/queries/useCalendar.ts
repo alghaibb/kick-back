@@ -32,18 +32,24 @@ export interface CalendarResponse {
 export function useCalendar() {
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
 
-  // Calculate polling interval based on recent activity
+  // Ultra-fast polling for small user base (0-100 users)
   const getPollingInterval = () => {
     const timeSinceActivity = Date.now() - lastActivity;
 
-    // If activity within last 2 minutes: poll every 15 seconds (very aggressive)
-    if (timeSinceActivity < 2 * 60 * 1000) return 15 * 1000;
+    // If activity within last 30 seconds: poll every 3 seconds (still very fast)
+    if (timeSinceActivity < 30 * 1000) return 3000;
 
-    // If activity within last 10 minutes: poll every 1 minute  
-    if (timeSinceActivity < 10 * 60 * 1000) return 60 * 1000;
+    // If activity within last 2 minutes: poll every 5 seconds (ultra-aggressive)
+    if (timeSinceActivity < 2 * 60 * 1000) return 5000;
 
-    // Otherwise: poll every 5 minutes (efficient when idle)
-    return 5 * 60 * 1000;
+    // If activity within last 5 minutes: poll every 10 seconds
+    if (timeSinceActivity < 5 * 60 * 1000) return 10000;
+
+    // If activity within last 15 minutes: poll every 30 seconds
+    if (timeSinceActivity < 15 * 60 * 1000) return 30000;
+
+    // Otherwise: poll every 60 seconds (still quite fast)
+    return 60000;
   };
 
   const query = useQuery({
@@ -56,10 +62,10 @@ export function useCalendar() {
       const data = await response.json();
       return data;
     },
-    staleTime: 30 * 1000, // Reduce to 30 seconds for faster RSVP updates
+    staleTime: 5 * 1000, // 5 seconds - very fresh data
     gcTime: 15 * 60 * 1000,
     refetchInterval: getPollingInterval(),
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Re-enable for instant updates when switching tabs
     refetchOnReconnect: true,
   });
 

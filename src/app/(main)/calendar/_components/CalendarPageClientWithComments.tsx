@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -22,10 +22,11 @@ import {
 export function CalendarPageClientWithComments() {
   const searchParams = useSearchParams();
   const targetEventId = searchParams.get("event");
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
-  const { data, isLoading, error, isFetching } = useCalendar();
+  const { data, isLoading, error } = useCalendar();
 
   // Handle navigation from notifications
   useEffect(() => {
@@ -95,17 +96,16 @@ export function CalendarPageClientWithComments() {
           onMonthChange={setSelectedDate}
         />
       </div>
-      <div className="flex-1 border-l pl-6 overflow-y-auto max-h-[800px]">
+      <div
+        className="flex-1 border-l pl-6 overflow-y-auto max-h-[800px]"
+        ref={scrollContainerRef}
+        style={{ scrollBehavior: "auto" }} // Prevent smooth scrolling that can cause jumps
+      >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-lg">
             {format(selectedDate, "PPP")}
           </h3>
-          {isFetching && !isLoading && (
-            <div className="flex items-center text-xs text-muted-foreground">
-              <div className="animate-spin w-3 h-3 border border-current border-t-transparent rounded-full mr-1" />
-              Updating...
-            </div>
-          )}
+          {/* Removed constant loading spinner - ultra-fast polling makes it unnecessary */}
         </div>
 
         {eventsForDay.length === 0 ? (

@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { ActiveThemeProvider } from "@/providers/ActiveThemeProvider";
-import { QueryProvider } from "@/providers/QueryProvider";
+import QueryProvider from "@/providers/QueryProvider";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";

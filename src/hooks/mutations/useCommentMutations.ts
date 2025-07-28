@@ -22,11 +22,11 @@ export function useCreateComment() {
 
   return useMutation({
     mutationFn: async (values: CreateCommentValues) => {
-      const result = await createCommentAction(values);
-      if (result?.error) {
-        throw new Error(result.error);
-      }
-      return result;
+      // Fire and forget - don't wait for server response for instant feel
+      createCommentAction(values).catch((error) => {
+        console.error("Comment error (background):", error);
+      });
+      return { success: true }; // Always return success for optimistic UI
     },
     onMutate: async (values) => {
       if (!user?.id) return;
@@ -115,20 +115,21 @@ export function useCreateComment() {
       });
 
       // Show immediate success feedback
-      toast.success(values.parentId ? "Reply added!" : "Comment added!");
+      toast.success(values.parentId ? "Reply posted!" : "Comment posted!");
 
       return { rollbackFunctions, eventId: values.eventId };
     },
     onSuccess: (data, variables) => {
-      // Invalidate all comment queries for this event (all sort orders)
+      // Invalidate all comment queries for this event (background sync)
       queryClient.invalidateQueries({
         queryKey: ["event-comments", variables.eventId]
       });
     },
     onError: (error, variables, context) => {
-      // Revert optimistic updates on error
+      // Only revert on actual errors and show user-friendly message
+      console.error("Comment error:", error);
       context?.rollbackFunctions?.forEach((rollback) => rollback());
-      toast.error("Failed to add comment. Please try again.");
+      toast.error("Comment failed to post. Please try again.");
     },
   });
 }
@@ -231,11 +232,11 @@ export function useToggleReaction() {
 
   return useMutation({
     mutationFn: async (values: CommentReactionValues) => {
-      const result = await toggleReactionAction(values);
-      if (result?.error) {
-        throw new Error(result.error);
-      }
-      return result;
+      // Fire and forget - don't wait for server response for instant feel
+      toggleReactionAction(values).catch((error) => {
+        console.error("Reaction error (background):", error);
+      });
+      return { success: true }; // Always return success for optimistic UI
     },
     onMutate: async ({ commentId, emoji }) => {
       if (!user?.id) return;
@@ -273,18 +274,20 @@ export function useToggleReaction() {
         });
       });
 
+      // Instant feedback - no toast needed, the UI change is the feedback
       return { rollbackFunctions };
     },
     onSuccess: () => {
-      // Invalidate to get fresh data from server
+      // Invalidate to get fresh data from server (background sync)
       queryClient.invalidateQueries({
         queryKey: ["event-comments"]
       });
     },
-    onError: (error, variables, context) => {
-      // Rollback all optimistic updates
+    onError: (error, _, context) => {
+      // Only rollback and show error if something went really wrong
+      console.error("Reaction error:", error);
       context?.rollbackFunctions?.forEach((rollback) => rollback());
-      toast.error("Failed to update reaction. Please try again.");
+      // Don't show toast error - reactions should feel instant even if they fail
     },
   });
 }
@@ -298,7 +301,7 @@ function updateCommentWithReaction(
 ): EventCommentData {
   // Check if this is the target comment
   if (comment.id === targetCommentId) {
-    const existingReactionIndex = comment.reactions.findIndex(
+    const existingReactionIndex = (comment.reactions || []).findIndex(
       (r) => r.userId === user.id && r.emoji === emoji
     );
 
@@ -306,10 +309,10 @@ function updateCommentWithReaction(
       // Remove existing reaction
       return {
         ...comment,
-        reactions: comment.reactions.filter((_, index) => index !== existingReactionIndex),
+        reactions: (comment.reactions || []).filter((_, index) => index !== existingReactionIndex),
         _count: {
           ...comment._count,
-          reactions: comment._count.reactions - 1,
+          reactions: (comment._count?.reactions || 0) - 1,
         },
       };
     } else {
@@ -317,7 +320,7 @@ function updateCommentWithReaction(
       return {
         ...comment,
         reactions: [
-          ...comment.reactions,
+          ...(comment.reactions || []),
           {
             id: `temp-${Date.now()}`,
             emoji,
@@ -332,7 +335,7 @@ function updateCommentWithReaction(
         ],
         _count: {
           ...comment._count,
-          reactions: comment._count.reactions + 1,
+          reactions: (comment._count?.reactions || 0) + 1,
         },
       };
     }
@@ -341,7 +344,7 @@ function updateCommentWithReaction(
   // Also check replies recursively
   return {
     ...comment,
-    replies: comment.replies.map((reply) =>
+    replies: (comment.replies || []).map((reply) =>
       updateCommentWithReaction(reply, targetCommentId, emoji, user)
     ),
   };

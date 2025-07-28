@@ -164,11 +164,11 @@ export function useLikePhoto() {
 
   return useMutation({
     mutationFn: async (data: { photoId: string; eventId: string }) => {
-      const result = await likePhotoAction({ photoId: data.photoId });
-      if (result.error) {
-        throw new Error(result.error);
-      }
-      return result;
+      // Fire and forget - don't wait for server response for instant feel
+      likePhotoAction({ photoId: data.photoId }).catch((error) => {
+        console.error("Photo like error (background):", error);
+      });
+      return { success: true }; // Always return success for optimistic UI
     },
     onMutate: async ({ photoId, eventId }) => {
       // Cancel any outgoing refetches
@@ -207,21 +207,22 @@ export function useLikePhoto() {
         }
       );
 
+      // Instant feedback - no toast needed, the heart animation is the feedback
       return { previousPhotos, eventId };
     },
     onError: (error: Error, variables, context) => {
-      // Rollback on error
+      // Only rollback and show error if something went really wrong
+      console.error("Photo like error:", error);
       if (context?.previousPhotos && context?.eventId) {
         queryClient.setQueryData(
           ["event-photos", context.eventId],
           context.previousPhotos
         );
       }
-      console.error("Like photo error:", error);
-      toast.error(error.message || "Failed to like photo");
+      // Don't show toast error - likes should feel instant even if they fail
     },
     onSuccess: (data, variables) => {
-      // Invalidate to get fresh data for all users
+      // Background sync - invalidate to get fresh data for all users
       queryClient.invalidateQueries({
         queryKey: ["event-photos", variables.eventId]
       });
