@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/sheet";
 import { GroupData } from "@/hooks/queries/useEvents";
 import type { EventFilters } from "@/lib/event-filters";
+import { useDebounce } from "@/hooks/use-debounced-search";
+import React from "react";
 
 interface EventFiltersProps {
   filters: EventFilters;
@@ -36,6 +38,23 @@ export default function EventFilters({
   eventCount,
 }: EventFiltersProps) {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+
+  // Debounce search input
+  const {
+    value: searchValue,
+    debouncedValue: debouncedSearch,
+    setValue: setSearchValue,
+  } = useDebounce(filters.search, 300);
+
+  // Update filters when debounced search changes
+  React.useEffect(() => {
+    if (debouncedSearch !== filters.search) {
+      onFiltersChange({
+        ...filters,
+        search: debouncedSearch,
+      });
+    }
+  }, [debouncedSearch, filters, onFiltersChange]);
 
   const updateFilter = (key: keyof EventFilters, value: string) => {
     // Ensure groupId is never an empty string
@@ -57,17 +76,18 @@ export default function EventFilters({
       sortBy: "date",
       sortOrder: "desc",
     });
+    setSearchValue(""); // Clear the search input
   };
 
   const hasActiveFilters =
-    filters.search ||
+    searchValue || // Use immediate search value for UI feedback
     (filters.groupId && filters.groupId !== "all") ||
     filters.dateRange !== "all" ||
     filters.sortBy !== "date" ||
     filters.sortOrder !== "desc";
 
   const activeFilterCount = [
-    filters.search,
+    searchValue, // Use immediate search value
     filters.groupId && filters.groupId !== "all",
     filters.dateRange !== "all",
     filters.sortBy !== "date" || filters.sortOrder !== "desc",
@@ -174,8 +194,8 @@ export default function EventFilters({
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
           placeholder="Search events by name, description, or location..."
-          value={filters.search}
-          onChange={(e) => updateFilter("search", e.target.value)}
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
           className="pl-10 pr-4"
         />
       </div>
@@ -286,11 +306,11 @@ export default function EventFilters({
       {/* Active Filters Display - Mobile */}
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-2 lg:hidden">
-          {filters.search && (
+          {searchValue && (
             <Badge variant="secondary" className="text-xs">
-              Search: {filters.search}
+              Search: {searchValue}
               <button
-                onClick={() => updateFilter("search", "")}
+                onClick={() => setSearchValue("")}
                 className="ml-2 hover:bg-destructive/20 rounded-full p-0.5"
               >
                 <X className="w-3 h-3" />
