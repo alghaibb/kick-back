@@ -32,7 +32,7 @@ export const env = createEnv({
     TWILIO_ACCOUNT_SID: z.string().min(1, "TWILIO_ACCOUNT_SID is required"),
     TWILIO_AUTH_TOKEN: z.string().min(1, "TWILIO_AUTH_TOKEN is required"),
     TWILIO_PHONE_NUMBER: z.string().min(1, "TWILIO_PHONE_NUMBER is required"),
-    
+
     // Push Notification VAPID Keys
     VAPID_PRIVATE_KEY: z.string().min(1, "VAPID_PRIVATE_KEY is required"),
     VAPID_EMAIL: z.string().min(1, "VAPID_EMAIL is required").email(),
