@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import withPWA from "next-pwa";
+import { PrismaPlugin } from '@prisma/nextjs-monorepo-workaround-plugin';
 
 const nextConfig: NextConfig = {
   images: {
@@ -34,6 +35,13 @@ const nextConfig: NextConfig = {
     resolveAlias: {
       '@/generated/prisma': './src/generated/prisma',
     },
+  },
+  // Webpack configuration for Prisma
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.plugins = [...config.plugins, new PrismaPlugin()];
+    }
+    return config;
   },
   // Compress responses
   compress: true,
