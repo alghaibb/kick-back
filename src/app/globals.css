@@ -3,6 +3,66 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Mobile scroll optimizations */
+html {
+  /* Prevent zoom on iOS when focusing inputs */
+  -webkit-text-size-adjust: 100%;
+  /* Enable momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* Fix viewport height issues on mobile */
+  height: 100%;
+}
+
+body {
+  /* Prevent overscroll bounce on iOS */
+  overscroll-behavior: none;
+  /* Ensure smooth scrolling */
+  scroll-behavior: smooth;
+  /* Fix height on mobile browsers */
+  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for modern browsers */
+  min-height: calc(var(--vh, 1vh) * 100); /* Fallback for older browsers */
+}
+
+/* Main layout height fix for mobile */
+.mobile-layout {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height */
+  height: calc(var(--vh, 1vh) * 100); /* Custom property fallback */
+}
+
+/* Fix mobile scroll containers */
+.mobile-scroll-container {
+  /* Enable momentum scrolling */
+  -webkit-overflow-scrolling: touch;
+  /* Optimize touch interactions */
+  touch-action: pan-y;
+  /* Prevent scroll chaining */
+  overscroll-behavior: contain;
+  /* Ensure proper scrolling on iOS */
+  position: relative;
+  /* Fix scroll on WebKit browsers */
+  will-change: scroll-position;
+}
+
+/* Prevent scroll issues with fixed elements */
+.mobile-header {
+  /* Prevent scroll interference */
+  touch-action: none;
+  /* Ensure header stays fixed properly */
+  position: sticky;
+  z-index: 50;
+}
+
+/* Fix for iOS Safari bottom bar */
+@supports (-webkit-touch-callout: none) {
+  .mobile-scroll-container {
+    /* Account for iOS Safari's dynamic viewport */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

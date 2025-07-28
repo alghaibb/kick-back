@@ -62,9 +62,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${poppins.variable} antialiased min-h-screen bg-background`}
-      >
+      <body className={`${poppins.variable} antialiased bg-background`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -73,7 +71,7 @@ export default function RootLayout({
           <QueryProvider>
             <ActiveThemeProvider>
               <PageTracker />
-              <main className="min-h-screen flex flex-col">{children}</main>
+              <div className="min-h-screen flex flex-col">{children}</div>
               <Toaster richColors closeButton theme="light" />
               <PWAInstallPrompt />
             </ActiveThemeProvider>

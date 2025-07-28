@@ -1,12 +1,13 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
 import { useThemeConfig } from "@/providers/ActiveThemeProvider";
-import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useMobileScrollFix } from "@/hooks/use-mobile-scroll";
 import { MainHeader } from "./MainHeader";
 import { MainSidebar } from "./MainSidebar";
+import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface MainLayoutClientProps {
   children: React.ReactNode;
@@ -15,11 +16,13 @@ interface MainLayoutClientProps {
 export function MainLayoutClient({ children }: MainLayoutClientProps) {
   const { user } = useAuth();
   const { activeTheme } = useThemeConfig();
+  const isMobile = useIsMobile();
+
+  // Fix mobile scroll issues
+  useMobileScrollFix();
 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
-
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     setIsHydrated(true);
@@ -50,7 +53,7 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
 
   return (
     <div className={cn("min-h-screen", getThemeBackground())}>
-      <div className="flex h-screen">
+      <div className={cn("flex", isMobile ? "mobile-layout" : "h-screen")}>
         {/* Sidebar - Always visible on desktop, collapsible on mobile */}
         {isHydrated && (
           <>
@@ -93,7 +96,12 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
           />
 
           {/* Page Content */}
-          <main className="flex-1 overflow-y-auto p-6">
+          <main
+            className={cn(
+              "flex-1 overflow-y-auto p-6",
+              isMobile && "mobile-scroll-container"
+            )}
+          >
             <div className="mx-auto max-w-5xl">{children}</div>
           </main>
         </div>
