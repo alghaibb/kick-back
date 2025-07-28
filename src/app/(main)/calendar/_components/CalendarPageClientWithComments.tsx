@@ -37,6 +37,19 @@ export function CalendarPageClientWithComments() {
         const eventDate = new Date(targetEvent.date);
         setSelectedDate(eventDate);
         setExpandedEvents(new Set([targetEventId]));
+
+        // Scroll to the event after a short delay to ensure DOM is updated
+        setTimeout(() => {
+          const eventElement = document.getElementById(
+            `event-${targetEventId}`
+          );
+          if (eventElement) {
+            eventElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }
+        }, 100);
       }
     }
   }, [targetEventId, data?.events]);
@@ -107,7 +120,10 @@ export function CalendarPageClientWithComments() {
                 open={expandedEvents.has(event.id)}
                 onOpenChange={() => toggleEventExpanded(event.id)}
               >
-                <div className="border rounded-lg bg-card">
+                <div
+                  id={`event-${event.id}`}
+                  className="border rounded-lg bg-card"
+                >
                   {/* Event Header */}
                   <div className="p-4 space-y-3">
                     <div className="flex items-start justify-between">

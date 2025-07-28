@@ -100,6 +100,8 @@ export default function NotificationBell() {
       router.push(`/groups`);
     } else if (
       (notification.type === "EVENT_COMMENT" ||
+        notification.type === "COMMENT_REPLY" ||
+        notification.type === "COMMENT_REACTION" ||
         notification.type === "EVENT_PHOTO" ||
         notification.type === "EVENT_REMINDER") &&
       data.eventId

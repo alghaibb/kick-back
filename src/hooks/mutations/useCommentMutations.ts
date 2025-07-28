@@ -31,16 +31,18 @@ export function useCreateComment() {
     onMutate: async (values) => {
       if (!user?.id) return;
 
-      // Cancel any outgoing refetches
+      // Cancel any outgoing refetches for all sorting variations
       await queryClient.cancelQueries({
         queryKey: ["event-comments", values.eventId],
       });
 
-      // Snapshot the previous value
-      const previousComments = queryClient.getQueryData([
-        "event-comments",
-        values.eventId,
-      ]);
+      // Get all comment queries for this event to update them all
+      const queryCache = queryClient.getQueryCache();
+      const eventCommentQueries = queryCache.findAll({
+        queryKey: ["event-comments", values.eventId],
+      });
+
+      const rollbackFunctions: Array<() => void> = [];
 
       // Optimistically add the new comment
       const tempComment: EventCommentData = {
@@ -67,103 +69,65 @@ export function useCreateComment() {
         },
       };
 
-      // Update the cache based on whether it's a reply or main comment
-      if (values.parentId) {
-        // It's a reply - add to parent's replies
-        queryClient.setQueryData(
-          ["event-comments", values.eventId],
-          (old: CommentsResponse | undefined) => {
-            if (!old) return old;
+      // Update each comment query optimistically
+      eventCommentQueries.forEach((query) => {
+        const oldData = query.state.data as CommentsResponse | undefined;
+        if (!oldData) return;
 
-            return {
-              ...old,
-              comments: old.comments.map(comment =>
-                comment.id === values.parentId
-                  ? {
-                    ...comment,
-                    replies: [tempComment, ...comment.replies],
-                    _count: {
-                      ...comment._count,
-                      replies: comment._count.replies + 1,
-                    },
-                  }
-                  : comment
-              ),
-            };
-          }
-        );
-      } else {
-        // It's a main comment - add to top level
-        queryClient.setQueryData(
-          ["event-comments", values.eventId],
-          (old: CommentsResponse | undefined) => {
-            if (!old) {
-              return {
-                comments: [tempComment],
-                totalCount: 1,
-              };
-            }
+        // Store rollback function
+        rollbackFunctions.push(() => {
+          queryClient.setQueryData(query.queryKey, oldData);
+        });
 
-            return {
-              comments: [tempComment, ...old.comments],
-              totalCount: old.totalCount + 1,
-            };
-          }
-        );
-      }
+        // Update based on whether it's a reply or main comment
+        if (values.parentId) {
+          // It's a reply - add to parent's replies
+          const newData = {
+            ...oldData,
+            comments: oldData.comments.map(comment =>
+              comment.id === values.parentId
+                ? {
+                  ...comment,
+                  replies: [tempComment, ...comment.replies],
+                  _count: {
+                    ...comment._count,
+                    replies: comment._count.replies + 1,
+                  },
+                }
+                : comment
+            ),
+          };
+          queryClient.setQueryData(query.queryKey, newData);
+        } else {
+          // It's a main comment - add to top level (respect sort order)
+          const sortBy = query.queryKey[2] as string;
+          const newComments = sortBy === "oldest"
+            ? [...oldData.comments, tempComment]
+            : [tempComment, ...oldData.comments];
+
+          const newData = {
+            ...oldData,
+            comments: newComments,
+            totalCount: oldData.totalCount + 1,
+          };
+          queryClient.setQueryData(query.queryKey, newData);
+        }
+      });
 
       // Show immediate success feedback
       toast.success(values.parentId ? "Reply added!" : "Comment added!");
 
-      return { previousComments, eventId: values.eventId };
+      return { rollbackFunctions, eventId: values.eventId };
     },
     onSuccess: (data, variables) => {
-      // Replace optimistic comment with real one
-      queryClient.setQueryData(
-        ["event-comments", variables.eventId],
-        (old: CommentsResponse | undefined) => {
-          if (!old) return old;
-
-          if (variables.parentId) {
-            // Replace optimistic reply with real one
-            return {
-              ...old,
-              comments: old.comments.map(comment =>
-                comment.id === variables.parentId
-                  ? {
-                    ...comment,
-                    replies: comment.replies.map(reply =>
-                      reply.id.startsWith('temp-') ? data.comment : reply
-                    ),
-                  }
-                  : comment
-              ),
-            };
-          } else {
-            // Replace optimistic comment with real one
-            return {
-              ...old,
-              comments: old.comments.map(comment =>
-                comment.id.startsWith('temp-') ? data.comment : comment
-              ),
-            };
-          }
-        }
-      );
-
-      // Trigger immediate refetch to get latest comments from all users
+      // Invalidate all comment queries for this event (all sort orders)
       queryClient.invalidateQueries({
         queryKey: ["event-comments", variables.eventId]
       });
     },
     onError: (error, variables, context) => {
-      // Revert to previous state on error
-      if (context?.previousComments) {
-        queryClient.setQueryData(
-          ["event-comments", variables.eventId],
-          context.previousComments
-        );
-      }
+      // Revert optimistic updates on error
+      context?.rollbackFunctions?.forEach((rollback) => rollback());
       toast.error("Failed to add comment. Please try again.");
     },
   });
