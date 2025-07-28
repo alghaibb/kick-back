@@ -21,7 +21,7 @@ import {
 export function CalendarPageClientWithComments() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
-  const { data, isLoading, error } = useCalendar();
+  const { data, isLoading, error, isFetching } = useCalendar();
 
   const eventsForDay = useMemo(() => {
     if (!data?.events) return [];
@@ -63,9 +63,17 @@ export function CalendarPageClientWithComments() {
         />
       </div>
       <div className="flex-1 border-l pl-6 overflow-y-auto max-h-[800px]">
-        <h3 className="font-semibold text-lg mb-4">
-          {format(selectedDate, "PPP")}
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-lg">
+            {format(selectedDate, "PPP")}
+          </h3>
+          {isFetching && !isLoading && (
+            <div className="flex items-center text-xs text-muted-foreground">
+              <div className="animate-spin w-3 h-3 border border-current border-t-transparent rounded-full mr-1" />
+              Updating...
+            </div>
+          )}
+        </div>
 
         {eventsForDay.length === 0 ? (
           <div className="text-muted-foreground">
@@ -235,11 +243,17 @@ export function CalendarPageClientWithComments() {
                     <div className="border-t p-4">
                       <Tabs defaultValue="comments" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="comments" className="flex items-center gap-2">
+                          <TabsTrigger
+                            value="comments"
+                            className="flex items-center gap-2"
+                          >
                             <MessageCircle className="h-4 w-4" />
                             Comments
                           </TabsTrigger>
-                          <TabsTrigger value="photos" className="flex items-center gap-2">
+                          <TabsTrigger
+                            value="photos"
+                            className="flex items-center gap-2"
+                          >
                             <Camera className="h-4 w-4" />
                             Photos
                           </TabsTrigger>

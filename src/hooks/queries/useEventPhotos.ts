@@ -40,15 +40,12 @@ export function useEventPhotos(eventId: string) {
   return useQuery({
     queryKey: ["event-photos", eventId],
     queryFn: () => fetchEventPhotos(eventId),
-    staleTime: 30 * 1000,
-    gcTime: 2 * 60 * 1000,
-    retry: (failureCount, error) => {
-      if (error?.message === "UNAUTHORIZED") {
-        return false;
-      }
-      return failureCount < 2;
-    },
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    enabled: !!eventId,
+    // Real-time photos and likes with polling
+    staleTime: 0,                 // Always consider data stale
+    gcTime: 5 * 60 * 1000,        // 5 minutes
+    refetchInterval: 15000,       // Refetch every 15 seconds
+    refetchOnWindowFocus: true,   // Refetch when user comes back
+    refetchOnReconnect: true,     // Refetch when connection restored
   });
 }

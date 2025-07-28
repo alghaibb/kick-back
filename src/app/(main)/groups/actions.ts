@@ -268,20 +268,43 @@ export async function acceptGroupInviteAction(formData: FormData) {
       return { error: "You are already a member of this group" };
     }
 
-    // Add user to group
-    await prisma.$transaction([
-      prisma.groupMember.create({
+    // Add user to group and existing events
+    await prisma.$transaction(async (tx) => {
+      // Add user to group
+      await tx.groupMember.create({
         data: {
           groupId: invite.groupId,
           userId: session.user.id,
           role: "member",
         },
-      }),
-      prisma.groupInvite.update({
+      });
+
+      // Add user to all existing events in this group
+      const groupEvents = await tx.event.findMany({
+        where: {
+          groupId: invite.groupId,
+          date: { gte: new Date() } // Only future events
+        },
+        select: { id: true }
+      });
+
+      if (groupEvents.length > 0) {
+        await tx.eventAttendee.createMany({
+          data: groupEvents.map(event => ({
+            eventId: event.id,
+            userId: session.user.id,
+            rsvpStatus: "pending"
+          })),
+          skipDuplicates: true
+        });
+      }
+
+      // Mark invite as accepted
+      await tx.groupInvite.update({
         where: { id: invite.id },
         data: { status: "accepted" },
-      }),
-    ]);
+      });
+    });
 
     revalidatePath("/groups");
     revalidatePath("/dashboard");

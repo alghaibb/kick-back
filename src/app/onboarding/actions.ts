@@ -9,7 +9,10 @@ import { revalidatePath } from "next/cache";
 export async function onboarding(values: unknown) {
   try {
     const validated = serverOnboardingSchema.parse(values);
-    const { firstName, lastName, nickname, image, previousImage, reminderType, phoneNumber, reminderTime, timezone } = validated;
+    let { firstName, lastName, nickname, image, previousImage, reminderType, phoneNumber, reminderTime, timezone } = validated;
+
+    // Normalize phone number - empty strings should be null
+    phoneNumber = phoneNumber && phoneNumber.trim() !== "" ? phoneNumber.trim() : null;
 
     const session = await getSession();
     const userId = session?.user?.id;
@@ -45,6 +48,7 @@ export async function onboarding(values: unknown) {
       }
     }
 
+    // Check for duplicate phone number if provided
     if (phoneNumber) {
       const existingUser = await prisma.user.findUnique({
         where: { phoneNumber },
@@ -52,7 +56,7 @@ export async function onboarding(values: unknown) {
       });
 
       if (existingUser && existingUser.id !== userId) {
-        return { error: "This phone number is already registered" };
+        return { error: "This phone number is already registered by another user" };
       }
     }
 
@@ -80,7 +84,11 @@ export async function onboarding(values: unknown) {
   } catch (error) {
     console.error("Onboarding error:", error);
 
+    // Handle Prisma unique constraint errors
     if (error instanceof Error) {
+      if (error.message.includes('Unique constraint failed on the fields: (`phoneNumber`)')) {
+        return { error: "This phone number is already registered by another user" };
+      }
       return { error: error.message };
     }
 
