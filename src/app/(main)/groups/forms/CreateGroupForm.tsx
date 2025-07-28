@@ -191,7 +191,7 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
                   />
                   <div className="flex items-center gap-2">
                     <Button
-                    variant="outline"
+                      variant="outline"
                       type="button"
                       onClick={() => imageRef.current?.click()}
                       disabled={createGroupMutation.isPending || uploading}
