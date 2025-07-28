@@ -55,18 +55,16 @@ export function useGroups() {
   return useQuery({
     queryKey: ["groups"],
     queryFn: fetchGroups,
-    staleTime: 3 * 60 * 1000, // 3 minutes - groups don't change super frequently
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 15 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
     retry: (failureCount, error) => {
-      // Don't retry on 401 (unauthorized)
       if (error?.message === "UNAUTHORIZED") {
         return false;
       }
       return failureCount < 2;
     },
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
-    // Refetch every 10 minutes in the background to keep groups fresh
-    refetchInterval: 10 * 60 * 1000,
+    refetchInterval: 30 * 60 * 1000,
   });
 } 

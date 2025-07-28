@@ -39,11 +39,10 @@ export function useEventComments(eventId: string) {
     queryKey: ["event-comments", eventId],
     queryFn: () => fetchEventComments(eventId),
     enabled: !!eventId,
-    // Real-time comments with polling
-    staleTime: 0,                 // Always consider data stale
-    gcTime: 5 * 60 * 1000,        // 5 minutes
-    refetchInterval: 15000,       // Refetch every 15 seconds
-    refetchOnWindowFocus: true,   // Refetch when user comes back
-    refetchOnReconnect: true,     // Refetch when connection restored
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchInterval: 3 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
   });
 }

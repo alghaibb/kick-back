@@ -42,18 +42,16 @@ export function useEvents() {
   return useQuery({
     queryKey: ["events"],
     queryFn: fetchEvents,
-    staleTime: 2 * 60 * 1000, // 2 minutes - events don't change super frequently
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000,
+    gcTime: 20 * 60 * 1000,
     retry: (failureCount, error) => {
-      // Don't retry on 401 (unauthorized)
       if (error?.message === "UNAUTHORIZED") {
         return false;
       }
       return failureCount < 2;
     },
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
-    // Refetch every 5 minutes in the background to keep events fresh
-    refetchInterval: 5 * 60 * 1000,
+    refetchInterval: 15 * 60 * 1000,
   });
 } 

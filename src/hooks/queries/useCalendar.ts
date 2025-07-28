@@ -39,9 +39,10 @@ export function useCalendar() {
       const data = await response.json();
       return data;
     },
-    staleTime: 0,
-    refetchInterval: 15000, 
-    refetchOnWindowFocus: true,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });
 } 
