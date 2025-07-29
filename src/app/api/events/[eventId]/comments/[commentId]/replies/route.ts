@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ eventId: string }> }
+  { params }: { params: Promise<{ eventId: string; commentId: string }> }
 ) {
   try {
     const session = await getSession();
@@ -13,9 +13,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { eventId } = await params;
+    const { eventId, commentId } = await params;
     const url = new URL(request.url);
-    const sortBy = url.searchParams.get("sortBy") || "newest";
     const cursor = url.searchParams.get("cursor"); // For pagination
     const limit = parseInt(url.searchParams.get("limit") || "10");
 
@@ -48,18 +47,25 @@ export async function GET(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Build cursor condition for pagination
+    // Verify the parent comment exists and belongs to this event
+    const parentComment = await prisma.eventComment.findUnique({
+      where: { id: commentId },
+      select: { eventId: true },
+    });
+
+    if (!parentComment || parentComment.eventId !== eventId) {
+      return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    }
+
+    // Build cursor condition for pagination (replies are always oldest first)
     const cursorCondition = cursor
-      ? sortBy === "oldest"
-        ? { createdAt: { gt: new Date(cursor) } }
-        : { createdAt: { lt: new Date(cursor) } }
+      ? { createdAt: { gt: new Date(cursor) } }
       : {};
 
-    // Fetch top-level comments with pagination
-    const comments = await prisma.eventComment.findMany({
+    // Fetch replies with pagination
+    const replies = await prisma.eventComment.findMany({
       where: {
-        eventId,
-        parentId: null, // Only top-level comments
+        parentId: commentId,
         ...cursorCondition,
       },
       include: {
@@ -70,41 +76,6 @@ export async function GET(
             lastName: true,
             nickname: true,
             image: true,
-          },
-        },
-        replies: {
-          take: 3, // Only show first 3 replies initially
-          include: {
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                nickname: true,
-                image: true,
-              },
-            },
-            reactions: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    nickname: true,
-                  },
-                },
-              },
-            },
-            _count: {
-              select: {
-                replies: true,
-                reactions: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "asc", // Replies always oldest first
           },
         },
         reactions: {
@@ -128,36 +99,35 @@ export async function GET(
       },
       take: limit + 1, // Take one extra to check if there's more
       orderBy: {
-        createdAt: sortBy === "oldest" ? "asc" : "desc",
+        createdAt: "asc", // Replies always oldest first
       },
     });
 
-    // Check if there are more comments
-    const hasMore = comments.length > limit;
-    const commentsToReturn = hasMore ? comments.slice(0, -1) : comments;
+    // Check if there are more replies
+    const hasMore = replies.length > limit;
+    const repliesToReturn = hasMore ? replies.slice(0, -1) : replies;
 
     // Get the next cursor
     const nextCursor =
-      hasMore && commentsToReturn.length > 0
-        ? commentsToReturn[commentsToReturn.length - 1].createdAt.toISOString()
+      hasMore && repliesToReturn.length > 0
+        ? repliesToReturn[repliesToReturn.length - 1].createdAt.toISOString()
         : null;
 
     // Get total count
     const totalCount = await prisma.eventComment.count({
       where: {
-        eventId,
-        parentId: null,
+        parentId: commentId,
       },
     });
 
     return NextResponse.json({
-      comments: commentsToReturn,
+      replies: repliesToReturn,
       totalCount,
       hasMore,
       nextCursor,
     });
   } catch (error) {
-    console.error("Error fetching comments:", error);
+    console.error("Error fetching replies:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

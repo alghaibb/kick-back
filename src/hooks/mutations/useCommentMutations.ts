@@ -8,7 +8,10 @@ import {
   ReplyCommentValues,
   CommentReactionValues,
 } from "@/validations/events/createCommentSchema";
-import { EventCommentData, CommentsResponse } from "@/hooks/queries/useEventComments";
+import {
+  EventCommentData,
+  CommentsResponse,
+} from "@/hooks/queries/useEventComments";
 import {
   createCommentAction,
   createReplyAction,
@@ -84,16 +87,16 @@ export function useCreateComment() {
           // It's a reply - add to parent's replies
           const newData = {
             ...oldData,
-            comments: oldData.comments.map(comment =>
+            comments: oldData.comments.map((comment) =>
               comment.id === values.parentId
                 ? {
-                  ...comment,
-                  replies: [tempComment, ...comment.replies],
-                  _count: {
-                    ...comment._count,
-                    replies: comment._count.replies + 1,
-                  },
-                }
+                    ...comment,
+                    replies: [tempComment, ...comment.replies],
+                    _count: {
+                      ...comment._count,
+                      replies: comment._count.replies + 1,
+                    },
+                  }
                 : comment
             ),
           };
@@ -101,9 +104,10 @@ export function useCreateComment() {
         } else {
           // It's a main comment - add to top level (respect sort order)
           const sortBy = query.queryKey[2] as string;
-          const newComments = sortBy === "oldest"
-            ? [...oldData.comments, tempComment]
-            : [tempComment, ...oldData.comments];
+          const newComments =
+            sortBy === "oldest"
+              ? [...oldData.comments, tempComment]
+              : [tempComment, ...oldData.comments];
 
           const newData = {
             ...oldData,
@@ -122,7 +126,10 @@ export function useCreateComment() {
     onSuccess: (data, variables) => {
       // Invalidate all comment queries for this event (background sync)
       queryClient.invalidateQueries({
-        queryKey: ["event-comments", variables.eventId]
+        queryKey: ["event-comments", variables.eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["infinite-event-comments", variables.eventId],
       });
     },
     onError: (error, variables, context) => {
@@ -190,16 +197,16 @@ export function useCreateReply() {
 
           return {
             ...old,
-            comments: old.comments.map(comment =>
+            comments: old.comments.map((comment) =>
               comment.id === values.parentId
                 ? {
-                  ...comment,
-                  replies: [tempReply, ...comment.replies],
-                  _count: {
-                    ...comment._count,
-                    replies: comment._count.replies + 1,
-                  },
-                }
+                    ...comment,
+                    replies: [tempReply, ...comment.replies],
+                    _count: {
+                      ...comment._count,
+                      replies: comment._count.replies + 1,
+                    },
+                  }
                 : comment
             ),
           };
@@ -211,7 +218,13 @@ export function useCreateReply() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["event-comments", variables.eventId]
+        queryKey: ["event-comments", variables.eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["infinite-event-comments", variables.eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["infinite-replies", variables.eventId, variables.parentId],
       });
     },
     onError: (error, variables, context) => {
@@ -291,7 +304,13 @@ export function useToggleReaction() {
     onSuccess: () => {
       // Invalidate to get fresh data from server (background sync)
       queryClient.invalidateQueries({
-        queryKey: ["event-comments"]
+        queryKey: ["event-comments"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["infinite-event-comments"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["infinite-replies"],
       });
     },
     onError: (error, _, context) => {
@@ -307,7 +326,12 @@ function updateCommentWithReaction(
   comment: EventCommentData,
   targetCommentId: string,
   emoji: string,
-  user: { id: string; firstName?: string | null; lastName?: string | null; nickname?: string | null }
+  user: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    nickname?: string | null;
+  }
 ): EventCommentData {
   // Check if this is the target comment
   if (comment.id === targetCommentId) {
@@ -319,7 +343,9 @@ function updateCommentWithReaction(
       // Remove existing reaction
       return {
         ...comment,
-        reactions: (comment.reactions || []).filter((_, index) => index !== existingReactionIndex),
+        reactions: (comment.reactions || []).filter(
+          (_, index) => index !== existingReactionIndex
+        ),
         _count: {
           ...comment._count,
           reactions: (comment._count?.reactions || 0) - 1,
@@ -373,7 +399,13 @@ export function useDeleteComment() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["event-comments", variables.eventId]
+        queryKey: ["event-comments", variables.eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["infinite-event-comments", variables.eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["infinite-replies"],
       });
       toast.success("Comment deleted");
     },

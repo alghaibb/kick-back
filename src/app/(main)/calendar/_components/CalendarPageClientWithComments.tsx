@@ -8,7 +8,7 @@ import { format, isSameDay, startOfDay } from "date-fns";
 import { useCalendar } from "@/hooks/queries/useCalendar";
 import { formatDate } from "@/lib/date-utils";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
-import EventCommentsForm from "@/app/(main)/events/comments/_components/EventCommentsForm";
+import ThreadedEventComments from "@/app/(main)/events/comments/_components/ThreadedEventComments";
 import { PhotoUploadForm } from "@/app/(main)/events/photos/_components/PhotoUploadForm";
 import { PhotoGallery } from "@/app/(main)/events/photos/_components/PhotoGallery";
 import { MessageCircle, ChevronDown, ChevronUp, Camera } from "lucide-react";
@@ -295,7 +295,7 @@ export function CalendarPageClientWithComments() {
                           </TabsTrigger>
                         </TabsList>
                         <TabsContent value="comments" className="mt-4">
-                          <EventCommentsForm eventId={event.id} />
+                          <ThreadedEventComments eventId={event.id} />
                         </TabsContent>
                         <TabsContent value="photos" className="mt-4 space-y-6">
                           <PhotoUploadForm eventId={event.id} />
