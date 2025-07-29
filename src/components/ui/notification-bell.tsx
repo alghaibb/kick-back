@@ -10,11 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { NotificationType } from "@/generated/prisma";
 import { useSmartPolling } from "@/hooks/useSmartPolling";
 import { toast } from "sonner";
+import { deleteNotificationAction } from "@/app/api/notifications/actions";
 
 interface Notification {
   id: string;
@@ -138,6 +139,45 @@ export default function NotificationBell() {
     },
   });
 
+  const deleteNotificationMutation = useMutation({
+    mutationFn: deleteNotificationAction,
+    onMutate: async (notificationId) => {
+      // Cancel any outgoing notifications queries
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+
+      // Snapshot the previous value
+      const previousNotifications = queryClient.getQueryData(["notifications"]);
+
+      // Optimistically remove the notification
+      queryClient.setQueryData(["notifications"], (old: any) => {
+        if (!old?.notifications) return old;
+        return {
+          ...old,
+          notifications: old.notifications.filter(
+            (n: any) => n.id !== notificationId
+          ),
+        };
+      });
+
+      // Return context with the previous value
+      return { previousNotifications };
+    },
+    onError: (error: Error, notificationId, context) => {
+      // Rollback on error
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(
+          ["notifications"],
+          context.previousNotifications
+        );
+      }
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      // Always refetch to ensure we're in sync with server
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
   if (isLoading) {
     return (
       <Button variant="ghost" size="icon" disabled>
@@ -196,6 +236,15 @@ export default function NotificationBell() {
     } else {
       declineInviteMutation.mutate(inviteId);
     }
+  };
+
+  const handleDeleteNotification = (
+    e: React.MouseEvent,
+    notificationId: string
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    deleteNotificationMutation.mutate(notificationId);
   };
 
   const notifications = data?.notifications || [];
@@ -275,7 +324,7 @@ export default function NotificationBell() {
                   onClick={(e) => e.preventDefault()} // Prevent default click behavior
                 >
                   <div className="flex items-start justify-between w-full">
-                    <div className="flex-1">
+                    <div className="flex-1 pr-2">
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-sm">
                           {notification.title}
@@ -335,6 +384,19 @@ export default function NotificationBell() {
                         </div>
                       )}
                     </div>
+
+                    {/* Delete button */}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) =>
+                        handleDeleteNotification(e, notification.id)
+                      }
+                      disabled={deleteNotificationMutation.isPending}
+                      className="h-6 w-6 p-0 flex-shrink-0 hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
                 </DropdownMenuItem>
               );
@@ -348,7 +410,7 @@ export default function NotificationBell() {
                 onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex items-start justify-between w-full">
-                  <div className="flex-1">
+                  <div className="flex-1 pr-2">
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-sm">
                         {notification.title}
@@ -364,6 +426,19 @@ export default function NotificationBell() {
                       {new Date(notification.createdAt).toLocaleDateString()}
                     </p>
                   </div>
+
+                  {/* Delete button */}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) =>
+                      handleDeleteNotification(e, notification.id)
+                    }
+                    disabled={deleteNotificationMutation.isPending}
+                    className="h-6 w-6 p-0 flex-shrink-0 hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
                 </div>
               </DropdownMenuItem>
             );
