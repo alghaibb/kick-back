@@ -8,7 +8,6 @@ import { MainHeader } from "./MainHeader";
 import { MainSidebar } from "./MainSidebar";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 interface MainLayoutClientProps {
   children: React.ReactNode;
@@ -18,7 +17,6 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
   const { user } = useAuth();
   const { activeTheme } = useThemeConfig();
   const isMobile = useIsMobile();
-  const router = useRouter();
 
   // Fix mobile scroll issues
   useMobileScrollFix();
@@ -29,13 +27,6 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
   useEffect(() => {
     setIsHydrated(true);
   }, []);
-
-  // Handle onboarding redirect on client side
-  useEffect(() => {
-    if (user && !user.hasOnboarded) {
-      router.push("/onboarding");
-    }
-  }, [user, router]);
 
   if (!user) {
     return null;

@@ -101,12 +101,37 @@ const authConfig: NextAuthConfig = {
             lastName: profile?.family_name ?? "",
             emailVerified: new Date(),
             image: profile?.picture ?? null,
-            hasOnboarded: false, 
+            hasOnboarded: false, // Ensure new OAuth users go through onboarding
           },
         });
       }
 
       return true;
+    },
+    async redirect({ url, baseUrl }) {
+      console.log("NextAuth redirect called with:", { url, baseUrl });
+
+      // After OAuth callback, redirect to our auth-redirect page
+      if (
+        url.includes("/api/auth/callback/google") ||
+        url.includes("/api/auth/callback/facebook")
+      ) {
+        console.log("OAuth callback detected, redirecting to auth-redirect");
+        return `${baseUrl}/auth-redirect`;
+      }
+
+      // For any callback, go to auth-redirect to check onboarding
+      if (url.includes("/callback/")) {
+        console.log("General callback detected, redirecting to auth-redirect");
+        return `${baseUrl}/auth-redirect`;
+      }
+
+      // Default behavior for other redirects
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
+
+      console.log("Default redirect to auth-redirect");
+      return `${baseUrl}/auth-redirect`;
     },
     async jwt({ token, account, user }) {
       if (user) {
