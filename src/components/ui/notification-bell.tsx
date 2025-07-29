@@ -149,15 +149,18 @@ export default function NotificationBell() {
       const previousNotifications = queryClient.getQueryData(["notifications"]);
 
       // Optimistically remove the notification
-      queryClient.setQueryData(["notifications"], (old: any) => {
-        if (!old?.notifications) return old;
-        return {
-          ...old,
-          notifications: old.notifications.filter(
-            (n: any) => n.id !== notificationId
-          ),
-        };
-      });
+      queryClient.setQueryData(
+        ["notifications"],
+        (old: { notifications: Notification[] } | undefined) => {
+          if (!old?.notifications) return old;
+          return {
+            ...old,
+            notifications: old.notifications.filter(
+              (n: Notification) => n.id !== notificationId
+            ),
+          };
+        }
+      );
 
       // Return context with the previous value
       return { previousNotifications };
