@@ -70,15 +70,7 @@ const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉", "👏"];
 interface ThreadedRepliesSectionProps {
   eventId: string;
   commentId: string;
-  onReaction: (commentId: string, emoji: string) => void;
-  onDelete: (commentId: string) => void;
-  onStartReply: (comment: EventCommentData, isNestedReply: boolean) => void;
-  parentDepth: number;
-  renderComment: (
-    comment: EventCommentData,
-    depth: number,
-    isReply: boolean
-  ) => React.ReactNode;
+  renderComment: (comment: EventCommentData, depth: number) => React.ReactNode;
   expandedReplies: Set<string>;
   toggleRepliesExpansion: (commentId: string) => void;
 }
@@ -86,10 +78,6 @@ interface ThreadedRepliesSectionProps {
 function ThreadedRepliesSection({
   eventId,
   commentId,
-  onReaction,
-  onDelete,
-  onStartReply,
-  parentDepth,
   renderComment,
   expandedReplies,
   toggleRepliesExpansion,
@@ -160,7 +148,7 @@ function ThreadedRepliesSection({
       <div key={reply.id}>
         {/* Render the reply itself */}
         <div className="relative">
-          {renderComment(reply, depth + 1, true)}
+          {renderComment(reply, depth + 1)}
 
           {/* Show/Hide nested replies button for replies with children */}
           {hasNestedReplies && (
@@ -206,7 +194,7 @@ function ThreadedRepliesSection({
 
   return (
     <div className="space-y-2">
-      {threadedReplies.map((reply) => renderThreadedReply(reply, parentDepth))}
+      {threadedReplies.map((reply) => renderThreadedReply(reply, 0))}
 
       {/* Load more replies */}
       {hasNextReplies && (
@@ -335,7 +323,7 @@ export default function ThreadedEventComments({
       // For flat threading: if replying to a reply, use the top-level parent
       // but prepend @mention to show context
       let content = values.content;
-      let parentId = replyingTo;
+      const parentId = replyingTo;
 
       // If we're replying to someone specific, add @mention
       if (replyingToUser && replyingToUser.id !== user?.id) {
@@ -403,11 +391,7 @@ export default function ThreadedEventComments({
   );
 
   // Render individual comment with infinite threading depth
-  const renderComment = (
-    comment: EventCommentData,
-    depth: number = 0,
-    isReply: boolean = false
-  ) => {
+  const renderComment = (comment: EventCommentData, depth: number = 0) => {
     const reactions = comment.reactions || [];
     const reactionCounts = reactions.reduce(
       (acc, reaction) => {
@@ -716,10 +700,6 @@ export default function ThreadedEventComments({
                 <ThreadedRepliesSection
                   eventId={eventId}
                   commentId={comment.id}
-                  onReaction={handleReaction}
-                  onDelete={handleDeleteComment}
-                  onStartReply={handleStartReply}
-                  parentDepth={depth}
                   renderComment={renderComment}
                   expandedReplies={expandedReplies}
                   toggleRepliesExpansion={toggleRepliesExpansion}

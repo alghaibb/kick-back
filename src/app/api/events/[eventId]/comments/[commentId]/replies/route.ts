@@ -2,6 +2,39 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { NextResponse } from "next/server";
 
+type CommentWithRelations = {
+  id: string;
+  content: string;
+  imageUrl: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  eventId: string;
+  parentId: string | null;
+  user: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    nickname: string | null;
+    image: string | null;
+  };
+  reactions: Array<{
+    id: string;
+    emoji: string;
+    userId: string;
+    user: {
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      nickname: string | null;
+    };
+  }>;
+  _count: {
+    replies: number;
+    reactions: number;
+  };
+};
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ eventId: string; commentId: string }> }
@@ -12,7 +45,7 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     const { eventId, commentId } = await params;
     const url = new URL(request.url);
     const cursor = url.searchParams.get("cursor"); // For pagination
@@ -65,8 +98,8 @@ export async function GET(
     // Recursive function to get all replies in a thread
     async function getAllRepliesInThread(
       rootCommentId: string
-    ): Promise<any[]> {
-      const allReplies: any[] = [];
+    ): Promise<CommentWithRelations[]> {
+      const allReplies: CommentWithRelations[] = [];
       const idsToProcess = [rootCommentId];
       const processedIds = new Set<string>();
 

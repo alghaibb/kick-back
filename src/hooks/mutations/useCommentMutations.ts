@@ -307,12 +307,15 @@ export function useToggleReaction() {
       });
 
       infiniteCommentQueries.forEach((query) => {
-        const oldData = query.state.data as any;
+        const oldData = query.state.data as {
+          pages: Array<{ comments: EventCommentData[] }>;
+          pageParams: unknown[];
+        };
         if (!oldData?.pages) return;
 
         const newData = {
           ...oldData,
-          pages: oldData.pages.map((page: any) => ({
+          pages: oldData.pages.map((page) => ({
             ...page,
             comments: page.comments.map((comment: EventCommentData) =>
               updateCommentWithReaction(comment, commentId, emoji, user)
@@ -332,12 +335,15 @@ export function useToggleReaction() {
       });
 
       infiniteRepliesQueries.forEach((query) => {
-        const oldData = query.state.data as any;
+        const oldData = query.state.data as {
+          pages: Array<{ replies: EventCommentData[] }>;
+          pageParams: unknown[];
+        };
         if (!oldData?.pages) return;
 
         const newData = {
           ...oldData,
-          pages: oldData.pages.map((page: any) => ({
+          pages: oldData.pages.map((page) => ({
             ...page,
             replies: page.replies.map((reply: EventCommentData) =>
               updateCommentWithReaction(reply, commentId, emoji, user)
