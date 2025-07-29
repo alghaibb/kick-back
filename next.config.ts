@@ -42,23 +42,66 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-dropdown-menu",
       "@radix-ui/react-select",
       "@radix-ui/react-popover",
+      "@radix-ui/react-tooltip",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-checkbox",
+      "@radix-ui/react-switch",
+      "@radix-ui/react-tabs",
+      "@tanstack/react-query", // Tree-shake React Query
+      "sonner", // Tree-shake toast library
     ],
+    // Enable aggressive code splitting
+    optimizeServerReact: true,
+    // Reduce client-side JavaScript
+    serverMinification: true,
   },
+  // Compress responses more aggressively
+  compress: true,
+  // Optimize output
+  swcMinify: true,
+  // Static optimization
+  output: "standalone",
   // Turbopack configuration for Prisma
   turbopack: {
     resolveAlias: {
       "@/generated/prisma": "./src/generated/prisma",
     },
   },
-  // Webpack configuration for Prisma
-  webpack: (config, { isServer }) => {
+  // Webpack configuration for Prisma and optimizations
+  webpack: (config, { isServer, dev }) => {
     if (isServer) {
       config.plugins = [...config.plugins, new PrismaPlugin()];
     }
+
+    // Optimize for production
+    if (!dev) {
+      // Tree shake unused code more aggressively
+      config.optimization.usedExports = true;
+      config.optimization.sideEffects = false;
+
+      // Split chunks more efficiently
+      config.optimization.splitChunks = {
+        chunks: "all",
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: "vendors",
+            priority: 10,
+            chunks: "all",
+          },
+          common: {
+            name: "common",
+            minChunks: 2,
+            priority: 5,
+            chunks: "all",
+            enforce: true,
+          },
+        },
+      };
+    }
+
     return config;
   },
-  // Compress responses
-  compress: true,
 };
 
 export default withPWA({

@@ -14,9 +14,9 @@ export default function QueryProvider({
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Ultra-fast settings for small user base (0-100 users)
-            staleTime: 5 * 1000, // 5 seconds - very fresh data (increased from 2 seconds)
-            gcTime: 5 * 60 * 1000, // 5 minutes - reasonable cache time
+            // Optimized caching strategy for performance
+            staleTime: 2 * 60 * 1000, // 2 minutes - balance between freshness and performance
+            gcTime: 10 * 60 * 1000, // 10 minutes - longer cache retention for better UX
             retry: (failureCount, error) => {
               // Don't retry auth errors
               if (error?.message === "UNAUTHORIZED") {
@@ -28,13 +28,19 @@ export default function QueryProvider({
             refetchOnWindowFocus: true, // Re-enable for instant updates when switching tabs
             refetchOnReconnect: true,
             // Enable background refetching for real-time feel
-            refetchIntervalInBackground: true,
+            refetchIntervalInBackground: false, // Disable to save resources when tab is inactive
+            // Network mode optimizations
+            networkMode: "online",
+            // Reduce memory usage
+            structuralSharing: true, // Share identical data structures
           },
           mutations: {
             // Faster retry for mutations
             retry: 1,
-            // Don't show loading states for too long
-            gcTime: 1000,
+            // Longer garbage collection for mutations (better UX on slow networks)
+            gcTime: 5 * 60 * 1000, // 5 minutes instead of 1 second
+            // Network optimizations
+            networkMode: "online",
           },
         },
       })
@@ -43,7 +49,10 @@ export default function QueryProvider({
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <ReactQueryDevtools initialIsOpen={false} />
+      {/* Only load devtools in development */}
+      {process.env.NODE_ENV === "development" && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
     </QueryClientProvider>
   );
 }
