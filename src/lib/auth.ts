@@ -20,11 +20,21 @@ const authConfig: NextAuthConfig = {
       clientId: env.AUTH_GOOGLE_ID,
       clientSecret: env.AUTH_GOOGLE_SECRET,
       allowDangerousEmailAccountLinking: true,
+      authorization: {
+        params: {
+          prompt: "select_account",
+        },
+      },
     }),
     Facebook({
       clientId: env.AUTH_FACEBOOK_ID,
       clientSecret: env.AUTH_FACEBOOK_SECRET,
       allowDangerousEmailAccountLinking: true,
+      authorization: {
+        params: {
+          prompt: "select_account",
+        },
+      },
     }),
     Credentials({
       credentials: {
