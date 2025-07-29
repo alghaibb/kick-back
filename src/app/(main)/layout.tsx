@@ -1,5 +1,3 @@
-import { getSession } from "@/lib/sessions";
-import { redirect } from "next/navigation";
 import { lazy, Suspense } from "react";
 import { MainLayoutClient } from "./_components/MainLayoutClient";
 
@@ -38,16 +36,11 @@ const InviteGroupModal = lazy(() =>
   }))
 );
 
-export const dynamic = "force-dynamic";
-
-export default async function MainLayout({
+export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
-  if (!session?.user?.id) redirect("/login");
-
   return (
     <>
       <MainLayoutClient>{children}</MainLayoutClient>

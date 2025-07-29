@@ -12,6 +12,7 @@ export interface User {
   nickname: string | null;
   image: string | null;
   timezone: string | null;
+  hasOnboarded: boolean;
   createdAt: string;
   updatedAt: string;
 }

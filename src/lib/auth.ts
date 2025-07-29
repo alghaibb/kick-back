@@ -101,6 +101,7 @@ const authConfig: NextAuthConfig = {
             lastName: profile?.family_name ?? "",
             emailVerified: new Date(),
             image: profile?.picture ?? null,
+            hasOnboarded: false, 
           },
         });
       }

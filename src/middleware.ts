@@ -17,10 +17,29 @@ export default function middleware(request: NextRequest) {
     "/magic-link-login",
   ];
 
+  const protectedRoutes = [
+    "/dashboard",
+    "/calendar",
+    "/events",
+    "/groups",
+    "/profile",
+    "/settings",
+    "/onboarding",
+  ];
+
   const { pathname } = request.nextUrl;
 
+  // Redirect authenticated users away from auth-only pages
   if (isLoggedIn && unauthOnlyRoutes.includes(pathname)) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // Redirect unauthenticated users away from protected pages
+  if (
+    !isLoggedIn &&
+    protectedRoutes.some((route) => pathname.startsWith(route))
+  ) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();

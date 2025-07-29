@@ -48,6 +48,7 @@ export async function getSession() {
         emailVerified: session.user.emailVerified,
         image: session.user.image,
         timezone: session.user.timezone,
+        hasOnboarded: session.user.hasOnboarded,
         createdAt: session.user.createdAt,
         updatedAt: session.user.updatedAt,
       },
