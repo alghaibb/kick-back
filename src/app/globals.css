@@ -44,15 +44,20 @@ body {
   position: relative;
   /* Fix scroll on WebKit browsers */
   will-change: scroll-position;
+  /* Improve scroll performance */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Prevent scroll issues with fixed elements */
 .mobile-header {
-  /* Prevent scroll interference */
-  touch-action: none;
-  /* Ensure header stays fixed properly */
-  position: sticky;
-  z-index: 50;
+  /* Allow scrolling but prevent double-tap zoom */
+  touch-action: manipulation;
+  /* Ensure header stays above content but let Tailwind handle positioning */
+  z-index: 40;
+  /* Improve render performance */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Fix for iOS Safari bottom bar */
