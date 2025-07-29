@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingButton } from "@/components/ui/button";
+import { LoadingButton, Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -21,6 +21,7 @@ import {
 import {
   useSettingsMutation,
   useChangePasswordMutation,
+  useDeleteAccountMutation,
 } from "@/hooks/mutations/useSettingsMutation";
 import {
   Select,
@@ -34,6 +35,8 @@ import { settingsSchema, SettingsValues } from "@/validations/settingsSchema";
 import { Switch } from "@/components/ui/switch";
 import { formatToE164 } from "@/utils/formatPhoneNumber";
 import { detectCountryForSMS } from "@/utils/detectCountry";
+import { useModal } from "@/hooks/use-modal";
+import { GenericModal } from "@/components/ui/generic-modal";
 
 interface SettingsFormProps {
   user: {
@@ -52,6 +55,8 @@ interface SettingsFormProps {
 export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
   const settingsMutation = useSettingsMutation();
   const passwordMutation = useChangePasswordMutation();
+  const deleteAccountMutation = useDeleteAccountMutation();
+  const { open } = useModal();
 
   // Settings form (reminderType, reminderTime, timezone)
   const settingsForm = useForm<SettingsValues>({
@@ -363,6 +368,65 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Danger Zone */}
+      <Card className="border-destructive">
+        <CardHeader>
+          <CardTitle className="text-lg text-destructive">
+            Danger Zone
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-medium text-foreground">Delete Account</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Permanently delete your account and all associated data. This
+                action cannot be undone.
+              </p>
+            </div>
+            <LoadingButton
+              variant="destructive"
+              loading={deleteAccountMutation.isPending}
+              onClick={() => {
+                open("delete-account");
+              }}
+            >
+              Delete Account
+            </LoadingButton>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete Account Confirmation Modal */}
+      <GenericModal
+        type="delete-account"
+        title="Delete Account"
+        description="Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data, groups, events, and images."
+        showCancel={false}
+      >
+        <div className="flex flex-col gap-3 p-6">
+          <LoadingButton
+            variant="destructive"
+            loading={deleteAccountMutation.isPending}
+            onClick={() => {
+              useModal.getState().close();
+              deleteAccountMutation.mutate();
+            }}
+            className="w-full"
+          >
+            Yes, Delete My Account
+          </LoadingButton>
+          <Button
+            variant="outline"
+            onClick={() => useModal.getState().close()}
+            disabled={deleteAccountMutation.isPending}
+            className="w-full"
+          >
+            Cancel
+          </Button>
+        </div>
+      </GenericModal>
     </div>
   );
 }

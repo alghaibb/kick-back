@@ -213,7 +213,7 @@ model Event {
 model EventAttendee {
   id               String    @id @default(cuid())
   eventId          String
-  event            Event     @relation(fields: [eventId], references: [id])
+  event            Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   userId           String
   status           String?
   rsvpStatus       String    @default("pending")
@@ -221,7 +221,7 @@ model EventAttendee {
   invitedAt        DateTime  @default(now())
   respondedAt      DateTime?
   lastReminderSent DateTime?
-  user             User      @relation(fields: [userId], references: [id])
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId])
   @@index([userId])

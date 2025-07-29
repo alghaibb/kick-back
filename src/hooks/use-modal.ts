@@ -8,7 +8,8 @@ export type ModalType =
   | "edit-event"
   | "delete-event"
   | "delete-photo"
-  | "delete-comment";
+  | "delete-comment"
+  | "delete-account";
 
 interface ModalState {
   type: ModalType | null;

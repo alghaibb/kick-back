@@ -5,9 +5,11 @@ import { toast } from "sonner";
 import {
   updateSettingsAction,
   changePasswordAction,
+  deleteAccountAction,
 } from "@/app/(main)/settings/actions";
 import { SettingsValues } from "@/validations/settingsSchema";
 import { ChangePasswordValues } from "@/validations/profile/profileSchema";
+import { useRouter } from "next/navigation";
 
 export function useSettingsMutation() {
   const queryClient = useQueryClient();
@@ -60,6 +62,36 @@ export function useChangePasswordMutation() {
     onError: (error: Error) => {
       console.error("Password change error:", error);
       toast.error(error.message || "Failed to change password");
+    },
+  });
+}
+
+export function useDeleteAccountMutation() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const result = await deleteAccountAction();
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
+      return result;
+    },
+    onSuccess: () => {
+      // Clear all cached data
+      queryClient.clear();
+      toast.success("Account deleted successfully");
+
+      // Redirect to home page after a brief delay
+      setTimeout(() => {
+        router.replace("/");
+      }, 1000);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete account");
     },
   });
 }
