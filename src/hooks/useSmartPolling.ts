@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 type PollingStrategy = "ultra-fast" | "standard" | "relaxed";
 
@@ -48,22 +48,22 @@ export function useSmartPolling(options: SmartPollingOptions = {}) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Reset activity timer
-  const resetActivity = () => {
+  const resetActivity = useCallback(() => {
     lastActivityRef.current = Date.now();
     if (!isActive) {
       setIsActive(true);
     }
-  };
+  }, [isActive]);
 
   // Check if user has been idle
-  const checkIdleStatus = () => {
+  const checkIdleStatus = useCallback(() => {
     const now = Date.now();
     const timeSinceActivity = now - lastActivityRef.current;
 
     if (timeSinceActivity >= idleTimeout && isActive) {
       setIsActive(false);
     }
-  };
+  }, [idleTimeout, isActive]);
 
   useEffect(() => {
     // Track user activity events
@@ -93,17 +93,20 @@ export function useSmartPolling(options: SmartPollingOptions = {}) {
     // Check idle status every 30 seconds
     const idleCheckInterval = setInterval(checkIdleStatus, 30000);
 
+    // Capture the current timeout ref for cleanup
+    const currentTimeout = timeoutRef.current;
+
     return () => {
       events.forEach((event) =>
         document.removeEventListener(event, resetActivity, true)
       );
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearInterval(idleCheckInterval);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
       }
     };
-  }, [idleTimeout, isActive]);
+  }, [idleTimeout, isActive, checkIdleStatus, resetActivity]);
 
   // Calculate current polling interval
   const getPollingInterval = (): number => {
