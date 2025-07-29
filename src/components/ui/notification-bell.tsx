@@ -116,7 +116,7 @@ export default function NotificationBell() {
 
   const acceptInviteMutation = useMutation({
     mutationFn: acceptInvite,
-    onSuccess: (data, inviteId) => {
+    onSuccess: (data) => {
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["groups"] });
