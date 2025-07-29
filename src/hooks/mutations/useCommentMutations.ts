@@ -265,20 +265,25 @@ export function useToggleReaction() {
     onMutate: async ({ commentId, emoji }) => {
       if (!user?.id) return;
 
-      // Cancel outgoing refetches
+      // Cancel outgoing refetches for all comment-related queries
       await queryClient.cancelQueries({
         queryKey: ["event-comments"],
       });
+      await queryClient.cancelQueries({
+        queryKey: ["infinite-event-comments"],
+      });
+      await queryClient.cancelQueries({
+        queryKey: ["infinite-replies"],
+      });
 
-      // Get all comment queries to update
+      const rollbackFunctions: Array<() => void> = [];
       const queryCache = queryClient.getQueryCache();
+
+      // Update regular comment queries
       const commentQueries = queryCache.findAll({
         queryKey: ["event-comments"],
       });
 
-      const rollbackFunctions: Array<() => void> = [];
-
-      // Update each query optimistically
       commentQueries.forEach((query) => {
         const oldData = query.state.data as CommentsResponse | undefined;
         if (!oldData) return;
@@ -291,8 +296,56 @@ export function useToggleReaction() {
         };
 
         queryClient.setQueryData(query.queryKey, newData);
+        rollbackFunctions.push(() => {
+          queryClient.setQueryData(query.queryKey, oldData);
+        });
+      });
 
-        // Store rollback function
+      // Update infinite comment queries
+      const infiniteCommentQueries = queryCache.findAll({
+        queryKey: ["infinite-event-comments"],
+      });
+
+      infiniteCommentQueries.forEach((query) => {
+        const oldData = query.state.data as any;
+        if (!oldData?.pages) return;
+
+        const newData = {
+          ...oldData,
+          pages: oldData.pages.map((page: any) => ({
+            ...page,
+            comments: page.comments.map((comment: EventCommentData) =>
+              updateCommentWithReaction(comment, commentId, emoji, user)
+            ),
+          })),
+        };
+
+        queryClient.setQueryData(query.queryKey, newData);
+        rollbackFunctions.push(() => {
+          queryClient.setQueryData(query.queryKey, oldData);
+        });
+      });
+
+      // Update infinite replies queries
+      const infiniteRepliesQueries = queryCache.findAll({
+        queryKey: ["infinite-replies"],
+      });
+
+      infiniteRepliesQueries.forEach((query) => {
+        const oldData = query.state.data as any;
+        if (!oldData?.pages) return;
+
+        const newData = {
+          ...oldData,
+          pages: oldData.pages.map((page: any) => ({
+            ...page,
+            replies: page.replies.map((reply: EventCommentData) =>
+              updateCommentWithReaction(reply, commentId, emoji, user)
+            ),
+          })),
+        };
+
+        queryClient.setQueryData(query.queryKey, newData);
         rollbackFunctions.push(() => {
           queryClient.setQueryData(query.queryKey, oldData);
         });

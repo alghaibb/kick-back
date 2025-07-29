@@ -262,6 +262,48 @@ export async function createReplyAction(values: ReplyCommentValues) {
         eventName: parentComment.event.name,
         commentId: reply.id,
       });
+
+      // Check if this is a reply to a reply (contains @mention)
+      const mentionMatch = content.match(/^@(\w+)\s/);
+      if (mentionMatch) {
+        const mentionedName = mentionMatch[1];
+
+        // Find the mentioned user by finding a reply in this thread with that name
+        const mentionedReply = await prisma.eventComment.findFirst({
+          where: {
+            eventId,
+            OR: [
+              { parentId: parentComment.parentId || parentComment.id }, // Same thread
+              { id: parentComment.parentId || parentComment.id }, // Parent comment
+            ],
+            user: {
+              OR: [{ nickname: mentionedName }, { firstName: mentionedName }],
+            },
+            userId: { not: session.user.id }, // Don't notify self
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                nickname: true,
+              },
+            },
+          },
+        });
+
+        // Send additional notification to the mentioned user if found
+        if (mentionedReply && mentionedReply.userId !== parentComment.userId) {
+          await notifyCommentReply({
+            parentCommentUserId: mentionedReply.userId,
+            replierId: session.user.id,
+            replierName: reply.user.nickname || reply.user.firstName,
+            eventId,
+            eventName: parentComment.event.name,
+            commentId: reply.id,
+          });
+        }
+      }
     } catch (error) {
       console.error("Error sending reply notification:", error);
     }

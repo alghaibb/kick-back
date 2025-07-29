@@ -12,7 +12,7 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
+    
     const { eventId, commentId } = await params;
     const url = new URL(request.url);
     const cursor = url.searchParams.get("cursor"); // For pagination
@@ -62,23 +62,24 @@ export async function GET(
       ? { createdAt: { gt: new Date(cursor) } }
       : {};
 
-    // Fetch replies with pagination
-    const replies = await prisma.eventComment.findMany({
-      where: {
-        parentId: commentId,
-        ...cursorCondition,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            nickname: true,
-            image: true,
+    // Recursive function to get all replies in a thread
+    async function getAllRepliesInThread(
+      rootCommentId: string
+    ): Promise<any[]> {
+      const allReplies: any[] = [];
+      const idsToProcess = [rootCommentId];
+      const processedIds = new Set<string>();
+
+      while (idsToProcess.length > 0) {
+        const currentIds = idsToProcess.splice(0); // Take all current IDs
+
+        if (currentIds.length === 0) break;
+
+        // Fetch direct children of current IDs
+        const replies = await prisma.eventComment.findMany({
+          where: {
+            parentId: { in: currentIds },
           },
-        },
-        reactions: {
           include: {
             user: {
               select: {
@@ -86,26 +87,61 @@ export async function GET(
                 firstName: true,
                 lastName: true,
                 nickname: true,
+                image: true,
+              },
+            },
+            reactions: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    nickname: true,
+                  },
+                },
+              },
+            },
+            _count: {
+              select: {
+                replies: true,
+                reactions: true,
               },
             },
           },
-        },
-        _count: {
-          select: {
-            replies: true,
-            reactions: true,
+          orderBy: {
+            createdAt: "asc",
           },
-        },
-      },
-      take: limit + 1, // Take one extra to check if there's more
-      orderBy: {
-        createdAt: "asc", // Replies always oldest first
-      },
-    });
+        });
 
-    // Check if there are more replies
-    const hasMore = replies.length > limit;
-    const repliesToReturn = hasMore ? replies.slice(0, -1) : replies;
+        // Add new replies to our collection and queue their IDs for next iteration
+        for (const reply of replies) {
+          if (!processedIds.has(reply.id)) {
+            allReplies.push(reply);
+            idsToProcess.push(reply.id);
+            processedIds.add(reply.id);
+          }
+        }
+      }
+
+      return allReplies;
+    }
+
+    // Get all replies in the thread (excluding the root comment itself)
+    const allReplies = await getAllRepliesInThread(commentId);
+
+    // Apply cursor filtering for pagination
+    const filteredReplies = cursorCondition.createdAt
+      ? allReplies.filter(
+          (reply) => reply.createdAt > cursorCondition.createdAt!.gt!
+        )
+      : allReplies;
+
+    // Apply pagination
+    const hasMore = filteredReplies.length > limit;
+    const repliesToReturn = hasMore
+      ? filteredReplies.slice(0, limit)
+      : filteredReplies;
 
     // Get the next cursor
     const nextCursor =
@@ -114,11 +150,7 @@ export async function GET(
         : null;
 
     // Get total count
-    const totalCount = await prisma.eventComment.count({
-      where: {
-        parentId: commentId,
-      },
-    });
+    const totalCount = allReplies.length;
 
     return NextResponse.json({
       replies: repliesToReturn,
