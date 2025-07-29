@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { inviteId: string } }
+  { params }: { params: Promise<{ inviteId: string }> }
 ) {
   try {
     const session = await getSession();
@@ -12,7 +12,7 @@ export async function POST(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { inviteId } = params;
+    const { inviteId } = await params;
 
     // Find and validate invite
     const invite = await prisma.groupInvite.findUnique({
