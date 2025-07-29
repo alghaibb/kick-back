@@ -22,6 +22,7 @@ export function useProfileMutation() {
       // Invalidate and refetch user data from multiple locations
       queryClient.invalidateQueries({ queryKey: ["user"] });
       queryClient.invalidateQueries({ queryKey: ["auth"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] }); 
       queryClient.refetchQueries({ queryKey: ["user"] });
 
       toast.success("Profile updated successfully!");

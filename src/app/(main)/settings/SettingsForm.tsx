@@ -13,14 +13,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useForm } from "react-hook-form";
-import { useTransition } from "react";
-import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   changePasswordSchema,
   ChangePasswordValues,
 } from "@/validations/profile/profileSchema";
-import { updateSettingsAction, changePasswordAction } from "./actions";
+import {
+  useSettingsMutation,
+  useChangePasswordMutation,
+} from "@/hooks/mutations/useSettingsMutation";
 import {
   Select,
   SelectTrigger,
@@ -49,8 +50,8 @@ interface SettingsFormProps {
 }
 
 export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
-  const [isPendingSettings, startSettingsTransition] = useTransition();
-  const [isPendingPassword, startPasswordTransition] = useTransition();
+  const settingsMutation = useSettingsMutation();
+  const passwordMutation = useChangePasswordMutation();
 
   // Settings form (reminderType, reminderTime, timezone)
   const settingsForm = useForm<SettingsValues>({
@@ -100,26 +101,18 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
   const isPasswordValid = passwordForm.formState.isValid;
 
   async function onSettingsSubmit(values: SettingsValues) {
-    startSettingsTransition(async () => {
-      const res = await updateSettingsAction(values);
-      if (res?.error) {
-        toast.error(res.error);
-        return;
-      }
-      toast.success("Settings updated successfully!");
-      settingsForm.reset(values);
+    settingsMutation.mutate(values, {
+      onSuccess: () => {
+        settingsForm.reset(values);
+      },
     });
   }
 
   async function onPasswordSubmit(values: ChangePasswordValues) {
-    startPasswordTransition(async () => {
-      const res = await changePasswordAction(values);
-      if (res?.error) {
-        toast.error(res.error);
-        return;
-      }
-      toast.success("Password changed successfully!");
-      passwordForm.reset();
+    passwordMutation.mutate(values, {
+      onSuccess: () => {
+        passwordForm.reset();
+      },
     });
   }
 
@@ -152,7 +145,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        disabled={isPendingSettings}
+                        disabled={settingsMutation.isPending}
                       />
                     </FormControl>
                   </FormItem>
@@ -176,7 +169,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        disabled={isPendingSettings}
+                        disabled={settingsMutation.isPending}
                       />
                     </FormControl>
                   </FormItem>
@@ -194,7 +187,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                         value={field.value}
                         onValueChange={field.onChange}
                         disabled={
-                          isPendingSettings ||
+                          settingsMutation.isPending ||
                           !settingsForm.watch("notificationOptIn")
                         }
                       >
@@ -224,7 +217,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                           placeholder="Enter your phone number"
                           {...field}
                           disabled={
-                            isPendingSettings ||
+                            settingsMutation.isPending ||
                             !settingsForm.watch("notificationOptIn")
                           }
                         />
@@ -250,7 +243,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                         type="time"
                         {...field}
                         disabled={
-                          isPendingSettings ||
+                          settingsMutation.isPending ||
                           !settingsForm.watch("notificationOptIn")
                         }
                       />
@@ -270,7 +263,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                         value={field.value}
                         onChange={field.onChange}
                         disabled={
-                          isPendingSettings ||
+                          settingsMutation.isPending ||
                           !settingsForm.watch("notificationOptIn")
                         }
                       />
@@ -281,7 +274,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
               />
               <LoadingButton
                 type="submit"
-                loading={isPendingSettings}
+                loading={settingsMutation.isPending}
                 className="w-full"
                 disabled={
                   !isSettingsDirty ||
@@ -359,7 +352,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                 />
                 <LoadingButton
                   type="submit"
-                  loading={isPendingPassword}
+                  loading={passwordMutation.isPending}
                   className="w-full"
                   disabled={!isPasswordDirty || !isPasswordValid}
                 >
