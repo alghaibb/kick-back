@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useSmartPolling } from "@/hooks/useSmartPolling";
 
 export interface EventData {
   id: string;
@@ -39,6 +40,8 @@ async function fetchEvents(): Promise<EventsResponse> {
 }
 
 export function useEvents() {
+  const { pollingInterval } = useSmartPolling({ strategy: 'relaxed' });
+
   return useQuery({
     queryKey: ["events"],
     queryFn: fetchEvents,
@@ -52,6 +55,6 @@ export function useEvents() {
     },
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
-    refetchInterval: 15 * 60 * 1000,
+    refetchInterval: pollingInterval,
   });
 } 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useSmartPolling } from "@/hooks/useSmartPolling";
 
 export interface DashboardStats {
   todaysEventsCount: number;
@@ -33,6 +34,8 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
 }
 
 export function useDashboardStats() {
+  const { pollingInterval } = useSmartPolling({ strategy: "relaxed" });
+
   return useQuery({
     queryKey: ["dashboard", "stats"],
     queryFn: fetchDashboardStats,
@@ -46,6 +49,6 @@ export function useDashboardStats() {
     },
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
-    refetchInterval: 15 * 60 * 1000,
+    refetchInterval: pollingInterval,
   });
-} 
+}

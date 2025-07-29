@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { NotificationType } from "@/generated/prisma";
+import { useSmartPolling } from "@/hooks/useSmartPolling";
 
 interface Notification {
   id: string;
@@ -57,14 +58,17 @@ async function markAllAsRead(): Promise<void> {
 
 export default function NotificationBell() {
   const router = useRouter();
+  const { pollingInterval, userStatus } = useSmartPolling({
+    strategy: "standard",
+  });
 
   const { data, refetch } = useQuery({
     queryKey: ["notifications"],
     queryFn: fetchNotifications,
-    refetchInterval: 30 * 1000,
+    refetchInterval: pollingInterval,
     staleTime: 15 * 1000,
     gcTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Instant updates when switching back to tab
     refetchOnReconnect: true,
   });
 
@@ -137,7 +141,28 @@ export default function NotificationBell() {
         className="w-80 max-h-96 overflow-y-auto"
       >
         <div className="flex items-center justify-between p-2">
-          <h3 className="font-semibold">Notifications</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold">Notifications</h3>
+            <div className="flex items-center gap-1">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  userStatus === "active"
+                    ? "bg-green-500"
+                    : userStatus === "idle"
+                      ? "bg-yellow-500"
+                      : "bg-gray-400"
+                }`}
+                title={`Status: ${userStatus} (${pollingInterval / 1000}s)`}
+              />
+              <span className="text-xs text-muted-foreground">
+                {userStatus === "active"
+                  ? "5s"
+                  : userStatus === "idle"
+                    ? "30s"
+                    : "2m"}
+              </span>
+            </div>
+          </div>
           {unreadCount > 0 && (
             <Button
               variant="ghost"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useSmartPolling } from "@/hooks/useSmartPolling";
 
 export interface GroupMember {
   userId: string;
@@ -52,6 +53,8 @@ async function fetchGroups(): Promise<GroupsResponse> {
 }
 
 export function useGroups() {
+  const { pollingInterval } = useSmartPolling({ strategy: "relaxed" });
+
   return useQuery({
     queryKey: ["groups"],
     queryFn: fetchGroups,
@@ -65,6 +68,6 @@ export function useGroups() {
     },
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
-    refetchInterval: 30 * 60 * 1000,
+    refetchInterval: pollingInterval,
   });
-} 
+}
