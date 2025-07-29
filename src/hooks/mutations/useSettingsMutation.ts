@@ -9,7 +9,7 @@ import {
 } from "@/app/(main)/settings/actions";
 import { SettingsValues } from "@/validations/settingsSchema";
 import { ChangePasswordValues } from "@/validations/profile/profileSchema";
-import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 export function useSettingsMutation() {
   const queryClient = useQueryClient();
@@ -67,7 +67,6 @@ export function useChangePasswordMutation() {
 }
 
 export function useDeleteAccountMutation() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -85,10 +84,11 @@ export function useDeleteAccountMutation() {
       queryClient.clear();
       toast.success("Account deleted successfully");
 
-      // Redirect to home page after a brief delay
-      setTimeout(() => {
-        router.replace("/");
-      }, 1000);
+      // Sign out the user and redirect to login page
+      signOut({
+        callbackUrl: "/login",
+        redirect: true,
+      });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to delete account");
