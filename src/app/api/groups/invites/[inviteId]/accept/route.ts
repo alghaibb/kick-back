@@ -76,11 +76,11 @@ export async function POST(
     // Add user to group and existing events
     await prisma.$transaction(async (tx) => {
       // Add user to group with the role specified in the invitation
-      const newMember = await tx.groupMember.create({
+      await tx.groupMember.create({
         data: {
           groupId: invite.groupId,
           userId: session.user.id,
-          role: invite.role, // Use the role from the invitation instead of hardcoding "member"
+          role: invite.role, 
         },
       });
 

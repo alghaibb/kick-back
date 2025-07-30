@@ -9,6 +9,7 @@ export interface GroupMember {
   user: {
     id: string;
     firstName?: string;
+    nickname?: string | null;
     email?: string;
     image?: string | null;
   };
@@ -28,6 +29,7 @@ export interface CurrentUser {
   email: string;
   firstName?: string;
   lastName?: string;
+  nickname?: string | null;
   image?: string | null;
 }
 

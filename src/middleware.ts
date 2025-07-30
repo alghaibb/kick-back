@@ -39,9 +39,9 @@ export default function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth-only pages
-  // Let NextAuth redirect callback handle onboarding vs dashboard routing
+  // Let auth-redirect page handle onboarding vs dashboard routing
   if (isLoggedIn && unauthOnlyRoutes.includes(pathname)) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/auth-redirect", request.url));
   }
 
   return NextResponse.next();

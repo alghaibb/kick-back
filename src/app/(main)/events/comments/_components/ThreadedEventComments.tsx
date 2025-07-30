@@ -700,8 +700,9 @@ export default function ThreadedEventComments({
   };
 
   // Get all comments from all pages
-  const allComments =
-    commentsData?.pages.flatMap((page) => page.comments) || [];
+  const allComments = React.useMemo(() => {
+    return commentsData?.pages.flatMap((page) => page.comments) || [];
+  }, [commentsData?.pages]);
 
   // Calculate total comments count (including replies)
   const totalCommentsCount = React.useMemo(() => {

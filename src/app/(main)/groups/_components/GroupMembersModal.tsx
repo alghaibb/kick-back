@@ -36,6 +36,7 @@ interface GroupMembersModalProps {
       user?: {
         id: string;
         firstName?: string;
+        nickname?: string | null;
         email?: string;
         image?: string | null;
       };
@@ -58,9 +59,6 @@ export function GroupMembersModal({
 }: GroupMembersModalProps) {
   const userId = currentUser.id;
   const isOwner = group.createdBy === userId;
-  const isAdmin = group.members.some(
-    (m) => m.userId === userId && m.role === "admin"
-  );
 
   const [members, setMembers] = useState(group.members);
 
@@ -136,7 +134,9 @@ export function GroupMembersModal({
                   className="size-8 rounded-full object-cover"
                 />
                 <div>
-                  <div className="font-medium">{m.user?.firstName}</div>
+                  <div className="font-medium">
+                    {m.user?.nickname || m.user?.firstName}
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     {m.user?.email}
                   </div>

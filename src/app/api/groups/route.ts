@@ -9,6 +9,7 @@ interface FormattedMember {
   user: {
     id: string;
     firstName: string | null;
+    nickname: string | null;
     email: string;
     image: string | null;
   };
@@ -37,6 +38,7 @@ interface GroupWithMembers {
     user: {
       id: string;
       firstName: string | null;
+      nickname: string | null;
       email: string;
       image: string | null;
     };
@@ -94,6 +96,7 @@ export async function GET() {
         user: {
           id: member.user.id,
           firstName: member.user.firstName,
+          nickname: member.user.nickname,
           email: member.user.email,
           image: member.user.image,
         },
@@ -107,6 +110,7 @@ export async function GET() {
         id: session.user.id,
         email: session.user.email,
         firstName: session.user.firstName,
+        nickname: session.user.nickname,
         lastName: session.user.lastName,
         image: session.user.image,
       },

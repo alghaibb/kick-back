@@ -186,7 +186,7 @@ export function CalendarPageClientWithComments() {
                           <div className="text-xs text-muted-foreground">
                             {event.attendees
                               .filter((a) => a.rsvpStatus === "yes")
-                              .map((a) => a.user.firstName)
+                              .map((a) => a.user.nickname || a.user.firstName)
                               .join(", ")}
                           </div>
                         </div>
@@ -208,7 +208,7 @@ export function CalendarPageClientWithComments() {
                           <div className="text-xs text-muted-foreground">
                             {event.attendees
                               .filter((a) => a.rsvpStatus === "maybe")
-                              .map((a) => a.user.firstName)
+                              .map((a) => a.user.nickname || a.user.firstName)
                               .join(", ")}
                           </div>
                         </div>
@@ -230,7 +230,7 @@ export function CalendarPageClientWithComments() {
                           <div className="text-xs text-muted-foreground">
                             {event.attendees
                               .filter((a) => a.rsvpStatus === "pending")
-                              .map((a) => a.user.firstName)
+                              .map((a) => a.user.nickname || a.user.firstName)
                               .join(", ")}
                           </div>
                         </div>
@@ -252,7 +252,7 @@ export function CalendarPageClientWithComments() {
                           <div className="text-xs text-muted-foreground">
                             {event.attendees
                               .filter((a) => a.rsvpStatus === "no")
-                              .map((a) => a.user.firstName)
+                              .map((a) => a.user.nickname || a.user.firstName)
                               .join(", ")}
                           </div>
                         </div>

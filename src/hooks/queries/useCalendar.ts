@@ -17,6 +17,7 @@ export interface CalendarEvent {
   attendees: {
     user: {
       id: string;
+      nickname: string | null;
       firstName: string;
       lastName: string | null;
       image: string | null;
