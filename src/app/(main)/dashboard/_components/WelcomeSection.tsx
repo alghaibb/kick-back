@@ -1,7 +1,9 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 interface WelcomeSectionProps {
   subtitle?: string;
@@ -10,8 +12,42 @@ interface WelcomeSectionProps {
 export function WelcomeSection({
   subtitle = "Ready to plan your next amazing event?",
 }: WelcomeSectionProps) {
-  const { user } = useAuth();
-  const name = user?.nickname || user?.firstName || "back";
+  const { user, isLoading, error, isUnauthenticated } = useAuth();
+  const router = useRouter();
+
+  // Handle authentication issues
+  useEffect(() => {
+    if (isUnauthenticated || error?.message === "UNAUTHORIZED") {
+      console.log(
+        "User not authenticated in WelcomeSection, redirecting to login"
+      );
+      router.replace("/login");
+    }
+  }, [isUnauthenticated, error, router]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-3 sm:space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 mx-auto sm:mx-0">
+            <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary animate-spin" />
+          </div>
+          <div className="text-center sm:text-left">
+            <div className="h-8 bg-muted rounded animate-pulse mb-2" />
+            <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if no user (should redirect above)
+  if (!user) {
+    return null;
+  }
+
+  const name = user.nickname || user.firstName || "back";
 
   return (
     <div className="space-y-3 sm:space-y-4">

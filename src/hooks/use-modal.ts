@@ -9,7 +9,8 @@ export type ModalType =
   | "delete-event"
   | "delete-photo"
   | "delete-comment"
-  | "delete-account";
+  | "delete-account"
+  | "reply-comment";
 
 interface ModalState {
   type: ModalType | null;
@@ -34,6 +35,12 @@ interface ModalState {
     commentId?: string;
     commentContent?: string;
     isReply?: boolean;
+    // Reply modal fields
+    parentCommentId?: string;
+    replyingToUser?: {
+      id: string;
+      name: string;
+    };
   };
   open: (
     type: ModalType,
@@ -57,6 +64,12 @@ interface ModalState {
       commentId?: string;
       commentContent?: string;
       isReply?: boolean;
+      // Reply modal fields
+      parentCommentId?: string;
+      replyingToUser?: {
+        id: string;
+        name: string;
+      };
     }
   ) => void;
   close: () => void;

@@ -119,20 +119,17 @@ const authConfig: NextAuthConfig = {
       return true;
     },
     async redirect({ url, baseUrl }) {
-      console.log("NextAuth redirect called with:", { url, baseUrl });
 
       // After OAuth callback, redirect to our auth-redirect page
       if (
         url.includes("/api/auth/callback/google") ||
         url.includes("/api/auth/callback/facebook")
       ) {
-        console.log("OAuth callback detected, redirecting to auth-redirect");
         return `${baseUrl}/auth-redirect`;
       }
 
       // For any callback, go to auth-redirect to check onboarding
       if (url.includes("/callback/")) {
-        console.log("General callback detected, redirecting to auth-redirect");
         return `${baseUrl}/auth-redirect`;
       }
 
@@ -140,7 +137,6 @@ const authConfig: NextAuthConfig = {
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       if (new URL(url).origin === baseUrl) return url;
 
-      console.log("Default redirect to auth-redirect");
       return `${baseUrl}/auth-redirect`;
     },
     async jwt({ token, account, user }) {
@@ -160,8 +156,6 @@ const authConfig: NextAuthConfig = {
   },
   jwt: {
     encode: async function (params) {
-      console.log("[NextAuth][jwt.encode] params.token:", params.token);
-
       if (params.token?.credentials) {
         const sessionToken = uuid();
 
@@ -188,7 +182,6 @@ const authConfig: NextAuthConfig = {
           throw new Error("Failed to create session");
         }
 
-        console.log("[NextAuth][jwt.encode] Created session:", createdSession);
         return sessionToken;
       }
       return defaultEncode(params);

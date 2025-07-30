@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   useInfiniteEventComments,
   useInfiniteReplies,
@@ -47,8 +48,6 @@ import {
 import {
   createCommentSchema,
   CreateCommentValues,
-  replyCommentSchema,
-  ReplyCommentValues,
 } from "@/validations/events/createCommentSchema";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -222,25 +221,16 @@ export default function ThreadedEventComments({
 }: ThreadedEventCommentsProps) {
   const { user } = useAuth();
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyingToUser, setReplyingToUser] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
+
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(
     new Set()
   );
 
+  // Use the existing mobile hook
+  const isMobile = useIsMobile();
+
   // Image upload for main comment form
   const commentImageUpload = useImageUploadForm(undefined, undefined, {
-    ...IMAGE_UPLOAD_PRESETS.comment,
-    showToasts: false,
-    onSuccess: () => toast.success("Image uploaded successfully!"),
-    onError: (error) => toast.error(error),
-  });
-
-  // Image upload for reply form
-  const replyImageUpload = useImageUploadForm(undefined, undefined, {
     ...IMAGE_UPLOAD_PRESETS.comment,
     showToasts: false,
     onSuccess: () => toast.success("Image uploaded successfully!"),
@@ -273,16 +263,6 @@ export default function ThreadedEventComments({
     },
   });
 
-  const replyForm = useForm<ReplyCommentValues>({
-    resolver: zodResolver(replyCommentSchema),
-    defaultValues: {
-      content: "",
-      eventId,
-      parentId: "temp",
-      imageUrl: undefined,
-    },
-  });
-
   // Handlers
   const handleCommentSubmit = async (values: CreateCommentValues) => {
     try {
@@ -304,45 +284,6 @@ export default function ThreadedEventComments({
       commentImageUpload.reset();
     } catch (error) {
       console.error("Error creating comment:", error);
-    }
-  };
-
-  const handleReplySubmit = async (values: ReplyCommentValues) => {
-    if (!replyingTo) return;
-
-    try {
-      let imageUrl: string | undefined = undefined;
-
-      if (replyImageUpload.currentFile) {
-        const uploadedUrl = await replyImageUpload.uploadImage(
-          replyImageUpload.currentFile
-        );
-        imageUrl = uploadedUrl || undefined;
-      }
-
-      // For flat threading: if replying to a reply, use the top-level parent
-      // but prepend @mention to show context
-      let content = values.content;
-      const parentId = replyingTo;
-
-      // If we're replying to someone specific, add @mention
-      if (replyingToUser && replyingToUser.id !== user?.id) {
-        content = `@${replyingToUser.name} ${values.content}`;
-      }
-
-      await createReplyMutation.mutateAsync({
-        ...values,
-        content,
-        parentId,
-        imageUrl,
-      });
-
-      replyForm.reset();
-      replyImageUpload.reset();
-      setReplyingTo(null);
-      setReplyingToUser(null);
-    } catch (error) {
-      console.error("Error creating reply:", error);
     }
   };
 
@@ -373,21 +314,17 @@ export default function ThreadedEventComments({
 
   const handleStartReply = useCallback(
     (comment: EventCommentData, isNestedReply: boolean = false) => {
-      if (isNestedReply) {
-        // For true threading: reply directly to this comment
-        // The new reply will be a child of this comment
-        setReplyingTo(comment.id);
-        setReplyingToUser({
-          id: comment.userId,
+      // Open reply modal instead of inline form
+      openModal("reply-comment", {
+        eventId,
+        parentCommentId: comment.id,
+        replyingToUser: {
+          id: comment.user.id,
           name: comment.user.nickname || comment.user.firstName,
-        });
-      } else {
-        // Standard reply to top-level comment
-        setReplyingTo(comment.id);
-        setReplyingToUser(null);
-      }
+        },
+      });
     },
-    []
+    [eventId, openModal]
   );
 
   // Render individual comment with infinite threading depth
@@ -411,37 +348,78 @@ export default function ThreadedEventComments({
     const replyCount = comment._count?.replies || 0;
     const isExpanded = expandedReplies.has(comment.id);
 
-    // Calculate styling based on depth with graceful degradation for deep nesting
-    const baseIndentation = 32; // 32px per level
-    const minIndentation = 16; // Minimum indentation for very deep threads
+    // Calculate responsive indentation based on mobile/desktop
+    const marginLeft = isMobile
+      ? (() => {
+          // Mobile: MUCH more compact - you should see this difference immediately
+          if (depth === 0) return 0;
+          if (depth === 1) return 16; // Much smaller first level (was ~32px)
+          if (depth === 2) return 24; // Very small second level (was ~64px)
+          // Deep levels get minimal additional space
+          return 24 + (depth - 2) * 8;
+        })()
+      : (() => {
+          // Desktop: Original logic with reasonable max
+          const baseIndentation = 32;
+          const minIndentation = 16;
+          const maxDesktopIndent = 300; // Reasonable max for desktop
 
-    // Use progressive indentation that gets smaller for very deep threads
-    let marginLeft: number;
-    if (depth <= 3) {
-      marginLeft = depth * baseIndentation;
-    } else if (depth <= 6) {
-      // Levels 4-6: smaller increments
-      marginLeft = 3 * baseIndentation + (depth - 3) * 20;
-    } else {
-      // Levels 7+: minimal increments to prevent overflow
-      marginLeft = 3 * baseIndentation + 3 * 20 + (depth - 6) * minIndentation;
-    }
+          let indentation: number;
+          if (depth <= 3) {
+            indentation = depth * baseIndentation;
+          } else if (depth <= 6) {
+            indentation = 3 * baseIndentation + (depth - 3) * 20;
+          } else {
+            indentation =
+              3 * baseIndentation + 3 * 20 + (depth - 6) * minIndentation;
+          }
 
-    // Avatar size scales down but never smaller than 20px
-    const avatarSize = Math.max(20, 32 - depth * 2);
+          return Math.min(indentation, maxDesktopIndent);
+        })();
 
-    // Font size scales down but stays readable
-    const fontSize = depth > 2 ? "text-xs" : depth > 0 ? "text-sm" : "text-sm";
-    const timeSize = depth > 3 ? "text-xs" : "text-xs";
+    // Responsive avatar size
+    const avatarSize = isMobile
+      ? Math.max(14, 20 - depth * 1.5) // Mobile: much smaller avatars
+      : Math.max(20, 32 - depth * 2); // Desktop: original logic
 
-    // Connection line calculations for infinite depth
-    const connectionLeft = -(
-      16 +
-      Math.min(depth - 1, 3) * baseIndentation +
-      Math.max(0, depth - 4) * 20 +
-      Math.max(0, depth - 6) * minIndentation
-    );
-    const connectionHeight = depth === 1 ? 20 : Math.max(24, 32 - depth * 2);
+    // Responsive font sizes
+    const { fontSize, timeSize } = isMobile
+      ? (() => {
+          // Mobile: more aggressive font scaling
+          if (depth > 3) return { fontSize: "text-xs", timeSize: "text-xs" };
+          if (depth > 1) return { fontSize: "text-xs", timeSize: "text-xs" };
+          return { fontSize: "text-sm", timeSize: "text-xs" };
+        })()
+      : (() => {
+          // Desktop: original logic
+          const fontSize =
+            depth > 2 ? "text-xs" : depth > 0 ? "text-sm" : "text-sm";
+          const timeSize = depth > 3 ? "text-xs" : "text-xs";
+          return { fontSize, timeSize };
+        })();
+
+    // Responsive connection line calculations
+    const { connectionLeft, connectionHeight } = isMobile
+      ? (() => {
+          // Mobile: simplified connection lines that match new indentation
+          if (depth === 1) return { connectionLeft: -12, connectionHeight: 16 };
+          if (depth === 2) return { connectionLeft: -16, connectionHeight: 16 };
+          return { connectionLeft: -20, connectionHeight: 14 };
+        })()
+      : (() => {
+          // Desktop: original complex logic
+          const baseIndentation = 32;
+          const minIndentation = 16;
+          const connectionLeft = -(
+            16 +
+            Math.min(depth - 1, 3) * baseIndentation +
+            Math.max(0, depth - 4) * 20 +
+            Math.max(0, depth - 6) * minIndentation
+          );
+          const connectionHeight =
+            depth === 1 ? 20 : Math.max(24, 32 - depth * 2);
+          return { connectionLeft, connectionHeight };
+        })();
 
     return (
       <div
@@ -466,9 +444,9 @@ export default function ThreadedEventComments({
             <div
               className="absolute bg-border opacity-60"
               style={{
-                left: `-${Math.min(16, 12 + depth)}px`, // Shorter lines for deep threads
+                left: `-${isMobile ? (depth === 1 ? 12 : depth === 2 ? 16 : 20) : Math.min(16, 12 + depth)}px`,
                 top: `${Math.floor(connectionHeight / 2)}px`,
-                width: `${Math.min(16, 12 + depth)}px`,
+                width: `${isMobile ? (depth === 1 ? 12 : depth === 2 ? 16 : 20) : Math.min(16, 12 + depth)}px`,
                 height: "1px",
               }}
             />
@@ -476,8 +454,10 @@ export default function ThreadedEventComments({
         )}
 
         <div
-          className="flex gap-2 py-1.5"
-          style={{ gap: `${Math.max(8, 12 - depth)}px` }}
+          className="flex py-1.5"
+          style={{
+            gap: `${isMobile ? Math.max(4, 8 - depth) : Math.max(8, 12 - depth)}px`,
+          }}
         >
           {/* Avatar with infinite scaling */}
           <Avatar
@@ -506,41 +486,42 @@ export default function ThreadedEventComments({
                 })}
               </span>
 
-              {/* Show nesting indicator for deep threads */}
-              {depth > 4 && (
-                <span className="text-xs text-muted-foreground/50 px-1 py-0.5 bg-muted rounded">
-                  +{depth}
-                </span>
-              )}
+              {/* Removed confusing depth indicator */}
 
-              {canDelete && (
+              {(canDelete || isMobile) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
                       className={cn(
-                        "opacity-0 group-hover:opacity-100 transition-opacity",
-                        depth > 3
-                          ? "h-4 w-4"
-                          : depth > 1
-                            ? "h-5 w-5"
-                            : "h-6 w-6"
+                        "transition-opacity",
+                        isMobile
+                          ? "opacity-100 h-6 w-6"
+                          : "opacity-0 group-hover:opacity-100 h-5 w-5"
                       )}
                     >
-                      <MoreVertical
-                        className={cn(depth > 3 ? "h-2.5 w-2.5" : "h-3 w-3")}
-                      />
+                      <MoreVertical className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-32">
-                    <DropdownMenuItem
-                      onClick={() => handleDeleteComment(comment.id)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="h-3 w-3 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
+                    {isMobile && (
+                      <DropdownMenuItem
+                        onClick={() => handleStartReply(comment, depth > 0)}
+                      >
+                        <Reply className="h-3 w-3 mr-2" />
+                        Reply
+                      </DropdownMenuItem>
+                    )}
+                    {canDelete && (
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-3 w-3 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -571,7 +552,7 @@ export default function ThreadedEventComments({
               </div>
             )}
 
-            {/* Reactions - smaller for deep threads */}
+            {/* Reactions - mobile responsive */}
             {Object.keys(reactionCounts).length > 0 && (
               <div className="flex flex-wrap gap-0.5 mt-1.5">
                 {Object.entries(reactionCounts).map(([emoji, data]) => (
@@ -581,11 +562,11 @@ export default function ThreadedEventComments({
                     size="sm"
                     className={cn(
                       "px-1.5",
-                      depth > 3
-                        ? "h-4 text-xs"
-                        : depth > 1
-                          ? "h-5 text-xs"
-                          : "h-6 text-xs"
+                      isMobile
+                        ? "h-6 text-xs"
+                        : depth > 3
+                          ? "h-4 text-xs"
+                          : "h-5 text-xs"
                     )}
                     onClick={() => handleReaction(comment.id, emoji)}
                   >
@@ -596,103 +577,84 @@ export default function ThreadedEventComments({
               </div>
             )}
 
-            {/* Action buttons - scale with depth */}
-            <div className="flex items-center gap-0.5 mt-1.5">
-              {/* Quick reactions - hide for very deep threads to save space */}
-              {depth < 6 && (
-                <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {QUICK_REACTIONS.slice(0, depth > 3 ? 3 : 5).map((emoji) => (
+            {/* Action buttons - mobile responsive */}
+            <div className="flex items-center gap-0.5 mt-1.5 flex-wrap">
+              {/* Quick reactions - always visible on mobile, hover on desktop */}
+              <div
+                className={cn(
+                  "flex gap-0.5 transition-opacity",
+                  isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                )}
+              >
+                {QUICK_REACTIONS.slice(0, isMobile ? 3 : depth > 3 ? 3 : 5).map(
+                  (emoji) => (
                     <Button
                       key={emoji}
                       variant="ghost"
                       size="sm"
                       className={cn(
                         "p-0 hover:bg-muted",
-                        depth > 3
-                          ? "h-5 w-5"
-                          : depth > 1
-                            ? "h-6 w-6"
-                            : "h-7 w-7"
+                        isMobile
+                          ? "h-6 w-6"
+                          : depth > 3
+                            ? "h-5 w-5"
+                            : depth > 1
+                              ? "h-6 w-6"
+                              : "h-7 w-7"
                       )}
                       onClick={() => handleReaction(comment.id, emoji)}
                     >
-                      <span
-                        className={cn(
-                          depth > 3
-                            ? "text-xs"
-                            : depth > 1
-                              ? "text-xs"
-                              : "text-sm"
-                        )}
-                      >
+                      <span className={cn(isMobile ? "text-sm" : "text-xs")}>
                         {emoji}
                       </span>
                     </Button>
-                  ))}
-                </div>
+                  )
+                )}
+              </div>
+
+              {/* Reply button - hidden on mobile (moved to three dots menu) */}
+              {!isMobile && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "px-2 font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
+                    depth > 3 ? "h-5 text-xs" : "h-6 text-xs"
+                  )}
+                  onClick={() => handleStartReply(comment, depth > 0)}
+                >
+                  <Reply className="h-3 w-3 mr-1" />
+                  Reply
+                </Button>
               )}
 
-              {/* Reply button - always available for infinite threading */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "px-2 font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
-                  depth > 3
-                    ? "h-5 text-xs"
-                    : depth > 1
-                      ? "h-6 text-xs"
-                      : "h-7 text-xs"
-                )}
-                onClick={() => handleStartReply(comment, depth > 0)}
-              >
-                <Reply
-                  className={cn(
-                    depth > 3 ? "h-2.5 w-2.5 mr-0.5" : "h-3 w-3 mr-1"
-                  )}
-                />
-                Reply
-              </Button>
-
-              {/* Show/Hide replies button - only for top-level comments */}
+              {/* Show/Hide replies button - mobile responsive */}
               {depth === 0 && replyCount > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  className={cn(
+                    "px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
+                    isMobile ? "h-6" : "h-7"
+                  )}
                   onClick={() => toggleRepliesExpansion(comment.id)}
                 >
                   {isExpanded ? (
                     <>
                       <ChevronUp className="h-3 w-3 mr-1" />
-                      Hide replies
+                      {isMobile ? "Hide" : "Hide replies"}
                     </>
                   ) : (
                     <>
                       <ChevronDown className="h-3 w-3 mr-1" />
-                      {replyCount} {replyCount === 1 ? "reply" : "replies"}
+                      {isMobile
+                        ? replyCount.toString()
+                        : `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`}
                     </>
                   )}
                 </Button>
               )}
             </div>
-
-            {/* Reply form */}
-            {replyingTo === comment.id && (
-              <div className="mt-2">
-                <ReplyForm
-                  form={replyForm}
-                  onSubmit={handleReplySubmit}
-                  onCancel={() => {
-                    setReplyingTo(null);
-                    setReplyingToUser(null);
-                  }}
-                  imageUpload={replyImageUpload}
-                  isSubmitting={createReplyMutation.isPending}
-                  replyingToUser={replyingToUser}
-                />
-              </div>
-            )}
 
             {/* Infinite threaded replies - only show for top-level */}
             {depth === 0 && isExpanded && (
@@ -716,34 +678,69 @@ export default function ThreadedEventComments({
   const allComments =
     commentsData?.pages.flatMap((page) => page.comments) || [];
 
+  // Calculate total comments count (including replies)
+  const totalCommentsCount = React.useMemo(() => {
+    const countReplies = (comment: EventCommentData): number => {
+      return (
+        1 +
+        (comment.replies?.reduce(
+          (sum, reply) => sum + countReplies(reply),
+          0
+        ) || 0)
+      );
+    };
+
+    return allComments.reduce(
+      (total, comment) => total + countReplies(comment),
+      0
+    );
+  }, [allComments]);
+
   return (
     <div className="space-y-6">
-      {/* Comment form */}
+      {/* Comment form - mobile responsive */}
       <Card>
-        <CardHeader className="pb-4">
+        <CardHeader className={cn("pb-4", isMobile && "pb-2 px-3 py-3")}>
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
+            <h3
+              className={cn(
+                "font-semibold flex items-center gap-2",
+                isMobile ? "text-base" : "text-lg"
+              )}
+            >
+              <MessageCircle className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} />
               Comments
+              {totalCommentsCount > 0 && (
+                <span
+                  className={cn(
+                    "font-normal text-muted-foreground",
+                    isMobile ? "text-sm" : "text-base"
+                  )}
+                >
+                  ({totalCommentsCount})
+                </span>
+              )}
             </h3>
             <Select
               value={sortBy}
               onValueChange={(value: "newest" | "oldest") => setSortBy(value)}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger
+                className={cn(isMobile ? "w-24 h-8 text-xs" : "w-32")}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="newest">
                   <div className="flex items-center gap-2">
                     <SortDesc className="h-4 w-4" />
-                    Newest
+                    {isMobile ? "New" : "Newest"}
                   </div>
                 </SelectItem>
                 <SelectItem value="oldest">
                   <div className="flex items-center gap-2">
                     <SortAsc className="h-4 w-4" />
-                    Oldest
+                    {isMobile ? "Old" : "Oldest"}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -751,23 +748,30 @@ export default function ThreadedEventComments({
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent
+          className={cn("space-y-4", isMobile && "px-3 py-3 space-y-3")}
+        >
           <form
             onSubmit={commentForm.handleSubmit(handleCommentSubmit)}
-            className="space-y-3"
+            className={cn("space-y-3", isMobile && "space-y-2")}
           >
-            <div className="flex gap-3">
-              <Avatar className="h-8 w-8 flex-shrink-0">
+            <div className={cn("flex gap-3", isMobile && "gap-2")}>
+              <Avatar
+                className={cn(
+                  "flex-shrink-0",
+                  isMobile ? "h-6 w-6" : "h-8 w-8"
+                )}
+              >
                 <AvatarImage src={user?.image || undefined} />
-                <AvatarFallback>
+                <AvatarFallback className={cn(isMobile && "text-xs")}>
                   {user?.firstName?.[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 space-y-3">
+              <div className={cn("flex-1 space-y-3", isMobile && "space-y-2")}>
                 <Input
                   {...commentForm.register("content")}
                   placeholder="Write a comment..."
-                  className="bg-muted/50"
+                  className={cn("bg-muted/50", isMobile && "h-8 text-sm")}
                 />
 
                 {/* Image preview */}
@@ -798,7 +802,7 @@ export default function ThreadedEventComments({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-8 px-2"
+                      className={cn("px-2", isMobile ? "h-7" : "h-8")}
                       onClick={() =>
                         commentImageUpload.imageRef.current?.click()
                       }
@@ -821,7 +825,10 @@ export default function ThreadedEventComments({
                       createCommentMutation.isPending ||
                       !commentForm.watch("content")?.trim()
                     }
-                    className="h-8 px-4"
+                    className={cn(
+                      "px-4",
+                      isMobile ? "h-7 text-xs px-3" : "h-8"
+                    )}
                   >
                     {createCommentMutation.isPending ? (
                       <Loader2 className="h-3 w-3 animate-spin mr-1" />
@@ -870,134 +877,6 @@ export default function ThreadedEventComments({
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-// Reply form component
-interface ReplyFormProps {
-  form: ReturnType<typeof useForm<ReplyCommentValues>>;
-  onSubmit: (values: ReplyCommentValues) => void;
-  onCancel: () => void;
-  imageUpload: ReturnType<typeof useImageUploadForm>;
-  isSubmitting: boolean;
-  replyingToUser: { id: string; name: string } | null;
-}
-
-function ReplyForm({
-  form,
-  onSubmit,
-  onCancel,
-  imageUpload,
-  isSubmitting,
-  replyingToUser,
-}: ReplyFormProps) {
-  const { user } = useAuth();
-
-  return (
-    <div className="bg-muted/30 rounded-lg p-3 border">
-      {/* Show who we're replying to if it's a reply-to-reply */}
-      {replyingToUser && (
-        <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
-          <Reply className="h-3 w-3" />
-          <span>
-            Replying to{" "}
-            <span className="font-medium text-foreground">
-              @{replyingToUser.name}
-            </span>
-          </span>
-        </div>
-      )}
-
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-        <div className="flex gap-2">
-          <Avatar className="h-6 w-6 flex-shrink-0">
-            <AvatarImage src={user?.image || undefined} />
-            <AvatarFallback className="text-xs">
-              {user?.firstName?.[0]?.toUpperCase() || "?"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 space-y-2">
-            <Input
-              {...form.register("content")}
-              placeholder={
-                replyingToUser
-                  ? `Reply to @${replyingToUser.name}...`
-                  : "Add a reply..."
-              }
-              className="bg-background border-border text-sm"
-              autoFocus
-            />
-
-            {/* Image preview */}
-            {imageUpload.displayUrl && (
-              <div className="relative w-fit">
-                <Image
-                  src={imageUpload.displayUrl}
-                  alt="Reply image"
-                  width={200}
-                  height={120}
-                  className="rounded-md border max-h-24 w-auto object-cover"
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute -top-1 -right-1 h-5 w-5"
-                  onClick={imageUpload.removeImage}
-                >
-                  ×
-                </Button>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2"
-                onClick={() => imageUpload.imageRef.current?.click()}
-              >
-                <ImageIcon className="h-3 w-3 mr-1" />
-                <span className="text-xs">Image</span>
-              </Button>
-              <input
-                ref={imageUpload.imageRef}
-                type="file"
-                accept="image/*"
-                onChange={imageUpload.handleImageChange}
-                className="hidden"
-              />
-
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={onCancel}
-                  className="h-7 px-3 text-xs"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={isSubmitting || !form.watch("content")?.trim()}
-                  className="h-7 px-3 text-xs"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  ) : (
-                    <Send className="h-3 w-3 mr-1" />
-                  )}
-                  Reply
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
     </div>
   );
 }

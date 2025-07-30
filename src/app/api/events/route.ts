@@ -39,7 +39,6 @@ export async function GET() {
         orderBy: { date: "asc" },
       }),
 
-      // Fetch user's groups separately (cached by React Query)
       prisma.group.findMany({
         where: {
           OR: [

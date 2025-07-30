@@ -2,38 +2,59 @@
 
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function AuthRedirectPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, error } = useAuth();
   const router = useRouter();
-
-  console.log("AuthRedirectPage:", {
-    user,
-    isLoading,
-    hasOnboarded: user?.hasOnboarded,
-  });
+  const [redirectAttempts, setRedirectAttempts] = useState(0);
+  const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
-    console.log("AuthRedirectPage useEffect:", { user, isLoading });
-
-    if (!isLoading && user) {
-      console.log("User found, hasOnboarded:", user.hasOnboarded);
-      if (!user.hasOnboarded) {
-        console.log("Redirecting to onboarding");
-        router.replace("/onboarding");
-      } else {
-        console.log("Redirecting to dashboard");
-        router.replace("/dashboard");
-      }
-    } else if (!isLoading && !user) {
-      console.log("No user found, redirecting to login");
+    // Prevent infinite redirect loops
+    if (redirectAttempts >= 3) {
+      console.error("Too many redirect attempts, redirecting to login");
       router.replace("/login");
+      return;
     }
-  }, [user, isLoading, router]);
 
-  // Show loading while determining where to redirect
+    // Set timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      setTimeoutReached(true);
+      console.error("Auth redirect timeout, redirecting to login");
+      router.replace("/login");
+    }, 10000); // 10 second timeout
+
+    if (!isLoading) {
+      clearTimeout(timeout);
+
+      if (user) {
+        setRedirectAttempts((prev) => prev + 1);
+        if (!user.hasOnboarded) {
+          router.replace("/onboarding");
+        } else {
+          router.replace("/dashboard");
+        }
+      } else if (error || !user) {
+        setRedirectAttempts((prev) => prev + 1);
+        router.replace("/login");
+      }
+    }
+
+    return () => clearTimeout(timeout);
+  }, [user, isLoading, error, router, redirectAttempts]);
+
+  if (timeoutReached) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">

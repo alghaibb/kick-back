@@ -6,24 +6,30 @@ export async function getSession() {
     const cookieStore = await cookies();
 
     const possibleTokens = [
-      "authjs.session-token",
-      "next-auth.session-token",
+      // Check production token first
       process.env.NODE_ENV === "production"
         ? "__Secure-authjs.session-token"
         : "authjs.session-token",
+      // Fallback tokens
+      "authjs.session-token",
+      "next-auth.session-token",
+      "__Secure-authjs.session-token",
     ];
 
     let sessionToken = null;
+    let foundTokenName = null;
 
     for (const tokenName of possibleTokens) {
       const cookie = cookieStore.get(tokenName);
-      if (cookie) {
+      if (cookie?.value) {
         sessionToken = cookie.value;
+        foundTokenName = tokenName;
         break;
       }
     }
 
     if (!sessionToken) {
+      console.log("[getSession] No session token found in cookies");
       return null;
     }
 
@@ -32,8 +38,40 @@ export async function getSession() {
       include: { user: true },
     });
 
-    if (!session || new Date(session.expires) < new Date()) {
+    if (!session) {
+      console.log("[getSession] No session found in database for token");
       return null;
+    }
+
+    // Check if session is expired
+    if (new Date(session.expires) < new Date()) {
+      console.log("[getSession] Session expired, cleaning up");
+
+      // Clean up expired session from database
+      try {
+        await prisma.session.delete({
+          where: { sessionToken },
+        });
+      } catch (error) {
+        console.error("[getSession] Failed to delete expired session:", error);
+      }
+
+      return null;
+    }
+
+    // Extend session if it's close to expiring (within 7 days)
+    const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    if (session.expires < sevenDaysFromNow) {
+      try {
+        await prisma.session.update({
+          where: { sessionToken },
+          data: {
+            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Extend by 30 days
+          },
+        });
+      } catch (error) {
+        console.error("[getSession] Failed to extend session:", error);
+      }
     }
 
     return {
@@ -55,7 +93,7 @@ export async function getSession() {
       expires: session.expires.toISOString(),
     };
   } catch (error) {
-    console.error("An error occurred while fetching the session:", error);
+    console.error("[getSession] An error occurred while fetching the session:", error);
     return null;
   }
 }

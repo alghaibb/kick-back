@@ -55,8 +55,8 @@ export function useAuth() {
   } = useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 1 * 60 * 1000, // Reduced to 1 minute to prevent stale auth state
+    gcTime: 5 * 60 * 1000, // Reduced to 5 minutes
     retry: (failureCount, error) => {
       // Don't retry on 401 (unauthorized)
       if (error?.message === "UNAUTHORIZED") {
@@ -66,6 +66,7 @@ export function useAuth() {
     },
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes to catch session expiry
   });
 
   const logoutMutation = useMutation({
