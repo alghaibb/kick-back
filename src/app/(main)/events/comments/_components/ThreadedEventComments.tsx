@@ -43,7 +43,6 @@ import {
 } from "@/hooks/queries/useInfiniteEventComments";
 import {
   useCreateComment,
-  useCreateReply,
   useToggleReaction,
 } from "@/hooks/mutations/useCommentMutations";
 import {
