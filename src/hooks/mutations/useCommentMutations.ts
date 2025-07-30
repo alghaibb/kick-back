@@ -489,9 +489,8 @@ export function useEditComment() {
       }
       return result;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: () => {
       // Invalidate all comment queries for this event
-      // We need to extract eventId from the comment data or pass it separately
       queryClient.invalidateQueries({
         queryKey: ["event-comments"]
       });

@@ -17,13 +17,11 @@ export async function getSession() {
     ];
 
     let sessionToken = null;
-    let foundTokenName = null;
 
     for (const tokenName of possibleTokens) {
       const cookie = cookieStore.get(tokenName);
       if (cookie?.value) {
         sessionToken = cookie.value;
-        foundTokenName = tokenName;
         break;
       }
     }

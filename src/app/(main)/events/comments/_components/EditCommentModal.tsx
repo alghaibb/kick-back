@@ -64,6 +64,7 @@ export function EditCommentModal() {
     data?.editCommentId,
     data?.editCommentContent,
     data?.editCommentImageUrl,
+    form,
   ]);
 
   const handleSubmit = async (values: EditCommentValues) => {

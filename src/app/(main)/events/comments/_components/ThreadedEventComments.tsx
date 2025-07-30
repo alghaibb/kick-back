@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -249,8 +249,8 @@ export default function ThreadedEventComments({
 
   // Mutations
   const createCommentMutation = useCreateComment();
-  const createReplyMutation = useCreateReply();
   const toggleReactionMutation = useToggleReaction();
+
   const { open: openModal } = useModal();
 
   // Forms
@@ -314,7 +314,7 @@ export default function ThreadedEventComments({
   }, []);
 
   const handleStartReply = useCallback(
-    (comment: EventCommentData, isNestedReply: boolean = false) => {
+    (comment: EventCommentData) => {
       // Open reply modal instead of inline form
       openModal("reply-comment", {
         eventId,
@@ -525,7 +525,7 @@ export default function ThreadedEventComments({
                   <DropdownMenuContent align="end" className="w-32">
                     {isMobile && (
                       <DropdownMenuItem
-                        onClick={() => handleStartReply(comment, depth > 0)}
+                        onClick={() => handleStartReply(comment)}
                       >
                         <Reply className="h-3 w-3 mr-2" />
                         Reply
@@ -647,7 +647,7 @@ export default function ThreadedEventComments({
                     "px-2 font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
                     depth > 3 ? "h-5 text-xs" : "h-6 text-xs"
                   )}
-                  onClick={() => handleStartReply(comment, depth > 0)}
+                  onClick={() => handleStartReply(comment)}
                 >
                   <Reply className="h-3 w-3 mr-1" />
                   Reply
