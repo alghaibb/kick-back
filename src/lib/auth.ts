@@ -119,7 +119,6 @@ const authConfig: NextAuthConfig = {
       return true;
     },
     async redirect({ url, baseUrl }) {
-
       // After OAuth callback, redirect to our auth-redirect page
       if (
         url.includes("/api/auth/callback/google") ||
@@ -152,6 +151,41 @@ const authConfig: NextAuthConfig = {
         token.sub = account.userId;
       }
       return token;
+    },
+    async session({ session, token }) {
+      // Ensure the user still exists in the database
+      // This handles cases where the database was reset but cookies still exist
+      try {
+        if (session.user?.email) {
+          const user = await prisma.user.findUnique({
+            where: { email: session.user.email },
+          });
+
+          if (!user) {
+            console.log(
+              "[NextAuth][session] User no longer exists in database, invalidating session"
+            );
+            // Return null to invalidate the session
+            // NextAuth will handle clearing the session cookie
+            return null as any;
+          }
+
+          // Update session with fresh user data
+          session.user = {
+            ...session.user,
+            id: user.id,
+            name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+            email: user.email,
+            image: user.image,
+          };
+        }
+      } catch (error) {
+        console.error("[NextAuth][session] Error validating user:", error);
+        // If there's a database error, invalidate the session
+        return null as any;
+      }
+
+      return session;
     },
   },
   jwt: {
