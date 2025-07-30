@@ -143,7 +143,7 @@ export function GroupMembersModal({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {(isOwner || isAdmin) &&
+                {isOwner &&
                 userId !== m.userId &&
                 group.createdBy !== m.userId ? (
                   <Select
@@ -162,7 +162,7 @@ export function GroupMembersModal({
                 ) : (
                   <span className="capitalize text-sm">{m.role}</span>
                 )}
-                {(isOwner || isAdmin) &&
+                {isOwner &&
                   userId !== m.userId &&
                   group.createdBy !== m.userId && (
                     <Button

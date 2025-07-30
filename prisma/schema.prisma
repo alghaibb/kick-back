@@ -171,6 +171,7 @@ model GroupInvite {
   groupId   String
   email     String
   invitedBy String
+  role      String   @default("member") 
   token     String   @unique
   status    String   @default("pending")
   expiresAt DateTime

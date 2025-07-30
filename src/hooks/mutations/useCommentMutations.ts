@@ -27,11 +27,10 @@ export function useCreateComment() {
 
   return useMutation({
     mutationFn: async (values: CreateCommentValues) => {
-      // Fire and forget - don't wait for server response for instant feel
       createCommentAction(values).catch((error) => {
         console.error("Comment error (background):", error);
       });
-      return { success: true }; // Always return success for optimistic UI
+      return { success: true };
     },
     onMutate: async (values) => {
       if (!user?.id) return;
@@ -93,13 +92,13 @@ export function useCreateComment() {
             comments: oldData.comments.map((comment) =>
               comment.id === values.parentId
                 ? {
-                  ...comment,
-                  replies: [tempComment, ...comment.replies],
-                  _count: {
-                    ...comment._count,
-                    replies: comment._count.replies + 1,
-                  },
-                }
+                    ...comment,
+                    replies: [tempComment, ...comment.replies],
+                    _count: {
+                      ...comment._count,
+                      replies: comment._count.replies + 1,
+                    },
+                  }
                 : comment
             ),
           };
@@ -204,13 +203,13 @@ export function useCreateReply() {
             comments: old.comments.map((comment) =>
               comment.id === values.parentId
                 ? {
-                  ...comment,
-                  replies: [tempReply, ...comment.replies],
-                  _count: {
-                    ...comment._count,
-                    replies: comment._count.replies + 1,
-                  },
-                }
+                    ...comment,
+                    replies: [tempReply, ...comment.replies],
+                    _count: {
+                      ...comment._count,
+                      replies: comment._count.replies + 1,
+                    },
+                  }
                 : comment
             ),
           };
@@ -492,7 +491,7 @@ export function useEditComment() {
     onSuccess: () => {
       // Invalidate all comment queries for this event
       queryClient.invalidateQueries({
-        queryKey: ["event-comments"]
+        queryKey: ["event-comments"],
       });
       toast.success("Comment updated successfully");
     },

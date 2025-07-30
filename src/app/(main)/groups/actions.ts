@@ -80,7 +80,9 @@ export async function inviteToGroupAction(formData: FormData) {
     };
   }
 
-  const { groupId, email } = parsed.data;
+  const { groupId, email, role } = parsed.data;
+
+  console.log("Invite action - received role:", role); // Debug log
 
   try {
     // Check if group exists and user has permission
@@ -154,18 +156,22 @@ export async function inviteToGroupAction(formData: FormData) {
         groupId,
         email,
         invitedBy: session.user.id,
+        role,
         token,
         expiresAt,
         status: "pending",
       },
       update: {
         invitedBy: session.user.id,
+        role,
         token,
         expiresAt,
         status: "pending",
         updatedAt: new Date(),
       },
     });
+
+    console.log("Created/updated invite with role:", invite.role); // Debug log
 
     // Send email
     try {
@@ -331,20 +337,16 @@ export async function updateGroupMemberRoleAction({
   const session = await getSession();
   if (!session?.user?.id) return { error: "Not authenticated" };
 
-  // Only owner or admin can update roles
+  // Only owner can update roles
   const group = await prisma.group.findUnique({
     where: { id: groupId },
     include: { members: true },
   });
   if (!group) return { error: "Group not found" };
-  const actingMember = await prisma.groupMember.findUnique({
-    where: { groupId_userId: { groupId, userId: session.user.id } },
-  });
-  if (
-    !actingMember ||
-    (actingMember.role !== "admin" && group.createdBy !== session.user.id)
-  ) {
-    return { error: "You do not have permission to update roles" };
+
+  // Only group owner can change member roles
+  if (group.createdBy !== session.user.id) {
+    return { error: "Only the group owner can update member roles" };
   }
   // Prevent owner from being demoted
   if (group.createdBy === memberId) {
@@ -369,14 +371,10 @@ export async function removeGroupMemberAction({
   if (!session?.user?.id) return { error: "Not authenticated" };
   const group = await prisma.group.findUnique({ where: { id: groupId } });
   if (!group) return { error: "Group not found" };
-  const actingMember = await prisma.groupMember.findUnique({
-    where: { groupId_userId: { groupId, userId: session.user.id } },
-  });
-  if (
-    !actingMember ||
-    (actingMember.role !== "admin" && group.createdBy !== session.user.id)
-  ) {
-    return { error: "You do not have permission to remove members" };
+
+  // Only group owner can remove members
+  if (group.createdBy !== session.user.id) {
+    return { error: "Only the group owner can remove members" };
   }
   // Prevent owner from being removed
   if (group.createdBy === memberId) {

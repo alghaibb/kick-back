@@ -196,8 +196,8 @@ export function GroupsClientContent({
         {groupsIn.length === 0 ? (
           <div className="bg-card border border-border rounded-2xl p-8 text-center">
             <p className="text-muted-foreground">
-              You haven&apos;t joined any groups yet. Ask for an invitation or find
-              groups to join!
+              You haven&apos;t joined any groups yet. Ask for an invitation or
+              find groups to join!
             </p>
           </div>
         ) : (
@@ -257,6 +257,23 @@ export function GroupsClientContent({
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 w-full sm:w-auto">
+                    {userRole === "admin" && (
+                      <Button
+                        variant="ghost"
+                        onClick={() =>
+                          open("edit-group", {
+                            groupId: group.id,
+                            groupName: group.name,
+                            description: group.description ?? undefined,
+                            image: group.image,
+                          })
+                        }
+                        className="text-muted-foreground hover:text-primary w-full sm:w-auto"
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    )}
                     <InviteButton
                       groupId={group.id}
                       groupName={group.name}

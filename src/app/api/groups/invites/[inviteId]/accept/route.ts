@@ -73,16 +73,20 @@ export async function POST(
       );
     }
 
+    console.log("Accept invite - using role:", invite.role); // Debug log
+
     // Add user to group and existing events
     await prisma.$transaction(async (tx) => {
-      // Add user to group
-      await tx.groupMember.create({
+      // Add user to group with the role specified in the invitation
+      const newMember = await tx.groupMember.create({
         data: {
           groupId: invite.groupId,
           userId: session.user.id,
-          role: "member",
+          role: invite.role, // Use the role from the invitation instead of hardcoding "member"
         },
       });
+
+      console.log("Created group member with role:", newMember.role); // Debug log
 
       // Add user to all existing events in this group
       const groupEvents = await tx.event.findMany({
