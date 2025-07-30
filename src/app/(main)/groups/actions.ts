@@ -82,8 +82,6 @@ export async function inviteToGroupAction(formData: FormData) {
 
   const { groupId, email, role } = parsed.data;
 
-  console.log("Invite action - received role:", role); // Debug log
-
   try {
     // Check if group exists and user has permission
     const group = await prisma.group.findFirst({
@@ -170,8 +168,6 @@ export async function inviteToGroupAction(formData: FormData) {
         updatedAt: new Date(),
       },
     });
-
-    console.log("Created/updated invite with role:", invite.role); // Debug log
 
     // Send email
     try {
