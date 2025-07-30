@@ -10,7 +10,8 @@ export type ModalType =
   | "delete-photo"
   | "delete-comment"
   | "delete-account"
-  | "reply-comment";
+  | "reply-comment"
+  | "edit-comment";
 
 interface ModalState {
   type: ModalType | null;
@@ -41,6 +42,10 @@ interface ModalState {
       id: string;
       name: string;
     };
+    // Edit comment modal fields
+    editCommentId?: string;
+    editCommentContent?: string;
+    editCommentImageUrl?: string;
   };
   open: (
     type: ModalType,
@@ -70,6 +75,10 @@ interface ModalState {
         id: string;
         name: string;
       };
+      // Edit comment modal fields
+      editCommentId?: string;
+      editCommentContent?: string;
+      editCommentImageUrl?: string;
     }
   ) => void;
   close: () => void;

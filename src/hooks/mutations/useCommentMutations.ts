@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   CreateCommentValues,
   ReplyCommentValues,
+  EditCommentValues,
   CommentReactionValues,
 } from "@/validations/events/createCommentSchema";
 import {
@@ -15,6 +16,7 @@ import {
 import {
   createCommentAction,
   createReplyAction,
+  editCommentAction,
   deleteCommentAction,
   toggleReactionAction,
 } from "@/app/(main)/events/comments/actions";
@@ -57,6 +59,7 @@ export function useCreateComment() {
         parentId: values.parentId || null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        editedAt: null,
         user: {
           id: user.id,
           firstName: user.firstName || "You",
@@ -90,13 +93,13 @@ export function useCreateComment() {
             comments: oldData.comments.map((comment) =>
               comment.id === values.parentId
                 ? {
-                    ...comment,
-                    replies: [tempComment, ...comment.replies],
-                    _count: {
-                      ...comment._count,
-                      replies: comment._count.replies + 1,
-                    },
-                  }
+                  ...comment,
+                  replies: [tempComment, ...comment.replies],
+                  _count: {
+                    ...comment._count,
+                    replies: comment._count.replies + 1,
+                  },
+                }
                 : comment
             ),
           };
@@ -175,6 +178,7 @@ export function useCreateReply() {
         parentId: values.parentId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        editedAt: null,
         user: {
           id: user.id,
           firstName: user.firstName || "You",
@@ -200,13 +204,13 @@ export function useCreateReply() {
             comments: old.comments.map((comment) =>
               comment.id === values.parentId
                 ? {
-                    ...comment,
-                    replies: [tempReply, ...comment.replies],
-                    _count: {
-                      ...comment._count,
-                      replies: comment._count.replies + 1,
-                    },
-                  }
+                  ...comment,
+                  replies: [tempReply, ...comment.replies],
+                  _count: {
+                    ...comment._count,
+                    replies: comment._count.replies + 1,
+                  },
+                }
                 : comment
             ),
           };
@@ -470,6 +474,32 @@ export function useDeleteComment() {
     },
     onError: () => {
       toast.error("Failed to delete comment");
+    },
+  });
+}
+
+export function useEditComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: EditCommentValues) => {
+      const result = await editCommentAction(data);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate all comment queries for this event
+      // We need to extract eventId from the comment data or pass it separately
+      queryClient.invalidateQueries({
+        queryKey: ["event-comments"]
+      });
+      toast.success("Comment updated successfully");
+    },
+    onError: (error) => {
+      console.error("Edit comment error:", error);
+      toast.error("Failed to update comment");
     },
   });
 }

@@ -233,14 +233,15 @@ model EventAttendee {
 }
 
 model EventComment {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   content   String
   imageUrl  String? // Optional image attachment
   eventId   String
   userId    String
   parentId  String? // For reply threading
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  editedAt  DateTime? // Track when comment was last edited
 
   event  Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)

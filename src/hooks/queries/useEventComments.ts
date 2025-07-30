@@ -24,6 +24,7 @@ export interface EventCommentData {
   parentId: string | null;
   createdAt: string;
   updatedAt: string;
+  editedAt: string | null;
   user: {
     id: string;
     firstName: string;

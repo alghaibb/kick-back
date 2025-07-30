@@ -31,11 +31,22 @@ export const commentReactionSchema = z.object({
     .describe("Reaction emoji"),
 });
 
+export const editCommentSchema = z.object({
+  commentId: z.string().min(1, "Comment ID is required").describe("Comment ID"),
+  content: z
+    .string()
+    .min(1, "Comment cannot be empty")
+    .max(1000, "Comment is too long")
+    .describe("Updated comment content"),
+  imageUrl: z.string().url().optional().describe("Optional image attachment"),
+});
+
 export const commentSortSchema = z.object({
   sortBy: z.enum(["newest", "oldest"]).default("newest").describe("Sort order"),
 });
 
 export type CreateCommentValues = z.infer<typeof createCommentSchema>;
 export type ReplyCommentValues = z.infer<typeof replyCommentSchema>;
+export type EditCommentValues = z.infer<typeof editCommentSchema>;
 export type CommentReactionValues = z.infer<typeof commentReactionSchema>;
 export type CommentSortValues = z.infer<typeof commentSortSchema>;

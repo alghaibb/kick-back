@@ -7,6 +7,8 @@ import {
   CreateCommentValues,
   replyCommentSchema,
   ReplyCommentValues,
+  editCommentSchema,
+  EditCommentValues,
   commentReactionSchema,
   CommentReactionValues,
 } from "@/validations/events/createCommentSchema";
@@ -420,6 +422,9 @@ export async function toggleReactionAction(values: CommentReactionValues) {
         // Don't fail the reaction if notification fails
       }
 
+      revalidatePath("/events");
+      revalidatePath("/calendar");
+
       return { success: true, action: "added", reaction };
     }
   } catch (error) {
@@ -462,9 +467,141 @@ export async function deleteCommentAction(commentId: string) {
 
     revalidatePath("/events");
     revalidatePath("/calendar");
+
     return { success: true };
   } catch (error) {
     console.error("Error deleting comment:", error);
+    return { error: "An error occurred. Please try again." };
+  }
+}
+
+export async function editCommentAction(values: EditCommentValues) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    // Validate comment fields
+    const validatedFields = editCommentSchema.safeParse(values);
+    if (!validatedFields.success) {
+      return { error: "Invalid fields" };
+    }
+
+    const { commentId, content, imageUrl } = validatedFields.data;
+
+    // Check if comment exists and user owns it
+    const existingComment = await prisma.eventComment.findUnique({
+      where: { id: commentId },
+      include: {
+        event: {
+          include: {
+            attendees: {
+              where: { userId: session.user.id },
+            },
+            group: {
+              include: {
+                members: {
+                  where: { userId: session.user.id },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!existingComment) {
+      return { error: "Comment not found" };
+    }
+
+    if (existingComment.userId !== session.user.id) {
+      return { error: "You can only edit your own comments" };
+    }
+
+    // Check if user still has access to the event
+    const isAttendee = existingComment.event.attendees.length > 0;
+    const isGroupMember = (existingComment.event.group?.members?.length ?? 0) > 0;
+
+    if (!isAttendee && !isGroupMember) {
+      return { error: "You no longer have access to this event" };
+    }
+
+    // Update the comment
+    const updatedComment = await prisma.eventComment.update({
+      where: { id: commentId },
+      data: {
+        content,
+        imageUrl,
+        editedAt: new Date(), // Set the edited timestamp
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            nickname: true,
+            image: true,
+          },
+        },
+        replies: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                nickname: true,
+                image: true,
+              },
+            },
+            reactions: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    nickname: true,
+                  },
+                },
+              },
+            },
+            _count: {
+              select: {
+                replies: true,
+                reactions: true,
+              },
+            },
+          },
+        },
+        reactions: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                nickname: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            replies: true,
+            reactions: true,
+          },
+        },
+      },
+    });
+
+    revalidatePath("/events");
+    revalidatePath("/calendar");
+    return { success: true, comment: updatedComment };
+  } catch (error) {
+    console.error("Error editing comment:", error);
     return { error: "An error occurred. Please try again." };
   }
 }

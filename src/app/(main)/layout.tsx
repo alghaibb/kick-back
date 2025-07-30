@@ -25,6 +25,11 @@ const ReplyCommentModal = lazy(() =>
     default: m.ReplyCommentModal,
   }))
 );
+const EditCommentModal = lazy(() =>
+  import("./events/comments/_components/EditCommentModal").then((m) => ({
+    default: m.EditCommentModal,
+  }))
+);
 const CreateGroupModal = lazy(() =>
   import("./groups/_components/CreateGroupModal").then((m) => ({
     default: m.CreateGroupModal,
@@ -73,6 +78,9 @@ export default function MainLayout({
       </Suspense>
       <Suspense fallback={null}>
         <ReplyCommentModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <EditCommentModal />
       </Suspense>
     </>
   );

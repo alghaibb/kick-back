@@ -27,6 +27,7 @@ import {
   Reply,
   MoreVertical,
   Trash2,
+  Edit,
   SortAsc,
   SortDesc,
   ChevronDown,
@@ -327,6 +328,18 @@ export default function ThreadedEventComments({
     [eventId, openModal]
   );
 
+  const handleEditComment = useCallback(
+    (comment: EventCommentData) => {
+      // Open edit modal
+      openModal("edit-comment", {
+        editCommentId: comment.id,
+        editCommentContent: comment.content,
+        editCommentImageUrl: comment.imageUrl || undefined,
+      });
+    },
+    [openModal]
+  );
+
   // Render individual comment with infinite threading depth
   const renderComment = (comment: EventCommentData, depth: number = 0) => {
     const reactions = comment.reactions || [];
@@ -484,6 +497,11 @@ export default function ThreadedEventComments({
                 {formatDistanceToNow(new Date(comment.createdAt), {
                   addSuffix: true,
                 })}
+                {comment.editedAt && (
+                  <span className="ml-1 text-xs text-muted-foreground/70">
+                    (edited)
+                  </span>
+                )}
               </span>
 
               {/* Removed confusing depth indicator */}
@@ -511,6 +529,14 @@ export default function ThreadedEventComments({
                       >
                         <Reply className="h-3 w-3 mr-2" />
                         Reply
+                      </DropdownMenuItem>
+                    )}
+                    {canDelete && (
+                      <DropdownMenuItem
+                        onClick={() => handleEditComment(comment)}
+                      >
+                        <Edit className="h-3 w-3 mr-2" />
+                        Edit
                       </DropdownMenuItem>
                     )}
                     {canDelete && (
