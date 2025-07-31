@@ -158,6 +158,7 @@ export async function getSession() {
         image: session.user.image,
         timezone: session.user.timezone,
         hasOnboarded: session.user.hasOnboarded,
+        dashboardBackground: session.user.dashboardBackground,
         createdAt: session.user.createdAt,
         updatedAt: session.user.updatedAt,
       },

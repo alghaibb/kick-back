@@ -10,45 +10,45 @@ datasource db {
 }
 
 model User {
-  id                 String    @id @default(cuid())
-  firstName          String
-  lastName           String?
-  email              String    @unique
-  nickname           String?
-  password           String?
-  emailVerified      DateTime?
-  image              String?
-  hasOnboarded       Boolean   @default(false)
-  phoneNumber        String?   @unique
-  reminderType       String    @default("email")
-  reminderTime       String    @default("09:00")
-  timezone           String?
-  notificationOptIn  Boolean   @default(true) 
-  inAppNotifications Boolean   @default(true) 
-  pushNotifications  Boolean   @default(false) 
-
+  id                  String               @id @default(cuid())
+  firstName           String
+  lastName            String?
+  email               String               @unique
+  nickname            String?
+  password            String?
+  emailVerified       DateTime?
+  image               String?
+  hasOnboarded        Boolean              @default(false)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+  phoneNumber         String?              @unique
+  reminderTime        String               @default("09:00")
+  reminderType        String               @default("email")
+  timezone            String?
+  notificationOptIn   Boolean              @default(true)
+  inAppNotifications  Boolean              @default(true)
+  pushNotifications   Boolean              @default(false)
+  dashboardBackground String?
   accounts            Account[]
-  sessions            Session[]
-  verificationOTPs    VerificationOTP[]
-  resetPasswordTokens ResetPasswordToken[]
-  magicLinkTokens     MagicLinkToken[]
-  groupMembers        GroupMember[]
-  groupInvites        GroupInvite[]        @relation("GroupInvites")
+  CommentReaction     CommentReaction[]
   EventAttendee       EventAttendee[]
   eventComments       EventComment[]
-  eventPhotos         EventPhoto[]
   photoLikes          EventPhotoLike[]
+  eventPhotos         EventPhoto[]
+  groupInvites        GroupInvite[]        @relation("GroupInvites")
+  groupMembers        GroupMember[]
+  magicLinkTokens     MagicLinkToken[]
   notifications       Notification[]
   pushSubscriptions   PushSubscription[]
-  CommentReaction     CommentReaction[]
+  resetPasswordTokens ResetPasswordToken[]
+  sessions            Session[]
+  verificationOTPs    VerificationOTP[]
 
   @@map("users")
 }
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String   @id @default(cuid())
   userId            String
   type              String
   provider          String
@@ -60,11 +60,9 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -75,8 +73,7 @@ model Session {
   userId       String
   sessionToken String   @unique
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
@@ -88,8 +85,7 @@ model VerificationOTP {
   reason    String   @default("resend")
   expiresAt DateTime
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([otp])
   @@map("verification_otps")
@@ -101,8 +97,7 @@ model ResetPasswordToken {
   token     String
   expiresAt DateTime
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@map("reset_password_tokens")
@@ -114,8 +109,7 @@ model MagicLinkToken {
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@map("magic_link_tokens")
@@ -135,17 +129,16 @@ model RateLimitCounter {
 }
 
 model Group {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String
   description String?
   image       String?
   createdBy   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  members GroupMember[]
-  events  Event[]
-  invites GroupInvite[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  events      Event[]
+  invites     GroupInvite[]
+  members     GroupMember[]
 
   @@index([createdBy])
   @@map("groups")
@@ -157,9 +150,8 @@ model GroupMember {
   userId   String
   role     String
   joinedAt DateTime @default(now())
-
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId])
   @@index([userId])
@@ -172,15 +164,14 @@ model GroupInvite {
   groupId   String
   email     String
   invitedBy String
-  role      String   @default("member") 
   token     String   @unique
   status    String   @default("pending")
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  inviter User  @relation("GroupInvites", fields: [invitedBy], references: [id], onDelete: Cascade)
+  role      String   @default("member")
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  inviter   User     @relation("GroupInvites", fields: [invitedBy], references: [id], onDelete: Cascade)
 
   @@unique([groupId, email])
   @@index([token])
@@ -196,13 +187,13 @@ model Event {
   location    String?
   createdBy   String
   groupId     String?
-  group       Group?          @relation(fields: [groupId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   inviteLink  String?
   attendees   EventAttendee[]
   comments    EventComment[]
   photos      EventPhoto[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  group       Group?          @relation(fields: [groupId], references: [id])
 
   @@index([createdBy])
   @@index([date])
@@ -215,7 +206,6 @@ model Event {
 model EventAttendee {
   id               String    @id @default(cuid())
   eventId          String
-  event            Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   userId           String
   status           String?
   rsvpStatus       String    @default("pending")
@@ -223,6 +213,7 @@ model EventAttendee {
   invitedAt        DateTime  @default(now())
   respondedAt      DateTime?
   lastReminderSent DateTime?
+  event            Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId])
@@ -235,23 +226,20 @@ model EventAttendee {
 }
 
 model EventComment {
-  id        String    @id @default(cuid())
+  id        String            @id @default(cuid())
   content   String
-  imageUrl  String? // Optional image attachment
   eventId   String
   userId    String
-  parentId  String? // For reply threading
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  editedAt  DateTime? // Track when comment was last edited
-
-  event  Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent EventComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-
-  // Relations
-  replies   EventComment[]    @relation("CommentReplies")
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  editedAt  DateTime?
+  imageUrl  String?
+  parentId  String?
   reactions CommentReaction[]
+  event     Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  parent    EventComment?     @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   EventComment[]    @relation("CommentReplies")
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
   @@index([userId])
@@ -261,33 +249,31 @@ model EventComment {
 }
 
 model CommentReaction {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   commentId String
   userId    String
-  emoji     String // Store emoji as string (👍, ❤️, 😂, etc.)
-  createdAt DateTime @default(now())
+  emoji     String
+  createdAt DateTime     @default(now())
+  comment   EventComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  comment EventComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([commentId, userId, emoji]) // One reaction per user per emoji per comment
+  @@unique([commentId, userId, emoji])
   @@index([commentId])
   @@index([userId])
   @@map("comment_reactions")
 }
 
 model EventPhoto {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   eventId   String
   userId    String
   imageUrl  String
   caption   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  event Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  likes EventPhotoLike[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  likes     EventPhotoLike[]
+  event     Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
   @@index([userId])
@@ -296,13 +282,12 @@ model EventPhoto {
 }
 
 model EventPhotoLike {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   photoId   String
   userId    String
-  createdAt DateTime @default(now())
-
-  photo EventPhoto @relation(fields: [photoId], references: [id], onDelete: Cascade)
-  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  photo     EventPhoto @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([photoId, userId])
   @@index([photoId])
@@ -316,11 +301,10 @@ model Notification {
   type      NotificationType
   title     String
   message   String
-  data      Json? // Additional data (eventId, groupId, etc.)
+  data      Json?
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
   @@index([userId, createdAt])
@@ -328,16 +312,14 @@ model Notification {
 }
 
 model PushSubscription {
-  id       String @id @default(cuid())
-  userId   String
-  endpoint String @unique
-  p256dh   String
-  auth     String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("push_subscriptions")

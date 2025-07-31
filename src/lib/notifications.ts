@@ -152,7 +152,7 @@ export async function notifyUser(
       });
 
       if (user?.pushNotifications) {
-        await sendPushNotification(data.userId, pushData);
+      await sendPushNotification(data.userId, pushData);
       }
     }
 

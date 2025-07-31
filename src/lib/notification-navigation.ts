@@ -87,3 +87,4 @@ export function getNotificationPath(data: NotificationNavigationData): string {
       return "/";
   }
 }
+ 

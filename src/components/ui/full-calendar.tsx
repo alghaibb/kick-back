@@ -15,7 +15,9 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { useModal } from "@/hooks/use-modal";
+import { useAuth } from "@/hooks/use-auth";
 
 interface FullCalendarProps {
   selected?: Date;
@@ -31,7 +33,11 @@ export function FullCalendar({
   className,
 }: FullCalendarProps) {
   const { open } = useModal();
+  const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
+
+  // Check if custom background is active
+  const hasCustomBackground = !!user?.dashboardBackground;
 
   // Group events by date for quick lookup
   const eventsByDate = React.useMemo(() => {
@@ -93,8 +99,8 @@ export function FullCalendar({
 
   const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  return (
-    <div className={cn("w-full max-w-4xl mx-auto", className)}>
+  const calendarContent = (
+    <div className={cn("w-full max-w-4xl mx-auto full-calendar", className)}>
       {/* Calendar Header */}
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <Button
@@ -252,4 +258,16 @@ export function FullCalendar({
       </div>
     </div>
   );
+
+  // Wrap in Card component when custom background is active
+  if (hasCustomBackground) {
+    return (
+      <Card className="p-6 bg-card border border-border shadow-lg">
+        {calendarContent}
+      </Card>
+    );
+  }
+
+  // Return without Card wrapper when no custom background
+  return calendarContent;
 }

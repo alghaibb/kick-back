@@ -321,3 +321,53 @@ body {
 .theme-amber:hover {
   --color-border: #d97706; /* darker amber */
 }
+
+/* Custom background text styling for better contrast */
+.custom-background-active {
+  /* Ensure text has proper contrast when custom background is active */
+  /* This class acts as a marker to identify when custom background is active */
+  position: relative; /* Ensure proper stacking context */
+}
+
+/* Dark mode specific styling for text-muted-foreground when gradient background is active */
+.dark.custom-background-active .text-muted-foreground {
+  /* Change text-muted-foreground to text-background in dark mode with custom gradient */
+  color: hsl(var(--background)) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Exclude RSVP status indicators and attendee names from custom background styling */
+.dark.custom-background-active .text-muted-foreground.bg-green-500,
+.dark.custom-background-active .text-muted-foreground.bg-yellow-500,
+.dark.custom-background-active .text-muted-foreground.bg-red-500,
+.dark.custom-background-active .text-muted-foreground.bg-green-600,
+.dark.custom-background-active .text-muted-foreground.bg-yellow-600,
+.dark.custom-background-active .text-muted-foreground.bg-red-600,
+.dark.custom-background-active .text-muted-foreground.bg-green-400,
+.dark.custom-background-active .text-muted-foreground.bg-yellow-400,
+.dark.custom-background-active .text-muted-foreground.bg-red-400 {
+  /* Keep original colors for RSVP status indicators */
+  color: inherit !important;
+  text-shadow: none !important;
+}
+
+/* Exclude attendee names in calendar from custom background styling */
+.dark.custom-background-active .text-muted-foreground.text-xs {
+  /* Keep original muted color for attendee names in calendar */
+  color: hsl(var(--muted-foreground)) !important;
+  text-shadow: none !important;
+}
+
+/* Only apply to main route (not auth pages) */
+.custom-background-active .text-muted-foreground {
+  /* Light mode: keep normal muted foreground */
+  color: hsl(var(--muted-foreground));
+}
+
+/* Ensure buttons maintain proper styling */
+.custom-background-active .btn,
+.custom-background-active button {
+  /* Ensure buttons have proper contrast */
+  position: relative;
+  z-index: 1;
+}

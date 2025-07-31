@@ -2,7 +2,11 @@ import { Metadata } from "next";
 import { DashboardQuickActionsClient } from "./_components/DashboardQuickActionsClient";
 import { DashboardStatsClient } from "./_components/DashboardStatsClient";
 import { WelcomeSection } from "./_components/WelcomeSection";
-import { PageErrorBoundary, ComponentErrorBoundary } from "@/components/ui/error-boundary";
+
+import {
+  PageErrorBoundary,
+  ComponentErrorBoundary,
+} from "@/components/ui/error-boundary";
 
 export const metadata: Metadata = {
   title: "Dashboard | Kick Back",
@@ -15,7 +19,7 @@ export default function Page() {
       <div className="container mx-auto px-4 py-8 space-y-12">
         {/* Welcome Section */}
         <ComponentErrorBoundary title="Welcome Section">
-          <div className="bg-card border border-border rounded-2xl p-8">
+          <div className="bg-card/95 backdrop-blur-sm border border-border rounded-2xl p-8">
             <WelcomeSection />
           </div>
         </ComponentErrorBoundary>

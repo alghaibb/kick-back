@@ -260,11 +260,11 @@ export async function deletePhotoAction(data: { photoId: string }) {
     }
 
     // Delete from blob storage
-    try {
-      await del(photo.imageUrl);
+      try {
+        await del(photo.imageUrl);
     } catch (blobError) {
       console.error("Failed to delete from blob storage:", blobError);
-      // Continue with database deletion even if blob deletion fails
+        // Continue with database deletion even if blob deletion fails
     }
 
     // Delete from database

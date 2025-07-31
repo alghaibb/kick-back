@@ -38,6 +38,7 @@ import { detectCountryForSMS } from "@/utils/detectCountry";
 import { useModal } from "@/hooks/use-modal";
 import { GenericModal } from "@/components/ui/generic-modal";
 import PushNotificationToggle from "@/components/ui/push-notification-toggle";
+import { BackgroundCustomizer } from "@/components/background-customizer/BackgroundCustomizer";
 
 interface SettingsFormProps {
   user: {
@@ -375,6 +376,9 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Background Customization */}
+      <BackgroundCustomizer />
 
       {/* Danger Zone */}
       <Card className="border-destructive">

@@ -33,6 +33,12 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
   }
 
   const getThemeBackground = () => {
+    // If user has a custom background, don't apply theme background
+    if (user?.dashboardBackground) {
+      return "bg-transparent";
+    }
+
+    // Otherwise use theme-based backgrounds
     switch (activeTheme) {
       case "blue":
         return "bg-gradient-to-br from-background via-background to-blue-50/30 dark:to-blue-950/30";
@@ -45,6 +51,20 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
     }
   };
 
+  const getCustomBackgroundStyle = () => {
+    if (!user?.dashboardBackground) return {};
+
+    return {
+      backgroundImage: user.dashboardBackground.startsWith("linear-gradient")
+        ? user.dashboardBackground
+        : `url(${user.dashboardBackground})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+      backgroundAttachment: "fixed",
+    };
+  };
+
   const toggleMobileSidebar = () => {
     if (isMobile) {
       setMobileSidebarOpen(!mobileSidebarOpen);
@@ -52,8 +72,34 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
   };
 
   return (
-    <div className={cn("min-h-screen", getThemeBackground())}>
-      <div className={cn("flex", isMobile ? "mobile-layout" : "h-screen")}>
+    <div
+      className={cn(
+        "min-h-screen transition-all duration-500 ease-in-out",
+        getThemeBackground(),
+        // Add a class when custom background is active for text styling
+        user?.dashboardBackground && "custom-background-active"
+      )}
+      style={getCustomBackgroundStyle()}
+    >
+      {/* Smart overlay for custom backgrounds to ensure readability */}
+      {user?.dashboardBackground && (
+        <div
+          className={cn(
+            "absolute inset-0 transition-all duration-500",
+            // Stronger overlay for images, lighter for gradients
+            user.dashboardBackground.startsWith("linear-gradient")
+              ? "bg-background/20 dark:bg-background/40"
+              : "bg-background/50 dark:bg-background/60"
+          )}
+        />
+      )}
+
+      <div
+        className={cn(
+          "flex relative z-10",
+          isMobile ? "mobile-layout" : "h-screen"
+        )}
+      >
         {/* Sidebar - Always visible on desktop, collapsible on mobile */}
         {isHydrated && (
           <>
@@ -67,7 +113,7 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
               >
                 <div
                   className={cn(
-                    "w-full h-full bg-card transition-opacity duration-300",
+                    "w-full h-full bg-card/95 backdrop-blur-sm transition-opacity duration-300",
                     mobileSidebarOpen ? "opacity-100" : "opacity-0"
                   )}
                 >
@@ -79,7 +125,7 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
               </div>
             ) : (
               // Desktop: Always visible sidebar
-              <div className="w-64 bg-card border-r border-border">
+              <div className="w-64 bg-card/95 backdrop-blur-sm border-r border-border">
                 <MainSidebar isMobile={false} />
               </div>
             )}

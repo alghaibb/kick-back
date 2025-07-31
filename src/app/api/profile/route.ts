@@ -33,4 +33,44 @@ export async function GET() {
       { status: 500 }
     );
   }
-} 
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { dashboardBackground } = body;
+
+    // Validate the background URL
+    if (dashboardBackground && typeof dashboardBackground !== "string") {
+      return NextResponse.json(
+        { error: "Invalid background URL" },
+        { status: 400 }
+      );
+    }
+
+    // Update the user's dashboard background
+    const updatedUser = await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        dashboardBackground: dashboardBackground || null,
+      },
+      select: {
+        id: true,
+        dashboardBackground: true,
+      },
+    });
+
+    return NextResponse.json(updatedUser);
+  } catch (error) {
+    console.error("Profile update error:", error);
+    return NextResponse.json(
+      { error: "Failed to update profile" },
+      { status: 500 }
+    );
+  }
+}

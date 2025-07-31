@@ -16,6 +16,7 @@ export interface User {
   notificationOptIn: boolean;
   inAppNotifications: boolean;
   pushNotifications: boolean;
+  dashboardBackground: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -32,7 +33,8 @@ async function fetchUser(): Promise<User> {
     throw new Error("Failed to fetch user");
   }
 
-  return response.json();
+  const user = await response.json();
+  return user;
 }
 
 async function logoutUser(): Promise<void> {
