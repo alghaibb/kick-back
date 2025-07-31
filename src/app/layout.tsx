@@ -156,107 +156,123 @@ export default function RootLayout({
             __html: `
               // iOS Safari error handling
               if (typeof window !== 'undefined') {
+                console.log('Debug script loaded');
+                
                 // Detect iOS Safari
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
                 const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
                 
+                console.log('iOS detection:', { isIOS, isSafari, userAgent: navigator.userAgent });
+                
                 // Create debug panel for mobile
                 if (isIOS && isSafari) {
-                  // Create debug panel
-                  const debugPanel = document.createElement('div');
-                  debugPanel.id = 'debug-panel';
-                  debugPanel.style.cssText = \`
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    background: rgba(0,0,0,0.9);
-                    color: white;
-                    font-family: monospace;
-                    font-size: 12px;
-                    padding: 10px;
-                    z-index: 9999;
-                    max-height: 200px;
-                    overflow-y: auto;
-                    display: none;
-                  \`;
-                  document.body.appendChild(debugPanel);
+                  console.log('Creating debug panel for iOS Safari');
                   
-                  // Add debug toggle button
-                  const debugButton = document.createElement('button');
-                  debugButton.textContent = '🐛';
-                  debugButton.style.cssText = \`
-                    position: fixed;
-                    top: 10px;
-                    right: 10px;
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    background: #007AFF;
-                    color: white;
-                    border: none;
-                    font-size: 20px;
-                    z-index: 10000;
-                    cursor: pointer;
-                  \`;
-                  debugButton.onclick = () => {
-                    debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
-                  };
-                  document.body.appendChild(debugButton);
-                  
-                  // Add test error button
-                  const testErrorButton = document.createElement('button');
-                  testErrorButton.textContent = 'Test Error';
-                  testErrorButton.style.cssText = \`
-                    position: fixed;
-                    top: 60px;
-                    right: 10px;
-                    padding: 5px 10px;
-                    background: #ff6b6b;
-                    color: white;
-                    border: none;
-                    border-radius: 5px;
-                    font-size: 12px;
-                    z-index: 10000;
-                    cursor: pointer;
-                  \`;
-                  testErrorButton.onclick = () => {
-                    console.log('Testing error boundary...');
-                    // This should trigger the error boundary
-                    throw new Error('Test error to check error boundary');
-                  };
-                  document.body.appendChild(testErrorButton);
-                  
-                  // Override console.log to show in debug panel
-                  const originalLog = console.log;
-                  const originalError = console.error;
-                  
-                  function addToDebugPanel(message, type = 'log') {
-                    const debugPanel = document.getElementById('debug-panel');
-                    if (debugPanel) {
-                      const timestamp = new Date().toLocaleTimeString();
-                      const logEntry = document.createElement('div');
-                      logEntry.style.color = type === 'error' ? '#ff6b6b' : '#4ecdc4';
-                      logEntry.textContent = \`[\${timestamp}] \${message}\`;
-                      debugPanel.appendChild(logEntry);
-                      debugPanel.scrollTop = debugPanel.scrollHeight;
+                  try {
+                    // Create debug panel
+                    const debugPanel = document.createElement('div');
+                    debugPanel.id = 'debug-panel';
+                    debugPanel.style.cssText = \`
+                      position: fixed;
+                      top: 0;
+                      left: 0;
+                      right: 0;
+                      background: rgba(0,0,0,0.9);
+                      color: white;
+                      font-family: monospace;
+                      font-size: 12px;
+                      padding: 10px;
+                      z-index: 9999;
+                      max-height: 200px;
+                      overflow-y: auto;
+                      display: none;
+                    \`;
+                    document.body.appendChild(debugPanel);
+                    console.log('Debug panel created');
+                    
+                    // Add debug toggle button
+                    const debugButton = document.createElement('button');
+                    debugButton.textContent = '🐛';
+                    debugButton.style.cssText = \`
+                      position: fixed;
+                      top: 10px;
+                      right: 10px;
+                      width: 40px;
+                      height: 40px;
+                      border-radius: 50%;
+                      background: #007AFF;
+                      color: white;
+                      border: none;
+                      font-size: 20px;
+                      z-index: 10000;
+                      cursor: pointer;
+                    \`;
+                    debugButton.onclick = () => {
+                      debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+                    };
+                    document.body.appendChild(debugButton);
+                    console.log('Debug button created');
+                    
+                    // Add test error button
+                    const testErrorButton = document.createElement('button');
+                    testErrorButton.textContent = 'Test Error';
+                    testErrorButton.style.cssText = \`
+                      position: fixed;
+                      top: 60px;
+                      right: 10px;
+                      padding: 5px 10px;
+                      background: #ff6b6b;
+                      color: white;
+                      border: none;
+                      border-radius: 5px;
+                      font-size: 12px;
+                      z-index: 10000;
+                      cursor: pointer;
+                    \`;
+                    testErrorButton.onclick = () => {
+                      console.log('Testing error boundary...');
+                      // This should trigger the error boundary
+                      throw new Error('Test error to check error boundary');
+                    };
+                    document.body.appendChild(testErrorButton);
+                    console.log('Test error button created');
+                    
+                    // Override console.log to show in debug panel
+                    const originalLog = console.log;
+                    const originalError = console.error;
+                    
+                    function addToDebugPanel(message, type = 'log') {
+                      const debugPanel = document.getElementById('debug-panel');
+                      if (debugPanel) {
+                        const timestamp = new Date().toLocaleTimeString();
+                        const logEntry = document.createElement('div');
+                        logEntry.style.color = type === 'error' ? '#ff6b6b' : '#4ecdc4';
+                        logEntry.textContent = \`[\${timestamp}] \${message}\`;
+                        debugPanel.appendChild(logEntry);
+                        debugPanel.scrollTop = debugPanel.scrollHeight;
+                      }
                     }
+                    
+                    console.log = function(...args) {
+                      originalLog.apply(console, args);
+                      addToDebugPanel(args.join(' '), 'log');
+                    };
+                    
+                    console.error = function(...args) {
+                      originalError.apply(console, args);
+                      addToDebugPanel(args.join(' '), 'error');
+                    };
+                    
+                    // Add initial debug info
+                    addToDebugPanel('iOS Safari PWA Debug Mode Enabled');
+                    addToDebugPanel('User Agent: ' + navigator.userAgent);
+                    addToDebugPanel('Standalone: ' + navigator.standalone);
+                    console.log('Debug panel setup complete');
+                  } catch (error) {
+                    console.error('Error setting up debug panel:', error);
                   }
-                  
-                  console.log = function(...args) {
-                    originalLog.apply(console, args);
-                    addToDebugPanel(args.join(' '), 'log');
-                  };
-                  
-                  console.error = function(...args) {
-                    originalError.apply(console, args);
-                    addToDebugPanel(args.join(' '), 'error');
-                  };
-                  
-                  // Add initial debug info
-                  addToDebugPanel('iOS Safari PWA Debug Mode Enabled');
-                  addToDebugPanel('User Agent: ' + navigator.userAgent);
-                  addToDebugPanel('Standalone: ' + navigator.standalone);
+                } else {
+                  console.log('Not iOS Safari, skipping debug panel');
                 }
                 
                 // Global error handler
@@ -349,6 +365,41 @@ export default function RootLayout({
                 if (navigator.standalone) {
                   document.documentElement.classList.add('pwa-mode');
                   console.log('iOS Safari PWA mode detected');
+                }
+                
+                // Simple debug button for iOS Safari (always visible)
+                if (isIOS && isSafari) {
+                  try {
+                    const simpleDebugButton = document.createElement('button');
+                    simpleDebugButton.textContent = 'DEBUG';
+                    simpleDebugButton.style.cssText = \`
+                      position: fixed;
+                      top: 10px;
+                      left: 10px;
+                      padding: 8px 12px;
+                      background: #ff6b6b;
+                      color: white;
+                      border: none;
+                      border-radius: 5px;
+                      font-size: 12px;
+                      font-weight: bold;
+                      z-index: 10001;
+                      cursor: pointer;
+                    \`;
+                    simpleDebugButton.onclick = () => {
+                      alert('Debug button clicked! iOS Safari detected. Check console for errors.');
+                      console.log('Debug button clicked - iOS Safari detected');
+                      console.log('User Agent:', navigator.userAgent);
+                      console.log('Standalone:', navigator.standalone);
+                      console.log('Service Worker:', 'serviceWorker' in navigator);
+                      console.log('Push Manager:', 'PushManager' in window);
+                      console.log('Notification:', 'Notification' in window);
+                    };
+                    document.body.appendChild(simpleDebugButton);
+                    console.log('Simple debug button created');
+                  } catch (error) {
+                    console.error('Error creating simple debug button:', error);
+                  }
                 }
               }
             `,
