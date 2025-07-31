@@ -239,9 +239,9 @@ export default function PushNotificationToggle() {
                     iOS Safari PWA Mode
                   </p>
                   <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                    iOS Safari doesn&apos;t support web push notifications in PWA mode. 
-                    You&apos;ll receive notifications when the app is open, and we&apos;ll 
-                    use alternative methods for important updates.
+                    You&apos;ll receive notifications even when the app is closed! 
+                    iOS PWA uses a different notification system that works reliably 
+                    for comments, RSVPs, group invites, and more.
                   </p>
                 </div>
               </div>
@@ -284,7 +284,7 @@ export default function PushNotificationToggle() {
               </ul>
               {hasFallback && (
                 <p className="text-sm text-green-600 dark:text-green-400 mt-2">
-                  📱 Using iOS PWA mode - notifications will appear when the app is open
+                  📱 iOS PWA mode - notifications work even when app is closed!
                 </p>
               )}
               {process.env.NODE_ENV === "development" && (
@@ -344,10 +344,11 @@ export default function PushNotificationToggle() {
             </div>
           )}
 
-          {/* Sync button for when state gets out of sync */}
+          {/* Sync button for when state gets out of sync - hide for iOS PWA when working */}
           {localPushState !== null &&
             localPushState !== isSubscribed &&
-            user?.pushNotifications !== isSubscribed && (
+            user?.pushNotifications !== isSubscribed &&
+            !(hasFallback && localPushState) && (
               <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
                 <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
                   ⚠️ Push notification state is out of sync with your actual
