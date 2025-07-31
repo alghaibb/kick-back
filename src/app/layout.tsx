@@ -2,8 +2,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { ActiveThemeProvider } from "@/providers/ActiveThemeProvider";
 import QueryProvider from "@/providers/QueryProvider";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
-import { PageErrorBoundary } from "@/components/ui/error-boundary";
-import { DebugPanel } from "@/components/DebugPanel";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Poppins } from "next/font/google";
@@ -163,12 +161,9 @@ export default function RootLayout({
           <QueryProvider>
             <ActiveThemeProvider>
               <PageTracker />
-              <PageErrorBoundary>
-                <div className="min-h-screen flex flex-col">{children}</div>
-              </PageErrorBoundary>
+              <div className="min-h-screen flex flex-col">{children}</div>
               <Toaster richColors closeButton theme="light" />
               <PWAInstallPrompt />
-              <DebugPanel />
             </ActiveThemeProvider>
           </QueryProvider>
         </ThemeProvider>
