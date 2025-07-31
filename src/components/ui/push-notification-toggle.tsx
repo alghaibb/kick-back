@@ -57,6 +57,35 @@ export default function PushNotificationToggle() {
     isSafariIOS: isSafariIOS(),
   });
 
+  // For Safari iOS, show a simplified version that doesn't use push APIs
+  if (isSafariIOS()) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="h-5 w-5" />
+            Push Notifications
+          </CardTitle>
+          <CardDescription>Limited support in Safari on iOS</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Safari on iOS has limited push notification support. For full
+            functionality, try Chrome or Firefox, or install this app to your
+            home screen as a PWA.
+          </p>
+          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              💡 <strong>Tip:</strong> Add this app to your home screen to
+              enable push notifications! Tap the share button and select
+              &quot;Add to Home Screen&quot;.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const handleToggle = async () => {
     if (isLoading || isEnabling) return;
 
@@ -158,7 +187,9 @@ export default function PushNotificationToggle() {
           {isSafariIOS() && (
             <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                💡 <strong>Tip:</strong> Add this app to your home screen to enable push notifications! Tap the share button and select &quot;Add to Home Screen&quot;.
+                💡 <strong>Tip:</strong> Add this app to your home screen to
+                enable push notifications! Tap the share button and select
+                &quot;Add to Home Screen&quot;.
               </p>
             </div>
           )}

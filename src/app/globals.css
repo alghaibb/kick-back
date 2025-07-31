@@ -71,11 +71,11 @@ body {
 /* Adjust mobile content to account for fixed header */
 .mobile-layout .mobile-scroll-container {
   /* Add top padding to account for fixed header height */
-  padding-top: calc(80px + env(safe-area-inset-top, 0px));
+  padding-top: calc(88px + env(safe-area-inset-top, 0px));
   /* Ensure full height minus header */
-  height: calc(100vh - 80px);
-  height: calc(100dvh - 80px);
-  height: calc(calc(var(--vh, 1vh) * 100) - 80px);
+  height: calc(100vh - 88px);
+  height: calc(100dvh - 88px);
+  height: calc(calc(var(--vh, 1vh) * 100) - 88px);
 }
 
 /* Fix for iOS Safari bottom bar */

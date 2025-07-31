@@ -40,12 +40,12 @@ export function MainHeader({
   return (
     <header
       className={cn(
-        "bg-card border-b border-border py-3 sm:py-4 sticky top-0 z-40",
+        "bg-card border-b border-border py-4 sm:py-5 sticky top-0 z-40",
         showToggle && sidebarOpen ? "px-4" : "px-6",
         showToggle && "mobile-header"
       )}
     >
-      <div className="relative flex items-center justify-between h-10">
+      <div className="flex items-center justify-between h-10">
         {/* Left: Toggle Button */}
         <div className="flex items-center h-full flex-shrink-0">
           {showToggle && (
@@ -68,9 +68,9 @@ export function MainHeader({
           )}
         </div>
 
-        {/* Center: Logo - Absolutely centered */}
+        {/* Center: Logo - Flexbox centered */}
         {showToggle && !sidebarOpen && (
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0">
+          <div className="flex-1 flex justify-center items-center h-full">
             <Link
               href="/"
               className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
