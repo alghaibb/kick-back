@@ -164,6 +164,7 @@ export function DebugPanel() {
                         try {
                           return Notification.permission;
                         } catch (error) {
+                          console.error("Error accessing Notification API:", error);
                           return "Error accessing";
                         }
                       })()
