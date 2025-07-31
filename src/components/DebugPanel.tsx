@@ -104,8 +104,7 @@ export function DebugPanel() {
       {/* Debug Toggle Button */}
       <button
         onClick={() => setIsVisible(!isVisible)}
-        className="fixed top-4 left-4 z-50 bg-red-500 text-white px-3 py-2 rounded-md text-sm font-bold shadow-lg safe-top"
-        style={{ top: "calc(1rem + env(safe-area-inset-top, 0px))" }}
+        className="fixed top-4 left-4 z-50 bg-red-500 text-white px-3 py-2 rounded-md text-sm font-bold shadow-lg"
       >
         🐛 DEBUG
       </button>
@@ -116,8 +115,7 @@ export function DebugPanel() {
           console.log("Testing error boundary...");
           throw new Error("Test error to check error boundary");
         }}
-        className="fixed top-4 right-4 z-50 bg-orange-500 text-white px-3 py-2 rounded-md text-sm font-bold shadow-lg safe-top"
-        style={{ top: "calc(1rem + env(safe-area-inset-top, 0px))" }}
+        className="fixed top-4 right-4 z-50 bg-orange-500 text-white px-3 py-2 rounded-md text-sm font-bold shadow-lg"
       >
         Test Error
       </button>

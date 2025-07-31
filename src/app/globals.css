@@ -66,23 +66,12 @@ body {
   /* backface-visibility: hidden; - REMOVED */
   /* Ensure smooth rendering */
   will-change: transform;
-  /* Add safe area padding for mobile devices */
-  padding-top: env(safe-area-inset-top, 0px);
-}
-
-/* Safe area utility class */
-.safe-top {
-  padding-top: env(safe-area-inset-top, 0px);
-}
-
-.safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Adjust mobile content to account for fixed header */
 .mobile-layout .mobile-scroll-container {
   /* Add top padding to account for fixed header height */
-  padding-top: calc(88px + env(safe-area-inset-top, 0px));
+  padding-top: 88px;
   /* Ensure full height minus header */
   height: calc(100vh - 88px);
   height: calc(100dvh - 88px);
