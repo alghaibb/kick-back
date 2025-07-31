@@ -40,7 +40,7 @@ export function MainHeader({
   return (
     <header
       className={cn(
-        "bg-card border-b border-border py-5 sm:py-5 sticky top-0 z-40",
+        "bg-card border-b border-border py-3 sm:py-4 sticky top-0 z-40",
         showToggle && sidebarOpen ? "px-4" : "px-6",
         showToggle && "mobile-header"
       )}
