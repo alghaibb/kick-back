@@ -71,6 +71,11 @@ export function usePushNotifications() {
       throw new Error("Push notifications are not supported");
     }
 
+    // Check if Notification API is available
+    if (!("Notification" in window)) {
+      throw new Error("Notification API not available");
+    }
+
     if (Notification.permission === "granted") {
       return "granted";
     }
@@ -191,11 +196,11 @@ export function usePushNotifications() {
   const showFallbackNotification = async (title: string, body: string) => {
     if (isIOS && isSafari && isStandalone && hasFallback) {
       // Use browser notifications as fallback
-      if (Notification.permission === "granted") {
+      if ("Notification" in window && Notification.permission === "granted") {
         new Notification(title, {
           body,
           icon: "/android-chrome-192x192.png",
-          badge: "/favicon-32x32.png",
+          badge: "/favicon-32x192.png",
           tag: `fallback-${Date.now()}`,
         });
       }
@@ -210,7 +215,7 @@ export function usePushNotifications() {
     hasFallback,
     isIOS: isIOS && isSafari,
     permission:
-      typeof window !== "undefined" ? Notification.permission : "default",
+      typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default",
     subscribe,
     unsubscribe,
     requestPermission,

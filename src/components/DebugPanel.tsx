@@ -80,7 +80,11 @@ export function DebugPanel() {
 
         // Test notifications
         if ("Notification" in window) {
-          addLog(`Notification Permission: ${Notification.permission}`);
+          try {
+            addLog(`Notification Permission: ${Notification.permission}`);
+          } catch (error) {
+            addLog(`Notification API error: ${error}`, "error");
+          }
         } else {
           addLog("Notifications not available", "warn");
         }
@@ -135,7 +139,11 @@ export function DebugPanel() {
               <div className="text-sm space-y-1">
                 <div>User Agent: {navigator.userAgent}</div>
                 <div>
-                  Standalone: {(navigator as Navigator & { standalone?: boolean }).standalone ? "Yes" : "No"}
+                  Standalone:{" "}
+                  {(navigator as Navigator & { standalone?: boolean })
+                    .standalone
+                    ? "Yes"
+                    : "No"}
                 </div>
                 <div>
                   Service Worker:{" "}
@@ -151,7 +159,15 @@ export function DebugPanel() {
                 </div>
                 <div>
                   Notification Permission:{" "}
-                  {"Notification" in window ? Notification.permission : "N/A"}
+                  {"Notification" in window
+                    ? (() => {
+                        try {
+                          return Notification.permission;
+                        } catch (error) {
+                          return "Error accessing";
+                        }
+                      })()
+                    : "N/A"}
                 </div>
               </div>
             </div>
