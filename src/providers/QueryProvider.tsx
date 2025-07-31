@@ -25,7 +25,7 @@ export default function QueryProvider({
               // Only retry once for other errors
               return failureCount < 1;
             },
-            refetchOnWindowFocus: true, // Re-enable for instant updates when switching tabs
+            refetchOnWindowFocus: true, // Re-enabled for fresh data on navigation
             refetchOnReconnect: true,
             // Enable background refetching for real-time feel
             refetchIntervalInBackground: false, // Disable to save resources when tab is inactive

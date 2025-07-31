@@ -21,6 +21,7 @@ export async function GET() {
         phoneNumber: true,
         notificationOptIn: true,
         inAppNotifications: true,
+        pushNotifications: true,
       },
     });
 
@@ -37,6 +38,7 @@ export async function GET() {
         phoneNumber: user.phoneNumber,
         notificationOptIn: user.notificationOptIn,
         inAppNotifications: user.inAppNotifications,
+        pushNotifications: user.pushNotifications,
       },
       hasPassword,
     });
@@ -44,6 +46,34 @@ export async function GET() {
     console.error("Settings fetch error:", error);
     return NextResponse.json(
       { error: "Failed to fetch settings" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { pushNotifications } = body;
+
+    // Update push notification preference
+    if (typeof pushNotifications === "boolean") {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { pushNotifications },
+      });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Settings update error:", error);
+    return NextResponse.json(
+      { error: "Failed to update settings" },
       { status: 500 }
     );
   }

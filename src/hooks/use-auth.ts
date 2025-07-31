@@ -13,6 +13,9 @@ export interface User {
   image: string | null;
   timezone: string | null;
   hasOnboarded: boolean;
+  notificationOptIn: boolean;
+  inAppNotifications: boolean;
+  pushNotifications: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,8 +58,8 @@ export function useAuth() {
   } = useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
-    staleTime: 1 * 60 * 1000, // Reduced to 1 minute to prevent stale auth state
-    gcTime: 5 * 60 * 1000, // Reduced to 5 minutes
+    staleTime: 1 * 60 * 1000, // Back to 1 minute for fresh data
+    gcTime: 5 * 60 * 1000, // Back to 5 minutes
     retry: (failureCount, error) => {
       // Don't retry on 401 (unauthorized)
       if (error?.message === "UNAUTHORIZED") {
@@ -64,9 +67,9 @@ export function useAuth() {
       }
       return failureCount < 1;
     },
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: true, // Re-enabled for fresh data on navigation
     refetchOnReconnect: true,
-    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes to catch session expiry
+    refetchInterval: 5 * 60 * 1000, // Back to 5 minutes
   });
 
   const logoutMutation = useMutation({

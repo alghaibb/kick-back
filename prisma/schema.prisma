@@ -23,8 +23,9 @@ model User {
   reminderType       String    @default("email")
   reminderTime       String    @default("09:00")
   timezone           String?
-  notificationOptIn  Boolean   @default(true) // For SMS/Email reminders
-  inAppNotifications Boolean   @default(true) // For in-app notifications
+  notificationOptIn  Boolean   @default(true) 
+  inAppNotifications Boolean   @default(true) 
+  pushNotifications  Boolean   @default(false) 
 
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt

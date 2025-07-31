@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { BellOff, Smartphone } from "lucide-react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
 export default function PushNotificationToggle() {
@@ -24,6 +25,7 @@ export default function PushNotificationToggle() {
     unsubscribe,
     permission,
   } = usePushNotifications();
+  const { user } = useAuth();
   const [isEnabling, setIsEnabling] = useState(false);
 
   const handleToggle = async () => {
@@ -34,9 +36,11 @@ export default function PushNotificationToggle() {
 
       if (isSubscribed) {
         await unsubscribe();
+        await updateDbPreference(false);
         toast.success("Push notifications disabled");
       } else {
         await subscribe();
+        await updateDbPreference(true);
         toast.success(
           "Push notifications enabled! You'll now receive notifications when you're away from the app."
         );
@@ -57,6 +61,27 @@ export default function PushNotificationToggle() {
       }
     } finally {
       setIsEnabling(false);
+    }
+  };
+
+  const updateDbPreference = async (enabled: boolean) => {
+    try {
+      const response = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          pushNotifications: enabled,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update preference");
+      }
+    } catch (error) {
+      console.error("Failed to update push notification preference:", error);
+      toast.error("Failed to save preference");
     }
   };
 
@@ -105,7 +130,7 @@ export default function PushNotificationToggle() {
           </div>
           <Switch
             id="push-notifications"
-            checked={isSubscribed}
+            checked={user?.pushNotifications || false}
             onCheckedChange={handleToggle}
             disabled={isLoading || isEnabling}
           />
@@ -132,7 +157,7 @@ export default function PushNotificationToggle() {
           </div>
         )}
 
-        {isSubscribed && (
+        {user?.pushNotifications && (
           <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md">
             <p className="text-sm text-green-800 dark:text-green-200">
               ✅ Push notifications are enabled! You&apos;ll receive

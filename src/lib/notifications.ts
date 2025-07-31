@@ -143,9 +143,17 @@ export async function notifyUser(
     // Create in-app notification
     const notification = await createNotification(data);
 
-    // Send push notification if provided
+    // Send push notification if provided and user has enabled them
     if (pushData) {
-      await sendPushNotification(data.userId, pushData);
+      // Check if user has enabled push notifications
+      const user = await prisma.user.findUnique({
+        where: { id: data.userId },
+        select: { pushNotifications: true },
+      });
+
+      if (user?.pushNotifications) {
+        await sendPushNotification(data.userId, pushData);
+      }
     }
 
     return notification;
