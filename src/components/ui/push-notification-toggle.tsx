@@ -33,75 +33,12 @@ export default function PushNotificationToggle() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isEnabling, setIsEnabling] = useState(false);
-  const [localPushState, setLocalPushState] = useState<boolean | null>(null);
 
-  // Sync local state with actual subscription status
-  useEffect(() => {
-    if (!isLoading) {
-      // For iOS PWA, we need to be more careful about state sync
-      if (isIOS && isPWA) {
-        // On iOS PWA, if notifications are working but UI shows disabled,
-        // we should trust the actual working state
-        if (localPushState === null) {
-          // Initial load - prefer database preference, but if notifications are working, trust that
-          const shouldEnable = user?.pushNotifications || isSubscribed;
-          setLocalPushState(shouldEnable);
-        } else if (
-          localPushState !== isSubscribed &&
-          user?.pushNotifications !== isSubscribed
-        ) {
-          // If there's a mismatch and database doesn't match subscription, sync to working state
-          setLocalPushState(isSubscribed);
-        }
-      } else {
-        // For non-iOS or non-PWA, use standard logic
-        if (localPushState === null) {
-          setLocalPushState(user?.pushNotifications ?? isSubscribed);
-        } else if (
-          localPushState !== isSubscribed &&
-          user?.pushNotifications === isSubscribed
-        ) {
-          setLocalPushState(isSubscribed);
-        }
-      }
-    }
-  }, [
-    isSubscribed,
-    isLoading,
-    user?.pushNotifications,
-    localPushState,
-    isIOS,
-    isPWA,
-  ]);
-
-  // Periodic sync for iOS PWA to keep UI state accurate
-  useEffect(() => {
-    if (isIOS && isPWA && !isLoading) {
-      const syncInterval = setInterval(async () => {
-        try {
-          // Check actual subscription status
-          const registration =
-            await navigator.serviceWorker.getRegistration("/push-sw.js");
-          const subscription =
-            await registration?.pushManager.getSubscription();
-          const actualStatus = !!subscription;
-
-          // If UI state doesn't match actual status, update it
-          if (localPushState !== actualStatus) {
-            console.log("iOS PWA: Syncing notification state", {
-              localPushState,
-              actualStatus,
-            });
-            setLocalPushState(actualStatus);
-          }
-        } catch (error) {
-          console.log("iOS PWA: Sync check failed", error);
-        }
-      }, 10000); // Check every 10 seconds
-
-      return () => clearInterval(syncInterval);
-    }
-  }, [isIOS, isPWA, isLoading, localPushState]);
+  // Determine the current state - prioritize actual subscription status for PWA
+  const currentState =
+    isIOS && isPWA
+      ? isSubscribed || user?.pushNotifications
+      : (user?.pushNotifications ?? isSubscribed);
 
   // Defensive check for user data
   if (!user) {
@@ -126,7 +63,7 @@ export default function PushNotificationToggle() {
     pushNotifications: user.pushNotifications,
     isSupported,
     isSubscribed,
-    localPushState,
+    currentState,
     isPWA,
     hasFallback,
     isIOS,
@@ -137,10 +74,9 @@ export default function PushNotificationToggle() {
   const handleToggle = async () => {
     if (isLoading || isEnabling) return;
 
-    const newValue = !localPushState;
+    const newValue = !currentState;
 
     // Optimistically update the UI
-    setLocalPushState(newValue);
     queryClient.setQueryData(["user"], (oldData: User | undefined) => {
       if (!oldData) return oldData;
       return {
@@ -167,7 +103,6 @@ export default function PushNotificationToggle() {
       console.error("Failed to toggle push notifications:", error);
 
       // Revert optimistic update on error
-      setLocalPushState(!newValue);
       queryClient.setQueryData(["user"], (oldData: User | undefined) => {
         if (!oldData) return oldData;
         return {
@@ -200,8 +135,6 @@ export default function PushNotificationToggle() {
         await navigator.serviceWorker.getRegistration("/push-sw.js");
       const subscription = await registration?.pushManager.getSubscription();
       const actualStatus = !!subscription;
-
-      setLocalPushState(actualStatus);
 
       // Update database to match actual status
       await updateDbPreference(actualStatus);
@@ -273,7 +206,7 @@ export default function PushNotificationToggle() {
             </div>
             <Switch
               id="push-notifications-pwa"
-              checked={localPushState || false}
+              checked={currentState || false}
               onCheckedChange={handleToggle}
               disabled={isLoading || isEnabling}
             />
@@ -300,7 +233,7 @@ export default function PushNotificationToggle() {
             </div>
           )}
 
-          {localPushState && (
+          {currentState && (
             <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md">
               <p className="text-sm text-green-800 dark:text-green-200">
                 ✅ Notifications are enabled! You&apos;ll receive updates for:
@@ -372,8 +305,7 @@ export default function PushNotificationToggle() {
           )}
 
           {/* Sync button for when state gets out of sync */}
-          {localPushState !== null &&
-            localPushState !== isSubscribed &&
+          {currentState !== isSubscribed &&
             user?.pushNotifications !== isSubscribed && (
               <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
                 <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
@@ -481,7 +413,7 @@ export default function PushNotificationToggle() {
           </div>
           <Switch
             id="push-notifications"
-            checked={localPushState || false}
+            checked={currentState || false}
             onCheckedChange={handleToggle}
             disabled={isLoading || isEnabling}
           />
@@ -508,7 +440,7 @@ export default function PushNotificationToggle() {
           </div>
         )}
 
-        {localPushState && (
+        {currentState && (
           <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md">
             <p className="text-sm text-green-800 dark:text-green-200">
               ✅ Push notifications are enabled! You&apos;ll receive
@@ -559,8 +491,7 @@ export default function PushNotificationToggle() {
         )}
 
         {/* Sync button for when state gets out of sync */}
-        {localPushState !== null &&
-          localPushState !== isSubscribed &&
+        {currentState !== isSubscribed &&
           user?.pushNotifications !== isSubscribed && (
             <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
               <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
