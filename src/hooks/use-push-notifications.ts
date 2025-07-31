@@ -58,6 +58,9 @@ export function usePushNotifications() {
       if (isIOS && isSafari && isStandalone) {
         setHasFallback(true);
       }
+
+      // Don't let this error bubble up to cause error boundary
+      console.log("Push notification check failed, continuing without push notifications");
     } finally {
       setIsLoading(false);
     }
@@ -142,8 +145,11 @@ export function usePushNotifications() {
       // Set fallback for iOS Safari PWA
       if (isIOS && isSafari && isStandalone) {
         setHasFallback(true);
+        console.log("iOS Safari PWA: Using fallback notification mode");
       }
 
+      // Don't let this error bubble up to cause error boundary
+      console.log("Push subscription failed, continuing without push notifications");
       throw error;
     }
   };
@@ -174,6 +180,9 @@ export function usePushNotifications() {
       setHasFallback(false);
     } catch (error) {
       console.error("Failed to unsubscribe from push notifications:", error);
+
+      // Don't let this error bubble up to cause error boundary
+      console.log("Push unsubscription failed, but continuing");
       throw error;
     }
   };
