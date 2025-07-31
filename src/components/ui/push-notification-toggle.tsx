@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BellOff, Smartphone, Home, AlertTriangle } from "lucide-react";
+import { BellOff, Smartphone, Home } from "lucide-react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { useAuth, type User } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
