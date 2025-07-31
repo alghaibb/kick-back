@@ -7,7 +7,7 @@ import { env } from "@/lib/env";
 // iOS Safari detection
 const isIOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 const isSafari = typeof window !== "undefined" && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-const isStandalone = typeof window !== "undefined" && (window as any).navigator?.standalone === true;
+const isStandalone = typeof window !== "undefined" && (window.navigator as Navigator & { standalone?: boolean })?.standalone === true;
 
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);

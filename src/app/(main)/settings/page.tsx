@@ -4,6 +4,12 @@ import { Suspense } from "react";
 import { SettingsContent } from "./_components/SettingsContent";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { PageErrorBoundary } from "@/components/ui/error-boundary";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings",
+  description: "Manage your account security, email, timezone, and notification preferences",
+};
 
 export default function SettingsPage() {
   return (

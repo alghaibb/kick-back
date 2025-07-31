@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,25 @@ export default function PushNotificationToggle() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isEnabling, setIsEnabling] = useState(false);
+  const [localPushState, setLocalPushState] = useState<boolean | null>(null);
+
+  // Sync local state with actual subscription status
+  useEffect(() => {
+    if (!isLoading) {
+      // Only update local state if it's null (initial state) or if there's a clear mismatch
+      if (localPushState === null) {
+        // On initial load, prefer the user's database preference over subscription status
+        // This handles cases where the subscription might be lost but the user preference is still true
+        setLocalPushState(user?.pushNotifications ?? isSubscribed);
+      } else if (
+        localPushState !== isSubscribed &&
+        user?.pushNotifications === isSubscribed
+      ) {
+        // If local state doesn't match subscription but user data matches subscription, update local state
+        setLocalPushState(isSubscribed);
+      }
+    }
+  }, [isSubscribed, isLoading, user?.pushNotifications, localPushState]);
 
   // Defensive check for user data
   if (!user) {
@@ -57,6 +76,7 @@ export default function PushNotificationToggle() {
     pushNotifications: user.pushNotifications,
     isSupported,
     isSubscribed,
+    localPushState,
     isPWA,
     hasFallback,
     isIOS,
@@ -67,9 +87,10 @@ export default function PushNotificationToggle() {
   const handleToggle = async () => {
     if (isLoading || isEnabling) return;
 
-    const newValue = !user?.pushNotifications;
+    const newValue = !localPushState;
 
     // Optimistically update the UI
+    setLocalPushState(newValue);
     queryClient.setQueryData(["user"], (oldData: User | undefined) => {
       if (!oldData) return oldData;
       return {
@@ -96,6 +117,7 @@ export default function PushNotificationToggle() {
       console.error("Failed to toggle push notifications:", error);
 
       // Revert optimistic update on error
+      setLocalPushState(!newValue);
       queryClient.setQueryData(["user"], (oldData: User | undefined) => {
         if (!oldData) return oldData;
         return {
@@ -115,6 +137,40 @@ export default function PushNotificationToggle() {
       } else {
         toast.error("Failed to update push notification settings");
       }
+    } finally {
+      setIsEnabling(false);
+    }
+  };
+
+  const handleSync = async () => {
+    try {
+      setIsEnabling(true);
+      // Force refresh the subscription status
+      const registration =
+        await navigator.serviceWorker.getRegistration("/push-sw.js");
+      const subscription = await registration?.pushManager.getSubscription();
+      const actualStatus = !!subscription;
+
+      setLocalPushState(actualStatus);
+
+      // Update database to match actual status
+      await updateDbPreference(actualStatus);
+
+      // Update user cache
+      queryClient.setQueryData(["user"], (oldData: User | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pushNotifications: actualStatus,
+        };
+      });
+
+      toast.success(
+        `Push notifications ${actualStatus ? "enabled" : "disabled"} (synced with actual status)`
+      );
+    } catch (error) {
+      console.error("Failed to sync push notification status:", error);
+      toast.error("Failed to sync push notification status");
     } finally {
       setIsEnabling(false);
     }
@@ -167,7 +223,7 @@ export default function PushNotificationToggle() {
             </div>
             <Switch
               id="push-notifications-pwa"
-              checked={user?.pushNotifications || false}
+              checked={localPushState || false}
               onCheckedChange={handleToggle}
               disabled={isLoading || isEnabling}
             />
@@ -211,7 +267,7 @@ export default function PushNotificationToggle() {
             </div>
           )}
 
-          {user?.pushNotifications && (
+          {localPushState && (
             <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md">
               <p className="text-sm text-green-800 dark:text-green-200">
                 ✅ Push notifications are enabled in PWA mode! You&apos;ll
@@ -281,6 +337,26 @@ export default function PushNotificationToggle() {
               Setting up push notifications...
             </div>
           )}
+
+          {/* Sync button for when state gets out of sync */}
+          {localPushState !== null &&
+            localPushState !== isSubscribed &&
+            user?.pushNotifications !== isSubscribed && (
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
+                  ⚠️ Push notification state is out of sync with your actual
+                  subscription.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSync}
+                  disabled={isEnabling}
+                >
+                  Sync Status
+                </Button>
+              </div>
+            )}
         </CardContent>
       </Card>
     );
@@ -372,7 +448,7 @@ export default function PushNotificationToggle() {
           </div>
           <Switch
             id="push-notifications"
-            checked={user?.pushNotifications || false}
+            checked={localPushState || false}
             onCheckedChange={handleToggle}
             disabled={isLoading || isEnabling}
           />
@@ -399,7 +475,7 @@ export default function PushNotificationToggle() {
           </div>
         )}
 
-        {user?.pushNotifications && (
+        {localPushState && (
           <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md">
             <p className="text-sm text-green-800 dark:text-green-200">
               ✅ Push notifications are enabled! You&apos;ll receive
@@ -448,6 +524,26 @@ export default function PushNotificationToggle() {
             Setting up push notifications...
           </div>
         )}
+
+        {/* Sync button for when state gets out of sync */}
+        {localPushState !== null &&
+          localPushState !== isSubscribed &&
+          user?.pushNotifications !== isSubscribed && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
+              <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
+                ⚠️ Push notification state is out of sync with your actual
+                subscription.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSync}
+                disabled={isEnabling}
+              >
+                Sync Status
+              </Button>
+            </div>
+          )}
       </CardContent>
     </Card>
   );
