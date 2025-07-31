@@ -4,7 +4,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useThemeConfig } from "@/providers/ActiveThemeProvider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMobileScrollFix } from "@/hooks/use-mobile-scroll";
-import { useTitleBadge } from "@/hooks/use-title-badge";
 import { MainHeader } from "./MainHeader";
 import { MainSidebar } from "./MainSidebar";
 import { cn } from "@/lib/utils";
@@ -21,9 +20,6 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
 
   // Fix mobile scroll issues
   useMobileScrollFix();
-
-  // Enable title badge for PWA notifications
-  useTitleBadge();
 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);

@@ -107,21 +107,6 @@ self.addEventListener("unhandledrejection", (event) => {
 self.addEventListener("push", (event) => {
   console.log("Push event received:", event);
 
-  // Update badge count if supported
-  if ("setAppBadge" in navigator) {
-    // Get current badge count and increment
-    navigator
-      .getAppBadge()
-      .then((currentCount) => {
-        const newCount = (currentCount || 0) + 1;
-        navigator.setAppBadge(newCount);
-      })
-      .catch(() => {
-        // If getAppBadge fails, just set to 1
-        navigator.setAppBadge(1);
-      });
-  }
-
   try {
     let data = {};
     if (event.data) {
@@ -166,11 +151,6 @@ self.addEventListener("notificationclick", (event) => {
   console.log("Notification clicked:", event);
 
   event.notification.close();
-
-  // Clear badge count when notification is clicked
-  if ("clearAppBadge" in navigator) {
-    navigator.clearAppBadge();
-  }
 
   if (event.action === "close") {
     return;

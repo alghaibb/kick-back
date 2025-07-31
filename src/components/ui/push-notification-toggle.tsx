@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -39,6 +39,40 @@ export default function PushNotificationToggle() {
     isIOS && isPWA
       ? isSubscribed // If subscription exists, it's working - trust that
       : (user?.pushNotifications ?? isSubscribed);
+
+  // Auto-sync database when iOS PWA has working subscription but database shows disabled
+  useEffect(() => {
+    if (
+      isIOS &&
+      isPWA &&
+      isSubscribed &&
+      !user?.pushNotifications &&
+      !isLoading
+    ) {
+      console.log("iOS PWA: Auto-syncing database with working subscription");
+      updateDbPreference(true)
+        .then(() => {
+          // Update user cache to reflect the change
+          queryClient.setQueryData(["user"], (oldData: User | undefined) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              pushNotifications: true,
+            };
+          });
+        })
+        .catch((error) => {
+          console.error("Failed to auto-sync iOS PWA subscription:", error);
+        });
+    }
+  }, [
+    isIOS,
+    isPWA,
+    isSubscribed,
+    user?.pushNotifications,
+    isLoading,
+    queryClient,
+  ]);
 
   // Defensive check for user data
   if (!user) {
