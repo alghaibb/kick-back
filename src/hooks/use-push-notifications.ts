@@ -4,14 +4,24 @@ import { useEffect, useState } from "react";
 import { useAuth } from "./use-auth";
 import { env } from "@/lib/env";
 
+// iOS Safari detection
+const isIOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isSafari = typeof window !== "undefined" && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+const isStandalone = typeof window !== "undefined" && (window as any).navigator?.standalone === true;
+
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPWA, setIsPWA] = useState(false);
+  const [hasFallback, setHasFallback] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // Check if we're in PWA mode
+    setIsPWA(isStandalone);
 
     // Check if push notifications are supported
     const supported =
@@ -36,8 +46,18 @@ export function usePushNotifications() {
         await navigator.serviceWorker.getRegistration("/push-sw.js");
       const subscription = await registration?.pushManager.getSubscription();
       setIsSubscribed(!!subscription);
+
+      // Check if we need fallback for iOS Safari PWA
+      if (isIOS && isSafari && isStandalone && !subscription) {
+        setHasFallback(true);
+      }
     } catch (error) {
       console.error("Failed to check subscription status:", error);
+
+      // Set fallback for iOS Safari PWA
+      if (isIOS && isSafari && isStandalone) {
+        setHasFallback(true);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -67,10 +87,20 @@ export function usePushNotifications() {
     }
 
     try {
-      // Register the push notification service worker
+      // iOS Safari PWA specific handling
+      if (isIOS && isSafari && isStandalone) {
+        console.log("iOS Safari PWA detected - using enhanced service worker registration");
+      }
+
+      // Register the push notification service worker with cache busting
       const registration = await navigator.serviceWorker.register(
-        "/push-sw.js?v=" + Date.now()
+        "/push-sw.js?v=" + Date.now(),
+        {
+          scope: "/",
+          updateViaCache: "none" // Ensure fresh service worker in PWA mode
+        }
       );
+
       await navigator.serviceWorker.ready;
 
       // Check if already subscribed
@@ -104,9 +134,16 @@ export function usePushNotifications() {
       }
 
       setIsSubscribed(true);
+      setHasFallback(false);
       return subscription;
     } catch (error) {
       console.error("Failed to subscribe to push notifications:", error);
+
+      // Set fallback for iOS Safari PWA
+      if (isIOS && isSafari && isStandalone) {
+        setHasFallback(true);
+      }
+
       throw error;
     }
   };
@@ -134,9 +171,25 @@ export function usePushNotifications() {
       }
 
       setIsSubscribed(false);
+      setHasFallback(false);
     } catch (error) {
       console.error("Failed to unsubscribe from push notifications:", error);
       throw error;
+    }
+  };
+
+  // Fallback notification method for iOS Safari PWA
+  const showFallbackNotification = async (title: string, body: string) => {
+    if (isIOS && isSafari && isStandalone && hasFallback) {
+      // Use browser notifications as fallback
+      if (Notification.permission === "granted") {
+        new Notification(title, {
+          body,
+          icon: "/android-chrome-192x192.png",
+          badge: "/favicon-32x32.png",
+          tag: `fallback-${Date.now()}`,
+        });
+      }
     }
   };
 
@@ -144,11 +197,15 @@ export function usePushNotifications() {
     isSupported,
     isSubscribed,
     isLoading,
+    isPWA,
+    hasFallback,
+    isIOS: isIOS && isSafari,
     permission:
       typeof window !== "undefined" ? Notification.permission : "default",
     subscribe,
     unsubscribe,
     requestPermission,
+    showFallbackNotification,
   };
 }
 

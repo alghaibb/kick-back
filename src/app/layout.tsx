@@ -26,9 +26,58 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "Kick Back",
+    startupImage: [
+      {
+        url: "/apple-touch-icon.png",
+        media:
+          "(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)",
+      },
+      {
+        url: "/apple-touch-icon.png",
+        media:
+          "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)",
+      },
+      {
+        url: "/apple-touch-icon.png",
+        media:
+          "(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/apple-touch-icon.png",
+        media:
+          "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/apple-touch-icon.png",
+        media:
+          "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)",
+      },
+      {
+        url: "/apple-touch-icon.png",
+        media:
+          "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)",
+      },
+    ],
   },
   formatDetection: {
     telephone: false,
+    email: false,
+    address: false,
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover",
+  },
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-title": "Kick Back",
+    "mobile-web-app-capable": "yes",
+    "msapplication-TileColor": "#000000",
+    "msapplication-config": "/browserconfig.xml",
   },
   openGraph: {
     type: "website",
@@ -52,6 +101,11 @@ export const metadata: Metadata = {
 export function generateViewport() {
   return {
     themeColor: "#000000",
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover",
   };
 }
 
@@ -62,6 +116,68 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* iOS Safari specific meta tags */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Kick Back" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta
+          name="format-detection"
+          content="telephone=no,email=no,address=no"
+        />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+        />
+
+        {/* PWA icons for iOS */}
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link
+          rel="apple-touch-icon"
+          sizes="152x152"
+          href="/apple-touch-icon.png"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/apple-touch-icon.png"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="167x167"
+          href="/apple-touch-icon.png"
+        />
+
+        {/* Prevent iOS Safari from showing error boundary */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // iOS Safari error handling
+              if (typeof window !== 'undefined') {
+                window.addEventListener('error', function(e) {
+                  console.error('Global error caught:', e.error);
+                  // Prevent error boundary from showing for known iOS Safari issues
+                  if (e.error && e.error.message && (
+                    e.error.message.includes('Prisma') ||
+                    e.error.message.includes('service worker') ||
+                    e.error.message.includes('push notification')
+                  )) {
+                    e.preventDefault();
+                    console.log('Suppressed iOS Safari error:', e.error.message);
+                  }
+                });
+                
+                // iOS Safari PWA detection
+                if (navigator.standalone) {
+                  document.documentElement.classList.add('pwa-mode');
+                  console.log('iOS Safari PWA mode detected');
+                }
+              }
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${poppins.variable} antialiased bg-background`}
         suppressHydrationWarning
