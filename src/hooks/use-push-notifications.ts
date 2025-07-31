@@ -27,8 +27,7 @@ export function usePushNotifications() {
     const supported =
       "serviceWorker" in navigator &&
       "PushManager" in window &&
-      "Notification" in window &&
-      !isSafariIOS(); // Explicitly exclude Safari iOS
+      "Notification" in window;
 
     setIsSupported(supported);
 

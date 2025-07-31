@@ -135,7 +135,7 @@ export default function PushNotificationToggle() {
     }
   };
 
-  if (!isSupported || isSafariIOS()) {
+  if (!isSupported) {
     return (
       <Card>
         <CardHeader>
@@ -145,16 +145,24 @@ export default function PushNotificationToggle() {
           </CardTitle>
           <CardDescription>
             {isSafariIOS()
-              ? "Not available in Safari on iOS"
+              ? "Limited support in Safari on iOS"
               : "Push notifications are not supported in your browser"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
             {isSafariIOS()
-              ? "Safari on iOS doesn&apos;t support push notifications. You can still receive in-app notifications and email/SMS reminders."
+              ? "Safari on iOS has limited push notification support. For full functionality, try Chrome or Firefox, or install this app to your home screen as a PWA."
               : "Your browser doesn&apos;t support push notifications. Try using a modern browser like Chrome, Firefox, or Safari."}
           </p>
+          {isSafariIOS() && (
+            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                💡 <strong>Tip:</strong> You can still receive in-app
+                notifications and email/SMS reminders on Safari iOS!
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
