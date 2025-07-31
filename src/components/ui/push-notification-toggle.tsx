@@ -146,27 +146,31 @@ export default function PushNotificationToggle() {
               <li>• Event reminders</li>
               <li>• New photos added to events</li>
             </ul>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={async () => {
-                try {
-                  const response = await fetch("/api/notifications/test", {
-                    method: "POST",
-                  });
-                  if (response.ok) {
-                    toast.success("Test notification sent! Check your device.");
-                  } else {
+            {process.env.NODE_ENV === "development" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={async () => {
+                  try {
+                    const response = await fetch("/api/notifications/test", {
+                      method: "POST",
+                    });
+                    if (response.ok) {
+                      toast.success(
+                        "Test notification sent! Check your device."
+                      );
+                    } else {
+                      toast.error("Failed to send test notification");
+                    }
+                  } catch (error) {
                     toast.error("Failed to send test notification");
                   }
-                } catch (error) {
-                  toast.error("Failed to send test notification");
-                }
-              }}
-            >
-              Send Test Notification
-            </Button>
+                }}
+              >
+                Send Test Notification
+              </Button>
+            )}
           </div>
         )}
 
