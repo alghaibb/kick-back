@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/card";
 import { BellOff, Smartphone } from "lucide-react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, type User } from "@/hooks/use-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function PushNotificationToggle() {
@@ -26,10 +27,22 @@ export default function PushNotificationToggle() {
     permission,
   } = usePushNotifications();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isEnabling, setIsEnabling] = useState(false);
 
   const handleToggle = async () => {
     if (isLoading || isEnabling) return;
+
+    const newValue = !user?.pushNotifications;
+
+    // Optimistically update the UI
+    queryClient.setQueryData(["user"], (oldData: User | undefined) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        pushNotifications: newValue,
+      };
+    });
 
     try {
       setIsEnabling(true);
@@ -47,6 +60,15 @@ export default function PushNotificationToggle() {
       }
     } catch (error) {
       console.error("Failed to toggle push notifications:", error);
+
+      // Revert optimistic update on error
+      queryClient.setQueryData(["user"], (oldData: User | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pushNotifications: !newValue, // Revert to previous value
+        };
+      });
 
       if (error instanceof Error) {
         if (error.message.includes("permission denied")) {
@@ -82,6 +104,7 @@ export default function PushNotificationToggle() {
     } catch (error) {
       console.error("Failed to update push notification preference:", error);
       toast.error("Failed to save preference");
+      throw error; // Re-throw to trigger optimistic rollback
     }
   };
 
