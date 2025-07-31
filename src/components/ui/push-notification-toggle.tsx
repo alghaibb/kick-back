@@ -38,20 +38,70 @@ export default function PushNotificationToggle() {
   // Sync local state with actual subscription status
   useEffect(() => {
     if (!isLoading) {
-      // Only update local state if it's null (initial state) or if there's a clear mismatch
-      if (localPushState === null) {
-        // On initial load, prefer the user's database preference over subscription status
-        // This handles cases where the subscription might be lost but the user preference is still true
-        setLocalPushState(user?.pushNotifications ?? isSubscribed);
-      } else if (
-        localPushState !== isSubscribed &&
-        user?.pushNotifications === isSubscribed
-      ) {
-        // If local state doesn't match subscription but user data matches subscription, update local state
-        setLocalPushState(isSubscribed);
+      // For iOS PWA, we need to be more careful about state sync
+      if (isIOS && isPWA) {
+        // On iOS PWA, if notifications are working but UI shows disabled,
+        // we should trust the actual working state
+        if (localPushState === null) {
+          // Initial load - prefer database preference, but if notifications are working, trust that
+          const shouldEnable = user?.pushNotifications || isSubscribed;
+          setLocalPushState(shouldEnable);
+        } else if (
+          localPushState !== isSubscribed &&
+          user?.pushNotifications !== isSubscribed
+        ) {
+          // If there's a mismatch and database doesn't match subscription, sync to working state
+          setLocalPushState(isSubscribed);
+        }
+      } else {
+        // For non-iOS or non-PWA, use standard logic
+        if (localPushState === null) {
+          setLocalPushState(user?.pushNotifications ?? isSubscribed);
+        } else if (
+          localPushState !== isSubscribed &&
+          user?.pushNotifications === isSubscribed
+        ) {
+          setLocalPushState(isSubscribed);
+        }
       }
     }
-  }, [isSubscribed, isLoading, user?.pushNotifications, localPushState]);
+  }, [
+    isSubscribed,
+    isLoading,
+    user?.pushNotifications,
+    localPushState,
+    isIOS,
+    isPWA,
+  ]);
+
+  // Periodic sync for iOS PWA to keep UI state accurate
+  useEffect(() => {
+    if (isIOS && isPWA && !isLoading) {
+      const syncInterval = setInterval(async () => {
+        try {
+          // Check actual subscription status
+          const registration =
+            await navigator.serviceWorker.getRegistration("/push-sw.js");
+          const subscription =
+            await registration?.pushManager.getSubscription();
+          const actualStatus = !!subscription;
+
+          // If UI state doesn't match actual status, update it
+          if (localPushState !== actualStatus) {
+            console.log("iOS PWA: Syncing notification state", {
+              localPushState,
+              actualStatus,
+            });
+            setLocalPushState(actualStatus);
+          }
+        } catch (error) {
+          console.log("iOS PWA: Sync check failed", error);
+        }
+      }, 10000); // Check every 10 seconds
+
+      return () => clearInterval(syncInterval);
+    }
+  }, [isIOS, isPWA, isLoading, localPushState]);
 
   // Defensive check for user data
   if (!user) {
@@ -321,11 +371,10 @@ export default function PushNotificationToggle() {
             </div>
           )}
 
-          {/* Sync button for when state gets out of sync - hide for iOS PWA when working */}
+          {/* Sync button for when state gets out of sync */}
           {localPushState !== null &&
             localPushState !== isSubscribed &&
-            user?.pushNotifications !== isSubscribed &&
-            !(hasFallback && localPushState) && (
+            user?.pushNotifications !== isSubscribed && (
               <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
                 <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
                   ⚠️ Push notification state is out of sync with your actual
