@@ -36,8 +36,8 @@ const nextConfig: NextConfig = {
     optimizePackageImports: [
       "lucide-react",
       "framer-motion",
-      "date-fns", // Tree-shake date utilities
-      "react-icons", // Tree-shake icon imports
+      "date-fns",
+      "react-icons",
       "@radix-ui/react-dialog",
       "@radix-ui/react-dropdown-menu",
       "@radix-ui/react-select",
@@ -47,10 +47,9 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-checkbox",
       "@radix-ui/react-switch",
       "@radix-ui/react-tabs",
-      "@tanstack/react-query", // Tree-shake React Query
-      "sonner", // Tree-shake toast library
+      "@tanstack/react-query",
+      "sonner",
     ],
-    // Note: Removed aggressive optimizations that were causing server/client code mixing
   },
   // Compress responses more aggressively
   compress: true,

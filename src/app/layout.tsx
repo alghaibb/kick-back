@@ -73,11 +73,15 @@ export const metadata: Metadata = {
   },
   other: {
     "apple-mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
     "apple-mobile-web-app-title": "Kick Back",
     "mobile-web-app-capable": "yes",
     "msapplication-TileColor": "#000000",
     "msapplication-config": "/browserconfig.xml",
+    // iOS PWA specific meta tags
+    "apple-mobile-web-app-orientations": "portrait",
+    // Cache control for iOS
+    "cache-control": "public, max-age=31536000",
   },
   openGraph: {
     type: "website",

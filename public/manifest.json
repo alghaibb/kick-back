@@ -12,6 +12,10 @@
   "dir": "ltr",
   "categories": ["productivity", "social", "lifestyle"],
   "prefer_related_applications": false,
+  "display_override": ["standalone", "minimal-ui"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
   "icons": [
     {
       "src": "/favicon-16x16.png",

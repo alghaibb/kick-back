@@ -1,10 +1,10 @@
 // Push Notification Service Worker
 // iOS Safari PWA Enhanced Version
 
-// Detect iOS Safari
+// iOS PWA persistence fix
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-const isStandalone = navigator.standalone === true;
+const isStandalone = window.navigator.standalone === true;
 
 console.log('Service Worker: iOS Safari PWA detected:', isIOS && isSafari && isStandalone);
 
@@ -240,17 +240,42 @@ function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
-// Install event - set up the service worker
-self.addEventListener("install", function (event) {
-  console.log('Service worker installing...');
+// Enhanced service worker for iOS PWA persistence
+self.addEventListener('install', (event) => {
+  console.log('Service Worker installing...');
+  // Force the waiting service worker to become the active service worker
   self.skipWaiting();
 });
 
-// Activate event - take control immediately
-self.addEventListener("activate", function (event) {
-  console.log('Service worker activating...');
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating...');
+  // Ensure the service worker takes control immediately
   event.waitUntil(self.clients.claim());
 });
+
+// iOS-specific PWA persistence
+if (isIOS && isSafari && isStandalone) {
+  console.log('iOS PWA detected - enabling persistence features');
+
+  // Keep the service worker alive
+  self.addEventListener('fetch', (event) => {
+    // Cache critical resources for offline use
+    if (event.request.url.includes('/manifest.json') ||
+      event.request.url.includes('/apple-touch-icon') ||
+      event.request.url.includes('/favicon')) {
+      event.respondWith(
+        caches.match(event.request).then((response) => {
+          return response || fetch(event.request).then((fetchResponse) => {
+            return caches.open('pwa-cache').then((cache) => {
+              cache.put(event.request, fetchResponse.clone());
+              return fetchResponse;
+            });
+          });
+        })
+      );
+    }
+  });
+}
 
 // Error handling for iOS Safari PWA
 self.addEventListener("error", function (event) {
