@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Bell, BellOff, Smartphone } from "lucide-react";
+import { BellOff, Smartphone } from "lucide-react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { toast } from "sonner";
 
@@ -164,6 +164,7 @@ export default function PushNotificationToggle() {
                       toast.error("Failed to send test notification");
                     }
                   } catch (error) {
+                    console.error("Failed to send test notification:", error);
                     toast.error("Failed to send test notification");
                   }
                 }}
