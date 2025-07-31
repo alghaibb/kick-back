@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { Calendar } from "@/components/ui/calendar";
+import { FullCalendar } from "@/components/ui/full-calendar";
 import { Button } from "@/components/ui/button";
 import { format, isSameDay, startOfDay } from "date-fns";
 import { useCalendar } from "@/hooks/queries/useCalendar";
@@ -85,230 +85,238 @@ export function CalendarPageClientWithComments() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
-      <div className="flex-1">
-        <Calendar
-          required
+    <div className="flex flex-col gap-8">
+      {/* Calendar Section - Full width */}
+      <div className="w-full">
+        <FullCalendar
           selected={selectedDate}
           onSelect={setSelectedDate}
-          mode="single"
-          month={selectedDate}
-          onMonthChange={setSelectedDate}
+          events={data?.events || []}
+          className="w-full"
         />
       </div>
-      <div
-        className="flex-1 border-l pl-6 overflow-y-auto max-h-[800px]"
-        ref={scrollContainerRef}
-        style={{ scrollBehavior: "auto" }} // Prevent smooth scrolling that can cause jumps
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-lg">
-            {format(selectedDate, "PPP")}
-          </h3>
-          {/* Removed constant loading spinner - ultra-fast polling makes it unnecessary */}
-        </div>
 
-        {eventsForDay.length === 0 ? (
-          <div className="text-muted-foreground">
-            No events scheduled for this day.
+      {/* Events Panel - Full width below calendar */}
+      <div className="w-full">
+        <div
+          className="overflow-y-auto max-h-[600px]"
+          ref={scrollContainerRef}
+          style={{ scrollBehavior: "auto" }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-lg">
+              {format(selectedDate, "PPP")}
+            </h3>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {eventsForDay.map((event) => (
-              <Collapsible
-                key={event.id}
-                open={expandedEvents.has(event.id)}
-                onOpenChange={() => toggleEventExpanded(event.id)}
-              >
-                <div
-                  id={`event-${event.id}`}
-                  className="border rounded-lg bg-card"
+
+          {eventsForDay.length === 0 ? (
+            <div className="text-muted-foreground">
+              No events scheduled for this day.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {eventsForDay.map((event) => (
+                <Collapsible
+                  key={event.id}
+                  open={expandedEvents.has(event.id)}
+                  onOpenChange={() => toggleEventExpanded(event.id)}
                 >
-                  {/* Event Header */}
-                  <div className="p-4 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="font-bold text-lg">{event.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatDate(new Date(event.date), {
-                            includeWeekday: true,
-                            includeTime: true,
-                          })}
+                  <div
+                    id={`event-${event.id}`}
+                    className="border rounded-lg bg-card"
+                  >
+                    {/* Event Header */}
+                    <div className="p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="font-bold text-lg">{event.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatDate(new Date(event.date), {
+                              includeWeekday: true,
+                              includeTime: true,
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="text-xs mt-1">
-                      Location:{" "}
-                      <span className="font-medium">
-                        {event.location || "N/A"}
-                      </span>
-                    </div>
-
-                    {event.description && (
-                      <div className="text-sm text-muted-foreground">
-                        {event.description}
-                      </div>
-                    )}
-
-                    <div className="text-xs mt-1">
-                      {event.group ? (
-                        <>
-                          Group:{" "}
-                          <span className="font-medium">
-                            {event.group.name}
-                          </span>
-                        </>
-                      ) : (
-                        <>No group</>
-                      )}
-                    </div>
-
-                    {/* Attendees Summary */}
-                    <div className="mt-2">
-                      <div className="font-semibold text-xs mb-1">
-                        Attendees:
+                      <div className="text-xs mt-1">
+                        Location:{" "}
+                        <span className="font-medium">
+                          {event.location || "N/A"}
+                        </span>
                       </div>
 
-                      {/* Going Attendees */}
-                      {event.attendees.filter((a) => a.rsvpStatus === "yes")
-                        .length > 0 && (
-                        <div className="mb-2">
-                          <div className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">
-                            ✓ Going (
-                            {
-                              event.attendees.filter(
-                                (a) => a.rsvpStatus === "yes"
-                              ).length
-                            }
-                            )
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {event.attendees
-                              .filter((a) => a.rsvpStatus === "yes")
-                              .map((a) => a.user.nickname || a.user.firstName)
-                              .join(", ")}
-                          </div>
+                      {event.description && (
+                        <div className="text-sm text-muted-foreground">
+                          {event.description}
                         </div>
                       )}
 
-                      {/* Maybe Attendees */}
-                      {event.attendees.filter((a) => a.rsvpStatus === "maybe")
-                        .length > 0 && (
-                        <div className="mb-2">
-                          <div className="text-xs text-yellow-600 dark:text-yellow-400 font-medium mb-1">
-                            ? Maybe (
-                            {
-                              event.attendees.filter(
-                                (a) => a.rsvpStatus === "maybe"
-                              ).length
-                            }
-                            )
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {event.attendees
-                              .filter((a) => a.rsvpStatus === "maybe")
-                              .map((a) => a.user.nickname || a.user.firstName)
-                              .join(", ")}
-                          </div>
-                        </div>
-                      )}
+                      <div className="text-xs mt-1">
+                        {event.group ? (
+                          <>
+                            Group:{" "}
+                            <span className="font-medium">
+                              {event.group.name}
+                            </span>
+                          </>
+                        ) : (
+                          <>No group</>
+                        )}
+                      </div>
 
-                      {/* Pending Attendees */}
-                      {event.attendees.filter((a) => a.rsvpStatus === "pending")
-                        .length > 0 && (
-                        <div className="mb-2">
-                          <div className="text-xs text-muted-foreground font-medium mb-1">
-                            ⏳ Pending (
-                            {
-                              event.attendees.filter(
-                                (a) => a.rsvpStatus === "pending"
-                              ).length
-                            }
-                            )
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {event.attendees
-                              .filter((a) => a.rsvpStatus === "pending")
-                              .map((a) => a.user.nickname || a.user.firstName)
-                              .join(", ")}
-                          </div>
+                      {/* Attendees Summary */}
+                      <div className="mt-2">
+                        <div className="font-semibold text-xs mb-1">
+                          Attendees:
                         </div>
-                      )}
 
-                      {/* Not Going Attendees */}
-                      {event.attendees.filter((a) => a.rsvpStatus === "no")
-                        .length > 0 && (
-                        <div>
-                          <div className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">
-                            ✗ Not Going (
-                            {
-                              event.attendees.filter(
-                                (a) => a.rsvpStatus === "no"
-                              ).length
-                            }
-                            )
+                        {/* Going Attendees */}
+                        {event.attendees.filter((a) => a.rsvpStatus === "yes")
+                          .length > 0 && (
+                          <div className="mb-2">
+                            <div className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">
+                              ✓ Going (
+                              {
+                                event.attendees.filter(
+                                  (a) => a.rsvpStatus === "yes"
+                                ).length
+                              }
+                              )
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {event.attendees
+                                .filter((a) => a.rsvpStatus === "yes")
+                                .map((a) => a.user.nickname || a.user.firstName)
+                                .join(", ")}
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {event.attendees
-                              .filter((a) => a.rsvpStatus === "no")
-                              .map((a) => a.user.nickname || a.user.firstName)
-                              .join(", ")}
+                        )}
+
+                        {/* Maybe Attendees */}
+                        {event.attendees.filter((a) => a.rsvpStatus === "maybe")
+                          .length > 0 && (
+                          <div className="mb-2">
+                            <div className="text-xs text-yellow-600 dark:text-yellow-400 font-medium mb-1">
+                              ? Maybe (
+                              {
+                                event.attendees.filter(
+                                  (a) => a.rsvpStatus === "maybe"
+                                ).length
+                              }
+                              )
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {event.attendees
+                                .filter((a) => a.rsvpStatus === "maybe")
+                                .map((a) => a.user.nickname || a.user.firstName)
+                                .join(", ")}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+
+                        {/* Not Going Attendees */}
+                        {event.attendees.filter((a) => a.rsvpStatus === "no")
+                          .length > 0 && (
+                          <div className="mb-2">
+                            <div className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">
+                              ✗ Not Going (
+                              {
+                                event.attendees.filter(
+                                  (a) => a.rsvpStatus === "no"
+                                ).length
+                              }
+                              )
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {event.attendees
+                                .filter((a) => a.rsvpStatus === "no")
+                                .map((a) => a.user.nickname || a.user.firstName)
+                                .join(", ")}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* No Response Attendees */}
+                        {event.attendees.filter(
+                          (a) => a.rsvpStatus === "pending"
+                        ).length > 0 && (
+                          <div className="mb-2">
+                            <div className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">
+                              ○ No Response (
+                              {
+                                event.attendees.filter(
+                                  (a) => a.rsvpStatus === "pending"
+                                ).length
+                              }
+                              )
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {event.attendees
+                                .filter((a) => a.rsvpStatus === "pending")
+                                .map((a) => a.user.nickname || a.user.firstName)
+                                .join(", ")}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Discussion & Photos Toggle Button */}
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="w-full mt-4">
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        {expandedEvents.has(event.id) ? "Hide" : "View"}{" "}
-                        Discussion & Photos
-                        {expandedEvents.has(event.id) ? (
-                          <ChevronUp className="h-4 w-4 ml-2" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 ml-2" />
-                        )}
-                      </Button>
-                    </CollapsibleTrigger>
-                  </div>
-
-                  {/* Event Discussion & Photos Section */}
-                  <CollapsibleContent>
-                    <div className="border-t p-4">
-                      <Tabs defaultValue="comments" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger
-                            value="comments"
-                            className="flex items-center gap-2"
-                          >
-                            <MessageCircle className="h-4 w-4" />
-                            Comments
-                          </TabsTrigger>
-                          <TabsTrigger
-                            value="photos"
-                            className="flex items-center gap-2"
-                          >
-                            <Camera className="h-4 w-4" />
-                            Photos
-                          </TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="comments" className="mt-4">
-                          <ThreadedEventComments eventId={event.id} />
-                        </TabsContent>
-                        <TabsContent value="photos" className="mt-4 space-y-6">
-                          <PhotoUploadForm eventId={event.id} />
-                          <PhotoGallery eventId={event.id} />
-                        </TabsContent>
-                      </Tabs>
+                    <div className="border-t bg-muted/30">
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="w-full">
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          {expandedEvents.has(event.id) ? "Hide" : "View"}{" "}
+                          Discussion & Photos
+                          {expandedEvents.has(event.id) ? (
+                            <ChevronUp className="h-4 w-4 ml-2" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 ml-2" />
+                          )}
+                        </Button>
+                      </CollapsibleTrigger>
                     </div>
-                  </CollapsibleContent>
-                </div>
-              </Collapsible>
-            ))}
-          </div>
-        )}
+
+                    {/* Event Discussion & Photos Section */}
+                    <CollapsibleContent>
+                      <div className="border-t p-4">
+                        <Tabs defaultValue="comments" className="w-full">
+                          <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger
+                              value="comments"
+                              className="flex items-center gap-2"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              Comments
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="photos"
+                              className="flex items-center gap-2"
+                            >
+                              <Camera className="h-4 w-4" />
+                              Photos
+                            </TabsTrigger>
+                          </TabsList>
+                          <TabsContent value="comments" className="mt-4">
+                            <ThreadedEventComments eventId={event.id} />
+                          </TabsContent>
+                          <TabsContent
+                            value="photos"
+                            className="mt-4 space-y-6"
+                          >
+                            <PhotoUploadForm eventId={event.id} />
+                            <PhotoGallery eventId={event.id} />
+                          </TabsContent>
+                        </Tabs>
+                      </div>
+                    </CollapsibleContent>
+                  </div>
+                </Collapsible>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

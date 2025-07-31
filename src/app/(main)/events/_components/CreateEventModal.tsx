@@ -5,8 +5,8 @@ import { CreateEventForm } from "../forms/CreateEventForm";
 import { useEvents } from "@/hooks/queries/useEvents";
 
 export function CreateEventModal() {
-  const { close } = useModal();
-  const { data } = useEvents();
+  const { close, data } = useModal();
+  const { data: eventsData } = useEvents();
 
   return (
     <GenericModal
@@ -14,7 +14,11 @@ export function CreateEventModal() {
       title="Create New Event"
       className="space-y-4"
     >
-      <CreateEventForm groups={data?.groups || []} onSuccess={close} />
+      <CreateEventForm
+        groups={eventsData?.groups || []}
+        onSuccess={close}
+        defaultDate={data?.date}
+      />
     </GenericModal>
   );
 }

@@ -32,11 +32,13 @@ import { useCreateEvent } from "@/hooks/mutations/useEventMutations";
 interface CreateEventFormProps {
   groups: { id: string; name: string }[];
   onSuccess?: () => void;
+  defaultDate?: string;
 }
 
 export function CreateEventForm({
   groups: initialGroups,
   onSuccess,
+  defaultDate,
 }: CreateEventFormProps) {
   const [groups] = useState(initialGroups);
   const modal = useModal();
@@ -49,7 +51,7 @@ export function CreateEventForm({
       description: "",
       location: "",
       time: "",
-      date: "",
+      date: defaultDate || "",
       groupId: undefined,
     },
   });
