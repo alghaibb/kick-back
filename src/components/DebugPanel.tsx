@@ -104,7 +104,8 @@ export function DebugPanel() {
       {/* Debug Toggle Button */}
       <button
         onClick={() => setIsVisible(!isVisible)}
-        className="fixed top-4 left-4 z-50 bg-red-500 text-white px-3 py-2 rounded-md text-sm font-bold shadow-lg"
+        className="fixed top-4 left-4 z-50 bg-red-500 text-white px-3 py-2 rounded-md text-sm font-bold shadow-lg safe-top"
+        style={{ top: "calc(1rem + env(safe-area-inset-top, 0px))" }}
       >
         🐛 DEBUG
       </button>
@@ -115,7 +116,8 @@ export function DebugPanel() {
           console.log("Testing error boundary...");
           throw new Error("Test error to check error boundary");
         }}
-        className="fixed top-4 right-4 z-50 bg-orange-500 text-white px-3 py-2 rounded-md text-sm font-bold shadow-lg"
+        className="fixed top-4 right-4 z-50 bg-orange-500 text-white px-3 py-2 rounded-md text-sm font-bold shadow-lg safe-top"
+        style={{ top: "calc(1rem + env(safe-area-inset-top, 0px))" }}
       >
         Test Error
       </button>
@@ -164,7 +166,10 @@ export function DebugPanel() {
                         try {
                           return Notification.permission;
                         } catch (error) {
-                          console.error("Error accessing Notification API:", error);
+                          console.error(
+                            "Error accessing Notification API:",
+                            error
+                          );
                           return "Error accessing";
                         }
                       })()

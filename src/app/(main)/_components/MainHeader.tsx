@@ -41,6 +41,7 @@ export function MainHeader({
     <header
       className={cn(
         "bg-card border-b border-border py-4 sm:py-5 sticky top-0 z-40",
+        "safe-top", // Add safe area for mobile devices
         showToggle && sidebarOpen ? "px-4" : "px-6",
         showToggle && "mobile-header"
       )}

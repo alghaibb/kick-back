@@ -66,6 +66,17 @@ body {
   /* backface-visibility: hidden; - REMOVED */
   /* Ensure smooth rendering */
   will-change: transform;
+  /* Add safe area padding for mobile devices */
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Safe area utility class */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Adjust mobile content to account for fixed header */
