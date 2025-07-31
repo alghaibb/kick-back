@@ -83,7 +83,11 @@ export async function sendPushNotification(
       body: notification.body,
       icon: notification.icon || "/android-chrome-192x192.png",
       badge: notification.badge || "/favicon-32x32.png",
-      data: notification.data || {},
+      data: {
+        ...((notification.data as Record<string, unknown>) || {}),
+        type: (notification.data as Record<string, unknown>)?.type || "default",
+        timestamp: Date.now(),
+      },
       actions: notification.actions || [],
     });
 
@@ -281,7 +285,11 @@ export const NotificationTemplates = {
     pushBody: `${replierName} replied to your comment on "${eventName}". Tap to view.`,
   }),
 
-  COMMENT_REACTION: (reactorName: string, eventName: string, emoji: string) => ({
+  COMMENT_REACTION: (
+    reactorName: string,
+    eventName: string,
+    emoji: string
+  ) => ({
     title: "Comment Reaction",
     message: `${reactorName} reacted ${emoji} to your comment on "${eventName}"`,
     pushTitle: "New Reaction",

@@ -50,7 +50,7 @@ async function markAsRead(notificationId: string): Promise<void> {
 }
 
 async function markAllAsRead(): Promise<void> {
-  const response = await fetch("/api/notifications/mark-all-read", {
+  const response = await fetch("/api/notifications/read-all", {
     method: "PATCH",
   });
   if (!response.ok) {
@@ -275,24 +275,12 @@ export default function NotificationBell() {
         <div className="flex items-center justify-between p-2">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold">Notifications</h3>
-            <div className="flex items-center gap-1">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  userStatus === "active"
-                    ? "bg-green-500"
-                    : userStatus === "idle"
-                      ? "bg-yellow-500"
-                      : "bg-gray-400"
-                }`}
-                title={`Status: ${userStatus} (${pollingInterval / 1000}s)`}
-              />
-              <span className="text-xs text-muted-foreground">
-                {userStatus === "active"
-                  ? "5s"
-                  : userStatus === "idle"
-                    ? "30s"
-                    : "2m"}
-              </span>
+            <div
+              className="sr-only"
+              role="status"
+              aria-label={`Notification system ${userStatus}, checking every ${pollingInterval / 1000} seconds`}
+            >
+              Polling every {pollingInterval / 1000} seconds
             </div>
           </div>
           {unreadCount > 0 && (

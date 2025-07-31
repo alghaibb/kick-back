@@ -88,12 +88,14 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          {/* Header with Toggle (only on mobile) */}
-          <MainHeader
-            onToggleSidebar={isMobile ? toggleMobileSidebar : undefined}
-            sidebarOpen={isMobile ? mobileSidebarOpen : true}
-            showToggle={isMobile}
-          />
+          {/* Header with Toggle (only on mobile) - Hide when sidebar is open */}
+          {(!isMobile || !mobileSidebarOpen) && (
+            <MainHeader
+              onToggleSidebar={isMobile ? toggleMobileSidebar : undefined}
+              sidebarOpen={isMobile ? mobileSidebarOpen : true}
+              showToggle={isMobile}
+            />
+          )}
 
           {/* Page Content */}
           <main

@@ -9,6 +9,7 @@ import {
 } from "@/validations/photos/uploadPhotoSchema";
 import { revalidatePath } from "next/cache";
 import { notifyEventPhoto } from "@/lib/notification-triggers";
+import { notifyUser } from "@/lib/notifications";
 import { del } from "@vercel/blob";
 
 export async function savePhotoMetadataAction(data: {
@@ -175,19 +176,31 @@ export async function likePhotoAction(data: { photoId: string }) {
           });
 
           if (currentUser) {
-            // Create a simple photo like notification
-            await prisma.notification.create({
-              data: {
+            const likerName = currentUser.nickname || currentUser.firstName;
+
+            await notifyUser(
+              {
                 userId: photoInfo.userId,
                 type: "EVENT_PHOTO",
                 title: "Photo Liked",
-                message: `${currentUser.nickname || currentUser.firstName} liked your photo in "${photoInfo.event.name}"`,
+                message: `${likerName} liked your photo in "${photoInfo.event.name}"`,
                 data: {
+                  type: "EVENT_PHOTO",
                   eventId: photoInfo.event.id,
                   photoId: data.photoId,
                 },
               },
-            });
+              {
+                title: "Photo Liked",
+                body: `${likerName} liked your photo in "${photoInfo.event.name}"`,
+                data: {
+                  type: "EVENT_PHOTO",
+                  eventId: photoInfo.event.id,
+                  photoId: data.photoId,
+                },
+                actions: [{ action: "view", title: "View Photo" }],
+              }
+            );
           }
         } catch (notificationError) {
           console.error(
@@ -219,27 +232,42 @@ export async function deletePhotoAction(data: { photoId: string }) {
 
     const photo = await prisma.eventPhoto.findUnique({
       where: { id: data.photoId },
-      select: { userId: true, imageUrl: true },
+      include: {
+        event: {
+          select: {
+            createdBy: true,
+            attendees: {
+              where: { userId: session.user.id },
+            },
+          },
+        },
+      },
     });
 
     if (!photo) {
       return { error: "Photo not found" };
     }
 
-    if (photo.userId !== session.user.id) {
-      return { error: "You can only delete your own photos" };
+    const canDelete =
+      photo.userId === session.user.id ||
+      photo.event.createdBy === session.user.id ||
+      photo.event.attendees.length > 0;
+
+    if (!canDelete) {
+      return {
+        error: "You don't have permission to delete this photo",
+      };
     }
 
-    // Delete the image from Vercel blob storage
-    if (photo.imageUrl) {
-      try {
-        await del(photo.imageUrl);
-      } catch (error) {
-        console.error("Error deleting photo from blob storage:", error);
-        // Continue with database deletion even if blob deletion fails
-      }
+    // Delete from blob storage
+    try {
+      await del(photo.imageUrl);
+    } catch (blobError) {
+      console.error("Failed to delete from blob storage:", blobError);
+      // Continue with database deletion even if blob deletion fails
     }
 
+    // Delete from database
     await prisma.eventPhoto.delete({
       where: { id: data.photoId },
     });

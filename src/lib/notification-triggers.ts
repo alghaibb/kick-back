@@ -20,6 +20,7 @@ export async function notifyGroupInvite(data: {
       title: template.title,
       message: template.message,
       data: {
+        type: "GROUP_INVITE",
         groupId: data.groupId,
         inviteId: data.inviteId,
       },
@@ -28,6 +29,7 @@ export async function notifyGroupInvite(data: {
       title: template.pushTitle,
       body: template.pushBody,
       data: {
+        type: "GROUP_INVITE",
         groupId: data.groupId,
         inviteId: data.inviteId,
       },
@@ -59,12 +61,18 @@ export async function notifyEventComment(data: {
         type: "EVENT_COMMENT",
         title: template.title,
         message: template.message,
-        data: { eventId: data.eventId },
+        data: {
+          type: "EVENT_COMMENT",
+          eventId: data.eventId,
+        },
       },
       {
         title: template.pushTitle,
         body: template.pushBody,
-        data: { eventId: data.eventId },
+        data: {
+          type: "EVENT_COMMENT",
+          eventId: data.eventId,
+        },
         actions: [{ action: "view", title: "View Event" }],
       }
     )
@@ -99,6 +107,7 @@ export async function notifyCommentReply(data: {
       title: template.title,
       message: template.message,
       data: {
+        type: "COMMENT_REPLY",
         eventId: data.eventId,
         commentId: data.commentId,
       },
@@ -107,6 +116,7 @@ export async function notifyCommentReply(data: {
       title: template.pushTitle,
       body: template.pushBody,
       data: {
+        type: "COMMENT_REPLY",
         eventId: data.eventId,
         commentId: data.commentId,
       },
@@ -143,6 +153,7 @@ export async function notifyCommentReaction(data: {
       title: template.title,
       message: template.message,
       data: {
+        type: "COMMENT_REACTION",
         eventId: data.eventId,
         commentId: data.commentId,
       },
@@ -151,6 +162,7 @@ export async function notifyCommentReaction(data: {
       title: template.pushTitle,
       body: template.pushBody,
       data: {
+        type: "COMMENT_REACTION",
         eventId: data.eventId,
         commentId: data.commentId,
       },
@@ -178,12 +190,18 @@ export async function notifyEventPhoto(data: {
         type: "EVENT_PHOTO",
         title: template.title,
         message: template.message,
-        data: { eventId: data.eventId },
+        data: {
+          type: "EVENT_PHOTO",
+          eventId: data.eventId,
+        },
       },
       {
         title: template.pushTitle,
         body: template.pushBody,
-        data: { eventId: data.eventId },
+        data: {
+          type: "EVENT_PHOTO",
+          eventId: data.eventId,
+        },
         actions: [{ action: "view", title: "View Photos" }],
       }
     )
@@ -215,6 +233,7 @@ export async function notifyEventCreated(data: {
         title: template.title,
         message: template.message,
         data: {
+          type: "GROUP_EVENT_CREATED",
           eventId: data.eventId,
           groupId: data.groupId,
         },
@@ -223,6 +242,7 @@ export async function notifyEventCreated(data: {
         title: template.pushTitle,
         body: template.pushBody,
         data: {
+          type: "GROUP_EVENT_CREATED",
           eventId: data.eventId,
           groupId: data.groupId,
         },
@@ -254,12 +274,18 @@ export async function notifyRSVPUpdate(data: {
       type: "RSVP_UPDATE",
       title: template.title,
       message: template.message,
-      data: { eventId: data.eventId },
+      data: {
+        type: "RSVP_UPDATE",
+        eventId: data.eventId,
+      },
     },
     {
       title: template.pushTitle,
       body: template.pushBody,
-      data: { eventId: data.eventId },
+      data: {
+        type: "RSVP_UPDATE",
+        eventId: data.eventId,
+      },
     }
   );
 }
@@ -282,12 +308,18 @@ export async function sendEventReminder(data: {
       type: "EVENT_REMINDER",
       title: template.title,
       message: template.message,
-      data: { eventId: data.eventId },
+      data: {
+        type: "EVENT_REMINDER",
+        eventId: data.eventId,
+      },
     },
     {
       title: template.pushTitle,
       body: template.pushBody,
-      data: { eventId: data.eventId },
+      data: {
+        type: "EVENT_REMINDER",
+        eventId: data.eventId,
+      },
       actions: [
         { action: "view", title: "View Event" },
         { action: "dismiss", title: "Dismiss" },

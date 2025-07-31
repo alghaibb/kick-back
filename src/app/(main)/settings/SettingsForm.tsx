@@ -37,6 +37,7 @@ import { formatToE164 } from "@/utils/formatPhoneNumber";
 import { detectCountryForSMS } from "@/utils/detectCountry";
 import { useModal } from "@/hooks/use-modal";
 import { GenericModal } from "@/components/ui/generic-modal";
+import PushNotificationToggle from "@/components/ui/push-notification-toggle";
 
 interface SettingsFormProps {
   user: {
@@ -294,6 +295,9 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
           </Form>
         </CardContent>
       </Card>
+
+      {/* Push Notifications Section */}
+      <PushNotificationToggle />
 
       {/* Password Section */}
       {hasPassword && (

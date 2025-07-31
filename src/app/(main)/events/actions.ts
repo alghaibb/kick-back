@@ -6,7 +6,7 @@ import {
   createEventSchema,
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
-
+import { notifyEventCreated } from "@/lib/notification-triggers";
 function createEventDateTime(
   dateStr: string,
   timeStr: string,
@@ -129,6 +129,33 @@ export async function createEventAction(values: CreateEventValues) {
           data: groupAttendees,
           skipDuplicates: true,
         });
+      }
+
+      // Send notifications to group members about new event
+      try {
+        const group = await prisma.group.findUnique({
+          where: { id: groupId },
+          select: { name: true },
+        });
+
+        if (group) {
+          await notifyEventCreated({
+            eventId: event.id,
+            eventName: event.name,
+            creatorName: session.user.firstName || session.user.email,
+            groupId: groupId,
+            groupName: group.name,
+            groupMemberIds: groupMembers
+              .filter((m) => m.userId !== session.user.id)
+              .map((m) => m.userId),
+          });
+        }
+      } catch (notificationError) {
+        console.error(
+          "Failed to send event creation notifications:",
+          notificationError
+        );
+        // Don't fail event creation if notifications fail
       }
     }
 

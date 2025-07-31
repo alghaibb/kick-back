@@ -32,8 +32,9 @@ export function usePushNotifications() {
 
   const checkSubscriptionStatus = async () => {
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      const registration =
+        await navigator.serviceWorker.getRegistration("/push-sw.js");
+      const subscription = await registration?.pushManager.getSubscription();
       setIsSubscribed(!!subscription);
     } catch (error) {
       console.error("Failed to check subscription status:", error);
@@ -66,7 +67,11 @@ export function usePushNotifications() {
     }
 
     try {
-      const registration = await navigator.serviceWorker.ready;
+      // Register the push notification service worker
+      const registration = await navigator.serviceWorker.register(
+        "/push-sw.js?v=" + Date.now()
+      );
+      await navigator.serviceWorker.ready;
 
       // Check if already subscribed
       let subscription = await registration.pushManager.getSubscription();
@@ -108,8 +113,9 @@ export function usePushNotifications() {
 
   const unsubscribe = async () => {
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      const registration =
+        await navigator.serviceWorker.getRegistration("/push-sw.js");
+      const subscription = await registration?.pushManager.getSubscription();
 
       if (subscription) {
         // Remove from server
