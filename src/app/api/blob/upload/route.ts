@@ -27,9 +27,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Invalid file type" }, { status: 400 });
+    // Validate file type - check for HEIC and other unsupported formats
+    const supportedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+    ];
+    const unsupportedTypes = [
+      "image/heic",
+      "image/heif",
+      "image/heic-sequence",
+      "image/heif-sequence",
+    ];
+
+    if (unsupportedTypes.includes(file.type)) {
+      return NextResponse.json(
+        {
+          error:
+            "HEIC files are not supported. Please convert to JPEG or PNG first.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!supportedTypes.includes(file.type)) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid file type. Please select a JPEG, PNG, WebP, or GIF image file.",
+        },
+        { status: 400 }
+      );
     }
 
     // Dynamic file size limits based on folder type

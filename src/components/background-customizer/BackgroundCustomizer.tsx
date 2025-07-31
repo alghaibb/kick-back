@@ -121,18 +121,22 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Check for HEIC files (iPhone default format)
+    // Check for HEIC files (iPhone default format) - check both extension and MIME type
     const fileExtension = file.name.toLowerCase().split(".").pop();
-    if (fileExtension === "heic" || fileExtension === "heif") {
+    const isHeicByExtension = fileExtension === "heic" || fileExtension === "heif";
+    const isHeicByMime = file.type === "image/heic" || file.type === "image/heif" || file.type === "image/heic-sequence" || file.type === "image/heif-sequence";
+    
+    if (isHeicByExtension || isHeicByMime) {
       toast.error(
         "HEIC files are not supported. Please convert to JPEG or PNG first, or take a new photo in a different format."
       );
       return;
     }
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+    // Validate file type - be more specific about supported formats
+    const supportedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+    if (!supportedTypes.includes(file.type)) {
+      toast.error("Please select a JPEG, PNG, WebP, or GIF image file");
       return;
     }
 
@@ -144,10 +148,14 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
 
     setSelectedFile(file);
 
-    // Create preview
+    // Create preview with error handling
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreviewUrl(e.target?.result as string);
+    };
+    reader.onerror = () => {
+      toast.error("Error reading image file. Please try a different image.");
+      setSelectedFile(null);
     };
     reader.readAsDataURL(file);
   };
