@@ -33,7 +33,7 @@ Kick Back helps you:
 ### 🔔 Notifications
 
 - Push notifications (works even when app is closed)
-- Email notifications for important updates 
+- Email notifications for important updates
 - SMS reminders for events
 - In-app notification center
 - Notification preferences (opt in/out for different types)
@@ -59,6 +59,8 @@ Kick Back helps you:
 - Configure timezone and reminder time
 - Update profile information anytime
 - Manage account settings and privacy
+- **Custom app backgrounds** - Upload your own images or choose from professional gradients
+- **Smart image validation** - Automatic HEIC detection and format guidance for mobile users
 
 ### 🚀 Onboarding
 
@@ -68,6 +70,15 @@ Kick Back helps you:
 - Reminder type selection (email only, SMS only, or both)
 - Phone number for SMS reminders
 - All settings can be updated later in Profile & Settings pages
+
+### 🎨 Custom Backgrounds
+
+- **Personalized Experience** - Upload your own background images or choose from curated gradients
+- **Mobile Optimized** - Smart detection prevents HEIC uploads with helpful error messages
+- **Professional Gradients** - Pre-designed backgrounds optimized for text readability
+- **Cross-Device Sync** - Background preferences saved to your account and sync across all devices
+- **Calendar Integration** - Calendar automatically gets solid background for optimal readability
+- **Dark Mode Support** - Enhanced text contrast and readability in dark mode
 
 ## Tech Stack
 
@@ -118,7 +129,7 @@ cd kick-back
 2. **Install dependencies**
 
 ```bash
-pnpm install 
+pnpm install
 ```
 
 3. **Set up environment variables**
@@ -271,6 +282,41 @@ The app uses PostgreSQL (Neon via Vercel) with these models:
 - `RSVP_UPDATE` - RSVP status changes
 - `COMMENT_REPLY` - Comment reply notifications
 - `COMMENT_REACTION` - Comment reaction notifications
+
+## File Uploads & Supported Formats
+
+### 📁 File Upload System
+
+The app uses **Vercel Blob** for secure file storage with automatic optimization:
+
+- **Profile Pictures** - User avatars and profile images
+- **Event Photos** - Photos shared at events
+- **Group Images** - Group cover photos and avatars
+- **Custom Backgrounds** - User-uploaded app backgrounds
+
+### 🖼️ Supported Image Formats
+
+- **JPEG/JPG** - Most common format, great for photos
+- **PNG** - Good for graphics and transparency
+- **WebP** - Modern format with better compression
+- **GIF** - Animated images and simple graphics
+
+### 📱 Mobile Optimization
+
+- **HEIC Detection** - Automatic detection and blocking of HEIC files (iPhone default)
+- **File Size Limits** - Optimized limits per upload type:
+  - Profile pictures: 2MB
+  - Event photos: 10MB
+  - Group images: 4MB
+  - Custom backgrounds: 5MB
+- **Error Handling** - Clear error messages guide users to compatible formats
+
+### 🔧 Technical Details
+
+- **Vercel Blob** - Scalable file storage with CDN
+- **Automatic Optimization** - Images are optimized for web delivery
+- **Public Access** - Files are publicly accessible via CDN
+- **Organized Structure** - Files are organized by type and user ID
 
 ## API Routes & Server Actions
 
