@@ -215,10 +215,11 @@ export default function PushNotificationToggle() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="push-notifications-pwa">
-                Enable push notifications
+                Enable notifications
               </Label>
               <p className="text-sm text-muted-foreground">
                 Get notified about comments, RSVPs, group invites, and more
+                {hasFallback && " (iOS PWA mode)"}
               </p>
             </div>
             <Switch
@@ -247,7 +248,7 @@ export default function PushNotificationToggle() {
             </div>
           )}
 
-          {permission === "denied" && (
+          {permission === "denied" && !hasFallback && (
             <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
                 Notifications are blocked. Please enable them in your iOS
@@ -271,8 +272,7 @@ export default function PushNotificationToggle() {
           {localPushState && (
             <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md">
               <p className="text-sm text-green-800 dark:text-green-200">
-                ✅ Push notifications are enabled in PWA mode! You&apos;ll
-                receive notifications for:
+                ✅ Notifications are enabled! You&apos;ll receive updates for:
               </p>
               <ul className="text-sm text-green-700 dark:text-green-300 mt-2 space-y-1">
                 <li>• New comments on your events</li>
@@ -282,6 +282,11 @@ export default function PushNotificationToggle() {
                 <li>• Event reminders</li>
                 <li>• New photos added to events</li>
               </ul>
+              {hasFallback && (
+                <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+                  📱 Using iOS PWA mode - notifications will appear when the app is open
+                </p>
+              )}
               {process.env.NODE_ENV === "development" && (
                 <div className="mt-3 space-y-2">
                   <Button

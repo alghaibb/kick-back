@@ -107,7 +107,7 @@ export function usePushNotifications() {
       // iOS Safari PWA specific handling
       if (isIOS && isSafari && isStandalone) {
         console.log("iOS Safari PWA detected - using enhanced service worker registration");
-        
+
         // For iOS Safari PWA, we need to handle service worker differently
         // iOS Safari PWA doesn't support push notifications, so we'll use fallback
         setHasFallback(true);
