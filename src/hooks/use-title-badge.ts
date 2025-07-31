@@ -37,11 +37,15 @@ export function useTitleBadge() {
     const baseTitle = "Kick Back";
     const unreadCount = data?.unreadCount || 0;
 
+    console.log("Title Badge: Updating title", { unreadCount, baseTitle });
+
     // Update document title with badge
     if (unreadCount > 0) {
       document.title = `(${unreadCount}) ${baseTitle}`;
+      console.log("Title Badge: Set title to", document.title);
     } else {
       document.title = baseTitle;
+      console.log("Title Badge: Reset title to", document.title);
     }
 
     // Cleanup function to reset title when component unmounts

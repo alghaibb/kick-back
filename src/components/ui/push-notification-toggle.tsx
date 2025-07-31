@@ -34,10 +34,10 @@ export default function PushNotificationToggle() {
   const queryClient = useQueryClient();
   const [isEnabling, setIsEnabling] = useState(false);
 
-  // Determine the current state - prioritize actual subscription status for PWA
+  // Determine the current state - for iOS PWA, trust the actual working subscription
   const currentState =
     isIOS && isPWA
-      ? isSubscribed || user?.pushNotifications
+      ? isSubscribed // If subscription exists, it's working - trust that
       : (user?.pushNotifications ?? isSubscribed);
 
   // Defensive check for user data
@@ -490,8 +490,9 @@ export default function PushNotificationToggle() {
           </div>
         )}
 
-        {/* Sync button for when state gets out of sync */}
-        {currentState !== isSubscribed &&
+        {/* Sync button for when state gets out of sync - only show for non-iOS PWA */}
+        {!isIOS &&
+          currentState !== isSubscribed &&
           user?.pushNotifications !== isSubscribed && (
             <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
               <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
