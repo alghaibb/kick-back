@@ -1,272 +1,69 @@
-// Push Notification Service Worker
 // iOS Safari PWA Enhanced Version
 
-// iOS PWA persistence fix
+// Detect iOS Safari
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
 const isStandalone = window.navigator.standalone === true;
 
 console.log('Service Worker: iOS Safari PWA detected:', isIOS && isSafari && isStandalone);
 
-self.addEventListener("push", function (event) {
-  console.log('Push event received:', event);
-
-  // Prevent any errors from causing issues
-  try {
-    if (event.data) {
-      try {
-        const data = event.data.json();
-        console.log('Push data:', data);
-
-        const options = {
-          body: data.body,
-          icon: data.icon || "/android-chrome-192x192.png",
-          badge: data.badge || "/favicon-32x32.png",
-          data: data.data || {},
-          actions: data.actions || [],
-          requireInteraction: false,
-          silent: false,
-          tag: `notification-${Date.now()}-${Math.random()}`,
-          renotify: true,
-          vibrate: [200, 100, 200],
-          timestamp: Date.now(),
-        };
-
-        // iOS Safari PWA specific options
-        if (isIOS && isSafari && isStandalone) {
-          options.icon = "/apple-touch-icon.png"; // Use Apple touch icon for iOS
-          options.badge = "/favicon-32x32.png";
-          options.requireInteraction = true; // Keep notification visible longer on iOS
-        }
-
-        event.waitUntil(self.registration.showNotification(data.title, options));
-      } catch (error) {
-        console.error('Error processing push notification:', error);
-
-        // Fallback for iOS Safari PWA
-        if (isIOS && isSafari && isStandalone) {
-          const fallbackOptions = {
-            body: 'You have a new notification',
-            icon: "/apple-touch-icon.png",
-            badge: "/favicon-32x32.png",
-            tag: `fallback-${Date.now()}`,
-            requireInteraction: true,
-          };
-          event.waitUntil(self.registration.showNotification('Kick Back', fallbackOptions));
-        }
-      }
-    }
-  } catch (outerError) {
-    console.error('Critical error in push event handler:', outerError);
-    // Don't let this error bubble up
-  }
-});
-
-// Handle notification clicks
-self.addEventListener("notificationclick", function (event) {
-  console.log('Notification clicked:', event);
-
-  // Prevent any errors from causing issues
-  try {
-    event.notification.close();
-
-    // Handle different notification types
-    const data = event.notification.data;
-
-    if (data && data.type) {
-      let url = "/";
-
-      // Professional navigation mapping
-      switch (data.type) {
-        case "GROUP_INVITE":
-          url = "/groups";
-          break;
-        case "EVENT_COMMENT":
-        case "COMMENT_REPLY":
-        case "COMMENT_REACTION":
-          if (data.eventId) {
-            url = `/calendar?event=${data.eventId}${data.commentId ? `&comment=${data.commentId}` : ""}`;
-          } else {
-            url = "/calendar";
-          }
-          break;
-        case "EVENT_PHOTO":
-          if (data.eventId) {
-            url = `/calendar?event=${data.eventId}${data.photoId ? `&photo=${data.photoId}` : ""}`;
-          } else {
-            url = "/calendar";
-          }
-          break;
-        case "EVENT_REMINDER":
-        case "RSVP_UPDATE":
-          if (data.eventId) {
-            url = `/calendar?event=${data.eventId}`;
-          } else {
-            url = "/calendar";
-          }
-          break;
-        case "GROUP_EVENT_CREATED":
-          if (data.eventId) {
-            url = `/calendar?event=${data.eventId}`;
-          } else {
-            url = "/events";
-          }
-          break;
-        case "EVENT_CREATED":
-          url = "/events";
-          break;
-        default:
-          url = "/";
-      }
-
-      // iOS Safari PWA specific navigation
-      if (isIOS && isSafari && isStandalone) {
-        // For iOS PWA, try to focus existing window first
-        event.waitUntil(
-          clients.matchAll({ type: "window" }).then((clientList) => {
-            // Check if there's already a window open
-            for (const client of clientList) {
-              if (client.url.includes(self.location.origin) && "focus" in client) {
-                return client.focus().then(() => {
-                  // Use postMessage for iOS Safari PWA navigation
-                  client.postMessage({ type: 'navigate', url: url });
-                  return client.navigate(url);
-                });
-              }
-            }
-            // If no window is open, open a new one
-            return clients.openWindow(url);
-          })
-        );
-      } else {
-        // Standard navigation for other browsers
-        event.waitUntil(
-          clients.matchAll({ type: "window" }).then((clientList) => {
-            // Check if there's already a window open
-            for (const client of clientList) {
-              if (client.url.includes(self.location.origin) && "focus" in client) {
-                return client.focus().then(() => client.navigate(url));
-              }
-            }
-            // If no window is open, open a new one
-            return clients.openWindow(url);
-          })
-        );
-      }
-    } else {
-      // Default behavior - open the app
-      event.waitUntil(clients.openWindow("/"));
-    }
-  } catch (error) {
-    console.error('Error handling notification click:', error);
-    // Fallback - just open the app
-    event.waitUntil(clients.openWindow("/"));
-  }
-});
-
-// Handle notification close
-self.addEventListener("notificationclose", function (event) {
-  console.log('Notification closed:', event);
-});
-
-// Handle push subscription changes
-self.addEventListener("pushsubscriptionchange", function (event) {
-  console.log('Push subscription changed:', event);
-
-  try {
-    event.waitUntil(
-      self.registration.pushManager
-        .subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: self.applicationServerKey,
-        })
-        .then(function (subscription) {
-          // Send the new subscription to the server
-          return fetch("/api/notifications/subscribe", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              endpoint: subscription.endpoint,
-              p256dh: arrayBufferToBase64(subscription.getKey("p256dh")),
-              auth: arrayBufferToBase64(subscription.getKey("auth")),
-            }),
-          });
-        })
-        .catch(function (error) {
-          console.error('Error handling subscription change:', error);
-
-          // Fallback for iOS Safari PWA
-          if (isIOS && isSafari && isStandalone) {
-            console.log('iOS Safari PWA subscription change fallback');
-          }
-        })
-    );
-  } catch (error) {
-    console.error('Error in pushsubscriptionchange handler:', error);
-  }
-});
-
-// Handle service worker messages
-self.addEventListener("message", function (event) {
-  console.log('Service worker message received:', event.data);
-
-  try {
-    if (event.data && event.data.type === 'navigate') {
-      // Handle navigation messages from iOS Safari PWA
-      event.waitUntil(
-        clients.matchAll({ type: "window" }).then((clientList) => {
-          for (const client of clientList) {
-            if (client.url.includes(self.location.origin) && "navigate" in client) {
-              return client.navigate(event.data.url);
-            }
-          }
-        })
-      );
-    }
-  } catch (error) {
-    console.error('Error handling service worker message:', error);
-  }
-});
-
-// Helper function to convert ArrayBuffer to base64
-function arrayBufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
-
 // Enhanced service worker for iOS PWA persistence
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
   // Force the waiting service worker to become the active service worker
   self.skipWaiting();
+
+  // Cache critical resources for iOS PWA
+  if (isIOS && isSafari && isStandalone) {
+    event.waitUntil(
+      caches.open('ios-pwa-cache').then((cache) => {
+        return cache.addAll([
+          '/',
+          '/manifest.json',
+          '/apple-touch-icon.png',
+          '/favicon.ico',
+          '/favicon-16x16.png',
+          '/favicon-32x32.png'
+        ]);
+      })
+    );
+  }
 });
 
 self.addEventListener('activate', (event) => {
   console.log('Service Worker activating...');
   // Ensure the service worker takes control immediately
   event.waitUntil(self.clients.claim());
+
+  // Clean up old caches
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== 'ios-pwa-cache') {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
 });
 
 // iOS-specific PWA persistence
 if (isIOS && isSafari && isStandalone) {
   console.log('iOS PWA detected - enabling persistence features');
 
-  // Keep the service worker alive
+  // Keep the service worker alive and cache critical resources
   self.addEventListener('fetch', (event) => {
     // Cache critical resources for offline use
     if (event.request.url.includes('/manifest.json') ||
       event.request.url.includes('/apple-touch-icon') ||
-      event.request.url.includes('/favicon')) {
+      event.request.url.includes('/favicon') ||
+      event.request.url.includes('/_next/static/')) {
       event.respondWith(
         caches.match(event.request).then((response) => {
           return response || fetch(event.request).then((fetchResponse) => {
-            return caches.open('pwa-cache').then((cache) => {
+            return caches.open('ios-pwa-cache').then((cache) => {
               cache.put(event.request, fetchResponse.clone());
               return fetchResponse;
             });
@@ -274,14 +71,146 @@ if (isIOS && isSafari && isStandalone) {
         })
       );
     }
+
+    // For navigation requests, always try network first, then cache
+    if (event.request.mode === 'navigate') {
+      event.respondWith(
+        fetch(event.request).catch(() => {
+          return caches.match('/');
+        })
+      );
+    }
   });
 }
 
 // Error handling for iOS Safari PWA
-self.addEventListener("error", function (event) {
-  console.error('Service worker error:', event.error);
+self.addEventListener('error', (event) => {
+  console.error('Service Worker error:', event.error);
 });
 
-self.addEventListener("unhandledrejection", function (event) {
-  console.error('Service worker unhandled rejection:', event.reason);
+self.addEventListener('unhandledrejection', (event) => {
+  console.error('Service Worker unhandled rejection:', event.reason);
 });
+
+// Push notification handling
+self.addEventListener('push', (event) => {
+  console.log('Push event received:', event);
+
+  try {
+    let data = {};
+    if (event.data) {
+      data = event.data.json();
+    }
+
+    const options = {
+      body: data.body || 'You have a new notification!',
+      icon: '/apple-touch-icon.png',
+      badge: '/favicon-32x32.png',
+      vibrate: [200, 100, 200],
+      data: data,
+      actions: [
+        {
+          action: 'open',
+          title: 'Open App',
+          icon: '/favicon-32x32.png'
+        },
+        {
+          action: 'close',
+          title: 'Close',
+          icon: '/favicon-32x32.png'
+        }
+      ],
+      // iOS PWA specific options
+      requireInteraction: isIOS && isSafari && isStandalone,
+      silent: false,
+      tag: 'kick-back-notification',
+      renotify: true
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'Kick Back', options)
+    );
+  } catch (error) {
+    console.error('Error showing notification:', error);
+  }
+});
+
+// Notification click handling
+self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event);
+
+  event.notification.close();
+
+  if (event.action === 'close') {
+    return;
+  }
+
+  // Handle notification click
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Check if app is already open
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+
+      // If app is not open, open it
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
+  );
+});
+
+// Push subscription change handling
+self.addEventListener('pushsubscriptionchange', (event) => {
+  console.log('Push subscription changed:', event);
+
+  try {
+    event.waitUntil(
+      self.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: event.oldSubscription?.options?.applicationServerKey
+      }).then((subscription) => {
+        // Update subscription on server
+        return fetch('/api/notifications/subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            endpoint: subscription.endpoint,
+            p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
+            auth: arrayBufferToBase64(subscription.getKey('auth')),
+          }),
+        });
+      })
+    );
+  } catch (error) {
+    console.error('Error handling subscription change:', error);
+  }
+});
+
+// Message handling for iOS PWA
+self.addEventListener('message', (event) => {
+  console.log('Service Worker message received:', event.data);
+
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({ version: '1.0.0' });
+  }
+});
+
+// Helper function for base64 conversion
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}

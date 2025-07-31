@@ -80,8 +80,6 @@ export const metadata: Metadata = {
     "msapplication-config": "/browserconfig.xml",
     // iOS PWA specific meta tags
     "apple-mobile-web-app-orientations": "portrait",
-    // Cache control for iOS
-    "cache-control": "public, max-age=31536000",
   },
   openGraph: {
     type: "website",

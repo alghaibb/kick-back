@@ -108,19 +108,58 @@ export function usePushNotifications() {
       if (isIOS && isSafari && isStandalone) {
         console.log("iOS Safari PWA detected - using enhanced service worker registration");
 
-        // For iOS Safari PWA, we need to handle service worker differently
-        // iOS Safari PWA doesn't support push notifications, so we'll use fallback
-        setHasFallback(true);
-        console.log("iOS Safari PWA: Using fallback notification mode");
-        return null; // Return early for iOS PWA
+        // For iOS Safari PWA, we need to register service worker differently
+        const registration = await navigator.serviceWorker.register(
+          "/push-sw.js?v=" + Date.now(),
+          {
+            scope: "/",
+            updateViaCache: "none" // Ensure fresh service worker in PWA mode
+          }
+        );
+
+        await navigator.serviceWorker.ready;
+
+        // Check if already subscribed
+        let subscription = await registration.pushManager.getSubscription();
+
+        if (!subscription) {
+          // Create new subscription
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(
+              env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+            ),
+          });
+        }
+
+        // Save subscription to server
+        const response = await fetch("/api/notifications/subscribe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            endpoint: subscription.endpoint,
+            p256dh: arrayBufferToBase64(subscription.getKey("p256dh")!),
+            auth: arrayBufferToBase64(subscription.getKey("auth")!),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to save subscription");
+        }
+
+        setIsSubscribed(true);
+        setHasFallback(false);
+        return subscription;
       }
 
-      // Register the push notification service worker with cache busting
+      // Standard handling for other browsers
       const registration = await navigator.serviceWorker.register(
         "/push-sw.js?v=" + Date.now(),
         {
           scope: "/",
-          updateViaCache: "none" // Ensure fresh service worker in PWA mode
+          updateViaCache: "none"
         }
       );
 

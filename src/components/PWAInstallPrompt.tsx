@@ -82,9 +82,12 @@ export default function PWAInstallPrompt() {
         setDeferredPrompt(null);
         setShowInstallPrompt(false);
       }
+    } else if (isIOS) {
+      // iOS - show installation guide
+      window.open("/ios-pwa-install.html", "_blank");
+      setShowInstallPrompt(false);
     } else {
-      // iOS or browsers without native prompt - just dismiss
-      // User will need to manually add to home screen
+      // Other browsers - just dismiss
       setShowInstallPrompt(false);
     }
   };
