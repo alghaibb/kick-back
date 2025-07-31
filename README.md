@@ -18,7 +18,7 @@ Kick Back helps you:
 ### 🎉 Events
 
 - Create events with location, time, description, and photos
-- Calendar view to see all your upcoming events
+- Event list view to see all your upcoming events
 - RSVP system with status tracking
 - Event comments and reactions
 - Photo sharing for each event
@@ -33,24 +33,41 @@ Kick Back helps you:
 ### 🔔 Notifications
 
 - Push notifications (works even when app is closed)
-- Email notifications for important updates
+- Email notifications for important updates 
 - SMS reminders for events
 - In-app notification center
+- Notification preferences (opt in/out for different types)
 
 ### 📱 PWA Support
 
 - Add to home screen on iOS and Android
-- Works offline for basic features
 - Native app-like experience
 - Push notifications on mobile
+- Offline page for when connection is lost
 
 ### 🔐 Authentication
 
 - Email/password login
 - Magic link authentication
-- Social login options
-- Phone number verification
-- Two-factor authentication
+- Social login options (Google, Facebook)
+- Email verification for new accounts
+
+### ⚙️ Settings & Preferences
+
+- Customize notification preferences (in-app, SMS, push)
+- Set reminder type (email only, SMS only, or both)
+- Configure timezone and reminder time
+- Update profile information anytime
+- Manage account settings and privacy
+
+### 🚀 Onboarding
+
+- Complete profile setup (first name, last name, nickname)
+- Profile picture upload
+- Timezone and reminder time preferences
+- Reminder type selection (email only, SMS only, or both)
+- Phone number for SMS reminders
+- All settings can be updated later in Profile & Settings pages
 
 ## Tech Stack
 
@@ -59,7 +76,7 @@ Kick Back helps you:
 - **Next.js 15** - React framework with App Router
 - **TypeScript** - Type safety throughout
 - **Tailwind CSS** - Styling and responsive design
-- **Radix UI** - Accessible component library
+- **Shadcn UI** - Accessible component library
 - **Framer Motion** - Smooth animations
 - **React Query** - Data fetching and caching
 
@@ -67,7 +84,7 @@ Kick Back helps you:
 
 - **Next.js API Routes** - Server-side logic
 - **Prisma** - Database ORM
-- **PostgreSQL** - Database (Neon)
+- **PostgreSQL** - Database (Neon via Vercel)
 - **NextAuth.js** - Authentication
 - **Resend** - Email service
 - **Twilio** - SMS service
@@ -101,7 +118,7 @@ cd kick-back
 2. **Install dependencies**
 
 ```bash
-pnpm install
+pnpm install 
 ```
 
 3. **Set up environment variables**
@@ -187,7 +204,7 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY="your-vapid-public-key"
 
 1. Create a `.env.local` or `.env` file in the root directory
 2. Copy the variables above and fill in your values
-3. For Neon database, most variables are provided in your dashboard
+3. For database, use Vercel's Neon integration or set up Neon directly
 4. For VAPID keys, generate them using: `npx web-push generate-vapid-keys`
 
 ### Generating VAPID Keys
@@ -210,7 +227,7 @@ Copy the public key to `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and the private key to `VA
 
 ## Database Schema
 
-The app uses PostgreSQL with these models:
+The app uses PostgreSQL (Neon via Vercel) with these models:
 
 ### 👤 User Management
 
@@ -298,8 +315,8 @@ The app uses both **API Routes** and **Server Actions** for different purposes:
 
 ### 👤 Profile & Settings (Server Actions)
 
-- `updateProfileAction()` - Update user profile
-- `updateSettingsAction()` - Update user settings
+- `updateProfileAction()` - Update user profile (name, nickname, photo)
+- `updateSettingsAction()` - Update user settings (timezone, reminders, notification preferences)
 - `changePasswordAction()` - Change password
 - `deleteAccountAction()` - Delete user account
 - `onboarding()` - Complete user onboarding
