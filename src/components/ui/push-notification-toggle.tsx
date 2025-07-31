@@ -30,6 +30,33 @@ export default function PushNotificationToggle() {
   const queryClient = useQueryClient();
   const [isEnabling, setIsEnabling] = useState(false);
 
+  // Defensive check for user data
+  if (!user) {
+    console.log("PushNotificationToggle: No user data");
+    return null;
+  }
+
+  // Check if it's Safari on iOS
+  const isSafariIOS = () => {
+    if (typeof window === "undefined") return false;
+    const userAgent = window.navigator.userAgent;
+    return (
+      /iPad|iPhone|iPod/.test(userAgent) &&
+      /Safari/.test(userAgent) &&
+      !/Chrome/.test(userAgent)
+    );
+  };
+
+  // Debug logging for mobile issues
+  console.log("PushNotificationToggle: User data:", {
+    id: user.id,
+    pushNotifications: user.pushNotifications,
+    isSupported,
+    isSubscribed,
+    permission,
+    isSafariIOS: isSafariIOS(),
+  });
+
   const handleToggle = async () => {
     if (isLoading || isEnabling) return;
 
@@ -108,7 +135,7 @@ export default function PushNotificationToggle() {
     }
   };
 
-  if (!isSupported) {
+  if (!isSupported || isSafariIOS()) {
     return (
       <Card>
         <CardHeader>
@@ -117,13 +144,16 @@ export default function PushNotificationToggle() {
             Push Notifications
           </CardTitle>
           <CardDescription>
-            Push notifications are not supported in your browser
+            {isSafariIOS()
+              ? "Not available in Safari on iOS"
+              : "Push notifications are not supported in your browser"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Your browser doesn&apos;t support push notifications. Try using a
-            modern browser like Chrome, Firefox, or Safari.
+            {isSafariIOS()
+              ? "Safari on iOS doesn&apos;t support push notifications. You can still receive in-app notifications and email/SMS reminders."
+              : "Your browser doesn&apos;t support push notifications. Try using a modern browser like Chrome, Firefox, or Safari."}
           </p>
         </CardContent>
       </Card>

@@ -7,6 +7,7 @@ export const settingsSchema = z.object({
   phoneNumber: z.string().optional().or(z.literal("")),
   notificationOptIn: z.boolean(),
   inAppNotifications: z.boolean(),
+  pushNotifications: z.boolean(),
 }).refine((data) => {
   if ((data.reminderType === "sms" || data.reminderType === "both") && !data.phoneNumber) {
     return false;

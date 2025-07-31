@@ -10,6 +10,7 @@ export interface SettingsUser {
   phoneNumber: string | null;
   notificationOptIn: boolean;
   inAppNotifications: boolean;
+  pushNotifications: boolean;
 }
 
 export interface SettingsData {

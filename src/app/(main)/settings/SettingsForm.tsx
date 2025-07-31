@@ -49,6 +49,7 @@ interface SettingsFormProps {
     phoneNumber?: string | null;
     notificationOptIn?: boolean | null;
     inAppNotifications?: boolean | null;
+    pushNotifications?: boolean | null;
   };
   hasPassword: boolean;
 }
@@ -297,7 +298,9 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
       </Card>
 
       {/* Push Notifications Section */}
-      <PushNotificationToggle />
+      <div className="relative">
+        <PushNotificationToggle />
+      </div>
 
       {/* Password Section */}
       {hasPassword && (

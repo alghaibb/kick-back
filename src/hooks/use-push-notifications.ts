@@ -13,11 +13,22 @@ export function usePushNotifications() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Check if it's Safari on iOS
+    const isSafariIOS = () => {
+      const userAgent = window.navigator.userAgent;
+      return (
+        /iPad|iPhone|iPod/.test(userAgent) &&
+        /Safari/.test(userAgent) &&
+        !/Chrome/.test(userAgent)
+      );
+    };
+
     // Check if push notifications are supported
     const supported =
       "serviceWorker" in navigator &&
       "PushManager" in window &&
-      "Notification" in window;
+      "Notification" in window &&
+      !isSafariIOS(); // Explicitly exclude Safari iOS
 
     setIsSupported(supported);
 
