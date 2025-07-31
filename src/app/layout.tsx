@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { Poppins } from "next/font/google";
 import { PageTracker } from "react-page-tracker";
 import "./globals.css";
+import { useEffect } from "react";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -166,10 +167,39 @@ export default function RootLayout({
               <div className="min-h-screen flex flex-col">{children}</div>
               <Toaster richColors closeButton theme="light" />
               <PWAInstallPrompt />
+              <NotificationNavigationHandler />
             </ActiveThemeProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
   );
+}
+
+// Component to handle navigation from service worker notifications
+function NotificationNavigationHandler() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === "navigate") {
+        console.log("Received navigation message:", event.data.url);
+        // Use Next.js router to navigate
+        window.location.href = event.data.url;
+      }
+    };
+
+    // Listen for messages from service worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("message", handleMessage);
+    }
+
+    return () => {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.removeEventListener("message", handleMessage);
+      }
+    };
+  }, []);
+
+  return null;
 }

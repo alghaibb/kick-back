@@ -20,14 +20,16 @@ export async function POST() {
 
     // Send a test push notification
     await sendPushNotification(session.user.id, {
-      title: "Test Notification",
-      body: "This is a test push notification from Kick Back! 🎉",
+      title: "Test Event Comment",
+      body: "Someone commented on your event! Tap to view.",
       data: {
-        type: "TEST",
+        type: "EVENT_COMMENT",
+        eventId: "test-event-123",
+        commentId: "test-comment-456",
         timestamp: Date.now(),
       },
       actions: [
-        { action: "view", title: "View App" },
+        { action: "view", title: "View Event" },
         { action: "dismiss", title: "Dismiss" },
       ],
     });

@@ -147,19 +147,72 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  // Handle notification click
+  // Get notification data to determine navigation
+  const data = event.notification.data || {};
+  let targetUrl = '/';
+
+  // Determine target URL based on notification type
+  if (data.type && data.eventId) {
+    switch (data.type) {
+      case 'EVENT_COMMENT':
+      case 'COMMENT_REPLY':
+      case 'COMMENT_REACTION':
+        targetUrl = `/calendar?event=${data.eventId}${data.commentId ? `&comment=${data.commentId}` : ''}`;
+        break;
+      case 'EVENT_PHOTO':
+        targetUrl = `/calendar?event=${data.eventId}${data.photoId ? `&photo=${data.photoId}` : ''}`;
+        break;
+      case 'EVENT_REMINDER':
+      case 'RSVP_UPDATE':
+        targetUrl = `/calendar?event=${data.eventId}`;
+        break;
+      case 'GROUP_EVENT_CREATED':
+        targetUrl = `/calendar?event=${data.eventId}`;
+        break;
+      case 'EVENT_CREATED':
+        targetUrl = '/events';
+        break;
+      case 'GROUP_INVITE':
+        targetUrl = '/groups';
+        break;
+      default:
+        targetUrl = '/calendar';
+    }
+  } else if (data.eventId) {
+    // Fallback: if we have an eventId but no type, go to calendar
+    targetUrl = `/calendar?event=${data.eventId}`;
+  } else {
+    // Default fallback
+    targetUrl = '/calendar';
+  }
+
+  console.log('Navigating to:', targetUrl);
+
+  // Handle navigation
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       // Check if app is already open
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          return client.focus();
+          // Focus the existing window and navigate
+          return client.focus().then(() => {
+            // Use postMessage for iOS Safari PWA navigation
+            if (isIOS && isSafari) {
+              client.postMessage({ type: 'navigate', url: targetUrl });
+            }
+            // Try to navigate directly
+            if ('navigate' in client) {
+              return client.navigate(targetUrl);
+            }
+            // Fallback: reload with new URL
+            return client.navigate(targetUrl);
+          });
         }
       }
 
-      // If app is not open, open it
+      // If app is not open, open it at the target URL
       if (clients.openWindow) {
-        return clients.openWindow('/');
+        return clients.openWindow(targetUrl);
       }
     })
   );
