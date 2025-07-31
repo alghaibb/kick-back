@@ -219,7 +219,6 @@ export default function PushNotificationToggle() {
               </Label>
               <p className="text-sm text-muted-foreground">
                 Get notified about comments, RSVPs, group invites, and more
-                {hasFallback && " (iOS PWA mode)"}
               </p>
             </div>
             <Switch
@@ -229,24 +228,6 @@ export default function PushNotificationToggle() {
               disabled={isLoading || isEnabling}
             />
           </div>
-
-          {hasFallback && (
-            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
-                    iOS Safari PWA Mode
-                  </p>
-                  <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                    You&apos;ll receive notifications even when the app is closed! 
-                    iOS PWA uses a different notification system that works reliably 
-                    for comments, RSVPs, group invites, and more.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {permission === "denied" && !hasFallback && (
             <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
@@ -282,11 +263,7 @@ export default function PushNotificationToggle() {
                 <li>• Event reminders</li>
                 <li>• New photos added to events</li>
               </ul>
-              {hasFallback && (
-                <p className="text-sm text-green-600 dark:text-green-400 mt-2">
-                  📱 iOS PWA mode - notifications work even when app is closed!
-                </p>
-              )}
+
               {process.env.NODE_ENV === "development" && (
                 <div className="mt-3 space-y-2">
                   <Button
