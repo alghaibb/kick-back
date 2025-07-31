@@ -57,7 +57,7 @@ body {
   z-index: 40;
   /* Use position fixed instead of sticky for more reliable mobile behavior */
   position: fixed !important;
-  top: 0 !important;
+  top: env(safe-area-inset-top, 0px) !important;
   left: 0 !important;
   right: 0 !important;
   width: 100% !important;
@@ -66,16 +66,20 @@ body {
   /* backface-visibility: hidden; - REMOVED */
   /* Ensure smooth rendering */
   will-change: transform;
+  /* Add padding to account for safe area */
+  padding-top: 1rem;
 }
 
 /* Adjust mobile content to account for fixed header */
 .mobile-layout .mobile-scroll-container {
-  /* Add top padding to account for fixed header height */
-  padding-top: 88px;
+  /* Add top padding to account for fixed header height plus safe area */
+  padding-top: calc(88px + env(safe-area-inset-top, 0px));
   /* Ensure full height minus header */
-  height: calc(100vh - 88px);
-  height: calc(100dvh - 88px);
-  height: calc(calc(var(--vh, 1vh) * 100) - 88px);
+  height: calc(100vh - 88px - env(safe-area-inset-top, 0px));
+  height: calc(100dvh - 88px - env(safe-area-inset-top, 0px));
+  height: calc(
+    calc(var(--vh, 1vh) * 100) - 88px - env(safe-area-inset-top, 0px)
+  );
 }
 
 /* Fix for iOS Safari bottom bar */
@@ -88,7 +92,6 @@ body {
   /* Improve header positioning on iOS */
   .mobile-header {
     /* Account for iOS safe area */
-    padding-top: env(safe-area-inset-top, 0px);
     background: var(--card);
   }
 }
