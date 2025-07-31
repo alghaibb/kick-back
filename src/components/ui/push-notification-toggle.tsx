@@ -230,16 +230,17 @@ export default function PushNotificationToggle() {
           </div>
 
           {hasFallback && (
-            <div className="p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-md">
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm text-orange-800 dark:text-orange-200 font-medium">
-                    Using fallback notifications
+                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                    iOS Safari PWA Mode
                   </p>
-                  <p className="text-sm text-orange-700 dark:text-orange-300 mt-1">
-                    Service worker registration failed, but you&apos;ll still
-                    receive browser notifications when the app is open.
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                    iOS Safari doesn&apos;t support web push notifications in PWA mode. 
+                    You&apos;ll receive notifications when the app is open, and we&apos;ll 
+                    use alternative methods for important updates.
                   </p>
                 </div>
               </div>

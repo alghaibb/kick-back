@@ -42,6 +42,15 @@ export function usePushNotifications() {
 
   const checkSubscriptionStatus = async () => {
     try {
+      // For iOS Safari PWA, skip service worker registration check
+      if (isIOS && isSafari && isStandalone) {
+        console.log("iOS Safari PWA: Skipping service worker registration check");
+        setIsSubscribed(false);
+        setHasFallback(true);
+        setIsLoading(false);
+        return;
+      }
+
       const registration =
         await navigator.serviceWorker.getRegistration("/push-sw.js");
       const subscription = await registration?.pushManager.getSubscription();
@@ -98,6 +107,12 @@ export function usePushNotifications() {
       // iOS Safari PWA specific handling
       if (isIOS && isSafari && isStandalone) {
         console.log("iOS Safari PWA detected - using enhanced service worker registration");
+        
+        // For iOS Safari PWA, we need to handle service worker differently
+        // iOS Safari PWA doesn't support push notifications, so we'll use fallback
+        setHasFallback(true);
+        console.log("iOS Safari PWA: Using fallback notification mode");
+        return null; // Return early for iOS PWA
       }
 
       // Register the push notification service worker with cache busting
