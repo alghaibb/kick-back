@@ -36,10 +36,10 @@ body {
 .mobile-scroll-container {
   /* Enable momentum scrolling */
   -webkit-overflow-scrolling: touch;
-  /* Optimize touch interactions - allow vertical scroll */
+  /* Allow pull-to-refresh and normal scrolling */
   touch-action: pan-y pinch-zoom;
-  /* Prevent scroll chaining */
-  overscroll-behavior: contain;
+  /* Allow pull-to-refresh behavior */
+  overscroll-behavior: auto;
   /* Ensure proper scrolling on iOS */
   position: relative;
   /* Fix scroll on WebKit browsers */
@@ -51,8 +51,8 @@ body {
 
 /* Prevent scroll issues with fixed elements */
 .mobile-header {
-  /* Allow scrolling but prevent double-tap zoom */
-  touch-action: manipulation;
+  /* Allow pull-to-refresh while preventing double-tap zoom on header elements */
+  touch-action: pan-x pan-y;
   /* Ensure header stays above content */
   z-index: 40;
   /* Use position fixed instead of sticky for more reliable mobile behavior */
