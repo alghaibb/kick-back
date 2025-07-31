@@ -85,7 +85,7 @@ Kick Back helps you:
 - **Next.js API Routes** - Server-side logic
 - **Prisma** - Database ORM
 - **PostgreSQL** - Database (Neon via Vercel)
-- **NextAuth.js** - Authentication
+- **Auth.js** - Authentication
 - **Resend** - Email service
 - **Twilio** - SMS service
 - **Vercel Blob** - File uploads
