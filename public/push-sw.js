@@ -3,7 +3,9 @@
 // Detect iOS Safari
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-const isStandalone = window.navigator.standalone === true;
+// In service workers, we can't access window.navigator.standalone directly
+// We'll detect PWA mode through other means
+const isStandalone = false; // Will be determined by client-side detection
 
 console.log('Service Worker: iOS Safari PWA detected:', isIOS && isSafari && isStandalone);
 
@@ -13,8 +15,8 @@ self.addEventListener('install', (event) => {
   // Force the waiting service worker to become the active service worker
   self.skipWaiting();
 
-  // Cache critical resources for iOS PWA
-  if (isIOS && isSafari && isStandalone) {
+  // Cache critical resources for iOS Safari
+  if (isIOS && isSafari) {
     event.waitUntil(
       caches.open('ios-pwa-cache').then((cache) => {
         return cache.addAll([
@@ -50,8 +52,8 @@ self.addEventListener('activate', (event) => {
 });
 
 // iOS-specific PWA persistence
-if (isIOS && isSafari && isStandalone) {
-  console.log('iOS PWA detected - enabling persistence features');
+if (isIOS && isSafari) {
+  console.log('iOS Safari detected - enabling persistence features');
 
   // Keep the service worker alive and cache critical resources
   self.addEventListener('fetch', (event) => {
@@ -120,8 +122,8 @@ self.addEventListener('push', (event) => {
           icon: '/favicon-32x32.png'
         }
       ],
-      // iOS PWA specific options
-      requireInteraction: isIOS && isSafari && isStandalone,
+      // iOS Safari specific options
+      requireInteraction: isIOS && isSafari,
       silent: false,
       tag: 'kick-back-notification',
       renotify: true
