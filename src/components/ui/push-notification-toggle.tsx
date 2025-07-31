@@ -158,7 +158,7 @@ export default function PushNotificationToggle() {
           {isSafariIOS() && (
             <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                💡 <strong>Tip:</strong> Add this app to your home screen to enable push notifications! Tap the share button and select "Add to Home Screen".
+                💡 <strong>Tip:</strong> Add this app to your home screen to enable push notifications! Tap the share button and select &quot;Add to Home Screen&quot;.
               </p>
             </div>
           )}
