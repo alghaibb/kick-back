@@ -32,14 +32,17 @@ function MobileNav() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-11 w-11 hover:bg-muted/50" 
+          className="h-11 w-11 hover:bg-muted/50"
         >
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-[300px] flex flex-col p-0 overflow-hidden">
+      <SheetContent
+        side="right"
+        className="w-[300px] flex flex-col p-0 overflow-hidden"
+      >
         <SheetHeader className="flex flex-row items-center justify-start">
           <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
         </SheetHeader>

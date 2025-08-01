@@ -185,44 +185,56 @@ self.addEventListener("notificationclick", (event) => {
         targetUrl = "/groups";
         break;
       default:
-        targetUrl = "/calendar";
+        targetUrl = "/dashboard";
     }
   } else if (data.eventId) {
     // Fallback: if we have an eventId but no type, go to calendar
     targetUrl = `/calendar?event=${data.eventId}`;
   } else {
-    // Default fallback
-    targetUrl = "/calendar";
+    // Default fallback - go to dashboard (main app screen)
+    targetUrl = "/dashboard";
   }
 
   console.log("Navigating to:", targetUrl);
 
-  // Handle navigation
+  // Handle navigation - prioritize opening the PWA app
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
-        // Check if app is already open
+        console.log("Found clients:", clientList.length);
+        
+        // First, try to find and focus an existing PWA window
         for (const client of clientList) {
+          console.log("Checking client:", client.url);
           if (client.url.includes(self.location.origin) && "focus" in client) {
-            // Focus the existing window and navigate
+            console.log("Found existing app window, focusing and navigating");
+            // Focus the existing window first
             return client.focus().then(() => {
-              // Use postMessage for iOS Safari PWA navigation
-              if (isIOS && isSafari) {
-                client.postMessage({ type: "navigate", url: targetUrl });
-              }
-              // Try to navigate directly
+              // Then navigate to the target URL
               if ("navigate" in client) {
+                console.log("Navigating to:", targetUrl);
+                return client.navigate(targetUrl);
+              } else {
+                // Fallback: reload with new URL
+                console.log("Fallback navigation to:", targetUrl);
                 return client.navigate(targetUrl);
               }
-              // Fallback: reload with new URL
-              return client.navigate(targetUrl);
             });
           }
         }
 
-        // If app is not open, open it at the target URL
+        // If no existing window found, open the PWA app
+        console.log("No existing window found, opening PWA app at:", targetUrl);
         if (clients.openWindow) {
+          return clients.openWindow(targetUrl);
+        }
+      })
+      .catch((error) => {
+        console.error("Error handling notification click:", error);
+        // Fallback: try to open the app anyway
+        if (clients.openWindow) {
+          console.log("Fallback: opening app at:", targetUrl);
           return clients.openWindow(targetUrl);
         }
       })
