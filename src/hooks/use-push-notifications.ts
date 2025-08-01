@@ -62,7 +62,7 @@ export function usePushNotifications() {
         if (initialPermission.current === null) {
           initialPermission.current = Notification.permission;
         }
-        
+
         const currentPermission = initialPermission.current;
         const isEnabled = currentPermission === "granted";
 
@@ -308,7 +308,9 @@ export function usePushNotifications() {
     hasFallback,
     isIOS: isIOS && isSafari,
     permission:
-      typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default",
+      typeof window !== "undefined" && "Notification" in window 
+        ? (initialPermission.current || Notification.permission) 
+        : "default",
     subscribe,
     unsubscribe,
     requestPermission,
