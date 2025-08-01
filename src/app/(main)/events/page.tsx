@@ -9,14 +9,17 @@ import { PageErrorBoundary } from "@/components/ui/error-boundary";
 
 export const metadata: Metadata = {
   title: "Events",
-  description: "Discover and join amazing events with friends. Create, manage, and track your upcoming gatherings.",
+  description:
+    "Discover and join amazing events with friends. Create, manage, and track your upcoming gatherings.",
   openGraph: {
     title: "Events",
-    description: "Discover and join amazing events with friends. Create, manage, and track your upcoming gatherings.",
+    description:
+      "Discover and join amazing events with friends. Create, manage, and track your upcoming gatherings.",
   },
   twitter: {
     title: "Events",
-    description: "Discover and join amazing events with friends. Create, manage, and track your upcoming gatherings.",
+    description:
+      "Discover and join amazing events with friends. Create, manage, and track your upcoming gatherings.",
   },
 };
 

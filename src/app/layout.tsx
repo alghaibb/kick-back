@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Poppins } from "next/font/google";
 import { PageTracker } from "react-page-tracker";
+import { env } from "@/lib/env";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -16,6 +17,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(env.NEXT_PUBLIC_BASE_URL),
   title: {
     template: "%s | Kick Back",
     absolute: "Kick Back",
@@ -105,13 +107,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-    themeColor: "#000000",
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: "cover",
-  };
+  themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
 
 export default function RootLayout({
   children,
