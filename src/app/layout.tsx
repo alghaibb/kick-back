@@ -88,7 +88,7 @@ export const metadata: Metadata = {
     description: "Organize and manage your events with friends and family.",
     images: [
       {
-        url: "/logo.png",
+        url: "/dashboard-dark.png",
         width: 1200,
         height: 630,
         alt: "Kick Back - Organize and join events with friends and family",
@@ -102,7 +102,7 @@ export const metadata: Metadata = {
       template: "%s | Kick Back",
     },
     description: "Organize and manage your events with friends and family.",
-    images: ["/logo.png"],
+    images: ["/dashboard-dark.png"],
   },
 };
 
