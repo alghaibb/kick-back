@@ -4,7 +4,9 @@ import {
   Home,
   Settings,
   User,
-  CalendarDays
+  CalendarDays,
+  Shield,
+  Trash2,
 } from "lucide-react";
 
 export const navigation = [
@@ -16,4 +18,10 @@ export const navigation = [
   { name: "Settings", href: "/settings", icon: Settings },
 ] as const;
 
-export type NavigationItem = typeof navigation[number]; 
+export const adminNavigation = [
+  { name: "Admin Panel", href: "/admin", icon: Shield },
+  { name: "Users", href: "/admin/users", icon: Users },
+  { name: "Deleted Users", href: "/admin/deleted-users", icon: Trash2 },
+] as const;
+
+export type NavigationItem = (typeof navigation)[number];

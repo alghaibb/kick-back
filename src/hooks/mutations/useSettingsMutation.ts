@@ -7,6 +7,7 @@ import {
   changePasswordAction,
   deleteAccountAction,
 } from "@/app/(main)/settings/actions";
+import { recoverAccountAction } from "@/app/(main)/settings/actions";
 import { SettingsValues } from "@/validations/settingsSchema";
 import { ChangePasswordValues } from "@/validations/profile/profileSchema";
 import { signOut } from "next-auth/react";
@@ -82,7 +83,9 @@ export function useDeleteAccountMutation() {
     onSuccess: () => {
       // Clear all cached data
       queryClient.clear();
-      toast.success("Account deleted successfully");
+      toast.success(
+        "Account scheduled for deletion. You have 30 days to recover it."
+      );
 
       // Sign out the user and redirect to login page
       signOut({
@@ -92,6 +95,31 @@ export function useDeleteAccountMutation() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to delete account");
+    },
+  });
+}
+
+export function useRecoverAccountMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const result = await recoverAccountAction();
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
+      return result;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch user data
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
+      toast.success("Account recovered successfully!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to recover account");
     },
   });
 }

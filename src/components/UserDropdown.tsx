@@ -13,6 +13,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { userMenuLinks } from "@/lib/constants";
 import Link from "next/link";
+import { Shield } from "lucide-react";
 
 export function UserDropdown() {
   const { user } = useAuth();
@@ -41,6 +42,20 @@ export function UserDropdown() {
             <Link href={link.href}>{link.label}</Link>
           </DropdownMenuItem>
         ))}
+
+        {/* Admin Link - Only show for admin users */}
+        {user.role === "ADMIN" && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/admin" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Admin Panel
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
+
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <LogoutButton className="w-full justify-start" variant="ghost" />

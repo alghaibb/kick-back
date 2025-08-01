@@ -392,8 +392,8 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
             <div>
               <h3 className="font-medium text-foreground">Delete Account</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Permanently delete your account and all associated data. This
-                action cannot be undone.
+                Delete your account and all associated data. You can recover
+                your account within 30 days after deletion.
               </p>
             </div>
             <LoadingButton
@@ -413,7 +413,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
       <GenericModal
         type="delete-account"
         title="Delete Account"
-        description="Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data, groups, events, and images."
+        description="Are you sure you want to delete your account? Your account will be deleted but can be recovered within 30 days. After 30 days, it will be permanently deleted."
         showCancel={false}
       >
         <div className="flex flex-col gap-3 p-6">

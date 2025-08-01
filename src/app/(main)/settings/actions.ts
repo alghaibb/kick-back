@@ -11,7 +11,6 @@ import { revalidatePath } from "next/cache";
 import { settingsSchema, SettingsValues } from "@/validations/settingsSchema";
 import { formatToE164 } from "@/utils/formatPhoneNumber";
 import { detectCountryForSMS } from "@/utils/detectCountry";
-import { del } from "@vercel/blob";
 
 export async function updateSettingsAction(values: SettingsValues) {
   try {
@@ -130,128 +129,158 @@ export async function deleteAccountAction() {
 
     const userId = session.user.id;
 
-    // 1. Collect all images associated with the user for deletion from Vercel Blob
-    const imagesToDelete: string[] = [];
-
-    // Get user profile image
+    // Get user info before deletion
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { image: true },
-    });
-    if (user?.image) {
-      imagesToDelete.push(user.image);
-    }
-
-    // Get all comment images by the user
-    const commentImages = await prisma.eventComment.findMany({
-      where: { userId, imageUrl: { not: null } },
-      select: { imageUrl: true },
-    });
-    commentImages.forEach((comment: { imageUrl: string | null }) => {
-      if (comment.imageUrl) imagesToDelete.push(comment.imageUrl);
-    });
-
-    // Get all event photos by the user
-    const eventPhotos = await prisma.eventPhoto.findMany({
-      where: { userId },
-      select: { imageUrl: true },
-    });
-    eventPhotos.forEach((photo: { imageUrl: string }) => {
-      imagesToDelete.push(photo.imageUrl);
-    });
-
-    // 2. Handle group ownership - transfer ownership or delete groups
-    const groupsCreatedByUser = await prisma.group.findMany({
-      where: { createdBy: userId },
       include: {
-        members: {
-          where: { userId: { not: userId } },
-          include: { user: true },
+        groupMembers: {
+          include: { group: true },
         },
       },
     });
 
-    for (const group of groupsCreatedByUser) {
-      // Add group image to deletion list
-      if (group.image) {
-        imagesToDelete.push(group.image);
-      }
+    if (!user) {
+      return { error: "User not found" };
+    }
 
-      if (group.members.length > 0) {
-        // Transfer ownership to the first remaining member
-        const newOwner = group.members[0];
+    // Handle group ownership transfers
+    const groupsToTransfer = user.groupMembers.filter(
+      (member) => member.role === "owner"
+    );
+
+    for (const member of groupsToTransfer) {
+      const groupId = member.groupId;
+
+      // Find the next oldest member to transfer ownership to
+      const nextOwner = await prisma.groupMember.findFirst({
+        where: {
+          groupId: groupId,
+          userId: { not: userId },
+          role: { not: "owner" },
+        },
+        orderBy: { joinedAt: "asc" },
+      });
+
+      if (nextOwner) {
+        // Transfer ownership to the next oldest member
         await prisma.groupMember.update({
-          where: {
-            groupId_userId: {
-              groupId: group.id,
-              userId: newOwner.userId,
-            },
-          },
-          data: { role: "admin" },
+          where: { id: nextOwner.id },
+          data: { role: "owner" },
         });
 
-        // Update group's createdBy
+        // Update group createdBy field
         await prisma.group.update({
-          where: { id: group.id },
-          data: { createdBy: newOwner.userId },
+          where: { id: groupId },
+          data: { createdBy: nextOwner.userId },
         });
       } else {
-        // No other members, delete the group entirely
-        await prisma.group.delete({
-          where: { id: group.id },
+        // No other members, mark group as inactive by setting createdBy to empty string
+        await prisma.group.update({
+          where: { id: groupId },
+          data: { createdBy: "" },
         });
       }
     }
 
-    // 3. Handle events created by the user
-    const eventsCreatedByUser = await prisma.event.findMany({
-      where: { createdBy: userId },
-      include: {
-        group: {
-          include: {
-            members: {
-              where: { userId: { not: userId } },
-              orderBy: { joinedAt: "asc" },
-            },
-          },
-        },
-      },
-    });
+    // Soft delete the user with 30-day grace period
+    const gracePeriodDays = 30;
+    const permanentlyDeletedAt = new Date();
+    permanentlyDeletedAt.setDate(
+      permanentlyDeletedAt.getDate() + gracePeriodDays
+    );
 
-    for (const event of eventsCreatedByUser) {
-      if (event.group && event.group.members.length > 0) {
-        // Transfer event ownership to the first group member
-        const newOwner = event.group.members[0];
-        await prisma.event.update({
-          where: { id: event.id },
-          data: { createdBy: newOwner.userId },
-        });
-      } else {
-        // No group or no other members, delete the event
-        await prisma.event.delete({
-          where: { id: event.id },
-        });
-      }
-    }
-
-    // 4. Delete all images from Vercel Blob
-    const deletePromises = imagesToDelete.map(async (imageUrl) => {
-      try {
-        await del(imageUrl);
-      } catch (error) {
-        console.error(`Failed to delete image ${imageUrl}:`, error);
-      }
-    });
-    await Promise.allSettled(deletePromises);
-
-    // 5. Delete the user (this will cascade delete most related data)
-    await prisma.user.delete({
+    await prisma.user.update({
       where: { id: userId },
+      data: {
+        deletedAt: new Date(),
+        permanentlyDeletedAt: permanentlyDeletedAt,
+        email: `deleted_${Date.now()}_${user.email}`, // Make email unique
+        firstName: "Deleted",
+        lastName: "User",
+      },
     });
 
     return { success: true };
   } catch (error) {
     console.error("Delete account error:", error);
     return { error: "Failed to delete account" };
+  }
+}
+
+export async function recoverAccountAction() {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    const userId = session.user.id;
+
+    // Get the deleted user
+    const deletedUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        groupMembers: {
+          include: { group: true },
+        },
+      },
+    });
+
+    if (!deletedUser || !deletedUser.deletedAt) {
+      return { error: "User not found or not deleted" };
+    }
+
+    // Check if grace period has expired
+    if (
+      deletedUser.permanentlyDeletedAt &&
+      new Date() > deletedUser.permanentlyDeletedAt
+    ) {
+      return {
+        error: "Account recovery period has expired. Please contact support.",
+      };
+    }
+
+    // Restore the user's original email and name
+    const originalEmail = deletedUser.email.replace(/^deleted_\d+_/, "");
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        deletedAt: null,
+        permanentlyDeletedAt: null,
+        email: originalEmail,
+        firstName: "Recovered",
+        lastName: "User",
+      },
+    });
+
+    // Handle group ownership recovery
+    const groupsToRecover = deletedUser.groupMembers.filter(
+      (member) => member.role === "owner"
+    );
+
+    for (const member of groupsToRecover) {
+      const groupId = member.groupId;
+
+      // Check if the group currently has no owner (createdBy is empty)
+      const group = await prisma.group.findUnique({
+        where: { id: groupId },
+      });
+
+      if (group && group.createdBy === "") {
+        // Restore ownership to the recovered user
+        await prisma.group.update({
+          where: { id: groupId },
+          data: { createdBy: userId },
+        });
+      }
+      // If group has a current owner, leave it as is to avoid conflicts
+    }
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Account recovery error:", error);
+    return { error: "Failed to recover account" };
   }
 }

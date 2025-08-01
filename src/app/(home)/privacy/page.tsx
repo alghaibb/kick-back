@@ -300,7 +300,8 @@ export default function PrivacyPage() {
                   <div>
                     <h3 className="font-medium mb-2">Delete Your Account</h3>
                     <p className="text-sm text-muted-foreground">
-                      Permanently delete your account and all associated data.
+                      Delete your account and all associated data. You can
+                      recover your account within 30 days.
                     </p>
                   </div>
                 </div>
@@ -376,7 +377,8 @@ export default function PrivacyPage() {
                       • Verification tokens: Automatically expired after use
                     </li>
                     <li>
-                      • Deleted accounts: Permanently removed within 30 days
+                      • Deleted accounts: Can be recovered within 30 days, then
+                      permanently removed
                     </li>
                   </ul>
                 </div>

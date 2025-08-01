@@ -74,13 +74,16 @@ export default function Benefits() {
           variants={itemVariants}
         >
           {learnMoreData.benefits.features.map((feature, index) => (
-            <Card key={index} className="p-6">
+            <Card key={index}>
+              <CardHeader>
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <feature.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <CardTitle className="text-left">{feature.title}</CardTitle>
                 </div>
-                <div>
-                  <CardTitle className="mb-2">{feature.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
                   <p className="text-muted-foreground mb-3">
                     {feature.description}
                   </p>
@@ -96,8 +99,7 @@ export default function Benefits() {
                       );
                     })}
                   </ul>
-                </div>
-              </div>
+              </CardContent>
             </Card>
           ))}
         </motion.div>

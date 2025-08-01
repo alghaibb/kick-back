@@ -17,8 +17,11 @@ export interface User {
   inAppNotifications: boolean;
   pushNotifications: boolean;
   dashboardBackground: string | null;
+  role: "USER" | "ADMIN";
   createdAt: string;
   updatedAt: string;
+  deletedAt: string | null;
+  permanentlyDeletedAt: string | null;
 }
 
 async function fetchUser(): Promise<User> {

@@ -21,6 +21,8 @@ model User {
   hasOnboarded        Boolean              @default(false)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+  deletedAt           DateTime?
+  permanentlyDeletedAt DateTime?
   phoneNumber         String?              @unique
   reminderTime        String               @default("09:00")
   reminderType        String               @default("email")
@@ -29,6 +31,7 @@ model User {
   inAppNotifications  Boolean              @default(true)
   pushNotifications   Boolean              @default(false)
   dashboardBackground String?
+  role                UserRole              @default(USER)
   accounts            Account[]
   CommentReaction     CommentReaction[]
   EventAttendee       EventAttendee[]
@@ -337,6 +340,11 @@ enum NotificationType {
   RSVP_UPDATE
   COMMENT_REPLY
   COMMENT_REACTION
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
 
 model Contact {

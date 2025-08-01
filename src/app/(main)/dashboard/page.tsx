@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/error-boundary";
 
 export const metadata: Metadata = {
-  title: "Dashboard | Kick Back",
+  title: "Dashboard",
   description: "Your personal event planning dashboard",
 };
 

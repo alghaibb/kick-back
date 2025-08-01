@@ -9,9 +9,11 @@ import { ThemeSelector } from "../ui/theme-selector";
 import { UserDropdown } from "../UserDropdown";
 import { Logo } from "../Logo";
 import MobileNav from "./MobileNav";
+import { Badge } from "@/components/ui/badge";
+import { Shield } from "lucide-react";
 
 export default function Navbar() {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth();
 
   return (
     <header className="w-full border-b border-border bg-background/90 backdrop-blur-md shadow-lg sticky top-0 z-50">
@@ -43,7 +45,16 @@ export default function Navbar() {
             {isLoading ? (
               <div className="w-8 h-8 animate-pulse bg-muted rounded-full"></div>
             ) : isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                {/* Admin Badge */}
+                {user?.role === "ADMIN" && (
+                  <Badge variant="secondary" className="text-xs">
+                    <Shield className="h-3 w-3 mr-1" />
+                    Admin
+                  </Badge>
+                )}
               <UserDropdown />
+              </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Button asChild size="sm" variant="ghost">

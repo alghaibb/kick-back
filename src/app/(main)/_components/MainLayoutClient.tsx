@@ -8,6 +8,7 @@ import { MainHeader } from "./MainHeader";
 import { MainSidebar } from "./MainSidebar";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { FilterProvider } from "@/providers/FilterProvider";
 
 interface MainLayoutClientProps {
   children: React.ReactNode;
@@ -150,7 +151,9 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
               isMobile && "mobile-scroll-container"
             )}
           >
-            <div className="mx-auto max-w-5xl">{children}</div>
+            <FilterProvider>
+              <div className="mx-auto max-w-5xl">{children}</div>
+            </FilterProvider>
           </main>
         </div>
       </div>

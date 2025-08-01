@@ -24,6 +24,12 @@ export default function AuthRedirectPage() {
       return;
     }
 
+    // Check if user is soft deleted
+    if (user.deletedAt) {
+      router.replace("/recover-account");
+      return;
+    }
+
     if (!user.hasOnboarded) {
       router.replace("/onboarding");
     } else {

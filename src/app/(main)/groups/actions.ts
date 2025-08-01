@@ -42,7 +42,7 @@ export async function createGroupAction(values: CreateGroupValues) {
         members: {
           create: {
             userId: session.user.id,
-            role: "admin",
+            role: "owner",
           },
         },
       },

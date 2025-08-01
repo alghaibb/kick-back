@@ -130,6 +130,38 @@ export async function getSession() {
       return null;
     }
 
+    // Check if user is soft deleted
+    if (session.user.deletedAt) {
+      console.log(
+        "[getSession] User is soft deleted, returning session with deleted flag"
+      );
+
+      // Return the session but mark the user as deleted
+      // This allows the frontend to handle the soft-deleted state
+      return {
+        ...session,
+        user: {
+          id: session.user.id,
+          nickname: session.user.nickname,
+          firstName: session.user.firstName,
+          lastName: session.user.lastName,
+          email: session.user.email,
+          password: session.user.password,
+          emailVerified: session.user.emailVerified,
+          image: session.user.image,
+          timezone: session.user.timezone,
+          hasOnboarded: session.user.hasOnboarded,
+          dashboardBackground: session.user.dashboardBackground,
+          role: session.user.role,
+          createdAt: session.user.createdAt,
+          updatedAt: session.user.updatedAt,
+          deletedAt: session.user.deletedAt,
+          permanentlyDeletedAt: session.user.permanentlyDeletedAt,
+        },
+        expires: session.expires.toISOString(),
+      };
+    }
+
     // Extend session if it's close to expiring (within 7 days)
     const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     if (session.expires < sevenDaysFromNow) {
@@ -159,8 +191,11 @@ export async function getSession() {
         timezone: session.user.timezone,
         hasOnboarded: session.user.hasOnboarded,
         dashboardBackground: session.user.dashboardBackground,
+        role: session.user.role,
         createdAt: session.user.createdAt,
         updatedAt: session.user.updatedAt,
+        deletedAt: session.user.deletedAt,
+        permanentlyDeletedAt: session.user.permanentlyDeletedAt,
       },
       expires: session.expires.toISOString(),
     };
