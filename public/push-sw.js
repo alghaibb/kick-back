@@ -203,7 +203,7 @@ self.addEventListener("notificationclick", (event) => {
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
         console.log("Found clients:", clientList.length);
-        
+
         // First, try to find and focus an existing PWA window
         for (const client of clientList) {
           console.log("Checking client:", client.url);

@@ -53,13 +53,20 @@ export function usePushNotifications() {
 
   const checkSubscriptionStatus = async () => {
     try {
-      // For iOS Safari PWA, skip service worker registration check
+      // For iOS Safari PWA, check if notifications are enabled in device settings
       if (isIOS && isSafari && isStandalone) {
-        console.log("iOS Safari PWA: Skipping service worker registration check");
-        setIsSubscribed(false);
-        setHasFallback(true);
+        console.log("iOS Safari PWA: Checking device notification permission");
+        
+        // Check if notifications are enabled in device settings
+        const permission = await requestPermission();
+        const isEnabled = permission === "granted";
+        
+        setIsSubscribed(isEnabled);
+        setHasFallback(isEnabled);
         setIsLoading(false);
         hasInitialized.current = true;
+        
+        console.log("iOS Safari PWA: Notification permission:", permission, "Enabled:", isEnabled);
         return;
       }
 
@@ -220,8 +227,18 @@ export function usePushNotifications() {
 
       // Set fallback for iOS Safari PWA
       if (isIOS && isSafari && isStandalone) {
-        setHasFallback(true);
-        console.log("iOS Safari PWA: Using fallback notification mode");
+        // Check device permission as fallback
+        try {
+          const permission = await requestPermission();
+          const isEnabled = permission === "granted";
+          setIsSubscribed(isEnabled);
+          setHasFallback(isEnabled);
+          console.log("iOS Safari PWA: Fallback permission check:", permission, "Enabled:", isEnabled);
+        } catch (permError) {
+          console.error("Failed to check iOS Safari PWA permission:", permError);
+          setIsSubscribed(false);
+          setHasFallback(false);
+        }
       }
 
       // Don't let this error bubble up to cause error boundary

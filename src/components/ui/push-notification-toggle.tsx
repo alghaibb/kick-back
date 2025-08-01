@@ -34,11 +34,15 @@ export default function PushNotificationToggle() {
   const queryClient = useQueryClient();
   const [isEnabling, setIsEnabling] = useState(false);
 
-  // Determine the current state - for iOS PWA, trust the actual working subscription
-  const currentState =
-    isIOS && isPWA
-      ? isSubscribed // If subscription exists, it's working - trust that
-      : (user?.pushNotifications ?? isSubscribed);
+  // Determine the current state - for iOS PWA, check both subscription and permission
+  const currentState = (() => {
+    if (isIOS && isPWA) {
+      // For iOS PWA, check if notifications are actually enabled
+      return isSubscribed && permission === "granted";
+    }
+    // For other platforms, use database preference or subscription status
+    return user?.pushNotifications ?? isSubscribed;
+  })();
 
   // Auto-sync database when iOS PWA has working subscription but database shows disabled
   useEffect(() => {
@@ -46,6 +50,7 @@ export default function PushNotificationToggle() {
       isIOS &&
       isPWA &&
       isSubscribed &&
+      permission === "granted" &&
       !user?.pushNotifications &&
       !isLoading
     ) {
@@ -69,6 +74,7 @@ export default function PushNotificationToggle() {
     isIOS,
     isPWA,
     isSubscribed,
+    permission,
     user?.pushNotifications,
     isLoading,
     queryClient,
