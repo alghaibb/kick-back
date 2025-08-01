@@ -39,7 +39,7 @@ function MobileNav() {
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-[300px] flex flex-col p-0">
+      <SheetContent side="right" className="w-[300px] flex flex-col p-0 overflow-hidden">
         <SheetHeader className="flex flex-row items-center justify-start">
           <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
         </SheetHeader>
@@ -61,7 +61,7 @@ function MobileNav() {
         <Separator />
 
         {/* Navigation Links */}
-        <nav className="flex-1 px-6 py-4">
+        <nav className="flex-1 px-6 py-4 overflow-y-auto">
           <div className="space-y-1">
             {navLinks.map((link) => (
               <SheetClose asChild key={link.href}>
