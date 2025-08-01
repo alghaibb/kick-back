@@ -1,25 +1,9 @@
 import { signOut } from "@/lib/auth";
-import { getSession } from "@/lib/sessions";
-import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function POST() {
   try {
-    // Get current session to clean up from database
-    const session = await getSession();
-
-    // Clean up session from database if it exists
-    if (session?.sessionToken) {
-      try {
-        await prisma.session.delete({
-          where: { sessionToken: session.sessionToken },
-        });
-      } catch (error) {
-        console.error("Failed to delete session from database:", error);
-      }
-    }
-
-    // Sign out using NextAuth
+    // Sign out using NextAuth - it handles session cleanup automatically
     await signOut({ redirect: false });
 
     const response = NextResponse.json({ success: true, redirect: "/login" });

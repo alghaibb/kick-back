@@ -17,7 +17,7 @@ const authConfig: NextAuthConfig = {
   adapter,
   providers: [
     Google({
-      clientId: env.AUTH_GOOGLE_ID,
+      clientId: env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
       clientSecret: env.AUTH_GOOGLE_SECRET,
       allowDangerousEmailAccountLinking: true,
       authorization: {
@@ -27,7 +27,7 @@ const authConfig: NextAuthConfig = {
       },
     }),
     Facebook({
-      clientId: env.AUTH_FACEBOOK_ID,
+      clientId: env.NEXT_PUBLIC_FACEBOOK_APP_ID,
       clientSecret: env.AUTH_FACEBOOK_SECRET,
       allowDangerousEmailAccountLinking: true,
       authorization: {
