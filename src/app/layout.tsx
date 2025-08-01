@@ -89,12 +89,12 @@ export const metadata: Metadata = {
     description: "Organize and manage your events with friends and family.",
     images: [
       {
-        url: "/dashboard-dark.png",
+        url: "/api/og-image",
         width: 1200,
         height: 630,
         alt: "Kick Back - Organize and join events with friends and family",
         type: "image/png",
-        secureUrl: `${env.NEXT_PUBLIC_BASE_URL}/dashboard-dark.png`,
+        secureUrl: `${env.NEXT_PUBLIC_BASE_URL}/api/og-image`,
       },
     ],
   },
