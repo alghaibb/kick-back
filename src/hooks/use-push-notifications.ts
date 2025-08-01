@@ -308,8 +308,8 @@ export function usePushNotifications() {
     hasFallback,
     isIOS: isIOS && isSafari,
     permission:
-      typeof window !== "undefined" && "Notification" in window 
-        ? (initialPermission.current || Notification.permission) 
+      typeof window !== "undefined" && "Notification" in window
+        ? (initialPermission.current || Notification.permission)
         : "default",
     subscribe,
     unsubscribe,

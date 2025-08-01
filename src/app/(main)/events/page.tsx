@@ -1,10 +1,24 @@
 import { Calendar } from "lucide-react";
 import { Suspense } from "react";
+import { Metadata } from "next";
 import { CreateActionButton } from "../_components/CreateActionButton";
 import { PageHeader } from "../_components/PageHeader";
 import { EventsClient } from "./_components/EventsClient";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { PageErrorBoundary } from "@/components/ui/error-boundary";
+
+export const metadata: Metadata = {
+  title: "Events",
+  description: "Discover and join amazing events with friends. Create, manage, and track your upcoming gatherings.",
+  openGraph: {
+    title: "Events",
+    description: "Discover and join amazing events with friends. Create, manage, and track your upcoming gatherings.",
+  },
+  twitter: {
+    title: "Events",
+    description: "Discover and join amazing events with friends. Create, manage, and track your upcoming gatherings.",
+  },
+};
 
 export default function Page() {
   return (
