@@ -77,6 +77,7 @@ export const metadata: Metadata = {
     "msapplication-config": "/browserconfig.xml",
     // iOS PWA specific meta tags
     "apple-mobile-web-app-orientations": "portrait",
+    "fb:app_id": env.NEXT_PUBLIC_FACEBOOK_APP_ID,
   },
   openGraph: {
     type: "website",
