@@ -38,7 +38,7 @@ export default function PushNotificationToggle() {
   const currentState = (() => {
     // First check database preference
     const dbPreference = user?.pushNotifications ?? false;
-    
+
     if (isIOS && isPWA) {
       // For iOS PWA: if database says enabled, check device permission
       // if database says disabled, show disabled regardless of device permission
@@ -47,7 +47,7 @@ export default function PushNotificationToggle() {
       }
       return false; // Database says disabled
     }
-    
+
     // For other platforms: use database preference, fallback to subscription status
     return dbPreference || isSubscribed;
   })();
@@ -58,12 +58,14 @@ export default function PushNotificationToggle() {
 
     const dbPreference = user.pushNotifications;
     const deviceEnabled = isSubscribed && permission === "granted";
-    
+
     // Auto-sync when database and device are out of sync
     if (isIOS && isPWA) {
       if (dbPreference && !deviceEnabled) {
         // Database says enabled but device permission denied - sync to disabled
-        console.log("iOS PWA: Auto-syncing database to disabled (device permission denied)");
+        console.log(
+          "iOS PWA: Auto-syncing database to disabled (device permission denied)"
+        );
         updateDbPreference(false)
           .then(() => {
             queryClient.setQueryData(["user"], (oldData: User | undefined) => {
@@ -76,7 +78,9 @@ export default function PushNotificationToggle() {
           });
       } else if (!dbPreference && deviceEnabled) {
         // Database says disabled but device permission granted - sync to enabled
-        console.log("iOS PWA: Auto-syncing database to enabled (device permission granted)");
+        console.log(
+          "iOS PWA: Auto-syncing database to enabled (device permission granted)"
+        );
         updateDbPreference(true)
           .then(() => {
             queryClient.setQueryData(["user"], (oldData: User | undefined) => {

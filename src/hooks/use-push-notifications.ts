@@ -17,6 +17,7 @@ export function usePushNotifications() {
   const [hasFallback, setHasFallback] = useState(false);
   const { user } = useAuth();
   const hasInitialized = useRef(false);
+  const initialPermission = useRef<string | null>(null);
 
   // Initialize only once on mount
   useEffect(() => {
@@ -57,16 +58,20 @@ export function usePushNotifications() {
       if (isIOS && isSafari && isStandalone) {
         console.log("iOS Safari PWA: Checking device notification permission");
 
-        // Check if notifications are enabled in device settings
-        const permission = await requestPermission();
-        const isEnabled = permission === "granted";
+        // Cache the initial permission to prevent changes on route navigation
+        if (initialPermission.current === null) {
+          initialPermission.current = Notification.permission;
+        }
+        
+        const currentPermission = initialPermission.current;
+        const isEnabled = currentPermission === "granted";
 
         setIsSubscribed(isEnabled);
         setHasFallback(isEnabled);
         setIsLoading(false);
         hasInitialized.current = true;
 
-        console.log("iOS Safari PWA: Notification permission:", permission, "Enabled:", isEnabled);
+        console.log("iOS Safari PWA: Cached permission:", currentPermission, "Enabled:", isEnabled);
         return;
       }
 
@@ -227,13 +232,13 @@ export function usePushNotifications() {
 
       // Set fallback for iOS Safari PWA
       if (isIOS && isSafari && isStandalone) {
-        // Check device permission as fallback
+        // Use cached permission as fallback
         try {
-          const permission = await requestPermission();
-          const isEnabled = permission === "granted";
+          const currentPermission = initialPermission.current || Notification.permission;
+          const isEnabled = currentPermission === "granted";
           setIsSubscribed(isEnabled);
           setHasFallback(isEnabled);
-          console.log("iOS Safari PWA: Fallback permission check:", permission, "Enabled:", isEnabled);
+          console.log("iOS Safari PWA: Fallback permission check:", currentPermission, "Enabled:", isEnabled);
         } catch (permError) {
           console.error("Failed to check iOS Safari PWA permission:", permError);
           setIsSubscribed(false);
