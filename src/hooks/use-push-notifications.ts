@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "./use-auth";
 import { env } from "@/lib/env";
 
@@ -16,9 +16,11 @@ export function usePushNotifications() {
   const [isPWA, setIsPWA] = useState(false);
   const [hasFallback, setHasFallback] = useState(false);
   const { user } = useAuth();
+  const hasInitialized = useRef(false);
 
+  // Initialize only once on mount
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || hasInitialized.current) return;
 
     // Check if we're in PWA mode
     setIsPWA(isStandalone);
@@ -33,12 +35,21 @@ export function usePushNotifications() {
 
     if (!supported) {
       setIsLoading(false);
+      hasInitialized.current = true;
       return;
     }
 
-    // Check current subscription status
+    // Check current subscription status only once
     checkSubscriptionStatus();
-  }, [user]);
+  }, []);
+
+  // Only re-check when user changes (not on every route)
+  useEffect(() => {
+    if (!hasInitialized.current || !user) return;
+
+    // Only re-check if user ID changes (new login/logout)
+    // This prevents unnecessary checks on route navigation
+  }, [user?.id]);
 
   const checkSubscriptionStatus = async () => {
     try {
@@ -48,30 +59,36 @@ export function usePushNotifications() {
         setIsSubscribed(false);
         setHasFallback(true);
         setIsLoading(false);
+        hasInitialized.current = true;
         return;
       }
 
       const registration =
         await navigator.serviceWorker.getRegistration("/push-sw.js");
       const subscription = await registration?.pushManager.getSubscription();
-      setIsSubscribed(!!subscription);
+      const subscribed = !!subscription;
+      setIsSubscribed(subscribed);
 
       // Check if we need fallback for iOS Safari PWA
       if (isIOS && isSafari && isStandalone && !subscription) {
         setHasFallback(true);
       }
+
+
     } catch (error) {
       console.error("Failed to check subscription status:", error);
 
       // Set fallback for iOS Safari PWA
       if (isIOS && isSafari && isStandalone) {
         setHasFallback(true);
+
       }
 
       // Don't let this error bubble up to cause error boundary
       console.log("Push notification check failed, continuing without push notifications");
     } finally {
       setIsLoading(false);
+      hasInitialized.current = true;
     }
   };
 

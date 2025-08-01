@@ -164,6 +164,7 @@ export default function PushNotificationToggle() {
   const handleSync = async () => {
     try {
       setIsEnabling(true);
+
       // Force refresh the subscription status
       const registration =
         await navigator.serviceWorker.getRegistration("/push-sw.js");
