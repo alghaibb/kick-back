@@ -466,3 +466,4 @@ If you run into issues:
 ---
 
 Built with ❤️ using Next.js, TypeScript, and modern web technologies.
+# Force Vercel rebuild
