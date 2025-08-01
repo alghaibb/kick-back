@@ -56,16 +56,16 @@ export function usePushNotifications() {
       // For iOS Safari PWA, check if notifications are enabled in device settings
       if (isIOS && isSafari && isStandalone) {
         console.log("iOS Safari PWA: Checking device notification permission");
-        
+
         // Check if notifications are enabled in device settings
         const permission = await requestPermission();
         const isEnabled = permission === "granted";
-        
+
         setIsSubscribed(isEnabled);
         setHasFallback(isEnabled);
         setIsLoading(false);
         hasInitialized.current = true;
-        
+
         console.log("iOS Safari PWA: Notification permission:", permission, "Enabled:", isEnabled);
         return;
       }
