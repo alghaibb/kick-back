@@ -77,7 +77,6 @@ export const metadata: Metadata = {
     "msapplication-config": "/browserconfig.xml",
     // iOS PWA specific meta tags
     "apple-mobile-web-app-orientations": "portrait",
-
   },
   openGraph: {
     type: "website",
@@ -94,6 +93,8 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         alt: "Kick Back - Organize and join events with friends and family",
+        type: "image/png",
+        secureUrl: `${env.NEXT_PUBLIC_BASE_URL}/dashboard-dark.png`,
       },
     ],
   },
