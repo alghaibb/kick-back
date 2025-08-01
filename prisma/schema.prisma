@@ -43,6 +43,7 @@ model User {
   resetPasswordTokens ResetPasswordToken[]
   sessions            Session[]
   verificationOTPs    VerificationOTP[]
+  contacts            Contact[]
 
   @@map("users")
 }
@@ -336,4 +337,20 @@ enum NotificationType {
   RSVP_UPDATE
   COMMENT_REPLY
   COMMENT_REACTION
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String?
+  email     String
+  subject   String
+  message   String
+  userId    String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("contacts")
 }

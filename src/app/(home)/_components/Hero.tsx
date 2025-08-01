@@ -88,7 +88,7 @@ export default function Hero() {
                   variant="outline"
                   className="text-base w-full sm:w-auto"
                 >
-                  <Link href="#features">Learn More</Link>
+                  <Link href="/learn-more">Learn More</Link>
                 </Button>
               </motion.div>
             </div>

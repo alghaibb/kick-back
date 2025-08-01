@@ -271,3 +271,4 @@ export function FullCalendar({
   // Return without Card wrapper when no custom background
   return calendarContent;
 }
+ 
