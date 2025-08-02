@@ -36,7 +36,7 @@ export async function updateUser(
     validateAdminAction('update_user', { userId, updates });
 
     // Check admin permissions with audit logging
-    await requireAdminWithAudit('update_user', `user:${userId}`);
+    await requireAdminWithAudit('update_user', `user:${userId}`, true);
 
     // Check if admin can manage this user
     const { canManage, error } = await canManageUser(userId);
@@ -120,7 +120,7 @@ export async function updateUser(
 export async function deleteContact(contactId: string) {
   try {
     validateAdminAction('delete_contact', { contactId });
-    await requireAdminWithAudit('delete_contact', `contact:${contactId}`);
+    await requireAdminWithAudit('delete_contact', `contact:${contactId}`, true);
 
     if (!contactId || typeof contactId !== 'string') {
       throw new AdminActionError("Valid contact ID is required", "INVALID_INPUT", 400);
@@ -161,7 +161,7 @@ export async function deleteContact(contactId: string) {
 export async function deleteUser(userId: string) {
   try {
     validateAdminAction('delete_user', { userId });
-    await requireAdminWithAudit('delete_user', `user:${userId}`);
+    await requireAdminWithAudit('delete_user', `user:${userId}`, true);
 
     const { canManage, error } = await canManageUser(userId);
     if (!canManage) {
@@ -173,8 +173,10 @@ export async function deleteUser(userId: string) {
     }
 
     // Use transaction for data consistency
+    console.info(`Starting user deletion transaction for userId: ${userId}`);
     const result = await prisma.$transaction(async (tx) => {
       // Get user info before deletion
+      console.info(`Finding user with ID: ${userId}`);
       const user = await tx.user.findUnique({
         where: { id: userId },
         include: {
@@ -187,17 +189,23 @@ export async function deleteUser(userId: string) {
       });
 
       if (!user) {
+        console.error(`User not found with ID: ${userId}`);
         throw new AdminActionError("User not found", "NOT_FOUND", 404);
       }
 
+      console.info(`Found user: ${user.firstName} ${user.lastName} (${user.email})`);
+
       if (user.deletedAt) {
+        console.error(`User ${userId} is already deleted at: ${user.deletedAt}`);
         throw new AdminActionError("User is already deleted", "INVALID_STATE", 400);
       }
 
       // Handle group ownership transfers
+      console.info(`Processing group memberships for user ${userId}`);
       const groupsToTransfer = user.groupMembers.filter(
         (member) => member.role === "owner"
       );
+      console.info(`Found ${groupsToTransfer.length} groups owned by user ${userId}`);
 
       for (const member of groupsToTransfer) {
         const groupId = member.groupId;
@@ -238,6 +246,7 @@ export async function deleteUser(userId: string) {
       }
 
       // Soft delete the user with proper data handling
+      console.info(`Performing soft delete for user ${userId}`);
       const deletedUser = await tx.user.update({
         where: { id: userId },
         data: {
@@ -250,6 +259,7 @@ export async function deleteUser(userId: string) {
           updatedAt: new Date(),
         },
       });
+      console.info(`Successfully soft deleted user ${userId}`);
 
       return {
         deletedUser,
@@ -272,11 +282,26 @@ export async function deleteUser(userId: string) {
         totalContacts: result.totalContacts,
       }
     };
-  } catch (error) {
-    console.error("Error deleting user:", error);
+  } catch (error: unknown) {
+    console.error("=== ERROR in deleteUser ===");
+    console.error("Error type:", (error as Error)?.constructor?.name);
+    console.error("Error message:", (error as Error)?.message);
+    console.error("Error stack:", (error as Error)?.stack);
+    console.error("Full error object:", error);
 
     if (error instanceof AdminActionError) {
+      console.error("Re-throwing AdminActionError:", error.message, error.code);
       throw error;
+    }
+
+    // Check for specific Prisma errors
+    const prismaError = error as { code?: string; message?: string };
+    if (prismaError?.code === 'P2025') {
+      throw new AdminActionError("User not found or already deleted", "NOT_FOUND", 404);
+    }
+    if (prismaError?.code?.startsWith('P2')) {
+      console.error("Prisma error code:", prismaError.code);
+      throw new AdminActionError(`Database error: ${(error as Error).message}`, "DATABASE_ERROR", 500);
     }
 
     throw new AdminActionError("Failed to delete user", "INTERNAL_ERROR", 500);
@@ -287,7 +312,7 @@ export async function deleteUser(userId: string) {
 export async function recoverUser(userId: string) {
   try {
     validateAdminAction('recover_user', { userId });
-    await requireAdminWithAudit('recover_user', `user:${userId}`);
+    await requireAdminWithAudit('recover_user', `user:${userId}`, true);
 
     if (!userId || typeof userId !== 'string') {
       throw new AdminActionError("Valid user ID is required", "INVALID_INPUT", 400);
@@ -421,7 +446,7 @@ export async function recoverUser(userId: string) {
 // Utility function to get admin action logs (could be enhanced with proper logging table)
 export async function getAdminActionSummary() {
   try {
-    await requireAdminWithAudit('view_stats', 'admin_actions');
+    await requireAdminWithAudit('view_stats', 'admin_actions', true);
 
     // This could be enhanced with a proper audit log table
     // For now, return basic statistics
