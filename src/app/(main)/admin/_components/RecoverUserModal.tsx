@@ -28,7 +28,13 @@ export function RecoverUserModal() {
     <GenericModal
       type="recover-user"
       title="Recover User"
-      description={`Are you sure you want to recover ${data.userName}? This will restore their account and all associated data.`}
+      description={
+        <>
+          Are you sure you want to recover{" "}
+          <span className="font-bold">{data.userName}</span>? This will restore
+          their account and all associated data.
+        </>
+      }
       showCancel={false}
       onCancel={close}
     >

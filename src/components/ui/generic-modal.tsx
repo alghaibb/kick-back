@@ -15,7 +15,7 @@ import type { ModalType } from "@/hooks/use-modal";
 interface GenericModalProps {
   type: ModalType;
   title: string;
-  description?: string;
+  description?: string | React.ReactNode;
   children: React.ReactNode;
   showCancel?: boolean;
   cancelText?: string;
@@ -48,7 +48,9 @@ export function GenericModal({
         <ResponsiveModalHeader>
           <ResponsiveModalTitle>{title}</ResponsiveModalTitle>
           {description && (
-            <ResponsiveModalDescription>{description}</ResponsiveModalDescription>
+            <ResponsiveModalDescription>
+              {description}
+            </ResponsiveModalDescription>
           )}
         </ResponsiveModalHeader>
         {children}

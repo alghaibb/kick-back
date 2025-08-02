@@ -246,7 +246,9 @@ function AdminDeletedUsersData({
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">{getCleanEmail(user.email)}</div>
+                            <div className="font-medium">
+                              {getCleanEmail(user.email)}
+                            </div>
                             <div className="text-sm text-muted-foreground">
                               Deleted on{" "}
                               {formatDate(user.deletedAt, { format: "short" })}
@@ -302,7 +304,12 @@ function AdminDeletedUsersData({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleRecoverUser(user.id, getCleanEmail(user.email))}
+                          onClick={() =>
+                            handleRecoverUser(
+                              user.id,
+                              getCleanEmail(user.email)
+                            )
+                          }
                         >
                           <RotateCcw className="mr-2 h-3 w-3" />
                           Recover
