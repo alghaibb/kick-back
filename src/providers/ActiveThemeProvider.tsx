@@ -51,7 +51,7 @@ export function ActiveThemeProvider({
     localStorage.setItem("shadcn-theme", theme);
     setThemeCookie(theme);
     setActiveThemeState(theme);
-  }, []);
+  }, [initialTheme]);
 
   const setActiveTheme = (theme: string) => {
     document.documentElement.classList.remove(

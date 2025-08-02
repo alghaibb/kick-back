@@ -92,6 +92,7 @@ async function fetchUsers(params: UsersParams): Promise<UsersResponse> {
     return response.json();
   } catch (error) {
     clearTimeout(timeoutId);
+    console.error("Error fetching admin users:", error);
 
     if (error instanceof Error) {
       if (error.name === "AbortError") {

@@ -50,8 +50,8 @@ export const ContactReplyEmail = ({
           <Section>
             <Text style={text}>Hello {userFirstName},</Text>
             <Text style={text}>
-              Thank you for reaching out to us. We've received your message and
-              would like to respond.
+              Thank you for reaching out to us. We&apos;ve received your message
+              and would like to respond.
             </Text>
 
             <Text style={text}>
@@ -91,7 +91,7 @@ export const ContactReplyEmail = ({
             </div>
 
             <Text style={text}>
-              If you have any further questions, please don't hesitate to
+              If you have any further questions, please don&apos;t hesitate to
               contact us again.
             </Text>
 

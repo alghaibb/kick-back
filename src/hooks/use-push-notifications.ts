@@ -5,9 +5,16 @@ import { useAuth } from "./use-auth";
 import { env } from "@/lib/env";
 
 // iOS Safari detection
-const isIOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
-const isSafari = typeof window !== "undefined" && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-const isStandalone = typeof window !== "undefined" && (window.navigator as Navigator & { standalone?: boolean })?.standalone === true;
+const isIOS =
+  typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isSafari =
+  typeof window !== "undefined" &&
+  /Safari/.test(navigator.userAgent) &&
+  !/Chrome/.test(navigator.userAgent);
+const isStandalone =
+  typeof window !== "undefined" &&
+  (window.navigator as Navigator & { standalone?: boolean })?.standalone ===
+    true;
 
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
@@ -50,7 +57,7 @@ export function usePushNotifications() {
 
     // Only re-check if user ID changes (new login/logout)
     // This prevents unnecessary checks on route navigation
-  }, [user?.id]);
+  }, [user?.id, user]);
 
   const checkSubscriptionStatus = async () => {
     try {
@@ -71,7 +78,12 @@ export function usePushNotifications() {
         setIsLoading(false);
         hasInitialized.current = true;
 
-        console.log("iOS Safari PWA: Cached permission:", currentPermission, "Enabled:", isEnabled);
+        console.log(
+          "iOS Safari PWA: Cached permission:",
+          currentPermission,
+          "Enabled:",
+          isEnabled
+        );
         return;
       }
 
@@ -85,19 +97,18 @@ export function usePushNotifications() {
       if (isIOS && isSafari && isStandalone && !subscription) {
         setHasFallback(true);
       }
-
-
     } catch (error) {
       console.error("Failed to check subscription status:", error);
 
       // Set fallback for iOS Safari PWA
       if (isIOS && isSafari && isStandalone) {
         setHasFallback(true);
-
       }
 
       // Don't let this error bubble up to cause error boundary
-      console.log("Push notification check failed, continuing without push notifications");
+      console.log(
+        "Push notification check failed, continuing without push notifications"
+      );
     } finally {
       setIsLoading(false);
       hasInitialized.current = true;
@@ -135,14 +146,16 @@ export function usePushNotifications() {
     try {
       // iOS Safari PWA specific handling
       if (isIOS && isSafari && isStandalone) {
-        console.log("iOS Safari PWA detected - using enhanced service worker registration");
+        console.log(
+          "iOS Safari PWA detected - using enhanced service worker registration"
+        );
 
         // For iOS Safari PWA, we need to register service worker differently
         const registration = await navigator.serviceWorker.register(
           "/push-sw.js?v=" + Date.now(),
           {
             scope: "/",
-            updateViaCache: "none" // Ensure fresh service worker in PWA mode
+            updateViaCache: "none", // Ensure fresh service worker in PWA mode
           }
         );
 
@@ -188,7 +201,7 @@ export function usePushNotifications() {
         "/push-sw.js?v=" + Date.now(),
         {
           scope: "/",
-          updateViaCache: "none"
+          updateViaCache: "none",
         }
       );
 
@@ -234,20 +247,31 @@ export function usePushNotifications() {
       if (isIOS && isSafari && isStandalone) {
         // Use cached permission as fallback
         try {
-          const currentPermission = initialPermission.current || Notification.permission;
+          const currentPermission =
+            initialPermission.current || Notification.permission;
           const isEnabled = currentPermission === "granted";
           setIsSubscribed(isEnabled);
           setHasFallback(isEnabled);
-          console.log("iOS Safari PWA: Fallback permission check:", currentPermission, "Enabled:", isEnabled);
+          console.log(
+            "iOS Safari PWA: Fallback permission check:",
+            currentPermission,
+            "Enabled:",
+            isEnabled
+          );
         } catch (permError) {
-          console.error("Failed to check iOS Safari PWA permission:", permError);
+          console.error(
+            "Failed to check iOS Safari PWA permission:",
+            permError
+          );
           setIsSubscribed(false);
           setHasFallback(false);
         }
       }
 
       // Don't let this error bubble up to cause error boundary
-      console.log("Push subscription failed, continuing without push notifications");
+      console.log(
+        "Push subscription failed, continuing without push notifications"
+      );
       throw error;
     }
   };
@@ -309,7 +333,7 @@ export function usePushNotifications() {
     isIOS: isIOS && isSafari,
     permission:
       typeof window !== "undefined" && "Notification" in window
-        ? (initialPermission.current || Notification.permission)
+        ? initialPermission.current || Notification.permission
         : "default",
     subscribe,
     unsubscribe,

@@ -101,6 +101,7 @@ export default function PushNotificationToggle() {
     user?.pushNotifications,
     isLoading,
     queryClient,
+    user,
   ]);
 
   // Defensive check for user data

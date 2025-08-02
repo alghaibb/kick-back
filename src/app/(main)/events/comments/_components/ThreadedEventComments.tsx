@@ -342,10 +342,9 @@ export default function ThreadedEventComments({
   // Memoized comment component to prevent unnecessary re-renders
   const CommentItem = memo(
     ({ comment, depth = 0 }: { comment: EventCommentData; depth: number }) => {
-      const reactions = comment.reactions || [];
-
       // Memoize reaction counts to prevent recalculation on every render
       const reactionCounts = useMemo(() => {
+        const reactions = comment.reactions || [];
         const currentUserId = user?.id;
         return reactions.reduce(
           (acc, reaction) => {
@@ -360,7 +359,7 @@ export default function ThreadedEventComments({
           },
           {} as Record<string, { count: number; hasUserReacted: boolean }>
         );
-      }, [reactions]);
+      }, [comment.reactions, user?.id]);
 
       const canDelete = user?.id === comment.userId;
       const replyCount = comment._count?.replies || 0;

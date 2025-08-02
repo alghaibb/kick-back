@@ -6,7 +6,7 @@ export default function PhotoSharing() {
     <Card>
       <CardContent className="p-8">
         <div className="flex items-center gap-3 mb-6">
-          <Image className="h-5 w-5 text-primary" />
+          <Image className="h-5 w-5 text-primary" aria-hidden="true" />
           <h2 className="text-2xl font-semibold">Photo Sharing</h2>
         </div>
 
@@ -58,4 +58,3 @@ export default function PhotoSharing() {
     </Card>
   );
 }
- 

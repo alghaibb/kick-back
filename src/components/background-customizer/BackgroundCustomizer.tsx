@@ -305,7 +305,7 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
                     htmlFor="background-upload"
                     className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 border border-dashed border-muted-foreground/25 rounded-lg hover:border-muted-foreground/50 transition-colors"
                   >
-                    <Image className="w-4 h-4" />
+                    <Image className="w-4 h-4" aria-hidden="true" />
                     Choose Image
                   </Label>
                   {selectedFile && (
