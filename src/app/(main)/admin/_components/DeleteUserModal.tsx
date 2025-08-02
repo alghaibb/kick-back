@@ -18,7 +18,7 @@ export function DeleteUserModal() {
     if (!data.userId) return;
 
     try {
-      await deleteUserMutation.mutateAsync({ userId: data.userId });
+      await deleteUserMutation.mutateAsync(data.userId);
       close();
     } catch (error) {
       console.error("Error deleting user:", error);
