@@ -104,7 +104,7 @@ export function CalendarPageClientWithComments() {
     <div className="flex flex-col gap-8">
       {/* Calendar Section - Full width */}
       <div className="w-full">
-        <Suspense fallback={<UnifiedSkeleton className="h-[400px] w-full"   />}>
+        <Suspense fallback={<UnifiedSkeleton className="h-[400px] w-full" />}>
           <FullCalendar
             selected={selectedDate}
             onSelect={setSelectedDate}
