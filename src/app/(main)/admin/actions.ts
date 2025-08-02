@@ -602,13 +602,14 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       throw error;
     }
 
-    // Check for specific error types
-    if ((error as any)?.code === 'P2025') {
+    // Check for specific error types (Prisma errors)
+    const prismaError = error as { code?: string; message?: string };
+    if (prismaError?.code === 'P2025') {
       throw new AdminActionError("User not found or already deleted", "NOT_FOUND", 404);
     }
 
-    if ((error as any)?.code?.startsWith('P2')) {
-      console.error("Prisma error code:", (error as any).code);
+    if (prismaError?.code?.startsWith('P2')) {
+      console.error("Prisma error code:", prismaError.code);
       throw new AdminActionError(`Database error: ${(error as Error).message}`, "DATABASE_ERROR", 500);
     }
 
