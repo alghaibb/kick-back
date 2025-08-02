@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo, memo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -339,280 +339,292 @@ export default function ThreadedEventComments({
     [openModal]
   );
 
-  // Render individual comment with infinite threading depth
-  const renderComment = (comment: EventCommentData, depth: number = 0) => {
-    const reactions = comment.reactions || [];
-    const reactionCounts = reactions.reduce(
-      (acc, reaction) => {
-        if (!acc[reaction.emoji]) {
-          acc[reaction.emoji] = { count: 0, hasUserReacted: false };
-        }
-        acc[reaction.emoji].count++;
-        if (reaction.userId === user?.id) {
-          acc[reaction.emoji].hasUserReacted = true;
-        }
-        return acc;
-      },
-      {} as Record<string, { count: number; hasUserReacted: boolean }>
-    );
+  // Memoized comment component to prevent unnecessary re-renders
+  const CommentItem = memo(
+    ({ comment, depth = 0 }: { comment: EventCommentData; depth: number }) => {
+      const reactions = comment.reactions || [];
 
-    const canDelete = user?.id === comment.userId;
-    const replyCount = comment._count?.replies || 0;
-    const isExpanded = expandedReplies.has(comment.id);
+      // Memoize reaction counts to prevent recalculation on every render
+      const reactionCounts = useMemo(() => {
+        const currentUserId = user?.id;
+        return reactions.reduce(
+          (acc, reaction) => {
+            if (!acc[reaction.emoji]) {
+              acc[reaction.emoji] = { count: 0, hasUserReacted: false };
+            }
+            acc[reaction.emoji].count++;
+            if (reaction.userId === currentUserId) {
+              acc[reaction.emoji].hasUserReacted = true;
+            }
+            return acc;
+          },
+          {} as Record<string, { count: number; hasUserReacted: boolean }>
+        );
+      }, [reactions]);
 
-    // Calculate responsive indentation based on mobile/desktop
-    const marginLeft = isMobile
-      ? (() => {
-          // Mobile: MUCH more compact - you should see this difference immediately
-          if (depth === 0) return 0;
-          if (depth === 1) return 16; // Much smaller first level (was ~32px)
-          if (depth === 2) return 24; // Very small second level (was ~64px)
-          // Deep levels get minimal additional space
-          return 24 + (depth - 2) * 8;
-        })()
-      : (() => {
-          // Desktop: Original logic with reasonable max
-          const baseIndentation = 32;
-          const minIndentation = 16;
-          const maxDesktopIndent = 300; // Reasonable max for desktop
+      const canDelete = user?.id === comment.userId;
+      const replyCount = comment._count?.replies || 0;
+      const isExpanded = expandedReplies.has(comment.id);
 
-          let indentation: number;
-          if (depth <= 3) {
-            indentation = depth * baseIndentation;
-          } else if (depth <= 6) {
-            indentation = 3 * baseIndentation + (depth - 3) * 20;
-          } else {
-            indentation =
-              3 * baseIndentation + 3 * 20 + (depth - 6) * minIndentation;
-          }
+      // Calculate responsive indentation based on mobile/desktop
+      const marginLeft = isMobile
+        ? (() => {
+            // Mobile: MUCH more compact - you should see this difference immediately
+            if (depth === 0) return 0;
+            if (depth === 1) return 16; // Much smaller first level (was ~32px)
+            if (depth === 2) return 24; // Very small second level (was ~64px)
+            // Deep levels get minimal additional space
+            return 24 + (depth - 2) * 8;
+          })()
+        : (() => {
+            // Desktop: Original logic with reasonable max
+            const baseIndentation = 32;
+            const minIndentation = 16;
+            const maxDesktopIndent = 300; // Reasonable max for desktop
 
-          return Math.min(indentation, maxDesktopIndent);
-        })();
+            let indentation: number;
+            if (depth <= 3) {
+              indentation = depth * baseIndentation;
+            } else if (depth <= 6) {
+              indentation = 3 * baseIndentation + (depth - 3) * 20;
+            } else {
+              indentation =
+                3 * baseIndentation + 3 * 20 + (depth - 6) * minIndentation;
+            }
 
-    // Responsive avatar size
-    const avatarSize = isMobile
-      ? Math.max(14, 20 - depth * 1.5) // Mobile: much smaller avatars
-      : Math.max(20, 32 - depth * 2); // Desktop: original logic
+            return Math.min(indentation, maxDesktopIndent);
+          })();
 
-    // Responsive font sizes
-    const { fontSize, timeSize } = isMobile
-      ? (() => {
-          // Mobile: more aggressive font scaling
-          if (depth > 3) return { fontSize: "text-xs", timeSize: "text-xs" };
-          if (depth > 1) return { fontSize: "text-xs", timeSize: "text-xs" };
-          return { fontSize: "text-sm", timeSize: "text-xs" };
-        })()
-      : (() => {
-          // Desktop: original logic
-          const fontSize =
-            depth > 2 ? "text-xs" : depth > 0 ? "text-sm" : "text-sm";
-          const timeSize = depth > 3 ? "text-xs" : "text-xs";
-          return { fontSize, timeSize };
-        })();
+      // Responsive avatar size
+      const avatarSize = isMobile
+        ? Math.max(14, 20 - depth * 1.5) // Mobile: much smaller avatars
+        : Math.max(20, 32 - depth * 2); // Desktop: original logic
 
-    // Responsive connection line calculations
-    const { connectionLeft, connectionHeight } = isMobile
-      ? (() => {
-          // Mobile: simplified connection lines that match new indentation
-          if (depth === 1) return { connectionLeft: -12, connectionHeight: 16 };
-          if (depth === 2) return { connectionLeft: -16, connectionHeight: 16 };
-          return { connectionLeft: -20, connectionHeight: 14 };
-        })()
-      : (() => {
-          // Desktop: original complex logic
-          const baseIndentation = 32;
-          const minIndentation = 16;
-          const connectionLeft = -(
-            16 +
-            Math.min(depth - 1, 3) * baseIndentation +
-            Math.max(0, depth - 4) * 20 +
-            Math.max(0, depth - 6) * minIndentation
-          );
-          const connectionHeight =
-            depth === 1 ? 20 : Math.max(24, 32 - depth * 2);
-          return { connectionLeft, connectionHeight };
-        })();
+      // Responsive font sizes
+      const { fontSize, timeSize } = isMobile
+        ? (() => {
+            // Mobile: more aggressive font scaling
+            if (depth > 3) return { fontSize: "text-xs", timeSize: "text-xs" };
+            if (depth > 1) return { fontSize: "text-xs", timeSize: "text-xs" };
+            return { fontSize: "text-sm", timeSize: "text-xs" };
+          })()
+        : (() => {
+            // Desktop: original logic
+            const fontSize =
+              depth > 2 ? "text-xs" : depth > 0 ? "text-sm" : "text-sm";
+            const timeSize = depth > 3 ? "text-xs" : "text-xs";
+            return { fontSize, timeSize };
+          })();
 
-    return (
-      <div
-        key={comment.id}
-        className="group relative"
-        style={{ marginLeft: `${marginLeft}px` }}
-      >
-        {/* Connection lines for infinite threading */}
-        {depth > 0 && (
-          <>
-            {/* Vertical line connecting to parent */}
-            <div
-              className="absolute bg-border opacity-60"
-              style={{
-                left: `${connectionLeft}px`,
-                top: "0px",
-                width: "1px", // Thinner lines for deep threads
-                height: `${connectionHeight}px`,
-              }}
-            />
-            {/* Horizontal line to comment */}
-            <div
-              className="absolute bg-border opacity-60"
-              style={{
-                left: `-${isMobile ? (depth === 1 ? 12 : depth === 2 ? 16 : 20) : Math.min(16, 12 + depth)}px`,
-                top: `${Math.floor(connectionHeight / 2)}px`,
-                width: `${isMobile ? (depth === 1 ? 12 : depth === 2 ? 16 : 20) : Math.min(16, 12 + depth)}px`,
-                height: "1px",
-              }}
-            />
-          </>
-        )}
+      // Responsive connection line calculations
+      const { connectionLeft, connectionHeight } = isMobile
+        ? (() => {
+            // Mobile: simplified connection lines that match new indentation
+            if (depth === 1)
+              return { connectionLeft: -12, connectionHeight: 16 };
+            if (depth === 2)
+              return { connectionLeft: -16, connectionHeight: 16 };
+            return { connectionLeft: -20, connectionHeight: 14 };
+          })()
+        : (() => {
+            // Desktop: original complex logic
+            const baseIndentation = 32;
+            const minIndentation = 16;
+            const connectionLeft = -(
+              16 +
+              Math.min(depth - 1, 3) * baseIndentation +
+              Math.max(0, depth - 4) * 20 +
+              Math.max(0, depth - 6) * minIndentation
+            );
+            const connectionHeight =
+              depth === 1 ? 20 : Math.max(24, 32 - depth * 2);
+            return { connectionLeft, connectionHeight };
+          })();
 
+      return (
         <div
-          className="flex py-1.5"
-          style={{
-            gap: `${isMobile ? Math.max(4, 8 - depth) : Math.max(8, 12 - depth)}px`,
-          }}
+          key={comment.id}
+          className="group relative"
+          style={{ marginLeft: `${marginLeft}px` }}
         >
-          {/* Avatar with infinite scaling */}
-          <Avatar
-            className="flex-shrink-0"
-            style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}
-          >
-            <AvatarImage src={comment.user.image || undefined} />
-            <AvatarFallback
-              className={cn(fontSize, "font-medium")}
-              style={{ fontSize: `${Math.max(10, 14 - depth)}px` }}
-            >
-              {comment.user.firstName?.[0]?.toUpperCase() || "?"}
-            </AvatarFallback>
-          </Avatar>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            {/* Header */}
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className={cn("font-medium text-foreground", fontSize)}>
-                {comment.user.nickname || comment.user.firstName}
-              </span>
-              <span className={cn("text-muted-foreground", timeSize)}>
-                {formatDistanceToNow(new Date(comment.createdAt), {
-                  addSuffix: true,
-                })}
-                {comment.editedAt && (
-                  <span className="ml-1 text-xs text-muted-foreground/70">
-                    (edited)
-                  </span>
-                )}
-              </span>
-
-              {/* Removed confusing depth indicator */}
-
-              {(canDelete || isMobile) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "transition-opacity",
-                        isMobile
-                          ? "opacity-100 h-6 w-6"
-                          : "opacity-0 group-hover:opacity-100 h-5 w-5"
-                      )}
-                    >
-                      <MoreVertical className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-32">
-                    {isMobile && (
-                      <DropdownMenuItem
-                        onClick={() => handleStartReply(comment)}
-                      >
-                        <Reply className="h-3 w-3 mr-2" />
-                        Reply
-                      </DropdownMenuItem>
-                    )}
-                    {canDelete && (
-                      <DropdownMenuItem
-                        onClick={() => handleEditComment(comment)}
-                      >
-                        <Edit className="h-3 w-3 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                    )}
-                    {canDelete && (
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteComment(comment.id)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-3 w-3 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-
-            {/* Comment content */}
-            <div className={cn("text-foreground leading-relaxed", fontSize)}>
-              {comment.content}
-            </div>
-
-            {/* Image attachment - smaller for deep threads */}
-            {comment.imageUrl && (
-              <div className="mt-2 rounded-lg overflow-hidden border">
-                <Image
-                  src={comment.imageUrl}
-                  alt="Comment attachment"
-                  width={Math.max(150, 400 - depth * 30)}
-                  height={Math.max(100, 300 - depth * 25)}
-                  className={cn(
-                    "w-full h-auto object-cover",
-                    depth > 3
-                      ? "max-w-32 max-h-24"
-                      : depth > 1
-                        ? "max-w-48 max-h-32"
-                        : "max-w-sm max-h-60"
-                  )}
-                />
-              </div>
-            )}
-
-            {/* Reactions - mobile responsive */}
-            {Object.keys(reactionCounts).length > 0 && (
-              <div className="flex flex-wrap gap-0.5 mt-1.5">
-                {Object.entries(reactionCounts).map(([emoji, data]) => (
-                  <Button
-                    key={emoji}
-                    variant={data.hasUserReacted ? "default" : "outline"}
-                    size="sm"
-                    className={cn(
-                      "px-1.5",
-                      isMobile
-                        ? "h-6 text-xs"
-                        : depth > 3
-                          ? "h-4 text-xs"
-                          : "h-5 text-xs"
-                    )}
-                    onClick={() => handleReaction(comment.id, emoji)}
-                  >
-                    <span className="mr-0.5">{emoji}</span>
-                    {data.count}
-                  </Button>
-                ))}
-              </div>
-            )}
-
-            {/* Action buttons - mobile responsive */}
-            <div className="flex items-center gap-0.5 mt-1.5 flex-wrap">
-              {/* Quick reactions - always visible on mobile, hover on desktop */}
+          {/* Connection lines for infinite threading */}
+          {depth > 0 && (
+            <>
+              {/* Vertical line connecting to parent */}
               <div
-                className={cn(
-                  "flex gap-0.5 transition-opacity",
-                  isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                )}
+                className="absolute bg-border opacity-60"
+                style={{
+                  left: `${connectionLeft}px`,
+                  top: "0px",
+                  width: "1px", // Thinner lines for deep threads
+                  height: `${connectionHeight}px`,
+                }}
+              />
+              {/* Horizontal line to comment */}
+              <div
+                className="absolute bg-border opacity-60"
+                style={{
+                  left: `-${isMobile ? (depth === 1 ? 12 : depth === 2 ? 16 : 20) : Math.min(16, 12 + depth)}px`,
+                  top: `${Math.floor(connectionHeight / 2)}px`,
+                  width: `${isMobile ? (depth === 1 ? 12 : depth === 2 ? 16 : 20) : Math.min(16, 12 + depth)}px`,
+                  height: "1px",
+                }}
+              />
+            </>
+          )}
+
+          <div
+            className="flex py-1.5"
+            style={{
+              gap: `${isMobile ? Math.max(4, 8 - depth) : Math.max(8, 12 - depth)}px`,
+            }}
+          >
+            {/* Avatar with infinite scaling */}
+            <Avatar
+              className="flex-shrink-0"
+              style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}
+            >
+              <AvatarImage src={comment.user.image || undefined} />
+              <AvatarFallback
+                className={cn(fontSize, "font-medium")}
+                style={{ fontSize: `${Math.max(10, 14 - depth)}px` }}
               >
-                {QUICK_REACTIONS.slice(0, isMobile ? 3 : depth > 3 ? 3 : 5).map(
-                  (emoji) => (
+                {comment.user.firstName?.[0]?.toUpperCase() || "?"}
+              </AvatarFallback>
+            </Avatar>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              {/* Header */}
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className={cn("font-medium text-foreground", fontSize)}>
+                  {comment.user.nickname || comment.user.firstName}
+                </span>
+                <span className={cn("text-muted-foreground", timeSize)}>
+                  {formatDistanceToNow(new Date(comment.createdAt), {
+                    addSuffix: true,
+                  })}
+                  {comment.editedAt && (
+                    <span className="ml-1 text-xs text-muted-foreground/70">
+                      (edited)
+                    </span>
+                  )}
+                </span>
+
+                {/* Removed confusing depth indicator */}
+
+                {(canDelete || isMobile) && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "transition-opacity",
+                          isMobile
+                            ? "opacity-100 h-6 w-6"
+                            : "opacity-0 group-hover:opacity-100 h-5 w-5"
+                        )}
+                      >
+                        <MoreVertical className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-32">
+                      {isMobile && (
+                        <DropdownMenuItem
+                          onClick={() => handleStartReply(comment)}
+                        >
+                          <Reply className="h-3 w-3 mr-2" />
+                          Reply
+                        </DropdownMenuItem>
+                      )}
+                      {canDelete && (
+                        <DropdownMenuItem
+                          onClick={() => handleEditComment(comment)}
+                        >
+                          <Edit className="h-3 w-3 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                      )}
+                      {canDelete && (
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+
+              {/* Comment content */}
+              <div className={cn("text-foreground leading-relaxed", fontSize)}>
+                {comment.content}
+              </div>
+
+              {/* Image attachment - smaller for deep threads */}
+              {comment.imageUrl && (
+                <div className="mt-2 rounded-lg overflow-hidden border">
+                  <Image
+                    src={comment.imageUrl}
+                    alt="Comment attachment"
+                    width={Math.max(150, 400 - depth * 30)}
+                    height={Math.max(100, 300 - depth * 25)}
+                    className={cn(
+                      "w-full h-auto object-cover",
+                      depth > 3
+                        ? "max-w-32 max-h-24"
+                        : depth > 1
+                          ? "max-w-48 max-h-32"
+                          : "max-w-sm max-h-60"
+                    )}
+                  />
+                </div>
+              )}
+
+              {/* Reactions - mobile responsive */}
+              {Object.keys(reactionCounts).length > 0 && (
+                <div className="flex flex-wrap gap-0.5 mt-1.5">
+                  {Object.entries(reactionCounts).map(([emoji, data]) => (
+                    <Button
+                      key={emoji}
+                      variant={data.hasUserReacted ? "default" : "outline"}
+                      size="sm"
+                      className={cn(
+                        "px-1.5",
+                        isMobile
+                          ? "h-6 text-xs"
+                          : depth > 3
+                            ? "h-4 text-xs"
+                            : "h-5 text-xs"
+                      )}
+                      onClick={() => handleReaction(comment.id, emoji)}
+                    >
+                      <span className="mr-0.5">{emoji}</span>
+                      {data.count}
+                    </Button>
+                  ))}
+                </div>
+              )}
+
+              {/* Action buttons - mobile responsive */}
+              <div className="flex items-center gap-0.5 mt-1.5 flex-wrap">
+                {/* Quick reactions - always visible on mobile, hover on desktop */}
+                <div
+                  className={cn(
+                    "flex gap-0.5 transition-opacity",
+                    isMobile
+                      ? "opacity-100"
+                      : "opacity-0 group-hover:opacity-100"
+                  )}
+                >
+                  {QUICK_REACTIONS.slice(
+                    0,
+                    isMobile ? 3 : depth > 3 ? 3 : 5
+                  ).map((emoji) => (
                     <Button
                       key={emoji}
                       variant="ghost"
@@ -633,71 +645,81 @@ export default function ThreadedEventComments({
                         {emoji}
                       </span>
                     </Button>
-                  )
+                  ))}
+                </div>
+
+                {/* Reply button - hidden on mobile (moved to three dots menu) */}
+                {!isMobile && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "px-2 font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
+                      depth > 3 ? "h-5 text-xs" : "h-6 text-xs"
+                    )}
+                    onClick={() => handleStartReply(comment)}
+                  >
+                    <Reply className="h-3 w-3 mr-1" />
+                    Reply
+                  </Button>
+                )}
+
+                {/* Show/Hide replies button - mobile responsive */}
+                {depth === 0 && replyCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
+                      isMobile ? "h-6" : "h-7"
+                    )}
+                    onClick={() => toggleRepliesExpansion(comment.id)}
+                  >
+                    {isExpanded ? (
+                      <>
+                        <ChevronUp className="h-3 w-3 mr-1" />
+                        {isMobile ? "Hide" : "Hide replies"}
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-3 w-3 mr-1" />
+                        {isMobile
+                          ? replyCount.toString()
+                          : `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`}
+                      </>
+                    )}
+                  </Button>
                 )}
               </div>
 
-              {/* Reply button - hidden on mobile (moved to three dots menu) */}
-              {!isMobile && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "px-2 font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
-                    depth > 3 ? "h-5 text-xs" : "h-6 text-xs"
-                  )}
-                  onClick={() => handleStartReply(comment)}
-                >
-                  <Reply className="h-3 w-3 mr-1" />
-                  Reply
-                </Button>
-              )}
-
-              {/* Show/Hide replies button - mobile responsive */}
-              {depth === 0 && replyCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
-                    isMobile ? "h-6" : "h-7"
-                  )}
-                  onClick={() => toggleRepliesExpansion(comment.id)}
-                >
-                  {isExpanded ? (
-                    <>
-                      <ChevronUp className="h-3 w-3 mr-1" />
-                      {isMobile ? "Hide" : "Hide replies"}
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="h-3 w-3 mr-1" />
-                      {isMobile
-                        ? replyCount.toString()
-                        : `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`}
-                    </>
-                  )}
-                </Button>
+              {/* Infinite threaded replies - only show for top-level */}
+              {depth === 0 && isExpanded && (
+                <div className="mt-3">
+                  <ThreadedRepliesSection
+                    eventId={eventId}
+                    commentId={comment.id}
+                    renderComment={renderComment}
+                    expandedReplies={expandedReplies}
+                    toggleRepliesExpansion={toggleRepliesExpansion}
+                  />
+                </div>
               )}
             </div>
-
-            {/* Infinite threaded replies - only show for top-level */}
-            {depth === 0 && isExpanded && (
-              <div className="mt-3">
-                <ThreadedRepliesSection
-                  eventId={eventId}
-                  commentId={comment.id}
-                  renderComment={renderComment}
-                  expandedReplies={expandedReplies}
-                  toggleRepliesExpansion={toggleRepliesExpansion}
-                />
-              </div>
-            )}
           </div>
         </div>
-      </div>
-    );
-  };
+      );
+    }
+  );
+
+  CommentItem.displayName = "CommentItem";
+
+  // Render comment wrapper that uses the memoized component
+  const renderComment = useCallback(
+    (comment: EventCommentData, depth: number = 0) => {
+      return <CommentItem key={comment.id} comment={comment} depth={depth} />;
+    },
+    [CommentItem]
+  );
 
   // Get all comments from all pages
   const allComments = React.useMemo(() => {

@@ -73,13 +73,16 @@ export function useEventComments(
     queryKey: ["event-comments", eventId, sortBy],
     queryFn: () => fetchEventComments(eventId, sortBy),
     enabled: !!eventId,
-    staleTime: 1 * 1000, // 1 second - ultra-fresh data for YouTube-like speed
+    staleTime: 5 * 1000, // 5 seconds - balance between freshness and performance
     gcTime: 10 * 60 * 1000,
     refetchInterval: pollingInterval,
     refetchOnWindowFocus: false, // Keep disabled to prevent scroll jumps
     refetchOnReconnect: true,
     placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
     refetchIntervalInBackground: false, // Keep disabled to prevent background scroll issues
+    // Optimize network requests
+    retry: 1,
+    retryDelay: 1000,
   });
 
   return query;

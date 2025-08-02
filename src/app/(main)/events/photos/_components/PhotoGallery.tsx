@@ -141,6 +141,8 @@ export function PhotoGallery({ eventId }: PhotoGalleryProps) {
                           src={photo.imageUrl}
                           alt={photo.caption || "Event photo"}
                           fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                          loading="lazy"
                           className={cn(
                             "object-cover transition-transform group-hover:scale-105",
                             photo.isUploading && "opacity-50"
@@ -249,8 +251,7 @@ export function PhotoGallery({ eventId }: PhotoGalleryProps) {
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
                       className="object-contain"
-                      placeholder="blur"
-                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyruBhVHJNfcmk="
+                      priority
                     />
                   </div>
                   <div className="flex-shrink-0 p-6 bg-card border-t">

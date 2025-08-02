@@ -251,6 +251,7 @@ model EventComment {
   @@index([userId])
   @@index([parentId])
   @@index([eventId, createdAt])
+  @@index([eventId, parentId]) 
   @@map("event_comments")
 }
 

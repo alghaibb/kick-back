@@ -7,28 +7,18 @@ export async function GET() {
     const session = await getSession();
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const userId = session.user.id;
 
-    // Get all group IDs the user belongs to
-    const groupMemberships = await prisma.groupMember.findMany({
-      where: { userId },
-      select: { groupId: true },
-    });
-    const groupIds = groupMemberships.map((g) => g.groupId);
-
-    // Fetch events
+    // Fetch events with optimized single query - no N+1 problem
     const eventsRaw = await prisma.event.findMany({
       where: {
         OR: [
           { createdBy: userId },
           { attendees: { some: { userId } } },
-          { groupId: { in: groupIds } },
+          { group: { members: { some: { userId } } } },
         ],
       },
       include: {
@@ -74,4 +64,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-} 
+}

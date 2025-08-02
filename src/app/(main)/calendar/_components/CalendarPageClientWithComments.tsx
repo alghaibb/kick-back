@@ -1,16 +1,32 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, lazy, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { FullCalendar } from "@/components/ui/full-calendar";
 import { Button } from "@/components/ui/button";
 import { format, isSameDay, startOfDay } from "date-fns";
 import { useCalendar } from "@/hooks/queries/useCalendar";
 import { formatDate } from "@/lib/date-utils";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
-import ThreadedEventComments from "@/app/(main)/events/comments/_components/ThreadedEventComments";
-import { PhotoUploadForm } from "@/app/(main)/events/photos/_components/PhotoUploadForm";
-import { PhotoGallery } from "@/app/(main)/events/photos/_components/PhotoGallery";
+
+// Lazy load heavy components
+const FullCalendar = lazy(() =>
+  import("@/components/ui/full-calendar").then((m) => ({
+    default: m.FullCalendar,
+  }))
+);
+const ThreadedEventComments = lazy(
+  () => import("@/app/(main)/events/comments/_components/ThreadedEventComments")
+);
+const PhotoUploadForm = lazy(() =>
+  import("@/app/(main)/events/photos/_components/PhotoUploadForm").then(
+    (m) => ({ default: m.PhotoUploadForm })
+  )
+);
+const PhotoGallery = lazy(() =>
+  import("@/app/(main)/events/photos/_components/PhotoGallery").then((m) => ({
+    default: m.PhotoGallery,
+  }))
+);
 import { MessageCircle, ChevronDown, ChevronUp, Camera } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -88,12 +104,14 @@ export function CalendarPageClientWithComments() {
     <div className="flex flex-col gap-8">
       {/* Calendar Section - Full width */}
       <div className="w-full">
-        <FullCalendar
-          selected={selectedDate}
-          onSelect={setSelectedDate}
-          events={data?.events || []}
-          className="w-full"
-        />
+        <Suspense fallback={<UnifiedSkeleton className="h-[400px] w-full"   />}>
+          <FullCalendar
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            events={data?.events || []}
+            className="w-full"
+          />
+        </Suspense>
       </div>
 
       {/* Events Panel - Full width below calendar */}
@@ -299,14 +317,32 @@ export function CalendarPageClientWithComments() {
                             </TabsTrigger>
                           </TabsList>
                           <TabsContent value="comments" className="mt-4">
-                            <ThreadedEventComments eventId={event.id} />
+                            <Suspense
+                              fallback={
+                                <UnifiedSkeleton className="h-[200px]" />
+                              }
+                            >
+                              <ThreadedEventComments eventId={event.id} />
+                            </Suspense>
                           </TabsContent>
                           <TabsContent
                             value="photos"
                             className="mt-4 space-y-6"
                           >
-                            <PhotoUploadForm eventId={event.id} />
-                            <PhotoGallery eventId={event.id} />
+                            <Suspense
+                              fallback={
+                                <UnifiedSkeleton className="h-[100px]" />
+                              }
+                            >
+                              <PhotoUploadForm eventId={event.id} />
+                            </Suspense>
+                            <Suspense
+                              fallback={
+                                <UnifiedSkeleton className="h-[300px]" />
+                              }
+                            >
+                              <PhotoGallery eventId={event.id} />
+                            </Suspense>
                           </TabsContent>
                         </Tabs>
                       </div>

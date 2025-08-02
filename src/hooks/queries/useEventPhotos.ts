@@ -25,7 +25,9 @@ export interface EventPhotoData {
   isLikedByUser: boolean;
 }
 
-async function fetchEventPhotos(eventId: string): Promise<{ photos: EventPhotoData[] }> {
+async function fetchEventPhotos(
+  eventId: string
+): Promise<{ photos: EventPhotoData[] }> {
   const response = await fetch(`/api/events/${eventId}/photos`, {
     credentials: "include",
   });
@@ -64,11 +66,14 @@ export function useEventPhotos(eventId: string) {
     queryKey: ["event-photos", eventId],
     queryFn: () => fetchEventPhotos(eventId),
     enabled: !!eventId,
-    staleTime: 3 * 1000, // 3 seconds - ultra-fresh data
+    staleTime: 10 * 1000, // 10 seconds - reduce unnecessary refetches
     gcTime: 10 * 60 * 1000,
     refetchInterval: getPollingInterval(),
     refetchOnWindowFocus: true, // Re-enable for instant updates
     refetchOnReconnect: true,
+    // Optimize network requests
+    retry: 1,
+    retryDelay: 1000,
   });
 
   // Update activity timestamp when new photos arrive or likes change
@@ -86,7 +91,7 @@ export function useEventPhotos(eventId: string) {
 
       // Check for photos with any likes (suggests recent activity)
       const photosWithLikes = query.data.photos.filter(
-        photo => photo._count.likes > 0
+        (photo) => photo._count.likes > 0
       );
       if (photosWithLikes.length > 0) {
         hasRecentActivity = true;
