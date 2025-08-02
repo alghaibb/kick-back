@@ -37,6 +37,7 @@ import {
   Trash2,
   User,
   Users,
+  Edit,
   Calendar,
   MessageSquare,
 } from "lucide-react";
@@ -47,6 +48,7 @@ import { AdminUsersSkeleton } from "./AdminUsersSkeleton";
 import { useFilters } from "@/providers/FilterProvider";
 import { useModal } from "@/hooks/use-modal";
 import { formatDate } from "@/lib/date-utils";
+import EditUserModal from "./EditUserModal";
 
 interface User {
   id: string;
@@ -142,6 +144,10 @@ function AdminUsersData({
 
   const handleDeleteUser = (userId: string, userName: string) => {
     open("delete-user", { userId, userName });
+  };
+
+  const handleEditUser = (user: User) => {
+    open("edit-user", { user });
   };
 
   const getInitials = (firstName: string, lastName: string | null) => {
@@ -320,6 +326,12 @@ function AdminUsersData({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleEditUser(user)}
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit User
+                          </DropdownMenuItem>
                           {user.id !== currentUser?.id && (
                             <>
                               {user.role === "USER" ? (
@@ -488,6 +500,7 @@ export function AdminUsersClient() {
           />
         )}
       </div>
+      <EditUserModal />
     </div>
   );
 }

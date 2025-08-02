@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { requireAdminWithAudit, canManageUser, validateAdminAction } from "@/lib/admin-auth";
+import { editUserSchema, type EditUserInput } from "@/validations/admin/editUserSchema";
+import bcrypt from "bcryptjs";
 
 // Enhanced error handling and logging
 class AdminActionError extends Error {
@@ -438,5 +440,112 @@ export async function getAdminActionSummary() {
   } catch (error) {
     console.error("Error getting admin action summary:", error);
     throw new AdminActionError("Failed to get admin action summary", "INTERNAL_ERROR", 500);
+  }
+}
+
+// Edit User Profile with Password Change Support
+export async function editUserProfile(userId: string, data: EditUserInput) {
+  try {
+    // Validate input data
+    const validatedData = editUserSchema.parse(data);
+
+    // Check admin permissions
+    await requireAdminWithAudit('edit_user_profile', `user:${userId}`);
+
+    // Check if admin can manage this user
+    const { canManage, error } = await canManageUser(userId);
+    if (!canManage) {
+      throw new AdminActionError(error || "Cannot manage this user", "FORBIDDEN", 403);
+    }
+
+    // Verify user exists and is not deleted
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        deletedAt: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        nickname: true,
+        email: true,
+        hasOnboarded: true
+      },
+    });
+
+    if (!existingUser) {
+      throw new AdminActionError("User not found", "NOT_FOUND", 404);
+    }
+
+    if (existingUser.deletedAt) {
+      throw new AdminActionError("Cannot edit deleted user", "INVALID_STATE", 400);
+    }
+
+    // Prepare update data
+    const updateData: Record<string, unknown> = {
+      firstName: validatedData.firstName,
+      lastName: validatedData.lastName,
+      nickname: validatedData.nickname,
+      role: validatedData.role,
+      hasOnboarded: validatedData.hasOnboarded,
+      updatedAt: new Date(),
+    };
+
+    // Handle password change if provided
+    if (validatedData.newPassword && validatedData.newPassword.length > 0) {
+      const hashedPassword = await bcrypt.hash(validatedData.newPassword, 12);
+      updateData.password = hashedPassword;
+      console.info(`Admin password change for user ${userId}`);
+    }
+
+    // Log role changes
+    if (validatedData.role !== existingUser.role) {
+      console.info(`Admin role change: ${existingUser.role} -> ${validatedData.role} for user ${userId}`);
+    }
+
+    // Update user
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        nickname: true,
+        email: true,
+        role: true,
+        hasOnboarded: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            groupMembers: true,
+            eventComments: true,
+            contacts: true,
+          },
+        },
+      },
+    });
+
+    // Revalidate relevant paths
+    revalidatePath("/admin/users");
+    revalidatePath("/admin");
+
+    return {
+      user: {
+        ...updatedUser,
+        createdAt: updatedUser.updatedAt.toISOString(), // Use updatedAt as fallback
+        updatedAt: updatedUser.updatedAt.toISOString(),
+      },
+      success: true,
+      message: validatedData.newPassword ? "User profile and password updated successfully" : "User profile updated successfully",
+    };
+  } catch (error) {
+    console.error("Error editing user profile:", error);
+
+    if (error instanceof AdminActionError) {
+      throw error;
+    }
+
+    throw new AdminActionError("Failed to edit user profile", "INTERNAL_ERROR", 500);
   }
 }

@@ -12,6 +12,7 @@ export type ModalType =
   | "delete-account"
   | "delete-user"
   | "recover-user"
+  | "edit-user"
   | "reply-comment"
   | "edit-comment";
 
@@ -51,6 +52,17 @@ interface ModalState {
     // Delete user modal fields
     userId?: string;
     userName?: string;
+    // Edit user modal fields
+    user?: {
+      id: string;
+      firstName: string;
+      lastName: string | null;
+      email: string;
+      nickname: string | null;
+      role: "USER" | "ADMIN";
+      hasOnboarded: boolean;
+      accounts?: Array<{ provider: string }>;
+    };
   };
   open: (
     type: ModalType,
@@ -87,6 +99,17 @@ interface ModalState {
       // Delete user modal fields
       userId?: string;
       userName?: string;
+      // Edit user modal fields
+      user?: {
+        id: string;
+        firstName: string;
+        lastName: string | null;
+        email: string;
+        nickname: string | null;
+        role: "USER" | "ADMIN";
+        hasOnboarded: boolean;
+        accounts?: Array<{ provider: string }>;
+      };
     }
   ) => void;
   close: () => void;

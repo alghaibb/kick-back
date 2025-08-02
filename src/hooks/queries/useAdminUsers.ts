@@ -7,7 +7,9 @@ import {
 import {
   deleteUser as deleteUserAction,
   recoverUser as recoverUserAction,
+  editUserProfile as editUserProfileAction,
 } from "@/app/(main)/admin/actions";
+import type { EditUserInput } from "@/validations/admin/editUserSchema";
 
 interface User {
   id: string;
@@ -276,6 +278,84 @@ export function useRecoverUser() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "deleted-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+    },
+  });
+}
+
+// Edit user profile mutation with optimistic updates
+export function useEditUserProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, data }: { userId: string; data: EditUserInput }) => {
+      return editUserProfileAction(userId, data);
+    },
+    onMutate: async ({ userId, data }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
+
+      // Snapshot previous value
+      const previousUsers = queryClient.getQueryData(["admin", "users"]);
+
+      // Optimistically update the user in all relevant queries
+      queryClient.setQueryData(["admin", "users"], (old: UsersResponse | undefined) => {
+        if (!old) return old;
+
+        return {
+          ...old,
+          users: old.users.map(user =>
+            user.id === userId
+              ? {
+                ...user,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                nickname: data.nickname,
+                role: data.role,
+                hasOnboarded: data.hasOnboarded,
+                updatedAt: new Date().toISOString()
+              }
+              : user
+          ),
+        };
+      });
+
+      // Update infinite query as well
+      queryClient.setQueryData(["admin", "users", "infinite"], (old: { pages: UsersResponse[] } | undefined) => {
+        if (!old) return old;
+
+        return {
+          ...old,
+          pages: old.pages.map((page: UsersResponse) => ({
+            ...page,
+            users: page.users.map((user: User) =>
+              user.id === userId
+                ? {
+                  ...user,
+                  firstName: data.firstName,
+                  lastName: data.lastName,
+                  nickname: data.nickname,
+                  role: data.role,
+                  hasOnboarded: data.hasOnboarded,
+                  updatedAt: new Date().toISOString()
+                }
+                : user
+            ),
+          })),
+        };
+      });
+
+      return { previousUsers };
+    },
+    onError: (_err, _variables, context) => {
+      // Rollback on error
+      if (context?.previousUsers) {
+        queryClient.setQueryData(["admin", "users"], context.previousUsers);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
     },

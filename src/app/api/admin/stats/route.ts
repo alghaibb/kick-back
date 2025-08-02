@@ -135,7 +135,7 @@ export async function GET() {
 // Add endpoint to clear cache if needed
 export async function DELETE() {
   try {
-    await requireAdmin();
+    await requireAdmin(true);
     statsCache = null;
     return NextResponse.json({ message: "Cache cleared successfully" });
   } catch (error) {
