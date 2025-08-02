@@ -26,9 +26,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Info } from "lucide-react";
+import { Info, Upload, X } from "lucide-react";
 import { z } from "zod";
 import { firstNameField } from "@/validations/fieldsSchema";
+import { useEffect, useMemo } from "react";
+import { useImageUploadForm } from "@/hooks/useImageUploadForm";
 
 // Define the form schema directly in the component to avoid type conflicts
 const editUserFormSchema = z
@@ -38,6 +40,7 @@ const editUserFormSchema = z
     nickname: z.string(),
     role: z.enum(["USER", "ADMIN"]),
     hasOnboarded: z.boolean(),
+    image: z.string().optional(),
     newPassword: z.string().optional(),
     confirmPassword: z.string().optional(),
   })
@@ -61,10 +64,12 @@ interface User {
   firstName: string;
   lastName: string | null;
   email: string;
+  image: string | null;
   nickname: string | null;
   role: "USER" | "ADMIN";
   hasOnboarded: boolean;
   accounts?: Array<{ provider: string }>;
+  hasPassword?: boolean;
 }
 
 export default function EditUserModal() {
@@ -73,30 +78,136 @@ export default function EditUserModal() {
 
   const user = data?.user as User;
 
-  if (!user) return null;
-
-  // Check if user signed up with OAuth (Google, etc.) - they might not have a password
-  const hasOAuthAccount = user.accounts?.some(
-    (account) =>
-      account.provider === "google" || account.provider === "facebook"
+  // Image upload hook
+  const imageUpload = useImageUploadForm(
+    undefined, // No form setValue needed, we'll handle manually
+    undefined, // No field name needed
+    {
+      maxSize: 2 * 1024 * 1024, // 2MB for profile images
+      initialImageUrl: user?.image,
+      showToasts: true,
+      folder: "profile",
+      generateUniqueName: true,
+    }
   );
 
+  // Always call useForm hook, even when user is null
   const form = useForm<EditUserFormValues>({
     resolver: zodResolver(editUserFormSchema),
     defaultValues: {
-      firstName: user.firstName,
-      lastName: user.lastName ?? "",
-      nickname: user.nickname ?? "",
-      role: user.role,
-      hasOnboarded: user.hasOnboarded,
+      firstName: user?.firstName || "",
+      lastName: user?.lastName ?? "",
+      nickname: user?.nickname ?? "",
+      role: user?.role || "USER",
+      hasOnboarded: user?.hasOnboarded || false,
+      image: user?.image || "",
       newPassword: "",
       confirmPassword: "",
     },
     mode: "onChange",
   });
 
+  // Watch form values for changes (must be called before conditional return)
+  const formValues = form.watch();
+
+  // Update form when user data becomes available
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        firstName: user.firstName,
+        lastName: user.lastName ?? "",
+        nickname: user.nickname ?? "",
+        role: user.role,
+        hasOnboarded: user.hasOnboarded,
+        image: user.image || "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    }
+  }, [user, form]);
+
+  // Check if user signed up with OAuth (Google, etc.) - they might not have a password
+  const hasOAuthAccount = user?.accounts?.some(
+    (account) =>
+      account.provider === "google" || account.provider === "facebook"
+  );
+
+  // Determine if user has a password or can set one
+  // If hasPassword is explicitly false or user only has OAuth accounts, don't show password fields
+  const canChangePassword = user?.hasPassword !== false && !hasOAuthAccount;
+
+  // Check if form has changes compared to original user data (must be called before conditional return)
+  const hasChanges = useMemo(() => {
+    if (!user) return false;
+
+    const originalValues = {
+      firstName: user.firstName,
+      lastName: user.lastName ?? "",
+      nickname: user.nickname ?? "",
+      role: user.role,
+      hasOnboarded: user.hasOnboarded,
+      image: user.image || "",
+    };
+
+    const currentValues = {
+      firstName: formValues.firstName || "",
+      lastName: formValues.lastName || "",
+      nickname: formValues.nickname || "",
+      role: formValues.role,
+      hasOnboarded: formValues.hasOnboarded,
+      image: formValues.image || "",
+    };
+
+    // Check if any field has changed
+    const fieldsChanged = Object.keys(originalValues).some((key) => {
+      return (
+        originalValues[key as keyof typeof originalValues] !==
+        currentValues[key as keyof typeof currentValues]
+      );
+    });
+
+    // Check if password fields have content (only if user can change password)
+    const passwordChanged =
+      canChangePassword &&
+      ((formValues.newPassword && formValues.newPassword.length > 0) ||
+        (formValues.confirmPassword && formValues.confirmPassword.length > 0));
+
+    // Check if image has changed
+    const imageChanged = imageUpload.currentFile || imageUpload.isDeleted;
+
+    return fieldsChanged || passwordChanged || imageChanged;
+  }, [
+    user,
+    formValues,
+    canChangePassword,
+    imageUpload.currentFile,
+    imageUpload.isDeleted,
+  ]);
+
+  // Early return after all hooks are called
+  if (!user) return null;
+
   const handleSubmit = async (values: EditUserFormValues) => {
     try {
+      let imageUrl = user.image; // Keep existing image by default
+
+      // Handle image upload if there's a new file
+      if (imageUpload.currentFile) {
+        toast.info("Uploading image...");
+        const uploadedUrl = await imageUpload.uploadImage(
+          imageUpload.currentFile
+        );
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        } else {
+          toast.error("Image upload failed");
+          return;
+        }
+      } else if (imageUpload.isDeleted) {
+        // User explicitly removed the image
+        imageUrl = null;
+      }
+
       // Transform form values to match the API expected format
       const apiData = {
         firstName: values.firstName,
@@ -104,6 +215,7 @@ export default function EditUserModal() {
         nickname: values.nickname === "" ? null : values.nickname,
         role: values.role,
         hasOnboarded: values.hasOnboarded,
+        image: imageUrl,
         newPassword:
           values.newPassword && values.newPassword.length > 0
             ? values.newPassword
@@ -135,8 +247,8 @@ export default function EditUserModal() {
   return (
     <GenericModal
       type="edit-user"
-      title="Edit User Profile"
-      description={`Editing profile for ${user.firstName} ${user.lastName || ""} (${user.email})`}
+      title={hasChanges ? "Edit User Profile *" : "Edit User Profile"}
+      description={`Editing profile for ${user.firstName} ${user.lastName || ""} (${user.email})${hasChanges ? " • Unsaved changes" : ""}`}
       showCancel={false}
     >
       <Form {...form}>
@@ -213,6 +325,62 @@ export default function EditUserModal() {
               )}
             />
 
+            {/* Profile Image Upload */}
+            <div className="space-y-2">
+              <FormLabel>Profile Image</FormLabel>
+              <div className="flex items-center gap-4">
+                {/* Current/Preview Image */}
+                {imageUpload.displayUrl && !imageUpload.isDeleted && (
+                  <div className="relative">
+                    <img
+                      src={imageUpload.displayUrl}
+                      alt="Profile"
+                      className="w-16 h-16 rounded-full object-cover border"
+                    />
+                    <button
+                      type="button"
+                      onClick={imageUpload.removeImage}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      disabled={imageUpload.isUploading}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Upload Button */}
+                <div className="flex flex-col gap-2">
+                  <input
+                    ref={imageUpload.imageRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={imageUpload.handleImageChange}
+                    className="hidden"
+                    disabled={imageUpload.isUploading}
+                  />
+                  <LoadingButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => imageUpload.imageRef.current?.click()}
+                    disabled={imageUpload.isUploading}
+                    loading={imageUpload.isUploading}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {imageUpload.displayUrl ? "Change Image" : "Upload Image"}
+                  </LoadingButton>
+                  <p className="text-xs text-muted-foreground">
+                    Max 2MB • JPEG, PNG, WebP, GIF
+                  </p>
+                </div>
+              </div>
+              {imageUpload.uploadError && (
+                <p className="text-sm text-red-500">
+                  {imageUpload.uploadError}
+                </p>
+              )}
+            </div>
+
             {/* Role */}
             <FormField
               control={form.control}
@@ -262,63 +430,68 @@ export default function EditUserModal() {
             />
           </div>
 
-          {/* Password Section */}
-          <div className="space-y-4 border-t pt-4">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-medium">Password Settings</h3>
-              {hasOAuthAccount && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Info className="h-3 w-3" />
-                  <span>User may not have a password</span>
-                </div>
-              )}
+          {/* Password Section - Only show for users who can change passwords */}
+          {canChangePassword && (
+            <div className="space-y-4 border-t pt-4">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium">Password Settings</h3>
+                {hasOAuthAccount && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Info className="h-3 w-3" />
+                    <span>User may not have a password</span>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                {hasOAuthAccount
+                  ? "This user signed up with OAuth. Setting a password will allow them to login with email/password as well."
+                  : "Leave blank to keep current password unchanged."}
+              </p>
+
+              {/* New Password */}
+              <FormField
+                control={form.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {hasOAuthAccount ? "Set Password" : "New Password"}
+                    </FormLabel>
+                    <FormControl>
+                      <PasswordInput
+                        placeholder={
+                          hasOAuthAccount
+                            ? "Set a password"
+                            : "Enter new password"
+                        }
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Confirm Password */}
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <PasswordInput
+                        placeholder="Confirm password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-
-            <p className="text-xs text-muted-foreground">
-              {hasOAuthAccount
-                ? "This user signed up with OAuth. Setting a password will allow them to login with email/password as well."
-                : "Leave blank to keep current password unchanged."}
-            </p>
-
-            {/* New Password */}
-            <FormField
-              control={form.control}
-              name="newPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {hasOAuthAccount ? "Set Password" : "New Password"}
-                  </FormLabel>
-                  <FormControl>
-                    <PasswordInput
-                      placeholder={
-                        hasOAuthAccount
-                          ? "Set a password"
-                          : "Enter new password"
-                      }
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Confirm Password */}
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
-                  <FormControl>
-                    <PasswordInput placeholder="Confirm password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          )}
 
           {/* Form Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">
@@ -333,9 +506,13 @@ export default function EditUserModal() {
             <LoadingButton
               type="submit"
               loading={editUserMutation.isPending}
-              disabled={!form.formState.isValid}
+              disabled={
+                !form.formState.isValid ||
+                !hasChanges ||
+                editUserMutation.isPending
+              }
             >
-              Update User
+              {hasChanges ? "Update User" : "No Changes"}
             </LoadingButton>
           </div>
         </form>

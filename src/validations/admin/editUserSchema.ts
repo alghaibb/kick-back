@@ -9,6 +9,8 @@ export const editUserSchema = z.object({
     required_error: "Role is required",
   }),
   hasOnboarded: z.boolean(),
+  // Optional image URL (will be set after upload)
+  image: z.string().nullable().optional(),
   // Optional password change
   newPassword: z.string().optional(),
   confirmPassword: z.string().optional(),

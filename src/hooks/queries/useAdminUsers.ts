@@ -22,6 +22,8 @@ interface User {
   hasOnboarded: boolean;
   createdAt: string;
   updatedAt: string;
+  hasPassword?: boolean;
+  accounts?: Array<{ provider: string }>;
   _count?: {
     groupMembers: number;
     eventComments: number;
@@ -290,74 +292,117 @@ export function useEditUserProfile() {
 
   return useMutation({
     mutationFn: async ({ userId, data }: { userId: string; data: EditUserInput }) => {
-      return editUserProfileAction(userId, data);
+      try {
+        const result = await editUserProfileAction(userId, data);
+        return result;
+      } catch (error) {
+        console.error("Edit user profile mutation error:", error);
+        throw error;
+      }
     },
     onMutate: async ({ userId, data }) => {
-      // Cancel outgoing refetches
+      console.log("Optimistic update starting for user:", userId, data);
+
+      // Cancel ALL admin users queries to prevent race conditions
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
 
-      // Snapshot previous value
-      const previousUsers = queryClient.getQueryData(["admin", "users"]);
+      // Get all existing query data before updating
+      const allQueryData = queryClient.getQueriesData({ queryKey: ["admin", "users"] });
 
-      // Optimistically update the user in all relevant queries
-      queryClient.setQueryData(["admin", "users"], (old: UsersResponse | undefined) => {
-        if (!old) return old;
+      // Helper function to update user data
+      const updateUser = (user: User) =>
+        user.id === userId
+          ? {
+            ...user,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            nickname: data.nickname,
+            role: data.role,
+            hasOnboarded: data.hasOnboarded,
+            image: data.image !== undefined ? data.image || null : user.image,
+            updatedAt: new Date().toISOString()
+          }
+          : user;
 
-        return {
-          ...old,
-          users: old.users.map(user =>
-            user.id === userId
-              ? {
-                ...user,
-                firstName: data.firstName,
-                lastName: data.lastName,
-                nickname: data.nickname,
-                role: data.role,
-                hasOnboarded: data.hasOnboarded,
-                updatedAt: new Date().toISOString()
-              }
-              : user
-          ),
-        };
+      // Update ALL queries that match the pattern
+      allQueryData.forEach(([queryKey, queryData]) => {
+        if (queryData) {
+          // Handle infinite queries
+          if (queryKey.includes("infinite") && queryData && typeof queryData === 'object' && 'pages' in queryData) {
+            const infiniteData = queryData as { pages: UsersResponse[] };
+            queryClient.setQueryData(queryKey, {
+              ...infiniteData,
+              pages: infiniteData.pages.map((page: UsersResponse) => ({
+                ...page,
+                users: page.users.map(updateUser),
+              })),
+            });
+          }
+          // Handle regular queries
+          else if (queryData && typeof queryData === 'object' && 'users' in queryData) {
+            const regularData = queryData as UsersResponse;
+            queryClient.setQueryData(queryKey, {
+              ...regularData,
+              users: regularData.users.map(updateUser),
+            });
+          }
+        }
       });
 
-      // Update infinite query as well
-      queryClient.setQueryData(["admin", "users", "infinite"], (old: { pages: UsersResponse[] } | undefined) => {
-        if (!old) return old;
-
-        return {
-          ...old,
-          pages: old.pages.map((page: UsersResponse) => ({
-            ...page,
-            users: page.users.map((user: User) =>
-              user.id === userId
-                ? {
-                  ...user,
-                  firstName: data.firstName,
-                  lastName: data.lastName,
-                  nickname: data.nickname,
-                  role: data.role,
-                  hasOnboarded: data.hasOnboarded,
-                  updatedAt: new Date().toISOString()
-                }
-                : user
-            ),
-          })),
-        };
-      });
-
-      return { previousUsers };
+      return { allQueryData };
     },
-    onError: (_err, _variables, context) => {
-      // Rollback on error
-      if (context?.previousUsers) {
-        queryClient.setQueryData(["admin", "users"], context.previousUsers);
+    onSuccess: (result, { userId }) => {
+      console.log("Edit user success, updating cache with server data:", result);
+
+      // Update cache with actual server response
+      const updateUserWithServerData = (user: User) =>
+        user.id === userId ? { ...user, ...result.user } : user;
+
+      // Update ALL queries with server data
+      const allQueryData = queryClient.getQueriesData({ queryKey: ["admin", "users"] });
+
+      allQueryData.forEach(([queryKey, queryData]) => {
+        if (queryData) {
+          // Handle infinite queries
+          if (queryKey.includes("infinite") && queryData && typeof queryData === 'object' && 'pages' in queryData) {
+            const infiniteData = queryData as { pages: UsersResponse[] };
+            queryClient.setQueryData(queryKey, {
+              ...infiniteData,
+              pages: infiniteData.pages.map((page: UsersResponse) => ({
+                ...page,
+                users: page.users.map(updateUserWithServerData),
+              })),
+            });
+          }
+          // Handle regular queries
+          else if (queryData && typeof queryData === 'object' && 'users' in queryData) {
+            const regularData = queryData as UsersResponse;
+            queryClient.setQueryData(queryKey, {
+              ...regularData,
+              users: regularData.users.map(updateUserWithServerData),
+            });
+          }
+        }
+      });
+    },
+    onError: (_err, { userId }, context) => {
+      console.log("Edit user error, rolling back optimistic updates");
+
+      // Rollback all queries to their previous state
+      if (context?.allQueryData) {
+        context.allQueryData.forEach(([queryKey, queryData]) => {
+          if (queryData) {
+            queryClient.setQueryData(queryKey, queryData);
+          }
+        });
       }
     },
     onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+      // Don't invalidate anything - we're managing cache manually in onSuccess
+      // Only invalidate stats after a delay to avoid race conditions
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+      }, 100);
     },
   });
 }

@@ -61,6 +61,8 @@ interface User {
   hasOnboarded: boolean;
   createdAt: string;
   updatedAt: string;
+  hasPassword?: boolean;
+  accounts?: Array<{ provider: string }>;
   _count?: {
     groupMembers: number;
     eventComments: number;

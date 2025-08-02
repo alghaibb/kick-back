@@ -59,6 +59,12 @@ export async function GET(request: NextRequest) {
           hasOnboarded: true,
           createdAt: true,
           updatedAt: true,
+          password: true,
+          accounts: {
+            select: {
+              provider: true,
+            },
+          },
           // Use conditional loading for counts to improve performance
           _count: search ? undefined : {
             select: {
@@ -76,6 +82,13 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
+    // Transform users to include hasPassword boolean without exposing actual password
+    const transformedUsers = users.map(user => ({
+      ...user,
+      hasPassword: Boolean(user.password), // Convert password to boolean
+      password: undefined, // Remove actual password from response
+    }));
+
     const total = totalCount;
 
     const totalPages = Math.ceil(total / limit);
@@ -83,7 +96,7 @@ export async function GET(request: NextRequest) {
     const hasPrev = page > 1;
 
     const response = NextResponse.json({
-      users,
+      users: transformedUsers,
       pagination: {
         page,
         limit,

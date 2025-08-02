@@ -101,7 +101,7 @@ export async function requireAdminWithAudit(
 }
 
 // Check if current user can perform action on target user
-export async function canManageUser(targetUserId: string) {
+export async function canManageUser(targetUserId: string, allowSelfEdit = false) {
   const session = await getSession();
   const { isAdmin } = await checkAdminAccess(true); // Skip rate limit for read-only check
 
@@ -109,8 +109,9 @@ export async function canManageUser(targetUserId: string) {
     return { canManage: false, error: "Admin access required" };
   }
 
-  // Prevent admin from managing themselves in certain operations
-  if (session?.user?.id === targetUserId) {
+  // Prevent admin from managing themselves in certain operations (like delete)
+  // But allow self-editing for profile updates
+  if (session?.user?.id === targetUserId && !allowSelfEdit) {
     return { canManage: false, error: "Cannot perform this action on yourself" };
   }
 

@@ -5,12 +5,24 @@ import prisma from "@/lib/prisma";
 import { requireAdminWithAudit, canManageUser, validateAdminAction } from "@/lib/admin-auth";
 import { editUserSchema, type EditUserInput } from "@/validations/admin/editUserSchema";
 import bcrypt from "bcryptjs";
+import { del } from "@vercel/blob";
 
 // Enhanced error handling and logging
 class AdminActionError extends Error {
   constructor(message: string, public code?: string, public statusCode?: number) {
     super(message);
     this.name = 'AdminActionError';
+  }
+}
+
+// Helper function to check if URL is a Vercel Blob URL that we can delete
+function isVercelBlobUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname.includes('blob.vercel-storage.com') ||
+      urlObj.hostname.includes('vercel-storage.com');
+  } catch {
+    return false;
   }
 }
 
@@ -446,14 +458,21 @@ export async function getAdminActionSummary() {
 // Edit User Profile with Password Change Support
 export async function editUserProfile(userId: string, data: EditUserInput) {
   try {
+    console.log("=== editUserProfile SERVER ACTION called ===");
+    console.log("userId:", userId);
+    console.log("data:", JSON.stringify(data, null, 2));
+
     // Validate input data
     const validatedData = editUserSchema.parse(data);
+    console.log("Data validation passed:", validatedData);
 
-    // Check admin permissions
-    await requireAdminWithAudit('edit_user_profile', `user:${userId}`);
+    // Check admin permissions (skip rate limit for legitimate admin operations)
+    await requireAdminWithAudit('edit_user_profile', `user:${userId}`, true);
+    console.log("Admin permissions check passed");
 
-    // Check if admin can manage this user
-    const { canManage, error } = await canManageUser(userId);
+    // Check if admin can manage this user (allow self-editing for profile updates)
+    const { canManage, error } = await canManageUser(userId, true);
+    console.log("canManageUser result:", { canManage, error, userId });
     if (!canManage) {
       throw new AdminActionError(error || "Cannot manage this user", "FORBIDDEN", 403);
     }
@@ -469,9 +488,11 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
         lastName: true,
         nickname: true,
         email: true,
+        image: true,
         hasOnboarded: true
       },
     });
+    console.log("Existing user lookup result:", existingUser);
 
     if (!existingUser) {
       throw new AdminActionError("User not found", "NOT_FOUND", 404);
@@ -491,6 +512,33 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       updatedAt: new Date(),
     };
 
+    // Handle image update if provided
+    if (validatedData.image !== undefined) {
+      const newImageUrl = validatedData.image || null;
+      const oldImageUrl = existingUser.image;
+
+      // If image is changing and there's an old image, delete it from blob storage
+      if (oldImageUrl && oldImageUrl !== newImageUrl && isVercelBlobUrl(oldImageUrl)) {
+        try {
+          console.info(`Deleting old Vercel Blob image for user ${userId}: ${oldImageUrl}`);
+          await del(oldImageUrl);
+          console.info(`Successfully deleted old image: ${oldImageUrl}`);
+        } catch (error) {
+          console.error(`Failed to delete old image ${oldImageUrl}:`, error);
+          // Continue with the update even if blob deletion fails
+        }
+      } else if (oldImageUrl && oldImageUrl !== newImageUrl) {
+        console.info(`Skipping deletion of external image URL: ${oldImageUrl}`);
+      }
+
+      updateData.image = newImageUrl;
+      if (newImageUrl) {
+        console.info(`Admin image change for user ${userId}: ${newImageUrl}`);
+      } else {
+        console.info(`Admin image removal for user ${userId}`);
+      }
+    }
+
     // Handle password change if provided
     if (validatedData.newPassword && validatedData.newPassword.length > 0) {
       const hashedPassword = await bcrypt.hash(validatedData.newPassword, 12);
@@ -504,6 +552,7 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
     }
 
     // Update user
+    console.log("About to update user with data:", updateData);
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
@@ -513,6 +562,7 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
         lastName: true,
         nickname: true,
         email: true,
+        image: true,
         role: true,
         hasOnboarded: true,
         updatedAt: true,
@@ -525,6 +575,7 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
         },
       },
     });
+    console.log("User update successful:", updatedUser);
 
     // Revalidate relevant paths
     revalidatePath("/admin/users");
@@ -539,11 +590,26 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       success: true,
       message: validatedData.newPassword ? "User profile and password updated successfully" : "User profile updated successfully",
     };
-  } catch (error) {
-    console.error("Error editing user profile:", error);
+  } catch (error: any) {
+    console.error("=== ERROR in editUserProfile ===");
+    console.error("Error type:", error?.constructor?.name);
+    console.error("Error message:", error?.message);
+    console.error("Error stack:", error?.stack);
+    console.error("Full error object:", error);
 
     if (error instanceof AdminActionError) {
+      console.error("Re-throwing AdminActionError:", error.message, error.code);
       throw error;
+    }
+
+    // Check for specific error types
+    if (error?.code === 'P2025') {
+      throw new AdminActionError("User not found or already deleted", "NOT_FOUND", 404);
+    }
+
+    if (error?.code?.startsWith('P2')) {
+      console.error("Prisma error code:", error.code);
+      throw new AdminActionError(`Database error: ${error.message}`, "DATABASE_ERROR", 500);
     }
 
     throw new AdminActionError("Failed to edit user profile", "INTERNAL_ERROR", 500);
