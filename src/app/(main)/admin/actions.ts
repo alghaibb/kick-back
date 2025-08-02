@@ -2,16 +2,27 @@
 
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { requireAdminWithAudit, canManageUser, validateAdminAction } from "@/lib/admin-auth";
-import { editUserSchema, type EditUserInput } from "@/validations/admin/editUserSchema";
+import {
+  requireAdminWithAudit,
+  canManageUser,
+  validateAdminAction,
+} from "@/lib/admin-auth";
+import {
+  editUserSchema,
+  type EditUserInput,
+} from "@/validations/admin/editUserSchema";
 import bcrypt from "bcryptjs";
 import { del } from "@vercel/blob";
 
 // Enhanced error handling and logging
 class AdminActionError extends Error {
-  constructor(message: string, public code?: string, public statusCode?: number) {
+  constructor(
+    message: string,
+    public code?: string,
+    public statusCode?: number
+  ) {
     super(message);
-    this.name = 'AdminActionError';
+    this.name = "AdminActionError";
   }
 }
 
@@ -19,8 +30,10 @@ class AdminActionError extends Error {
 function isVercelBlobUrl(url: string): boolean {
   try {
     const urlObj = new URL(url);
-    return urlObj.hostname.includes('blob.vercel-storage.com') ||
-      urlObj.hostname.includes('vercel-storage.com');
+    return (
+      urlObj.hostname.includes("blob.vercel-storage.com") ||
+      urlObj.hostname.includes("vercel-storage.com")
+    );
   } catch {
     return false;
   }
@@ -33,15 +46,19 @@ export async function updateUser(
 ) {
   try {
     // Validate action and data
-    validateAdminAction('update_user', { userId, updates });
+    validateAdminAction("update_user", { userId, updates });
 
     // Check admin permissions with audit logging
-    await requireAdminWithAudit('update_user', `user:${userId}`, true);
+    await requireAdminWithAudit("update_user", `user:${userId}`, true);
 
     // Check if admin can manage this user
     const { canManage, error } = await canManageUser(userId);
     if (!canManage) {
-      throw new AdminActionError(error || "Cannot manage this user", "FORBIDDEN", 403);
+      throw new AdminActionError(
+        error || "Cannot manage this user",
+        "FORBIDDEN",
+        403
+      );
     }
 
     // Verify user exists and is not deleted
@@ -55,12 +72,15 @@ export async function updateUser(
     }
 
     if (existingUser.deletedAt) {
-      throw new AdminActionError("Cannot update deleted user", "INVALID_STATE", 400);
+      throw new AdminActionError(
+        "Cannot update deleted user",
+        "INVALID_STATE",
+        400
+      );
     }
 
     // Prevent role escalation vulnerabilities
     if (updates.role && updates.role !== existingUser.role) {
-
     }
 
     // Update user with transaction for data consistency
@@ -95,7 +115,7 @@ export async function updateUser(
 
     // Revalidate relevant paths
     const pathsToRevalidate = ["/dashboard", "/admin/users", "/admin"];
-    pathsToRevalidate.forEach(path => revalidatePath(path));
+    pathsToRevalidate.forEach((path) => revalidatePath(path));
 
     return {
       user: {
@@ -119,11 +139,15 @@ export async function updateUser(
 // Contact Management with enhanced validation
 export async function deleteContact(contactId: string) {
   try {
-    validateAdminAction('delete_contact', { contactId });
-    await requireAdminWithAudit('delete_contact', `contact:${contactId}`, true);
+    validateAdminAction("delete_contact", { contactId });
+    await requireAdminWithAudit("delete_contact", `contact:${contactId}`, true);
 
-    if (!contactId || typeof contactId !== 'string') {
-      throw new AdminActionError("Valid contact ID is required", "INVALID_INPUT", 400);
+    if (!contactId || typeof contactId !== "string") {
+      throw new AdminActionError(
+        "Valid contact ID is required",
+        "INVALID_INPUT",
+        400
+      );
     }
 
     // Verify contact exists
@@ -153,23 +177,35 @@ export async function deleteContact(contactId: string) {
       throw error;
     }
 
-    throw new AdminActionError("Failed to delete contact", "INTERNAL_ERROR", 500);
+    throw new AdminActionError(
+      "Failed to delete contact",
+      "INTERNAL_ERROR",
+      500
+    );
   }
 }
 
 // Enhanced User Deletion with comprehensive ownership transfer
 export async function deleteUser(userId: string) {
   try {
-    validateAdminAction('delete_user', { userId });
-    await requireAdminWithAudit('delete_user', `user:${userId}`, true);
+    validateAdminAction("delete_user", { userId });
+    await requireAdminWithAudit("delete_user", `user:${userId}`, true);
 
     const { canManage, error } = await canManageUser(userId);
     if (!canManage) {
-      throw new AdminActionError(error || "Cannot delete this user", "FORBIDDEN", 403);
+      throw new AdminActionError(
+        error || "Cannot delete this user",
+        "FORBIDDEN",
+        403
+      );
     }
 
-    if (!userId || typeof userId !== 'string') {
-      throw new AdminActionError("Valid user ID is required", "INVALID_INPUT", 400);
+    if (!userId || typeof userId !== "string") {
+      throw new AdminActionError(
+        "Valid user ID is required",
+        "INVALID_INPUT",
+        400
+      );
     }
 
     // Use transaction for data consistency
@@ -191,7 +227,11 @@ export async function deleteUser(userId: string) {
       }
 
       if (user.deletedAt) {
-        throw new AdminActionError("User is already deleted", "INVALID_STATE", 400);
+        throw new AdminActionError(
+          "User is already deleted",
+          "INVALID_STATE",
+          400
+        );
       }
 
       // Handle group ownership transfers
@@ -224,7 +264,6 @@ export async function deleteUser(userId: string) {
             where: { id: groupId },
             data: { createdBy: nextOwner.userId },
           });
-
         } else {
           // No other members, mark group as inactive
           await tx.group.update({
@@ -257,8 +296,12 @@ export async function deleteUser(userId: string) {
     });
 
     // Revalidate paths
-    const pathsToRevalidate = ["/admin/deleted-users", "/admin/users", "/admin"];
-    pathsToRevalidate.forEach(path => revalidatePath(path));
+    const pathsToRevalidate = [
+      "/admin/deleted-users",
+      "/admin/users",
+      "/admin",
+    ];
+    pathsToRevalidate.forEach((path) => revalidatePath(path));
 
     return {
       success: true,
@@ -267,7 +310,7 @@ export async function deleteUser(userId: string) {
         transferredGroups: result.transferredGroups,
         totalComments: result.totalComments,
         totalContacts: result.totalContacts,
-      }
+      },
     };
   } catch (error: unknown) {
     console.error("Error deleting user:", error);
@@ -278,11 +321,19 @@ export async function deleteUser(userId: string) {
 
     // Check for specific Prisma errors
     const prismaError = error as { code?: string; message?: string };
-    if (prismaError?.code === 'P2025') {
-      throw new AdminActionError("User not found or already deleted", "NOT_FOUND", 404);
+    if (prismaError?.code === "P2025") {
+      throw new AdminActionError(
+        "User not found or already deleted",
+        "NOT_FOUND",
+        404
+      );
     }
-    if (prismaError?.code?.startsWith('P2')) {
-      throw new AdminActionError(`Database error: ${(error as Error).message}`, "DATABASE_ERROR", 500);
+    if (prismaError?.code?.startsWith("P2")) {
+      throw new AdminActionError(
+        `Database error: ${(error as Error).message}`,
+        "DATABASE_ERROR",
+        500
+      );
     }
 
     throw new AdminActionError("Failed to delete user", "INTERNAL_ERROR", 500);
@@ -292,11 +343,15 @@ export async function deleteUser(userId: string) {
 // Enhanced User Recovery with better error handling
 export async function recoverUser(userId: string) {
   try {
-    validateAdminAction('recover_user', { userId });
-    await requireAdminWithAudit('recover_user', `user:${userId}`, true);
+    validateAdminAction("recover_user", { userId });
+    await requireAdminWithAudit("recover_user", `user:${userId}`, true);
 
-    if (!userId || typeof userId !== 'string') {
-      throw new AdminActionError("Valid user ID is required", "INVALID_INPUT", 400);
+    if (!userId || typeof userId !== "string") {
+      throw new AdminActionError(
+        "Valid user ID is required",
+        "INVALID_INPUT",
+        400
+      );
     }
 
     // Use transaction for data consistency
@@ -348,10 +403,13 @@ export async function recoverUser(userId: string) {
         if (emailName) {
           const nameParts = emailName.split(/[._-]/);
           if (nameParts.length >= 2) {
-            firstName = nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
-            lastName = nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1);
+            firstName =
+              nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
+            lastName =
+              nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1);
           } else {
-            firstName = nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
+            firstName =
+              nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
             lastName = null;
           }
         } else {
@@ -403,15 +461,19 @@ export async function recoverUser(userId: string) {
     });
 
     // Revalidate paths
-    const pathsToRevalidate = ["/admin/deleted-users", "/admin/users", "/admin"];
-    pathsToRevalidate.forEach(path => revalidatePath(path));
+    const pathsToRevalidate = [
+      "/admin/deleted-users",
+      "/admin/users",
+      "/admin",
+    ];
+    pathsToRevalidate.forEach((path) => revalidatePath(path));
 
     return {
       success: true,
       message: `User recovered successfully. Restored ownership of ${result.recoveredGroups} groups.`,
       details: {
         recoveredGroups: result.recoveredGroups,
-      }
+      },
     };
   } catch (error) {
     console.error("Error recovering user:", error);
@@ -427,7 +489,7 @@ export async function recoverUser(userId: string) {
 // Utility function to get admin action logs (could be enhanced with proper logging table)
 export async function getAdminActionSummary() {
   try {
-    await requireAdminWithAudit('view_stats', 'admin_actions', true);
+    await requireAdminWithAudit("view_stats", "admin_actions", true);
 
     // This could be enhanced with a proper audit log table
     // For now, return basic statistics
@@ -457,30 +519,32 @@ export async function getAdminActionSummary() {
     };
   } catch (error) {
     console.error("Error getting admin action summary:", error);
-    throw new AdminActionError("Failed to get admin action summary", "INTERNAL_ERROR", 500);
+    throw new AdminActionError(
+      "Failed to get admin action summary",
+      "INTERNAL_ERROR",
+      500
+    );
   }
 }
 
 // Edit User Profile with Password Change Support
 export async function editUserProfile(userId: string, data: EditUserInput) {
   try {
-    console.log("=== editUserProfile SERVER ACTION called ===");
-    console.log("userId:", userId);
-    console.log("data:", JSON.stringify(data, null, 2));
-
     // Validate input data
     const validatedData = editUserSchema.parse(data);
-    console.log("Data validation passed:", validatedData);
 
     // Check admin permissions (skip rate limit for legitimate admin operations)
-    await requireAdminWithAudit('edit_user_profile', `user:${userId}`, true);
-    console.log("Admin permissions check passed");
+    await requireAdminWithAudit("edit_user_profile", `user:${userId}`, true);
 
     // Check if admin can manage this user (allow self-editing for profile updates)
     const { canManage, error } = await canManageUser(userId, true);
-    console.log("canManageUser result:", { canManage, error, userId });
+
     if (!canManage) {
-      throw new AdminActionError(error || "Cannot manage this user", "FORBIDDEN", 403);
+      throw new AdminActionError(
+        error || "Cannot manage this user",
+        "FORBIDDEN",
+        403
+      );
     }
 
     // Verify user exists and is not deleted
@@ -495,17 +559,20 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
         nickname: true,
         email: true,
         image: true,
-        hasOnboarded: true
+        hasOnboarded: true,
       },
     });
-    console.log("Existing user lookup result:", existingUser);
 
     if (!existingUser) {
       throw new AdminActionError("User not found", "NOT_FOUND", 404);
     }
 
     if (existingUser.deletedAt) {
-      throw new AdminActionError("Cannot edit deleted user", "INVALID_STATE", 400);
+      throw new AdminActionError(
+        "Cannot edit deleted user",
+        "INVALID_STATE",
+        400
+      );
     }
 
     // Prepare update data
@@ -524,7 +591,11 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       const oldImageUrl = existingUser.image;
 
       // If image is changing and there's an old image, delete it from blob storage
-      if (oldImageUrl && oldImageUrl !== newImageUrl && isVercelBlobUrl(oldImageUrl)) {
+      if (
+        oldImageUrl &&
+        oldImageUrl !== newImageUrl &&
+        isVercelBlobUrl(oldImageUrl)
+      ) {
         try {
           await del(oldImageUrl);
         } catch (error) {
@@ -534,23 +605,20 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       }
 
       updateData.image = newImageUrl;
-
     }
 
     // Handle password change if provided
     if (validatedData.newPassword && validatedData.newPassword.length > 0) {
       const hashedPassword = await bcrypt.hash(validatedData.newPassword, 12);
       updateData.password = hashedPassword;
-
     }
 
     // Log role changes
     if (validatedData.role !== existingUser.role) {
-
     }
 
     // Update user
-    console.log("About to update user with data:", updateData);
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
@@ -573,7 +641,6 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
         },
       },
     });
-    console.log("User update successful:", updatedUser);
 
     // Revalidate relevant paths
     revalidatePath("/admin/users");
@@ -586,7 +653,9 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
         updatedAt: updatedUser.updatedAt.toISOString(),
       },
       success: true,
-      message: validatedData.newPassword ? "User profile and password updated successfully" : "User profile updated successfully",
+      message: validatedData.newPassword
+        ? "User profile and password updated successfully"
+        : "User profile updated successfully",
     };
   } catch (error: unknown) {
     console.error("Error editing user profile:", error);
@@ -597,14 +666,26 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
 
     // Check for specific error types (Prisma errors)
     const prismaError = error as { code?: string; message?: string };
-    if (prismaError?.code === 'P2025') {
-      throw new AdminActionError("User not found or already deleted", "NOT_FOUND", 404);
+    if (prismaError?.code === "P2025") {
+      throw new AdminActionError(
+        "User not found or already deleted",
+        "NOT_FOUND",
+        404
+      );
     }
 
-    if (prismaError?.code?.startsWith('P2')) {
-      throw new AdminActionError(`Database error: ${(error as Error).message}`, "DATABASE_ERROR", 500);
+    if (prismaError?.code?.startsWith("P2")) {
+      throw new AdminActionError(
+        `Database error: ${(error as Error).message}`,
+        "DATABASE_ERROR",
+        500
+      );
     }
 
-    throw new AdminActionError("Failed to edit user profile", "INTERNAL_ERROR", 500);
+    throw new AdminActionError(
+      "Failed to edit user profile",
+      "INTERNAL_ERROR",
+      500
+    );
   }
 }
