@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { navLinks, footerLinks } from "@/lib/constants";
+import { adminNavigation } from "@/app/(main)/_components/constants";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { memo } from "react";
@@ -77,6 +78,32 @@ function MobileNav() {
               </SheetClose>
             ))}
           </div>
+
+          {/* Admin Navigation Links - Only show for admin users */}
+          {user?.role === "ADMIN" && (
+            <>
+              <Separator className="my-4" />
+              <div className="space-y-1">
+                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Admin Panel
+                </div>
+                {adminNavigation.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <SheetClose asChild key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{link.name}</span>
+                      </Link>
+                    </SheetClose>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </nav>
 
         <Separator />
