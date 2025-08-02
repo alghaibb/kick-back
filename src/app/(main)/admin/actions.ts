@@ -60,7 +60,7 @@ export async function updateUser(
 
     // Prevent role escalation vulnerabilities
     if (updates.role && updates.role !== existingUser.role) {
-      console.info(`Admin role change: ${existingUser.role} -> ${updates.role} for user ${userId}`);
+
     }
 
     // Update user with transaction for data consistency
@@ -173,10 +173,8 @@ export async function deleteUser(userId: string) {
     }
 
     // Use transaction for data consistency
-    console.info(`Starting user deletion transaction for userId: ${userId}`);
     const result = await prisma.$transaction(async (tx) => {
       // Get user info before deletion
-      console.info(`Finding user with ID: ${userId}`);
       const user = await tx.user.findUnique({
         where: { id: userId },
         include: {
@@ -189,23 +187,17 @@ export async function deleteUser(userId: string) {
       });
 
       if (!user) {
-        console.error(`User not found with ID: ${userId}`);
         throw new AdminActionError("User not found", "NOT_FOUND", 404);
       }
 
-      console.info(`Found user: ${user.firstName} ${user.lastName} (${user.email})`);
-
       if (user.deletedAt) {
-        console.error(`User ${userId} is already deleted at: ${user.deletedAt}`);
         throw new AdminActionError("User is already deleted", "INVALID_STATE", 400);
       }
 
       // Handle group ownership transfers
-      console.info(`Processing group memberships for user ${userId}`);
       const groupsToTransfer = user.groupMembers.filter(
         (member) => member.role === "owner"
       );
-      console.info(`Found ${groupsToTransfer.length} groups owned by user ${userId}`);
 
       for (const member of groupsToTransfer) {
         const groupId = member.groupId;
@@ -233,20 +225,16 @@ export async function deleteUser(userId: string) {
             data: { createdBy: nextOwner.userId },
           });
 
-          console.info(`Transferred ownership of group ${groupId} from ${userId} to ${nextOwner.userId}`);
         } else {
           // No other members, mark group as inactive
           await tx.group.update({
             where: { id: groupId },
             data: { createdBy: "" },
           });
-
-          console.info(`Group ${groupId} marked as inactive (no members to transfer to)`);
         }
       }
 
       // Soft delete the user with proper data handling
-      console.info(`Performing soft delete for user ${userId}`);
       const deletedUser = await tx.user.update({
         where: { id: userId },
         data: {
@@ -259,7 +247,6 @@ export async function deleteUser(userId: string) {
           updatedAt: new Date(),
         },
       });
-      console.info(`Successfully soft deleted user ${userId}`);
 
       return {
         deletedUser,
@@ -283,14 +270,9 @@ export async function deleteUser(userId: string) {
       }
     };
   } catch (error: unknown) {
-    console.error("=== ERROR in deleteUser ===");
-    console.error("Error type:", (error as Error)?.constructor?.name);
-    console.error("Error message:", (error as Error)?.message);
-    console.error("Error stack:", (error as Error)?.stack);
-    console.error("Full error object:", error);
+    console.error("Error deleting user:", error);
 
     if (error instanceof AdminActionError) {
-      console.error("Re-throwing AdminActionError:", error.message, error.code);
       throw error;
     }
 
@@ -300,7 +282,6 @@ export async function deleteUser(userId: string) {
       throw new AdminActionError("User not found or already deleted", "NOT_FOUND", 404);
     }
     if (prismaError?.code?.startsWith('P2')) {
-      console.error("Prisma error code:", prismaError.code);
       throw new AdminActionError(`Database error: ${(error as Error).message}`, "DATABASE_ERROR", 500);
     }
 
@@ -545,35 +526,27 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       // If image is changing and there's an old image, delete it from blob storage
       if (oldImageUrl && oldImageUrl !== newImageUrl && isVercelBlobUrl(oldImageUrl)) {
         try {
-          console.info(`Deleting old Vercel Blob image for user ${userId}: ${oldImageUrl}`);
           await del(oldImageUrl);
-          console.info(`Successfully deleted old image: ${oldImageUrl}`);
         } catch (error) {
           console.error(`Failed to delete old image ${oldImageUrl}:`, error);
           // Continue with the update even if blob deletion fails
         }
-      } else if (oldImageUrl && oldImageUrl !== newImageUrl) {
-        console.info(`Skipping deletion of external image URL: ${oldImageUrl}`);
       }
 
       updateData.image = newImageUrl;
-      if (newImageUrl) {
-        console.info(`Admin image change for user ${userId}: ${newImageUrl}`);
-      } else {
-        console.info(`Admin image removal for user ${userId}`);
-      }
+
     }
 
     // Handle password change if provided
     if (validatedData.newPassword && validatedData.newPassword.length > 0) {
       const hashedPassword = await bcrypt.hash(validatedData.newPassword, 12);
       updateData.password = hashedPassword;
-      console.info(`Admin password change for user ${userId}`);
+
     }
 
     // Log role changes
     if (validatedData.role !== existingUser.role) {
-      console.info(`Admin role change: ${existingUser.role} -> ${validatedData.role} for user ${userId}`);
+
     }
 
     // Update user
@@ -616,14 +589,9 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       message: validatedData.newPassword ? "User profile and password updated successfully" : "User profile updated successfully",
     };
   } catch (error: unknown) {
-    console.error("=== ERROR in editUserProfile ===");
-    console.error("Error type:", (error as Error)?.constructor?.name);
-    console.error("Error message:", (error as Error)?.message);
-    console.error("Error stack:", (error as Error)?.stack);
-    console.error("Full error object:", error);
+    console.error("Error editing user profile:", error);
 
     if (error instanceof AdminActionError) {
-      console.error("Re-throwing AdminActionError:", error.message, error.code);
       throw error;
     }
 
@@ -634,7 +602,6 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
     }
 
     if (prismaError?.code?.startsWith('P2')) {
-      console.error("Prisma error code:", prismaError.code);
       throw new AdminActionError(`Database error: ${(error as Error).message}`, "DATABASE_ERROR", 500);
     }
 
