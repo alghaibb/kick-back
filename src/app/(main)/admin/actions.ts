@@ -590,11 +590,11 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       success: true,
       message: validatedData.newPassword ? "User profile and password updated successfully" : "User profile updated successfully",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("=== ERROR in editUserProfile ===");
-    console.error("Error type:", error?.constructor?.name);
-    console.error("Error message:", error?.message);
-    console.error("Error stack:", error?.stack);
+    console.error("Error type:", (error as Error)?.constructor?.name);
+    console.error("Error message:", (error as Error)?.message);
+    console.error("Error stack:", (error as Error)?.stack);
     console.error("Full error object:", error);
 
     if (error instanceof AdminActionError) {
@@ -603,13 +603,13 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
     }
 
     // Check for specific error types
-    if (error?.code === 'P2025') {
+    if ((error as any)?.code === 'P2025') {
       throw new AdminActionError("User not found or already deleted", "NOT_FOUND", 404);
     }
 
-    if (error?.code?.startsWith('P2')) {
-      console.error("Prisma error code:", error.code);
-      throw new AdminActionError(`Database error: ${error.message}`, "DATABASE_ERROR", 500);
+    if ((error as any)?.code?.startsWith('P2')) {
+      console.error("Prisma error code:", (error as any).code);
+      throw new AdminActionError(`Database error: ${(error as Error).message}`, "DATABASE_ERROR", 500);
     }
 
     throw new AdminActionError("Failed to edit user profile", "INTERNAL_ERROR", 500);

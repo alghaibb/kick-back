@@ -385,7 +385,7 @@ export function useEditUserProfile() {
         }
       });
     },
-    onError: (_err, { userId }, context) => {
+    onError: (_err, _variables, context) => {
       console.log("Edit user error, rolling back optimistic updates");
 
       // Rollback all queries to their previous state

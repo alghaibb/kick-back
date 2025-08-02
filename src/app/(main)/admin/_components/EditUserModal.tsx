@@ -31,6 +31,7 @@ import { z } from "zod";
 import { firstNameField } from "@/validations/fieldsSchema";
 import { useEffect, useMemo } from "react";
 import { useImageUploadForm } from "@/hooks/useImageUploadForm";
+import Image from "next/image";
 
 // Define the form schema directly in the component to avoid type conflicts
 const editUserFormSchema = z
@@ -332,9 +333,11 @@ export default function EditUserModal() {
                 {/* Current/Preview Image */}
                 {imageUpload.displayUrl && !imageUpload.isDeleted && (
                   <div className="relative">
-                    <img
+                    <Image
                       src={imageUpload.displayUrl}
                       alt="Profile"
+                      width={64}
+                      height={64}
                       className="w-16 h-16 rounded-full object-cover border"
                     />
                     <button

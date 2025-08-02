@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { firstNameField, lastNameField, nicknameField, passwordField } from "../fieldsSchema";
+import { firstNameField } from "../fieldsSchema";
 
 export const editUserSchema = z.object({
   firstName: firstNameField,
