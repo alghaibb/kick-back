@@ -61,7 +61,7 @@ async function fetchUsers(params: UsersParams): Promise<UsersResponse> {
   const searchParams = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
+    if (value !== undefined && value !== null && value !== "") {
       searchParams.append(key, String(value));
     }
   });
@@ -75,7 +75,7 @@ async function fetchUsers(params: UsersParams): Promise<UsersResponse> {
       {
         signal: controller.signal,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
@@ -84,7 +84,9 @@ async function fetchUsers(params: UsersParams): Promise<UsersResponse> {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      throw new Error(
+        errorData.error || `HTTP ${response.status}: ${response.statusText}`
+      );
     }
 
     return response.json();
@@ -92,28 +94,29 @@ async function fetchUsers(params: UsersParams): Promise<UsersResponse> {
     clearTimeout(timeoutId);
 
     if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout - please try again');
+      if (error.name === "AbortError") {
+        throw new Error("Request timeout - please try again");
       }
       throw error;
     }
 
-    throw new Error('Failed to fetch users');
+    throw new Error("Failed to fetch users");
   }
 }
 
 // Optimized hook with better caching strategy
 export function useAdminUsers(params: Omit<UsersParams, "page"> = {}) {
+  // Stable query key to prevent unnecessary re-renders
   const queryKey = ["admin", "users", params];
 
   return useQuery({
     queryKey,
     queryFn: () => fetchUsers({ ...params, page: 1 }),
     staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes (was cacheTime)
+    gcTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       // Don't retry on auth errors
-      if (error instanceof Error && error.message.includes('Forbidden')) {
+      if (error instanceof Error && error.message.includes("Forbidden")) {
         return false;
       }
       return failureCount < 3;
@@ -130,7 +133,9 @@ export function useAdminUsersInfinite(params: Omit<UsersParams, "page"> = {}) {
     queryKey: ["admin", "users", "infinite", params],
     queryFn: ({ pageParam = 1 }) => fetchUsers({ ...params, page: pageParam }),
     getNextPageParam: (lastPage) => {
-      return lastPage.pagination.hasNext ? lastPage.pagination.page + 1 : undefined;
+      return lastPage.pagination.hasNext
+        ? lastPage.pagination.page + 1
+        : undefined;
     },
     initialPageParam: 1,
     staleTime: 2 * 60 * 1000,
@@ -145,18 +150,24 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, updates }: { userId: string; updates: Record<string, unknown> }) => {
-      const response = await fetch('/api/admin/users', {
-        method: 'PATCH',
+    mutationFn: async ({
+      userId,
+      updates,
+    }: {
+      userId: string;
+      updates: Record<string, unknown>;
+    }) => {
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ userId, updates }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to update user');
+        throw new Error(errorData.error || "Failed to update user");
       }
 
       return response.json();
@@ -169,18 +180,21 @@ export function useUpdateUser() {
       const previousUsers = queryClient.getQueryData(["admin", "users"]);
 
       // Optimistically update
-      queryClient.setQueryData(["admin", "users"], (old: UsersResponse | undefined) => {
-        if (!old) return old;
+      queryClient.setQueryData(
+        ["admin", "users"],
+        (old: UsersResponse | undefined) => {
+          if (!old) return old;
 
-        return {
-          ...old,
-          users: old.users.map(user =>
-            user.id === userId
-              ? { ...user, ...updates, updatedAt: new Date().toISOString() }
-              : user
-          ),
-        };
-      });
+          return {
+            ...old,
+            users: old.users.map((user) =>
+              user.id === userId
+                ? { ...user, ...updates, updatedAt: new Date().toISOString() }
+                : user
+            ),
+          };
+        }
+      );
 
       return { previousUsers };
     },
@@ -212,18 +226,21 @@ export function useDeleteUser() {
       const previousUsers = queryClient.getQueryData(["admin", "users"]);
 
       // Optimistically remove user
-      queryClient.setQueryData(["admin", "users"], (old: UsersResponse | undefined) => {
-        if (!old) return old;
+      queryClient.setQueryData(
+        ["admin", "users"],
+        (old: UsersResponse | undefined) => {
+          if (!old) return old;
 
-        return {
-          ...old,
-          users: old.users.filter(user => user.id !== userId),
-          pagination: {
-            ...old.pagination,
-            total: old.pagination.total - 1,
-          },
-        };
-      });
+          return {
+            ...old,
+            users: old.users.filter((user) => user.id !== userId),
+            pagination: {
+              ...old.pagination,
+              total: old.pagination.total - 1,
+            },
+          };
+        }
+      );
 
       return { previousUsers };
     },
@@ -232,10 +249,13 @@ export function useDeleteUser() {
         queryClient.setQueryData(["admin", "users"], context.previousUsers);
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "deleted-users"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+    onSettled: async () => {
+      // Batch invalidate related queries for better performance
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin", "users"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "deleted-users"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "stats"] }),
+      ]);
     },
   });
 }
@@ -252,27 +272,36 @@ export function useRecoverUser() {
       await queryClient.cancelQueries({ queryKey: ["admin", "deleted-users"] });
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
 
-      const previousDeletedUsers = queryClient.getQueryData(["admin", "deleted-users"]);
+      const previousDeletedUsers = queryClient.getQueryData([
+        "admin",
+        "deleted-users",
+      ]);
       const previousUsers = queryClient.getQueryData(["admin", "users"]);
 
       // Remove from deleted users list
-      queryClient.setQueryData(["admin", "deleted-users"], (old: UsersResponse | undefined) => {
-        if (!old) return old;
-        return {
-          ...old,
-          users: old.users.filter((user: User) => user.id !== userId),
-          pagination: {
-            ...old.pagination,
-            total: old.pagination.total - 1,
-          },
-        };
-      });
+      queryClient.setQueryData(
+        ["admin", "deleted-users"],
+        (old: UsersResponse | undefined) => {
+          if (!old) return old;
+          return {
+            ...old,
+            users: old.users.filter((user: User) => user.id !== userId),
+            pagination: {
+              ...old.pagination,
+              total: old.pagination.total - 1,
+            },
+          };
+        }
+      );
 
       return { previousDeletedUsers, previousUsers };
     },
     onError: (_err, _variables, context) => {
       if (context?.previousDeletedUsers) {
-        queryClient.setQueryData(["admin", "deleted-users"], context.previousDeletedUsers);
+        queryClient.setQueryData(
+          ["admin", "deleted-users"],
+          context.previousDeletedUsers
+        );
       }
       if (context?.previousUsers) {
         queryClient.setQueryData(["admin", "users"], context.previousUsers);
@@ -291,7 +320,13 @@ export function useEditUserProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, data }: { userId: string; data: EditUserInput }) => {
+    mutationFn: async ({
+      userId,
+      data,
+    }: {
+      userId: string;
+      data: EditUserInput;
+    }) => {
       try {
         const result = await editUserProfileAction(userId, data);
         return result;
@@ -307,28 +342,35 @@ export function useEditUserProfile() {
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
 
       // Get all existing query data before updating
-      const allQueryData = queryClient.getQueriesData({ queryKey: ["admin", "users"] });
+      const allQueryData = queryClient.getQueriesData({
+        queryKey: ["admin", "users"],
+      });
 
       // Helper function to update user data
       const updateUser = (user: User) =>
         user.id === userId
           ? {
-            ...user,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            nickname: data.nickname,
-            role: data.role,
-            hasOnboarded: data.hasOnboarded,
-            image: data.image !== undefined ? data.image || null : user.image,
-            updatedAt: new Date().toISOString()
-          }
+              ...user,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              nickname: data.nickname,
+              role: data.role,
+              hasOnboarded: data.hasOnboarded,
+              image: data.image !== undefined ? data.image || null : user.image,
+              updatedAt: new Date().toISOString(),
+            }
           : user;
 
       // Update ALL queries that match the pattern
       allQueryData.forEach(([queryKey, queryData]) => {
         if (queryData) {
           // Handle infinite queries
-          if (queryKey.includes("infinite") && queryData && typeof queryData === 'object' && 'pages' in queryData) {
+          if (
+            queryKey.includes("infinite") &&
+            queryData &&
+            typeof queryData === "object" &&
+            "pages" in queryData
+          ) {
             const infiniteData = queryData as { pages: UsersResponse[] };
             queryClient.setQueryData(queryKey, {
               ...infiniteData,
@@ -339,7 +381,11 @@ export function useEditUserProfile() {
             });
           }
           // Handle regular queries
-          else if (queryData && typeof queryData === 'object' && 'users' in queryData) {
+          else if (
+            queryData &&
+            typeof queryData === "object" &&
+            "users" in queryData
+          ) {
             const regularData = queryData as UsersResponse;
             queryClient.setQueryData(queryKey, {
               ...regularData,
@@ -352,19 +398,29 @@ export function useEditUserProfile() {
       return { allQueryData };
     },
     onSuccess: (result, { userId }) => {
-      console.log("Edit user success, updating cache with server data:", result);
+      console.log(
+        "Edit user success, updating cache with server data:",
+        result
+      );
 
       // Update cache with actual server response
       const updateUserWithServerData = (user: User) =>
         user.id === userId ? { ...user, ...result.user } : user;
 
       // Update ALL queries with server data
-      const allQueryData = queryClient.getQueriesData({ queryKey: ["admin", "users"] });
+      const allQueryData = queryClient.getQueriesData({
+        queryKey: ["admin", "users"],
+      });
 
       allQueryData.forEach(([queryKey, queryData]) => {
         if (queryData) {
           // Handle infinite queries
-          if (queryKey.includes("infinite") && queryData && typeof queryData === 'object' && 'pages' in queryData) {
+          if (
+            queryKey.includes("infinite") &&
+            queryData &&
+            typeof queryData === "object" &&
+            "pages" in queryData
+          ) {
             const infiniteData = queryData as { pages: UsersResponse[] };
             queryClient.setQueryData(queryKey, {
               ...infiniteData,
@@ -375,7 +431,11 @@ export function useEditUserProfile() {
             });
           }
           // Handle regular queries
-          else if (queryData && typeof queryData === 'object' && 'users' in queryData) {
+          else if (
+            queryData &&
+            typeof queryData === "object" &&
+            "users" in queryData
+          ) {
             const regularData = queryData as UsersResponse;
             queryClient.setQueryData(queryKey, {
               ...regularData,

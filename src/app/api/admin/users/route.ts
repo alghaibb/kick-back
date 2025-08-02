@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search")?.trim() || "";
     const role = searchParams.get("role") || "";
     const sortBy = searchParams.get("sortBy") || "createdAt";
-    const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
+    const sortOrder =
+      (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
 
     const skip = (page - 1) * limit;
 
@@ -38,14 +39,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate sortBy to prevent SQL injection
-    const allowedSortFields = ["createdAt", "updatedAt", "firstName", "lastName", "email", "role"];
-    const validSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
+    const allowedSortFields = [
+      "createdAt",
+      "updatedAt",
+      "firstName",
+      "lastName",
+      "email",
+      "role",
+    ];
+    const validSortBy = allowedSortFields.includes(sortBy)
+      ? sortBy
+      : "createdAt";
 
-    // Get total count first for conditional logic
-    const totalCount = await prisma.user.count({ where });
-
-    // Optimized query with selective field loading
-    const [users] = await Promise.all([
+    // Execute count and data queries in parallel for better performance
+    const [users, totalCount] = await Promise.all([
       prisma.user.findMany({
         where,
         select: {
@@ -66,13 +73,15 @@ export async function GET(request: NextRequest) {
             },
           },
           // Use conditional loading for counts to improve performance
-          _count: search ? undefined : {
-            select: {
-              groupMembers: true,
-              eventComments: true,
-              contacts: true,
-            },
-          },
+          _count: search
+            ? undefined
+            : {
+                select: {
+                  groupMembers: true,
+                  eventComments: true,
+                  contacts: true,
+                },
+              },
         },
         orderBy: {
           [validSortBy]: sortOrder,
@@ -80,10 +89,11 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
       }),
+      prisma.user.count({ where }),
     ]);
 
     // Transform users to include hasPassword boolean without exposing actual password
-    const transformedUsers = users.map(user => ({
+    const transformedUsers = users.map((user) => ({
       ...user,
       hasPassword: Boolean(user.password), // Convert password to boolean
       password: undefined, // Remove actual password from response
@@ -114,7 +124,9 @@ export async function GET(request: NextRequest) {
     // Add cache headers for better performance
     response.headers.set(
       "Cache-Control",
-      search ? "private, no-cache" : "public, s-maxage=30, stale-while-revalidate=60"
+      search
+        ? "private, no-cache"
+        : "public, s-maxage=30, stale-while-revalidate=60"
     );
 
     return response;
@@ -146,7 +158,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { userId, updates } = body;
 
-    if (!userId || !updates || typeof updates !== 'object') {
+    if (!userId || !updates || typeof updates !== "object") {
       return NextResponse.json(
         { error: "User ID and valid updates are required" },
         { status: 400 }
@@ -154,13 +166,22 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Sanitize updates - only allow specific fields
-    const allowedUpdates = ['firstName', 'lastName', 'nickname', 'role', 'hasOnboarded'];
+    const allowedUpdates = [
+      "firstName",
+      "lastName",
+      "nickname",
+      "role",
+      "hasOnboarded",
+    ];
     const sanitizedUpdates = Object.keys(updates)
-      .filter(key => allowedUpdates.includes(key))
-      .reduce((obj, key) => {
-        obj[key] = updates[key];
-        return obj;
-      }, {} as Record<string, unknown>);
+      .filter((key) => allowedUpdates.includes(key))
+      .reduce(
+        (obj, key) => {
+          obj[key] = updates[key];
+          return obj;
+        },
+        {} as Record<string, unknown>
+      );
 
     if (Object.keys(sanitizedUpdates).length === 0) {
       return NextResponse.json(
@@ -208,7 +229,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       user: updatedUser,
-      message: "User updated successfully"
+      message: "User updated successfully",
     });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -222,10 +243,7 @@ export async function PATCH(request: NextRequest) {
       }
 
       if (error.message.includes("Record to update not found")) {
-        return NextResponse.json(
-          { error: "User not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
     }
 

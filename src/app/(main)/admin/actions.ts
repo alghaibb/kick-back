@@ -113,9 +113,12 @@ export async function updateUser(
       });
     });
 
-    // Revalidate relevant paths
-    const pathsToRevalidate = ["/dashboard", "/admin/users", "/admin"];
-    pathsToRevalidate.forEach((path) => revalidatePath(path));
+    // Batch revalidate relevant paths
+    await Promise.all([
+      revalidatePath("/dashboard"),
+      revalidatePath("/admin/users"),
+      revalidatePath("/admin"),
+    ]);
 
     return {
       user: {
@@ -295,13 +298,12 @@ export async function deleteUser(userId: string) {
       };
     });
 
-    // Revalidate paths
-    const pathsToRevalidate = [
-      "/admin/deleted-users",
-      "/admin/users",
-      "/admin",
-    ];
-    pathsToRevalidate.forEach((path) => revalidatePath(path));
+    // Batch revalidate paths
+    await Promise.all([
+      revalidatePath("/admin/deleted-users"),
+      revalidatePath("/admin/users"),
+      revalidatePath("/admin"),
+    ]);
 
     return {
       success: true,
@@ -460,13 +462,12 @@ export async function recoverUser(userId: string) {
       return { recoveredUser, recoveredGroups };
     });
 
-    // Revalidate paths
-    const pathsToRevalidate = [
-      "/admin/deleted-users",
-      "/admin/users",
-      "/admin",
-    ];
-    pathsToRevalidate.forEach((path) => revalidatePath(path));
+    // Batch revalidate paths
+    await Promise.all([
+      revalidatePath("/admin/deleted-users"),
+      revalidatePath("/admin/users"),
+      revalidatePath("/admin"),
+    ]);
 
     return {
       success: true,

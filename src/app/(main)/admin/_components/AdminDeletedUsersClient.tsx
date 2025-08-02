@@ -61,24 +61,38 @@ interface DeletedUser {
 // Static header component
 function AdminDeletedUsersHeader() {
   return (
-    <div className="mb-6 md:mb-8">
-      <Button asChild variant="ghost" className="mb-3 md:mb-4">
+    <div className="mb-8 md:mb-10">
+      <Button
+        asChild
+        variant="ghost"
+        className="mb-4 md:mb-6 hover:bg-primary/5 transition-colors"
+      >
         <Link href="/admin">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Admin
         </Link>
       </Button>
-      <div className="flex items-center justify-between mb-3 md:mb-4">
-        <div className="flex items-center gap-2 md:gap-3">
-          <div className="p-1.5 md:p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
-            <Trash2 className="h-4 w-4 md:h-5 md:w-5 text-red-600 dark:text-red-400" />
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/30 backdrop-blur-xl p-6 md:p-8 shadow-2xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 via-transparent to-destructive/5 pointer-events-none" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-destructive/20 blur-xl" />
+              <div className="relative h-12 w-12 md:h-14 md:w-14 bg-gradient-to-br from-destructive to-destructive/80 rounded-2xl flex items-center justify-center shadow-lg">
+                <Trash2 className="h-6 w-6 md:h-7 md:w-7 text-destructive-foreground" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                Deleted Users
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground/90 mt-1">
+                View and recover deleted user accounts across the platform.
+              </p>
+            </div>
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold">Deleted Users</h1>
         </div>
       </div>
-      <p className="text-sm md:text-base text-muted-foreground">
-        View and recover deleted user accounts.
-      </p>
     </div>
   );
 }
@@ -133,19 +147,20 @@ function AdminDeletedUsersData({
 
   return (
     <>
-      {/* Filters and Search */}
-      <Card className="mb-6">
-        <CardContent className="p-4 md:p-6">
+      {/* Modern Filters and Search */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/30 backdrop-blur-sm p-5 md:p-6 shadow-lg mb-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 via-transparent to-destructive/5 pointer-events-none" />
+        <div className="relative z-10">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/60 group-hover:text-destructive transition-colors" />
                 <Input
-                  placeholder="Search deleted users..."
+                  placeholder="Search deleted users by name, email, or nickname..."
                   value={search as string}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-background/50 border-border/50 focus:bg-background focus:border-destructive/50 transition-all"
                 />
               </div>
             </div>
@@ -153,7 +168,7 @@ function AdminDeletedUsersData({
             {/* Sort By */}
             <div className="w-full md:w-48">
               <Select value={sortBy as string} onValueChange={handleSortBy}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-background/50 border-border/50 hover:bg-background hover:border-destructive/50 transition-all">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -170,138 +185,149 @@ function AdminDeletedUsersData({
               <Button
                 variant="outline"
                 onClick={handleSortOrder}
-                className="w-full md:w-auto"
+                className="w-full md:w-auto bg-background/50 border-border/50 hover:bg-background hover:border-destructive/50 transition-all"
               >
                 {sortOrder === "asc" ? "↑ Ascending" : "↓ Descending"}
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            Deleted Users ({pagination.total})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User ID</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Activity</TableHead>
-                  <TableHead>Deleted Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="text-sm font-mono text-muted-foreground">
-                        {user.id}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.image || undefined} />
-                          <AvatarFallback>
-                            {getInitials(user.firstName, user.lastName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">
-                            {user.firstName} {user.lastName}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {user.email}
-                          </div>
-                          {user.nickname && (
-                            <div className="text-xs text-muted-foreground">
-                              @{user.nickname}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          user.role === "ADMIN" ? "default" : "secondary"
-                        }
-                      >
-                        {user.role === "ADMIN" ? (
-                          <>
-                            <Shield className="mr-1 h-3 w-3" />
-                            Admin
-                          </>
-                        ) : (
-                          <>
-                            <User className="mr-1 h-3 w-3" />
-                            User
-                          </>
-                        )}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {user._count?.groupMembers ?? 0}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="h-3 w-3" />
-                          {user._count?.eventComments ?? 0}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm text-muted-foreground">
-                        {formatDate(user.deletedAt, { format: "short" })}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="destructive">Deleted</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handleRecoverUser(
-                            user.id,
-                            `${user.firstName} ${user.lastName || ""}`
-                          )
-                        }
-                      >
-                        <RotateCcw className="mr-2 h-3 w-3" />
-                        Recover
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Loading indicator for fetching next page */}
-          {isFetchingNextPage && (
-            <div className="flex items-center justify-center py-4 border-t">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                Loading more users...
+      {/* Modern Users Table */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/30 backdrop-blur-sm shadow-xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-destructive/5 pointer-events-none" />
+        <div className="relative z-10">
+          <CardHeader className="border-b border-border/50 bg-card/50 pb-4 pt-6">
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl font-semibold">Deleted Users</span>
+                <Badge className="bg-destructive/10 text-destructive border-destructive/20">
+                  {pagination.total} total
+                </Badge>
               </div>
+              <Badge variant="secondary" className="text-xs">
+                Page {pagination.page} of {pagination.totalPages}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User ID</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Activity</TableHead>
+                    <TableHead>Deleted Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="text-sm font-mono text-muted-foreground">
+                          {user.id}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.image || undefined} />
+                            <AvatarFallback>
+                              {getInitials(user.firstName, user.lastName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">
+                              {user.firstName} {user.lastName}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {user.email}
+                            </div>
+                            {user.nickname && (
+                              <div className="text-xs text-muted-foreground">
+                                @{user.nickname}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            user.role === "ADMIN" ? "default" : "secondary"
+                          }
+                        >
+                          {user.role === "ADMIN" ? (
+                            <>
+                              <Shield className="mr-1 h-3 w-3" />
+                              Admin
+                            </>
+                          ) : (
+                            <>
+                              <User className="mr-1 h-3 w-3" />
+                              User
+                            </>
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {user._count?.groupMembers ?? 0}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MessageSquare className="h-3 w-3" />
+                            {user._count?.eventComments ?? 0}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-muted-foreground">
+                          {formatDate(user.deletedAt, { format: "short" })}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="destructive">Deleted</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleRecoverUser(
+                              user.id,
+                              `${user.firstName} ${user.lastName || ""}`
+                            )
+                          }
+                        >
+                          <RotateCcw className="mr-2 h-3 w-3" />
+                          Recover
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {/* Loading indicator for fetching next page */}
+            {isFetchingNextPage && (
+              <div className="flex items-center justify-center py-4 border-t">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Loading more users...
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </div>
+      </div>
 
       {/* Load More / Pagination Info */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
@@ -386,8 +412,8 @@ export function AdminDeletedUsersClient() {
 
   if (error) {
     return (
-      <div className="relative pt-16 md:pt-24 pb-16">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+      <div className="relative min-h-screen bg-gradient-to-br from-background via-background to-muted/10 pt-16 md:pt-20 pb-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
           <AdminDeletedUsersHeader />
           <div className="flex items-center justify-center h-64">
             <p className="text-muted-foreground">
@@ -400,8 +426,8 @@ export function AdminDeletedUsersClient() {
   }
 
   return (
-    <div className="relative pt-16 md:pt-24 pb-16">
-      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+    <div className="relative min-h-screen bg-gradient-to-br from-background via-background to-muted/10 pt-16 md:pt-20 pb-16">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
         <AdminDeletedUsersHeader />
         {isLoading ? (
           <AdminDeletedUsersSkeleton />

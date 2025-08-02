@@ -84,32 +84,56 @@ export function AdminContactsClient() {
   const totalContacts = data?.pages[0]?.pagination.total || 0;
 
   return (
-    <div className="relative pt-16 md:pt-24 pb-16">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
-        {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <Button asChild variant="ghost" className="mb-3 md:mb-4">
+    <div className="relative min-h-screen bg-gradient-to-br from-background via-background to-muted/10 pt-16 md:pt-20 pb-16">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
+        {/* Modern Header */}
+        <div className="mb-8 md:mb-10">
+          <Button
+            asChild
+            variant="ghost"
+            className="mb-4 md:mb-6 hover:bg-primary/5 transition-colors"
+          >
             <Link href="/admin">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Admin
             </Link>
           </Button>
-          <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-            <div className="p-1.5 md:p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-              <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
+          <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/30 backdrop-blur-xl p-6 md:p-8 shadow-2xl">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-blue-500/5 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-blue-500/20 blur-xl" />
+                  <div className="relative h-12 w-12 md:h-14 md:w-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <MessageSquare className="h-6 w-6 md:h-7 md:w-7 text-blue-foreground" />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                    Contact Messages
+                  </h1>
+                  <p className="text-sm md:text-base text-muted-foreground/90 mt-1">
+                    View and manage user contact form submissions.
+                  </p>
+                </div>
+              </div>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold">Contact Messages</h1>
           </div>
-          <p className="text-sm md:text-base text-muted-foreground">
-            View and manage contact form submissions.
-          </p>
         </div>
+      </div>
 
-        {/* Contacts List */}
-        <Card>
-          <CardHeader>
+      {/* Modern Contacts List */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/30 backdrop-blur-sm shadow-xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-500/5 pointer-events-none" />
+        <div className="relative z-10">
+          <CardHeader className="border-b border-border/50 bg-card/50 pb-4 pt-6">
             <CardTitle className="flex items-center justify-between">
-              <span>Messages ({totalContacts})</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xl font-semibold">Messages</span>
+                <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                  {totalContacts} total
+                </Badge>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -198,7 +222,7 @@ export function AdminContactsClient() {
               </div>
             )}
           </CardContent>
-        </Card>
+        </div>
       </div>
     </div>
   );

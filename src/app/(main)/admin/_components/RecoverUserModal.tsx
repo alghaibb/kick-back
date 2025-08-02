@@ -1,7 +1,7 @@
 "use client";
 
 import { GenericModal } from "@/components/ui/generic-modal";
-import { Button } from "@/components/ui/button";
+import { Button, LoadingButton } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
 import { useRecoverUser } from "@/hooks/queries/useAdminDeletedUsers";
 import { RotateCcw, CheckCircle } from "lucide-react";
@@ -32,39 +32,44 @@ export function RecoverUserModal() {
       showCancel={false}
       onCancel={close}
     >
-      <div className="flex flex-col gap-4 p-6">
-        <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-          <div className="text-sm text-green-700 dark:text-green-300">
-            <p className="font-medium">Recovery Information</p>
-            <p>
-              This will restore the user&apos;s account, including their
-              profile, groups, events, and all associated data.
-            </p>
+      <div className="flex flex-col gap-6 p-6">
+        <div className="relative overflow-hidden rounded-xl border border-green-200/50 bg-green-50/50 p-4 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-green-500/5 pointer-events-none" />
+          <div className="relative z-10 flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-green-500/20 blur-lg" />
+              <div className="relative h-10 w-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <CheckCircle className="h-5 w-5 text-green-foreground" />
+              </div>
+            </div>
+            <div className="text-sm">
+              <p className="font-semibold text-green-700 mb-1">
+                Recovery Information
+              </p>
+              <p className="text-green-600 leading-relaxed">
+                This will restore the user&apos;s account, including their
+                profile, groups, events, and all associated data.
+              </p>
+            </div>
           </div>
         </div>
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={close}>
+          <Button
+            variant="outline"
+            onClick={close}
+            className="hover:bg-muted/50 transition-colors"
+          >
             Cancel
           </Button>
-          <Button
+          <LoadingButton
             variant="default"
             onClick={handleRecover}
-            disabled={recoverUserMutation.isPending}
+            loading={recoverUserMutation.isPending}
+            icon={<RotateCcw className="h-4 w-4" />}
           >
-            {recoverUserMutation.isPending ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Recovering...
-              </>
-            ) : (
-              <>
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Recover User
-              </>
-            )}
-          </Button>
+            Recover User
+          </LoadingButton>
         </div>
       </div>
     </GenericModal>
