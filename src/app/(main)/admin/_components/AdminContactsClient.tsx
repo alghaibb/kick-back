@@ -126,22 +126,25 @@ export function AdminContactsClient() {
       <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/30 backdrop-blur-sm shadow-xl">
         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-500/5 pointer-events-none" />
         <div className="relative z-10">
-          <CardHeader className="border-b border-border/50 bg-card/50 pb-4 pt-6">
+          <CardHeader className="border-b border-border/50 bg-card/50 pb-6 pt-6">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-xl font-semibold">Messages</span>
+                <span className="text-xl font-semibold">Contact Messages</span>
                 <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                  {totalContacts} total
+                  {totalContacts} {totalContacts === 1 ? 'message' : 'messages'}
                 </Badge>
               </div>
             </CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Each message shows the sender's name, email, subject, and full message content.
+            </p>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               {contacts.map((contact: Contact) => (
-                <div key={contact.id} className="p-4 md:p-6">
+                <div key={contact.id} className="p-6 md:p-8 hover:bg-muted/20 transition-colors">
                   <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3 md:gap-4 flex-1">
+                    <div className="flex items-start gap-4 md:gap-6 flex-1">
                       <Avatar className="h-10 w-10 md:h-12 md:w-12">
                         <AvatarImage
                           src={contact.user?.image ?? undefined}
@@ -152,8 +155,9 @@ export function AdminContactsClient() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium text-sm md:text-base">
+                        {/* Header with name, email, and user status */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <h3 className="font-semibold text-base md:text-lg text-foreground">
                             {contact.firstName} {contact.lastName}
                           </h3>
                           {contact.user && (
@@ -163,22 +167,41 @@ export function AdminContactsClient() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          {contact.email}
-                        </p>
-                        <h4 className="font-medium text-sm md:text-base mb-2">
-                          {contact.subject}
-                        </h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {contact.message}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {formatDate(contact.createdAt, {
-                            includeTime: true,
-                            format: "default",
-                            locale: "en-GB",
-                          })}
-                        </p>
+                        
+                        {/* Email */}
+                        <div className="mb-3">
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium text-foreground">Email:</span> {contact.email}
+                          </p>
+                        </div>
+
+                        {/* Subject */}
+                        <div className="mb-3">
+                          <h4 className="font-semibold text-base text-foreground mb-1">
+                            Subject: {contact.subject}
+                          </h4>
+                        </div>
+
+                        {/* Message */}
+                        <div className="mb-3">
+                          <p className="text-sm font-medium text-foreground mb-2">Message:</p>
+                          <div className="bg-muted/30 rounded-lg p-3 border border-border/50">
+                            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                              {contact.message}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Timestamp */}
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-muted-foreground">
+                            Sent on {formatDate(contact.createdAt, {
+                              includeTime: true,
+                              format: "default",
+                              locale: "en-GB",
+                            })}
+                          </p>
+                        </div>
                       </div>
                     </div>
                     <DropdownMenu>
