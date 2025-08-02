@@ -47,7 +47,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { AdminUsersSkeleton } from "./AdminUsersSkeleton";
 import { useFilters } from "@/providers/FilterProvider";
 import { useModal } from "@/hooks/use-modal";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date-utils";
 
 interface User {
   id: string;
@@ -324,7 +324,7 @@ function AdminUsersData() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
-                        {format(new Date(user.createdAt), "MMM d, yyyy")}
+                        {formatDate(user.createdAt, { format: "short" })}
                       </div>
                     </TableCell>
                     <TableCell>

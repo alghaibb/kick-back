@@ -6,6 +6,7 @@ export const formatDate = (
     weekdayFormat?: "short" | "long" | "narrow";
     timeZone?: string;
     locale?: string;
+    format?: "short" | "long" | "default";
   } = {}
 ) => {
   const dateObj = typeof date === "string" ? new Date(date) : date;
@@ -14,14 +15,27 @@ export const formatDate = (
     includeTime = false,
     weekdayFormat = "short",
     timeZone,
-    locale = "en-US"
+    locale = "en-US",
+    format = "default",
   } = options;
 
-  const formatOptions: Intl.DateTimeFormatOptions = {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  };
+  const formatOptions: Intl.DateTimeFormatOptions = {};
+
+  // Set format based on preference
+  if (format === "short") {
+    formatOptions.year = "2-digit";
+    formatOptions.month = "numeric";
+    formatOptions.day = "numeric";
+  } else if (format === "long") {
+    formatOptions.year = "numeric";
+    formatOptions.month = "long";
+    formatOptions.day = "numeric";
+  } else {
+    // default format
+    formatOptions.year = "numeric";
+    formatOptions.month = "short";
+    formatOptions.day = "numeric";
+  }
 
   if (timeZone) {
     formatOptions.timeZone = timeZone;
