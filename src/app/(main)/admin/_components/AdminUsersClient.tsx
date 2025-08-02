@@ -42,10 +42,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
-import {
-  useAdminUsers,
-  useUpdateUser,
-} from "@/hooks/queries/useAdminUsers";
+import { useAdminUsers, useUpdateUser } from "@/hooks/queries/useAdminUsers";
 import { useAuth } from "@/hooks/use-auth";
 import { AdminUsersSkeleton } from "./AdminUsersSkeleton";
 import { useFilters } from "@/providers/FilterProvider";
@@ -269,6 +266,7 @@ export function AdminUsersClient() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>User ID</TableHead>
                     <TableHead>User</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Activity</TableHead>
@@ -280,6 +278,11 @@ export function AdminUsersClient() {
                 <TableBody>
                   {users.map((user) => (
                     <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="text-sm font-mono text-muted-foreground">
+                          {user.id}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">

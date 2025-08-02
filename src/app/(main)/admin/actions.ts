@@ -192,14 +192,41 @@ export async function recoverUser(userId: string) {
     // Restore the user's original email and name
     const originalEmail = deletedUser.email.replace(/^deleted_\d+_/, "");
 
+    // For users deleted before we added original name fields, use a better fallback
+    let firstName = deletedUser.originalFirstName;
+    let lastName = deletedUser.originalLastName;
+
+    // If original name fields are null (legacy users), try to extract from email
+    if (!firstName || !lastName) {
+      // Try to extract name from email (e.g., john.doe@gmail.com -> John Doe)
+      const emailName = originalEmail.split("@")[0];
+      if (emailName) {
+        const nameParts = emailName.split(/[._-]/);
+        if (nameParts.length >= 2) {
+          firstName =
+            nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
+          lastName =
+            nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1);
+        } else {
+          firstName =
+            nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
+          lastName = null;
+        }
+      } else {
+        // Final fallback - could be enhanced with admin prompt system
+        firstName = "Recovered";
+        lastName = "User";
+      }
+    }
+
     await prisma.user.update({
       where: { id: userId },
       data: {
         deletedAt: null,
         permanentlyDeletedAt: null,
         email: originalEmail,
-        firstName: deletedUser.originalFirstName || "Recovered",
-        lastName: deletedUser.originalLastName || "User",
+        firstName: firstName,
+        lastName: lastName,
         originalFirstName: null,
         originalLastName: null,
       },

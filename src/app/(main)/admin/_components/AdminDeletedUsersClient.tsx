@@ -85,12 +85,7 @@ export function AdminDeletedUsersClient() {
     updateFilter("sortOrder", newOrder);
   };
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useAdminDeletedUsers({
+  const { data, isLoading, error, refetch } = useAdminDeletedUsers({
     search: search as string,
     sortBy: sortBy as string,
     sortOrder: sortOrder as "asc" | "desc",
@@ -215,6 +210,7 @@ export function AdminDeletedUsersClient() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>User ID</TableHead>
                     <TableHead>User</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Activity</TableHead>
@@ -226,6 +222,11 @@ export function AdminDeletedUsersClient() {
                 <TableBody>
                   {users.map((user) => (
                     <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="text-sm font-mono text-muted-foreground">
+                          {user.id}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
