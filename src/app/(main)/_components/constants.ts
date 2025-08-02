@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Shield,
   Trash2,
+  BarChart3,
 } from "lucide-react";
 
 export const navigation = [
@@ -19,7 +20,8 @@ export const navigation = [
 ] as const;
 
 export const adminNavigation = [
-  { name: "Admin Panel", href: "/admin", icon: Shield },
+  { name: "Admin Panel", href: "", icon: Shield },
+  { name: "Admin Dashboard", href: "/admin", icon: BarChart3 },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Deleted Users", href: "/admin/deleted-users", icon: Trash2 },
 ] as const;

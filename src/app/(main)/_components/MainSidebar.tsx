@@ -131,16 +131,13 @@ export function MainSidebar({ isMobile, onNavigate }: MainSidebarProps) {
                 <Button
                   variant="ghost"
                   className="w-full justify-between group"
-                  asChild
                 >
-                  <Link href="/admin" onClick={handleNavClick}>
-                    <div className="flex items-center">
-                      <Shield className="mr-3 h-4 w-4" />
-                      Admin Panel
-                    </div>
-                    <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:hidden" />
-                    <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=closed]:hidden" />
-                  </Link>
+                  <div className="flex items-center">
+                    <Shield className="mr-3 h-4 w-4" />
+                    Admin Panel
+                  </div>
+                  <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:hidden" />
+                  <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=closed]:hidden" />
                 </Button>
               </CollapsibleTrigger>
 
