@@ -245,10 +245,10 @@ export function useRecoverUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async ({ userId }: { userId: string }) => {
       return recoverUserAction(userId);
     },
-    onMutate: async (userId) => {
+    onMutate: async ({ userId }) => {
       await queryClient.cancelQueries({ queryKey: ["admin", "deleted-users"] });
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
 
@@ -270,7 +270,7 @@ export function useRecoverUser() {
 
       return { previousDeletedUsers, previousUsers };
     },
-    onError: (err, userId, context) => {
+    onError: (_err, { userId: _userId }, context) => {
       if (context?.previousDeletedUsers) {
         queryClient.setQueryData(["admin", "deleted-users"], context.previousDeletedUsers);
       }

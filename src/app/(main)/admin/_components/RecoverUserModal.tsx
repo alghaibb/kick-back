@@ -17,7 +17,7 @@ export function RecoverUserModal() {
   const handleRecover = async () => {
     if (!data.userId) return;
     try {
-      await recoverUserMutation.mutateAsync(data.userId);
+      await recoverUserMutation.mutateAsync({ userId: data.userId });
       close();
     } catch (error) {
       console.error("Error recovering user:", error);
