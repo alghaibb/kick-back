@@ -41,6 +41,7 @@ async function fetchAdminStats(): Promise<AdminStats> {
     return data;
   } catch (error) {
     clearTimeout(timeoutId);
+    console.error("Failed to fetch admin stats:", error);
 
     if (error instanceof Error) {
       if (error.name === 'AbortError') {

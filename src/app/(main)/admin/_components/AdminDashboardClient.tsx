@@ -37,6 +37,7 @@ export function AdminDashboardClient() {
       await refreshStats();
       toast.success("Stats refreshed successfully");
     } catch (error) {
+      console.error("Failed to refresh admin stats:", error);
       toast.error("Failed to refresh stats");
     } finally {
       setIsRefreshing(false);

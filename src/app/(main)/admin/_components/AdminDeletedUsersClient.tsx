@@ -27,7 +27,6 @@ import {
   User,
   Calendar,
   MessageSquare,
-  ChevronLeft,
   ChevronRight,
   RotateCcw,
   Trash2,
@@ -130,10 +129,6 @@ function AdminDeletedUsersData({
 
   const handleSortOrder = () => {
     updateFilters({ sortOrder: sortOrder === "asc" ? "desc" : "asc" });
-  };
-
-  const handleRefresh = () => {
-    refetch();
   };
 
   return (

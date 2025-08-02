@@ -3,8 +3,15 @@ import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
 
 // Cache stats for 2 minutes to reduce database load
+interface StatsData {
+  totalUsers: number;
+  activeEvents: number;
+  contactMessages: number;
+  totalGroups: number;
+}
+
 let statsCache: {
-  data: any;
+  data: StatsData;
   timestamp: number;
 } | null = null;
 
@@ -132,6 +139,7 @@ export async function DELETE() {
     statsCache = null;
     return NextResponse.json({ message: "Cache cleared successfully" });
   } catch (error) {
+    console.error("Error clearing admin stats cache:", error);
     return NextResponse.json(
       { error: "Failed to clear cache" },
       { status: 500 }

@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { requireAdminWithAudit, canManageUser, validateAdminAction } from "@/lib/admin-auth";
-import { del } from "@vercel/blob";
 
 // Enhanced error handling and logging
 class AdminActionError extends Error {

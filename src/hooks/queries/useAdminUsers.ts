@@ -5,7 +5,6 @@ import {
   useQuery,
 } from "@tanstack/react-query";
 import {
-  updateUser as updateUserAction,
   deleteUser as deleteUserAction,
   recoverUser as recoverUserAction,
 } from "@/app/(main)/admin/actions";
@@ -181,7 +180,7 @@ export function useUpdateUser() {
 
       return { previousUsers };
     },
-    onError: (err, variables, context) => {
+    onError: (_err, _variables, context) => {
       // Rollback on error
       if (context?.previousUsers) {
         queryClient.setQueryData(["admin", "users"], context.previousUsers);
@@ -253,7 +252,7 @@ export function useRecoverUser() {
       const previousUsers = queryClient.getQueryData(["admin", "users"]);
 
       // Remove from deleted users list
-      queryClient.setQueryData(["admin", "deleted-users"], (old: any) => {
+      queryClient.setQueryData(["admin", "deleted-users"], (old: UsersResponse | undefined) => {
         if (!old) return old;
         return {
           ...old,

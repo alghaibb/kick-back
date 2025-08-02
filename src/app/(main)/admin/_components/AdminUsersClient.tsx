@@ -164,10 +164,6 @@ function AdminUsersData({
     updateFilters({ sortOrder: sortOrder === "asc" ? "desc" : "asc" });
   };
 
-  const handleRefresh = () => {
-    refetch();
-  };
-
   return (
     <>
       {/* Filters and Search */}
