@@ -37,7 +37,6 @@ export async function updateUser(
     revalidatePath("/dashboard");
     revalidatePath("/admin/users");
     revalidatePath("/admin");
-    
 
     return {
       user: {
@@ -95,9 +94,9 @@ export async function deleteUser(userId: string) {
       where: { id: userId },
       include: {
         groupMembers: {
-          include: { group: true }
-        }
-      }
+          include: { group: true },
+        },
+      },
     });
 
     if (!user) {
@@ -105,38 +104,40 @@ export async function deleteUser(userId: string) {
     }
 
     // Handle group ownership transfers
-    const groupsToTransfer = user.groupMembers.filter(member => member.role === "owner");
-    
+    const groupsToTransfer = user.groupMembers.filter(
+      (member) => member.role === "owner"
+    );
+
     for (const member of groupsToTransfer) {
       const groupId = member.groupId;
-      
+
       // Find the next oldest member to transfer ownership to
       const nextOwner = await prisma.groupMember.findFirst({
         where: {
           groupId: groupId,
           userId: { not: userId },
-          role: { not: "owner" }
+          role: { not: "owner" },
         },
-        orderBy: { joinedAt: "asc" }
+        orderBy: { joinedAt: "asc" },
       });
 
       if (nextOwner) {
         // Transfer ownership to the next oldest member
         await prisma.groupMember.update({
           where: { id: nextOwner.id },
-          data: { role: "owner" }
+          data: { role: "owner" },
         });
 
         // Update group createdBy field
         await prisma.group.update({
           where: { id: groupId },
-          data: { createdBy: nextOwner.userId }
+          data: { createdBy: nextOwner.userId },
         });
       } else {
         // No other members, mark group as inactive by setting createdBy to empty string
         await prisma.group.update({
           where: { id: groupId },
-          data: { createdBy: "" }
+          data: { createdBy: "" },
         });
       }
     }
@@ -144,12 +145,14 @@ export async function deleteUser(userId: string) {
     // Soft delete the user
     await prisma.user.update({
       where: { id: userId },
-      data: { 
+      data: {
         deletedAt: new Date(),
         email: `deleted_${Date.now()}_${user.email}`, // Make email unique
+        originalFirstName: user.firstName,
+        originalLastName: user.lastName,
         firstName: "Deleted",
-        lastName: "User"
-      }
+        lastName: "User",
+      },
     });
 
     revalidatePath("/admin/deleted-users");
@@ -177,9 +180,9 @@ export async function recoverUser(userId: string) {
       where: { id: userId },
       include: {
         groupMembers: {
-          include: { group: true }
-        }
-      }
+          include: { group: true },
+        },
+      },
     });
 
     if (!deletedUser || !deletedUser.deletedAt) {
@@ -187,34 +190,39 @@ export async function recoverUser(userId: string) {
     }
 
     // Restore the user's original email and name
-    const originalEmail = deletedUser.email.replace(/^deleted_\d+_/, '');
-    
+    const originalEmail = deletedUser.email.replace(/^deleted_\d+_/, "");
+
     await prisma.user.update({
       where: { id: userId },
-      data: { 
+      data: {
         deletedAt: null,
+        permanentlyDeletedAt: null,
         email: originalEmail,
-        firstName: "Recovered",
-        lastName: "User"
-      }
+        firstName: deletedUser.originalFirstName || "Recovered",
+        lastName: deletedUser.originalLastName || "User",
+        originalFirstName: null,
+        originalLastName: null,
+      },
     });
 
     // Handle group ownership recovery
-    const groupsToRecover = deletedUser.groupMembers.filter(member => member.role === "owner");
-    
+    const groupsToRecover = deletedUser.groupMembers.filter(
+      (member) => member.role === "owner"
+    );
+
     for (const member of groupsToRecover) {
       const groupId = member.groupId;
-      
+
       // Check if the group currently has no owner (createdBy is empty)
       const group = await prisma.group.findUnique({
-        where: { id: groupId }
+        where: { id: groupId },
       });
 
       if (group && group.createdBy === "") {
         // Restore ownership to the recovered user
         await prisma.group.update({
           where: { id: groupId },
-          data: { createdBy: userId }
+          data: { createdBy: userId },
         });
       }
       // If group has a current owner, leave it as is to avoid conflicts

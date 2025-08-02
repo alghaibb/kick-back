@@ -195,6 +195,8 @@ export async function deleteAccountAction() {
         deletedAt: new Date(),
         permanentlyDeletedAt: permanentlyDeletedAt,
         email: `deleted_${Date.now()}_${user.email}`, // Make email unique
+        originalFirstName: user.firstName,
+        originalLastName: user.lastName,
         firstName: "Deleted",
         lastName: "User",
       },
@@ -249,8 +251,10 @@ export async function recoverAccountAction() {
         deletedAt: null,
         permanentlyDeletedAt: null,
         email: originalEmail,
-        firstName: "Recovered",
-        lastName: "User",
+        firstName: deletedUser.originalFirstName || "Recovered",
+        lastName: deletedUser.originalLastName || "User",
+        originalFirstName: null,
+        originalLastName: null,
       },
     });
 
