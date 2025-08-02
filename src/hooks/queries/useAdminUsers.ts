@@ -270,7 +270,7 @@ export function useRecoverUser() {
 
       return { previousDeletedUsers, previousUsers };
     },
-    onError: (_err, { userId: _userId }, context) => {
+    onError: (_err, _variables, context) => {
       if (context?.previousDeletedUsers) {
         queryClient.setQueryData(["admin", "deleted-users"], context.previousDeletedUsers);
       }
