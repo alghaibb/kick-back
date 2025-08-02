@@ -302,7 +302,7 @@ function AdminDeletedUsersData({
                           onClick={() =>
                             handleRecoverUser(
                               user.id,
-                              `${user.firstName} ${user.lastName || ""}`
+                              user.email
                             )
                           }
                         >
