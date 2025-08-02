@@ -133,6 +133,10 @@ function AdminDeletedUsersData({
     return `${firstName.charAt(0)}${lastName ? lastName.charAt(0) : ""}`.toUpperCase();
   };
 
+  const getCleanEmail = (email: string) => {
+    return email.replace(/^deleted_\d+_/, "");
+  };
+
   const handleSearch = (value: string) => {
     updateFilters({ search: value });
   };
@@ -242,11 +246,10 @@ function AdminDeletedUsersData({
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">
-                              {user.email}
-                            </div>
+                            <div className="font-medium">{getCleanEmail(user.email)}</div>
                             <div className="text-sm text-muted-foreground">
-                              Deleted on {formatDate(user.deletedAt, { format: "short" })}
+                              Deleted on{" "}
+                              {formatDate(user.deletedAt, { format: "short" })}
                             </div>
                             {user.nickname && (
                               <div className="text-xs text-muted-foreground">
@@ -299,7 +302,7 @@ function AdminDeletedUsersData({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleRecoverUser(user.id, user.email)}
+                          onClick={() => handleRecoverUser(user.id, getCleanEmail(user.email))}
                         >
                           <RotateCcw className="mr-2 h-3 w-3" />
                           Recover
