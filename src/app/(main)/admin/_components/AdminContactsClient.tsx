@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date-utils";
 import {
   ArrowLeft,
   MessageSquare,
@@ -149,10 +149,11 @@ export function AdminContactsClient() {
                           {contact.message}
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
-                          {format(
-                            new Date(contact.createdAt),
-                            "MMM d, yyyy 'at' h:mm a"
-                          )}
+                          {formatDate(contact.createdAt, {
+                            includeTime: true,
+                            format: "default",
+                            locale: "en-GB",
+                          })}
                         </p>
                       </div>
                     </div>

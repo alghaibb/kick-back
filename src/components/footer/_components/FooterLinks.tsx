@@ -4,8 +4,8 @@ const links = [
   { title: "Dashboard", href: "/dashboard" },
   { title: "Privacy Policy", href: "/privacy" },
   { title: "Terms of Service", href: "/terms" },
-  { title: "Help", href: "/dashboard" },
-  { title: "Contact", href: "/dashboard" },
+  { title: "Help", href: "/help" },
+  { title: "Contact", href: "/contact" },
 ];
 
 export function FooterLinks() {

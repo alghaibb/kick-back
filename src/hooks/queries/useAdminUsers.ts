@@ -2,6 +2,7 @@ import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
+  useQuery,
 } from "@tanstack/react-query";
 import {
   updateUser as updateUserAction,
@@ -20,7 +21,7 @@ interface User {
   hasOnboarded: boolean;
   createdAt: string;
   updatedAt: string;
-  _count: {
+  _count?: {
     groupMembers: number;
     eventComments: number;
     contacts: number;
@@ -37,6 +38,10 @@ interface UsersResponse {
     hasNext: boolean;
     hasPrev: boolean;
   };
+  meta?: {
+    searchApplied: boolean;
+    roleFilter: string | null;
+  };
 }
 
 interface UsersParams {
@@ -48,117 +53,136 @@ interface UsersParams {
   sortOrder?: "asc" | "desc";
 }
 
-async function fetchUsers(params: UsersParams = {}): Promise<UsersResponse> {
+// Enhanced fetch function with better error handling and retry logic
+async function fetchUsers(params: UsersParams): Promise<UsersResponse> {
   const searchParams = new URLSearchParams();
 
-  if (params.page) searchParams.set("page", params.page.toString());
-  if (params.limit) searchParams.set("limit", params.limit.toString());
-  if (params.search) searchParams.set("search", params.search);
-  if (params.role) searchParams.set("role", params.role);
-  if (params.sortBy) searchParams.set("sortBy", params.sortBy);
-  if (params.sortOrder) searchParams.set("sortOrder", params.sortOrder);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.append(key, String(value));
+    }
+  });
 
-  const response = await fetch(`/api/admin/users?${searchParams.toString()}`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch users");
-  }
-
-  return response.json();
-}
-
-async function updateUser(
-  userId: string,
-  updates: Partial<User>
-): Promise<{ user: User }> {
   try {
-    return await updateUserAction(userId, updates);
+    const response = await fetch(
+      `/api/admin/users?${searchParams.toString()}`,
+      {
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
   } catch (error) {
-    console.error("Failed to update user:", error);
-    throw new Error("Failed to update user");
+    clearTimeout(timeoutId);
+
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - please try again');
+      }
+      throw error;
+    }
+
+    throw new Error('Failed to fetch users');
   }
 }
 
-async function deleteUser(userId: string): Promise<{ success: boolean }> {
-  try {
-    return await deleteUserAction(userId);
-  } catch (error) {
-    console.error("Failed to delete user:", error);
-    throw new Error("Failed to delete user");
-  }
-}
-
-async function recoverUser(userId: string): Promise<{ success: boolean }> {
-  try {
-    return await recoverUserAction(userId);
-  } catch (error) {
-    console.error("Failed to recover user:", error);
-    throw new Error("Failed to recover user");
-  }
-}
-
+// Optimized hook with better caching strategy
 export function useAdminUsers(params: Omit<UsersParams, "page"> = {}) {
-  return useInfiniteQuery({
-    queryKey: ["admin", "users", params],
-    queryFn: ({ pageParam = 1 }) => fetchUsers({ ...params, page: pageParam }),
-    getNextPageParam: (lastPage) => {
-      return lastPage.pagination.hasNext
-        ? lastPage.pagination.page + 1
-        : undefined;
-    },
-    initialPageParam: 1,
+  const queryKey = ["admin", "users", params];
+
+  return useQuery({
+    queryKey,
+    queryFn: () => fetchUsers({ ...params, page: 1 }),
     staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes (was cacheTime)
     retry: (failureCount, error) => {
-      if (error?.message?.includes("Forbidden")) {
+      // Don't retry on auth errors
+      if (error instanceof Error && error.message.includes('Forbidden')) {
         return false;
       }
-      return failureCount < 2;
+      return failureCount < 3;
     },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     refetchOnWindowFocus: false,
-    // Keep previous data while fetching to prevent loading states
-    placeholderData: (previousData) => previousData,
+    refetchOnMount: true,
   });
 }
 
+// Infinite query for pagination
+export function useAdminUsersInfinite(params: Omit<UsersParams, "page"> = {}) {
+  return useInfiniteQuery({
+    queryKey: ["admin", "users", "infinite", params],
+    queryFn: ({ pageParam = 1 }) => fetchUsers({ ...params, page: pageParam }),
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasNext ? lastPage.pagination.page + 1 : undefined;
+    },
+    initialPageParam: 1,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+}
+
+// Optimized update mutation with better error handling
 export function useUpdateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      userId,
-      updates,
-    }: {
-      userId: string;
-      updates: Partial<User>;
-    }) => updateUser(userId, updates),
+    mutationFn: async ({ userId, updates }: { userId: string; updates: Record<string, unknown> }) => {
+      const response = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, updates }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to update user');
+      }
+
+      return response.json();
+    },
     onMutate: async ({ userId, updates }) => {
-      // Cancel any outgoing refetches
+      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
 
-      // Snapshot the previous value
+      // Snapshot previous value
       const previousUsers = queryClient.getQueryData(["admin", "users"]);
 
-      // Optimistically update the user
-      queryClient.setQueryData(["admin", "users"], (old: unknown) => {
-        if (!old || typeof old !== "object" || !("pages" in old)) return old;
+      // Optimistically update
+      queryClient.setQueryData(["admin", "users"], (old: UsersResponse | undefined) => {
+        if (!old) return old;
 
-        const oldData = old as { pages: Array<{ users: User[] }> };
         return {
-          ...oldData,
-          pages: oldData.pages.map((page) => ({
-            ...page,
-            users: page.users.map((user: User) =>
-              user.id === userId ? { ...user, ...updates } : user
-            ),
-          })),
+          ...old,
+          users: old.users.map(user =>
+            user.id === userId
+              ? { ...user, ...updates, updatedAt: new Date().toISOString() }
+              : user
+          ),
         };
       });
 
       return { previousUsers };
     },
-    onError: (_err, _variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (err, variables, context) => {
+      // Rollback on error
       if (context?.previousUsers) {
         queryClient.setQueryData(["admin", "users"], context.previousUsers);
       }
@@ -171,110 +195,103 @@ export function useUpdateUser() {
   });
 }
 
+// Optimized delete mutation
 export function useDeleteUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ userId }: { userId: string }) => deleteUser(userId),
-    onMutate: async ({ userId }) => {
-      // Cancel any outgoing refetches
+    mutationFn: async (userId: string) => {
+      return deleteUserAction(userId);
+    },
+    onMutate: async (userId) => {
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
 
-      // Snapshot the previous value
       const previousUsers = queryClient.getQueryData(["admin", "users"]);
 
-      // Optimistically remove the user
-      queryClient.setQueryData(["admin", "users"], (old: unknown) => {
-        if (!old || typeof old !== "object" || !("pages" in old)) return old;
+      // Optimistically remove user
+      queryClient.setQueryData(["admin", "users"], (old: UsersResponse | undefined) => {
+        if (!old) return old;
 
-        const oldData = old as {
-          pages: Array<{ users: User[]; pagination: { total: number } }>;
-        };
         return {
-          ...oldData,
-          pages: oldData.pages.map((page) => ({
-            ...page,
-            users: page.users.filter((user: User) => user.id !== userId),
-            pagination: {
-              ...page.pagination,
-              total: Math.max(0, page.pagination.total - 1),
-            },
-          })),
+          ...old,
+          users: old.users.filter(user => user.id !== userId),
+          pagination: {
+            ...old.pagination,
+            total: old.pagination.total - 1,
+          },
         };
       });
 
       return { previousUsers };
     },
-    onError: (_err, _variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (err, userId, context) => {
       if (context?.previousUsers) {
         queryClient.setQueryData(["admin", "users"], context.previousUsers);
       }
     },
     onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
-    },
-  });
-}
-
-export function useRecoverUser() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ userId }: { userId: string }) => recoverUser(userId),
-    onMutate: async ({ userId }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
-      await queryClient.cancelQueries({ queryKey: ["admin", "deleted-users"] });
-
-      // Snapshot the previous values
-      const previousUsers = queryClient.getQueryData(["admin", "users"]);
-      const previousDeletedUsers = queryClient.getQueryData([
-        "admin",
-        "deleted-users",
-      ]);
-
-      // Optimistically remove from deleted users and add to active users
-      queryClient.setQueryData(["admin", "deleted-users"], (old: unknown) => {
-        if (!old || typeof old !== "object" || !("pages" in old)) return old;
-
-        const oldData = old as {
-          pages: Array<{ users: User[]; pagination: { total: number } }>;
-        };
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page) => ({
-            ...page,
-            users: page.users.filter((user: User) => user.id !== userId),
-            pagination: {
-              ...page.pagination,
-              total: Math.max(0, page.pagination.total - 1),
-            },
-          })),
-        };
-      });
-
-      return { previousUsers, previousDeletedUsers };
-    },
-    onError: (_err, _variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousUsers) {
-        queryClient.setQueryData(["admin", "users"], context.previousUsers);
-      }
-      if (context?.previousDeletedUsers) {
-        queryClient.setQueryData(
-          ["admin", "deleted-users"],
-          context.previousDeletedUsers
-        );
-      }
-    },
-    onSettled: () => {
-      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "deleted-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
     },
   });
+}
+
+// Recover user mutation
+export function useRecoverUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      return recoverUserAction(userId);
+    },
+    onMutate: async (userId) => {
+      await queryClient.cancelQueries({ queryKey: ["admin", "deleted-users"] });
+      await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
+
+      const previousDeletedUsers = queryClient.getQueryData(["admin", "deleted-users"]);
+      const previousUsers = queryClient.getQueryData(["admin", "users"]);
+
+      // Remove from deleted users list
+      queryClient.setQueryData(["admin", "deleted-users"], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          users: old.users.filter((user: User) => user.id !== userId),
+          pagination: {
+            ...old.pagination,
+            total: old.pagination.total - 1,
+          },
+        };
+      });
+
+      return { previousDeletedUsers, previousUsers };
+    },
+    onError: (err, userId, context) => {
+      if (context?.previousDeletedUsers) {
+        queryClient.setQueryData(["admin", "deleted-users"], context.previousDeletedUsers);
+      }
+      if (context?.previousUsers) {
+        queryClient.setQueryData(["admin", "users"], context.previousUsers);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "deleted-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+    },
+  });
+}
+
+// Prefetch function for better UX
+export function usePrefetchAdminUsers() {
+  const queryClient = useQueryClient();
+
+  return (params: UsersParams = {}) => {
+    queryClient.prefetchQuery({
+      queryKey: ["admin", "users", params],
+      queryFn: () => fetchUsers(params),
+      staleTime: 2 * 60 * 1000,
+    });
+  };
 }

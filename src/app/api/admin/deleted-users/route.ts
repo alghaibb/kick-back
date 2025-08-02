@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    await requireAdmin(true); // Skip rate limiting for read operations
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");

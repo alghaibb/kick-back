@@ -52,7 +52,7 @@ interface DeletedUser {
   createdAt: string;
   updatedAt: string;
   deletedAt: string;
-  _count: {
+  _count?: {
     groupMembers: number;
     eventComments: number;
     contacts: number;
@@ -88,6 +88,10 @@ function AdminDeletedUsersHeader() {
 function AdminDeletedUsersData({
   users,
   pagination,
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
+  refetch,
 }: {
   users: DeletedUser[];
   pagination: {
@@ -98,6 +102,10 @@ function AdminDeletedUsersData({
     hasNext: boolean;
     hasPrev: boolean;
   };
+  hasNextPage?: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => void;
+  refetch: () => void;
 }) {
   const { filters, updateFilters } = useFilters();
   const { open } = useModal();
@@ -113,22 +121,16 @@ function AdminDeletedUsersData({
   };
 
   const handleSearch = (value: string) => {
-    updateFilters({ search: value, page: 1 });
+    updateFilters({ search: value });
   };
 
   const handleSortBy = (value: string) => {
-    updateFilters({ sortBy: value, page: 1 });
+    updateFilters({ sortBy: value });
   };
 
   const handleSortOrder = () => {
     updateFilters({ sortOrder: sortOrder === "asc" ? "desc" : "asc" });
   };
-
-  const { refetch } = useAdminDeletedUsers({
-    search: search as string,
-    sortBy: sortBy as string,
-    sortOrder: sortOrder as "asc" | "desc",
-  });
 
   const handleRefresh = () => {
     refetch();
@@ -178,12 +180,6 @@ function AdminDeletedUsersData({
                 {sortOrder === "asc" ? "↑ Ascending" : "↓ Descending"}
               </Button>
             </div>
-
-            {/* Refresh Button */}
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -263,11 +259,11 @@ function AdminDeletedUsersData({
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {user._count.groupMembers}
+                          {user._count?.groupMembers ?? 0}
                         </div>
                         <div className="flex items-center gap-1">
                           <MessageSquare className="h-3 w-3" />
-                          {user._count.eventComments}
+                          {user._count?.eventComments ?? 0}
                         </div>
                       </div>
                     </TableCell>
@@ -299,39 +295,67 @@ function AdminDeletedUsersData({
               </TableBody>
             </Table>
           </div>
+
+          {/* Loading indicator for fetching next page */}
+          {isFetchingNextPage && (
+            <div className="flex items-center justify-center py-4 border-t">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Loading more users...
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6">
-          <div className="text-sm text-muted-foreground">
-            Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-            {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-            {pagination.total} deleted users
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => updateFilters({ page: pagination.page - 1 })}
-              disabled={!pagination.hasPrev}
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => updateFilters({ page: pagination.page + 1 })}
-              disabled={!pagination.hasNext}
-            >
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
+      {/* Load More / Pagination Info */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
+        <div className="text-sm text-muted-foreground">
+          Showing {users.length} of {pagination.total} deleted users
+          {users.length === pagination.total && pagination.total > 0 && (
+            <span className="ml-2 text-green-600 font-medium">
+              • All loaded
+            </span>
+          )}
         </div>
-      )}
+        <div className="flex items-center gap-3">
+          {hasNextPage ? (
+            <Button
+              variant="outline"
+              onClick={fetchNextPage}
+              disabled={isFetchingNextPage}
+              className="w-full sm:w-auto"
+            >
+              {isFetchingNextPage ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Loading more...
+                </>
+              ) : (
+                <>
+                  Load More Users
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+          ) : (
+            users.length > 0 && (
+              <div className="text-sm text-muted-foreground italic">
+                No more users to load
+              </div>
+            )
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+      </div>
     </>
   );
 }
@@ -341,7 +365,15 @@ export function AdminDeletedUsersClient() {
   const { filters } = useFilters();
   const { search, sortBy, sortOrder } = filters;
 
-  const { data, isLoading, error } = useAdminDeletedUsers({
+  const {
+    data,
+    isLoading,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch,
+  } = useAdminDeletedUsers({
     search: search as string,
     sortBy: sortBy as string,
     sortOrder: sortOrder as "asc" | "desc",
@@ -379,7 +411,14 @@ export function AdminDeletedUsersClient() {
         {isLoading ? (
           <AdminDeletedUsersSkeleton />
         ) : (
-          <AdminDeletedUsersData users={users} pagination={pagination} />
+          <AdminDeletedUsersData
+            users={users}
+            pagination={pagination}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            fetchNextPage={fetchNextPage}
+            refetch={refetch}
+          />
         )}
       </div>
     </div>

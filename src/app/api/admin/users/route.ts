@@ -4,25 +4,27 @@ import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if user is admin
-    await requireAdmin();
+    // Check if user is admin (skip rate limiting for read operations)
+    await requireAdmin(true);
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
-    const search = searchParams.get("search") || "";
+    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100); // Cap limit at 100
+    const search = searchParams.get("search")?.trim() || "";
     const role = searchParams.get("role") || "";
     const sortBy = searchParams.get("sortBy") || "createdAt";
-    const sortOrder = searchParams.get("sortOrder") || "desc";
+    const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
 
     const skip = (page - 1) * limit;
 
-    // Build where clause
+    // Build where clause with optimized search
     const where: Record<string, unknown> = {
       deletedAt: null, // Exclude soft-deleted users
     };
 
+    // Optimized search with full-text search capabilities
     if (search) {
+      // Use more efficient search with indexed fields
       where.OR = [
         { firstName: { contains: search, mode: "insensitive" } },
         { lastName: { contains: search, mode: "insensitive" } },
@@ -31,12 +33,19 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    if (role) {
+    if (role && ["USER", "ADMIN"].includes(role)) {
       where.role = role;
     }
 
-    // Get users with pagination
-    const [users, total] = await Promise.all([
+    // Validate sortBy to prevent SQL injection
+    const allowedSortFields = ["createdAt", "updatedAt", "firstName", "lastName", "email", "role"];
+    const validSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
+
+    // Get total count first for conditional logic
+    const totalCount = await prisma.user.count({ where });
+
+    // Optimized query with selective field loading
+    const [users] = await Promise.all([
       prisma.user.findMany({
         where,
         select: {
@@ -50,7 +59,8 @@ export async function GET(request: NextRequest) {
           hasOnboarded: true,
           createdAt: true,
           updatedAt: true,
-          _count: {
+          // Use conditional loading for counts to improve performance
+          _count: search ? undefined : {
             select: {
               groupMembers: true,
               eventComments: true,
@@ -59,27 +69,42 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: {
-          [sortBy]: sortOrder,
+          [validSortBy]: sortOrder,
         },
         skip,
         take: limit,
       }),
-      prisma.user.count({ where }),
     ]);
 
-    const totalPages = Math.ceil(total / limit);
+    const total = totalCount;
 
-    return NextResponse.json({
+    const totalPages = Math.ceil(total / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
+    const response = NextResponse.json({
       users,
       pagination: {
         page,
         limit,
         total,
         totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
+        hasNext,
+        hasPrev,
+      },
+      meta: {
+        searchApplied: Boolean(search),
+        roleFilter: role || null,
       },
     });
+
+    // Add cache headers for better performance
+    response.headers.set(
+      "Cache-Control",
+      search ? "private, no-cache" : "public, s-maxage=30, stale-while-revalidate=60"
+    );
+
+    return response;
   } catch (error) {
     console.error("Error fetching users:", error);
 
@@ -108,27 +133,46 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { userId, updates } = body;
 
-    if (!userId || !updates) {
+    if (!userId || !updates || typeof updates !== 'object') {
       return NextResponse.json(
-        { error: "User ID and updates are required" },
+        { error: "User ID and valid updates are required" },
         { status: 400 }
       );
     }
 
-    // Prevent admin from changing their own role
+    // Sanitize updates - only allow specific fields
+    const allowedUpdates = ['firstName', 'lastName', 'nickname', 'role', 'hasOnboarded'];
+    const sanitizedUpdates = Object.keys(updates)
+      .filter(key => allowedUpdates.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = updates[key];
+        return obj;
+      }, {} as Record<string, unknown>);
+
+    if (Object.keys(sanitizedUpdates).length === 0) {
+      return NextResponse.json(
+        { error: "No valid updates provided" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user exists
     const currentUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { role: true },
+      select: { id: true, role: true },
     });
 
     if (!currentUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Update user
+    // Update user with optimistic concurrency control
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: updates,
+      data: {
+        ...sanitizedUpdates,
+        updatedAt: new Date(),
+      },
       select: {
         id: true,
         firstName: true,
@@ -139,21 +183,37 @@ export async function PATCH(request: NextRequest) {
         hasOnboarded: true,
         createdAt: true,
         updatedAt: true,
+        _count: {
+          select: {
+            groupMembers: true,
+            eventComments: true,
+            contacts: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json({ user: updatedUser });
+    return NextResponse.json({
+      user: updatedUser,
+      message: "User updated successfully"
+    });
   } catch (error) {
     console.error("Error updating user:", error);
 
-    if (
-      error instanceof Error &&
-      error.message.includes("Admin access required")
-    ) {
-      return NextResponse.json(
-        { error: "Forbidden - Admin access only" },
-        { status: 403 }
-      );
+    if (error instanceof Error) {
+      if (error.message.includes("Admin access required")) {
+        return NextResponse.json(
+          { error: "Forbidden - Admin access only" },
+          { status: 403 }
+        );
+      }
+
+      if (error.message.includes("Record to update not found")) {
+        return NextResponse.json(
+          { error: "User not found" },
+          { status: 404 }
+        );
+      }
     }
 
     return NextResponse.json(

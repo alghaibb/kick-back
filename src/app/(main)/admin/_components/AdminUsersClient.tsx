@@ -41,7 +41,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
-import { useAdminUsers } from "@/hooks/queries/useAdminUsers";
+import { useAdminUsersInfinite } from "@/hooks/queries/useAdminUsers";
 import { useAuth } from "@/hooks/use-auth";
 import { AdminUsersSkeleton } from "./AdminUsersSkeleton";
 import { useFilters } from "@/providers/FilterProvider";
@@ -59,7 +59,7 @@ interface User {
   hasOnboarded: boolean;
   createdAt: string;
   updatedAt: string;
-  _count: {
+  _count?: {
     groupMembers: number;
     eventComments: number;
     contacts: number;
@@ -95,6 +95,10 @@ function AdminUsersHeader() {
 function AdminUsersData({
   users,
   pagination,
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
+  refetch,
 }: {
   users: User[];
   pagination: {
@@ -105,19 +109,16 @@ function AdminUsersData({
     hasNext: boolean;
     hasPrev: boolean;
   };
+  hasNextPage?: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => void;
+  refetch: () => void;
 }) {
   const { user: currentUser } = useAuth();
   const { filters, updateFilters } = useFilters();
   const { open } = useModal();
 
   const { search, role, sortBy, sortOrder } = filters;
-
-  const { refetch } = useAdminUsers({
-    search: search as string,
-    role: role as string,
-    sortBy: sortBy as string,
-    sortOrder: sortOrder as "asc" | "desc",
-  });
 
   const handleRoleChange = async (
     userId: string,
@@ -148,15 +149,15 @@ function AdminUsersData({
   };
 
   const handleSearch = (value: string) => {
-    updateFilters({ search: value, page: 1 });
+    updateFilters({ search: value });
   };
 
   const handleRoleFilter = (value: string) => {
-    updateFilters({ role: value === "all" ? "" : value, page: 1 });
+    updateFilters({ role: value === "all" ? "" : value });
   };
 
   const handleSortBy = (value: string) => {
-    updateFilters({ sortBy: value, page: 1 });
+    updateFilters({ sortBy: value });
   };
 
   const handleSortOrder = () => {
@@ -218,12 +219,6 @@ function AdminUsersData({
               ) : (
                 <ChevronRight className="h-4 w-4" />
               )}
-            </Button>
-
-            {/* Refresh Button */}
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
             </Button>
           </div>
         </CardContent>
@@ -301,11 +296,11 @@ function AdminUsersData({
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {user._count.groupMembers}
+                          {user._count?.groupMembers ?? 0}
                         </div>
                         <div className="flex items-center gap-1">
                           <MessageSquare className="h-3 w-3" />
-                          {user._count.eventComments}
+                          {user._count?.eventComments ?? 0}
                         </div>
                       </div>
                     </TableCell>
@@ -372,37 +367,67 @@ function AdminUsersData({
               </TableBody>
             </Table>
           </div>
+
+          {/* Loading indicator for fetching next page */}
+          {isFetchingNextPage && (
+            <div className="flex items-center justify-center py-4 border-t">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Loading more users...
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6">
-          <div className="text-sm text-muted-foreground">
-            Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-            {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-            {pagination.total} users
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => updateFilters({ page: pagination.page - 1 })}
-              disabled={!pagination.hasPrev}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => updateFilters({ page: pagination.page + 1 })}
-              disabled={!pagination.hasNext}
-            >
-              Next
-            </Button>
-          </div>
+      {/* Load More / Pagination Info */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
+        <div className="text-sm text-muted-foreground">
+          Showing {users.length} of {pagination.total} users
+          {users.length === pagination.total && pagination.total > 0 && (
+            <span className="ml-2 text-green-600 font-medium">
+              • All loaded
+            </span>
+          )}
         </div>
-      )}
+        <div className="flex items-center gap-3">
+          {hasNextPage ? (
+            <Button
+              variant="outline"
+              onClick={fetchNextPage}
+              disabled={isFetchingNextPage}
+              className="w-full sm:w-auto"
+            >
+              {isFetchingNextPage ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Loading more...
+                </>
+              ) : (
+                <>
+                  Load More Users
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+          ) : (
+            users.length > 0 && (
+              <div className="text-sm text-muted-foreground italic">
+                No more users to load
+              </div>
+            )
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+      </div>
     </>
   );
 }
@@ -412,7 +437,15 @@ export function AdminUsersClient() {
   const { filters } = useFilters();
   const { search, role, sortBy, sortOrder } = filters;
 
-  const { data, isLoading, error } = useAdminUsers({
+  const {
+    data,
+    isLoading,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch,
+  } = useAdminUsersInfinite({
     search: search as string,
     role: role as string,
     sortBy: sortBy as string,
@@ -449,7 +482,14 @@ export function AdminUsersClient() {
         {isLoading ? (
           <AdminUsersSkeleton />
         ) : (
-          <AdminUsersData users={users} pagination={pagination} />
+          <AdminUsersData
+            users={users}
+            pagination={pagination}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            fetchNextPage={fetchNextPage}
+            refetch={refetch}
+          />
         )}
       </div>
     </div>
