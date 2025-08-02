@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function AdminDeletedUsersSkeleton() {
   return (
     <div className="relative pt-16 md:pt-24 pb-16">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
         {/* Header Skeleton */}
         <div className="mb-6 md:mb-8">
           <Skeleton className="h-10 w-32 mb-3 md:mb-4" />
@@ -34,18 +34,20 @@ export function AdminDeletedUsersSkeleton() {
           <CardContent>
             <div className="space-y-4">
               {/* Table Header */}
-              <div className="grid grid-cols-6 gap-4 pb-2 border-b">
+              <div className="grid grid-cols-7 gap-4 pb-2 border-b">
                 <Skeleton className="h-4 w-16" />
                 <Skeleton className="h-4 w-12" />
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-16" />
                 <Skeleton className="h-4 w-16" />
                 <Skeleton className="h-4 w-20 ml-auto" />
               </div>
 
               {/* Table Rows */}
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="grid grid-cols-6 gap-4 py-4 border-b">
+                <div key={i} className="grid grid-cols-7 gap-4 py-4 border-b">
+                  <Skeleton className="h-4 w-20" />
                   <div className="flex items-center gap-3">
                     <Skeleton className="h-8 w-8 rounded-full" />
                     <div className="space-y-1">
@@ -78,4 +80,4 @@ export function AdminDeletedUsersSkeleton() {
       </div>
     </div>
   );
-} 
+}

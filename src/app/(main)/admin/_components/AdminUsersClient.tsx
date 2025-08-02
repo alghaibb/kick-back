@@ -159,7 +159,7 @@ export function AdminUsersClient() {
 
   return (
     <div className="relative pt-16 md:pt-24 pb-16">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
         {/* Header */}
         <div className="mb-6 md:mb-8">
           <Button asChild variant="ghost" className="mb-3 md:mb-4">
