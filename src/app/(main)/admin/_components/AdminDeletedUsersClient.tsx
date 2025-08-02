@@ -1,6 +1,5 @@
 "use client";
 
-import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +40,25 @@ import { useFilters } from "@/providers/FilterProvider";
 import { formatDate } from "@/lib/date-utils";
 import { useModal } from "@/hooks/use-modal";
 
+interface DeletedUser {
+  id: string;
+  firstName: string;
+  lastName: string | null;
+  email: string;
+  image?: string | null;
+  nickname: string | null;
+  role: "USER" | "ADMIN";
+  hasOnboarded: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string;
+  _count: {
+    groupMembers: number;
+    eventComments: number;
+    contacts: number;
+  };
+}
+
 // Static header component
 function AdminDeletedUsersHeader() {
   return (
@@ -66,8 +84,21 @@ function AdminDeletedUsersHeader() {
   );
 }
 
-// Data component that can be wrapped in Suspense
-function AdminDeletedUsersData() {
+// Data component
+function AdminDeletedUsersData({
+  users,
+  pagination,
+}: {
+  users: DeletedUser[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}) {
   const { filters, updateFilters } = useFilters();
   const { open } = useModal();
 
@@ -93,7 +124,7 @@ function AdminDeletedUsersData() {
     updateFilters({ sortOrder: sortOrder === "asc" ? "desc" : "asc" });
   };
 
-  const { data, isLoading, error, refetch } = useAdminDeletedUsers({
+  const { refetch } = useAdminDeletedUsers({
     search: search as string,
     sortBy: sortBy as string,
     sortOrder: sortOrder as "asc" | "desc",
@@ -101,24 +132,6 @@ function AdminDeletedUsersData() {
 
   const handleRefresh = () => {
     refetch();
-  };
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Failed to load deleted users</p>
-      </div>
-    );
-  }
-
-  const users = data?.pages.flatMap((page) => page.users) || [];
-  const pagination = data?.pages[0]?.pagination || {
-    page: 1,
-    limit: 20,
-    total: 0,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false,
   };
 
   return (
@@ -167,15 +180,8 @@ function AdminDeletedUsersData() {
             </div>
 
             {/* Refresh Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-            >
-              <RefreshCw
-                className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-              />
+            <Button variant="outline" size="sm" onClick={handleRefresh}>
+              <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
           </div>
@@ -330,15 +336,51 @@ function AdminDeletedUsersData() {
   );
 }
 
-// Main component with Suspense
+// Main component with proper loading states
 export function AdminDeletedUsersClient() {
+  const { filters } = useFilters();
+  const { search, sortBy, sortOrder } = filters;
+
+  const { data, isLoading, error } = useAdminDeletedUsers({
+    search: search as string,
+    sortBy: sortBy as string,
+    sortOrder: sortOrder as "asc" | "desc",
+  });
+
+  const users = data?.pages.flatMap((page) => page.users) || [];
+  const pagination = data?.pages[0]?.pagination || {
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false,
+  };
+
+  if (error) {
+    return (
+      <div className="relative pt-16 md:pt-24 pb-16">
+        <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+          <AdminDeletedUsersHeader />
+          <div className="flex items-center justify-center h-64">
+            <p className="text-muted-foreground">
+              Failed to load deleted users
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative pt-16 md:pt-24 pb-16">
       <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
         <AdminDeletedUsersHeader />
-        <Suspense fallback={<AdminDeletedUsersSkeleton />}>
-          <AdminDeletedUsersData />
-        </Suspense>
+        {isLoading ? (
+          <AdminDeletedUsersSkeleton />
+        ) : (
+          <AdminDeletedUsersData users={users} pagination={pagination} />
+        )}
       </div>
     </div>
   );

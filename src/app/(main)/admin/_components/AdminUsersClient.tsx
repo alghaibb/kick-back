@@ -1,6 +1,5 @@
 "use client";
 
-import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -92,15 +91,28 @@ function AdminUsersHeader() {
   );
 }
 
-// Data component that can be wrapped in Suspense
-function AdminUsersData() {
+// Data component
+function AdminUsersData({
+  users,
+  pagination,
+}: {
+  users: User[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}) {
   const { user: currentUser } = useAuth();
   const { filters, updateFilters } = useFilters();
   const { open } = useModal();
 
   const { search, role, sortBy, sortOrder } = filters;
 
-  const { data, isLoading, error, refetch } = useAdminUsers({
+  const { refetch } = useAdminUsers({
     search: search as string,
     role: role as string,
     sortBy: sortBy as string,
@@ -153,24 +165,6 @@ function AdminUsersData() {
 
   const handleRefresh = () => {
     refetch();
-  };
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Failed to load users</p>
-      </div>
-    );
-  }
-
-  const users = data?.pages.flatMap((page) => page.users) || [];
-  const pagination = data?.pages[0]?.pagination || {
-    page: 1,
-    limit: 20,
-    total: 0,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false,
   };
 
   return (
@@ -227,15 +221,8 @@ function AdminUsersData() {
             </Button>
 
             {/* Refresh Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-            >
-              <RefreshCw
-                className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-              />
+            <Button variant="outline" size="sm" onClick={handleRefresh}>
+              <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
           </div>
@@ -420,15 +407,50 @@ function AdminUsersData() {
   );
 }
 
-// Main component with Suspense
+// Main component with proper loading states
 export function AdminUsersClient() {
+  const { filters } = useFilters();
+  const { search, role, sortBy, sortOrder } = filters;
+
+  const { data, isLoading, error } = useAdminUsers({
+    search: search as string,
+    role: role as string,
+    sortBy: sortBy as string,
+    sortOrder: sortOrder as "asc" | "desc",
+  });
+
+  const users = data?.pages.flatMap((page) => page.users) || [];
+  const pagination = data?.pages[0]?.pagination || {
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false,
+  };
+
+  if (error) {
+    return (
+      <div className="relative pt-16 md:pt-24 pb-16">
+        <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+          <AdminUsersHeader />
+          <div className="flex items-center justify-center h-64">
+            <p className="text-muted-foreground">Failed to load users</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative pt-16 md:pt-24 pb-16">
       <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
         <AdminUsersHeader />
-        <Suspense fallback={<AdminUsersSkeleton />}>
-          <AdminUsersData />
-        </Suspense>
+        {isLoading ? (
+          <AdminUsersSkeleton />
+        ) : (
+          <AdminUsersData users={users} pagination={pagination} />
+        )}
       </div>
     </div>
   );
