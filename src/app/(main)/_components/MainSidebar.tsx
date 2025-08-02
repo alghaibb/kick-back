@@ -184,6 +184,7 @@ export function MainSidebar({ isMobile, onNavigate }: MainSidebarProps) {
               {user.role === "ADMIN" && (
                 <Badge
                   variant="secondary"
+                  className="text-xs flex-shrink-0 px-1.5 py-0.5"
                 >
                   <Shield className="size-2.5 mr-1" />
                   Admin

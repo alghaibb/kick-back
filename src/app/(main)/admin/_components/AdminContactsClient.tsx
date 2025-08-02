@@ -131,18 +131,22 @@ export function AdminContactsClient() {
               <div className="flex items-center gap-3">
                 <span className="text-xl font-semibold">Contact Messages</span>
                 <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                  {totalContacts} {totalContacts === 1 ? 'message' : 'messages'}
+                  {totalContacts} {totalContacts === 1 ? "message" : "messages"}
                 </Badge>
               </div>
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Each message shows the sender's name, email, subject, and full message content.
+              Each message shows the sender's name, email, subject, and full
+              message content.
             </p>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               {contacts.map((contact: Contact) => (
-                <div key={contact.id} className="p-6 md:p-8 hover:bg-muted/20 transition-colors">
+                <div
+                  key={contact.id}
+                  className="p-6 md:p-8 hover:bg-muted/20 transition-colors"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4 md:gap-6 flex-1">
                       <Avatar className="h-10 w-10 md:h-12 md:w-12">
@@ -167,11 +171,14 @@ export function AdminContactsClient() {
                             </Badge>
                           )}
                         </div>
-                        
+
                         {/* Email */}
                         <div className="mb-3">
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">Email:</span> {contact.email}
+                            <span className="font-medium text-foreground">
+                              Email:
+                            </span>{" "}
+                            {contact.email}
                           </p>
                         </div>
 
@@ -184,7 +191,9 @@ export function AdminContactsClient() {
 
                         {/* Message */}
                         <div className="mb-3">
-                          <p className="text-sm font-medium text-foreground mb-2">Message:</p>
+                          <p className="text-sm font-medium text-foreground mb-2">
+                            Message:
+                          </p>
                           <div className="bg-muted/30 rounded-lg p-3 border border-border/50">
                             <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
                               {contact.message}
@@ -195,7 +204,8 @@ export function AdminContactsClient() {
                         {/* Timestamp */}
                         <div className="flex items-center gap-2">
                           <p className="text-xs text-muted-foreground">
-                            Sent on {formatDate(contact.createdAt, {
+                            Sent on{" "}
+                            {formatDate(contact.createdAt, {
                               includeTime: true,
                               format: "default",
                               locale: "en-GB",
