@@ -243,10 +243,10 @@ function AdminDeletedUsersData({
                           </Avatar>
                           <div>
                             <div className="font-medium">
-                              {user.firstName} {user.lastName}
+                              {user.email}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {user.email}
+                              Deleted on {formatDate(user.deletedAt, { format: "short" })}
                             </div>
                             {user.nickname && (
                               <div className="text-xs text-muted-foreground">
@@ -299,12 +299,7 @@ function AdminDeletedUsersData({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            handleRecoverUser(
-                              user.id,
-                              user.email
-                            )
-                          }
+                          onClick={() => handleRecoverUser(user.id, user.email)}
                         >
                           <RotateCcw className="mr-2 h-3 w-3" />
                           Recover
