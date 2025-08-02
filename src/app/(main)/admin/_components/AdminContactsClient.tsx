@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -136,8 +136,8 @@ export function AdminContactsClient() {
               </div>
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Each message shows the sender's name, email, subject, and full
-              message content.
+              Each message shows the sender&apos;s name, email, subject, and
+              full message content.
             </p>
           </CardHeader>
           <CardContent className="p-0">
