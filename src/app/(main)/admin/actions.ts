@@ -11,8 +11,14 @@ import {
   editUserSchema,
   type EditUserInput,
 } from "@/validations/admin/editUserSchema";
+import {
+  contactReplySchema,
+  type ContactReplyValues,
+} from "@/validations/admin/contactReplySchema";
 import bcrypt from "bcryptjs";
 import { del } from "@vercel/blob";
+import { sendContactReplyEmail } from "@/utils/sendEmails";
+import { z } from "zod";
 
 // Enhanced error handling and logging
 class AdminActionError extends Error {
@@ -688,5 +694,107 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       "INTERNAL_ERROR",
       500
     );
+  }
+}
+
+// Contact Reply Action with enhanced validation and error handling
+export async function replyToContact(data: ContactReplyValues) {
+  try {
+    // Validate input data
+    const validatedData = contactReplySchema.parse(data);
+    const { contactId, replyMessage } = validatedData;
+
+    // Check admin permissions with audit logging
+    await requireAdminWithAudit(
+      "reply_to_contact",
+      `contact:${contactId}`,
+      true
+    );
+
+    // Get contact details and admin info
+    const [contact, adminUser] = await Promise.all([
+      prisma.contact.findUnique({
+        where: { id: contactId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          subject: true,
+          message: true,
+        },
+      }),
+      prisma.user.findFirst({
+        where: { role: "ADMIN" },
+        select: { firstName: true, lastName: true },
+      }),
+    ]);
+
+    if (!contact) {
+      throw new AdminActionError("Contact not found", "NOT_FOUND", 404);
+    }
+
+    if (!adminUser) {
+      throw new AdminActionError("Admin user not found", "NOT_FOUND", 404);
+    }
+
+    const adminName =
+      `${adminUser.firstName} ${adminUser.lastName || ""}`.trim();
+
+    // Send the reply email
+    try {
+      await sendContactReplyEmail(
+        contact.email,
+        contact.subject,
+        contact.message,
+        replyMessage,
+        adminName
+      );
+    } catch (error) {
+      console.error("Failed to send contact reply email:", error);
+      throw new AdminActionError(
+        "Failed to send email reply",
+        "EMAIL_ERROR",
+        500
+      );
+    }
+
+    // Mark contact as replied
+    try {
+      const updatedContact = await prisma.contact.update({
+        where: { id: contactId },
+        data: { repliedAt: new Date() },
+        select: { id: true, repliedAt: true },
+      });
+      console.log("Contact updated with repliedAt:", updatedContact);
+    } catch (error) {
+      console.error("Failed to update contact repliedAt:", error);
+      // Continue with email sending even if update fails
+    }
+
+    // Revalidate paths
+    revalidatePath("/admin/contacts");
+    revalidatePath("/admin");
+
+    return {
+      success: true,
+      message: "Reply sent successfully",
+    };
+  } catch (error) {
+    console.error("Error replying to contact:", error);
+
+    if (error instanceof AdminActionError) {
+      throw error;
+    }
+
+    if (error instanceof z.ZodError) {
+      throw new AdminActionError(
+        `Validation error: ${error.errors.map((e) => e.message).join(", ")}`,
+        "VALIDATION_ERROR",
+        400
+      );
+    }
+
+    throw new AdminActionError("Failed to send reply", "INTERNAL_ERROR", 500);
   }
 }

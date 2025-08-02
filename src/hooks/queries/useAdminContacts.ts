@@ -3,7 +3,10 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { deleteContact as deleteContactAction } from "@/app/(main)/admin/actions";
+import {
+  deleteContact as deleteContactAction,
+  replyToContact as replyToContactAction,
+} from "@/app/(main)/admin/actions";
 
 interface Contact {
   id: string;
@@ -14,6 +17,7 @@ interface Contact {
   message: string;
   userId: string | null;
   createdAt: string;
+  repliedAt?: string | null;
   user?: {
     id: string;
     firstName: string;
@@ -67,6 +71,18 @@ async function deleteContact(contactId: string): Promise<{ success: boolean }> {
   }
 }
 
+async function replyToContact(data: {
+  contactId: string;
+  replyMessage: string;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    return await replyToContactAction(data);
+  } catch (error) {
+    console.error("Failed to reply to contact:", error);
+    throw new Error("Failed to reply to contact");
+  }
+}
+
 export function useAdminContacts(params: Omit<ContactsParams, "page"> = {}) {
   return useInfiniteQuery({
     queryKey: ["admin", "contacts", params],
@@ -114,6 +130,61 @@ export function useDeleteContact() {
             ...page,
             contacts: page.contacts.filter(
               (contact: Contact) => contact.id !== contactId
+            ),
+          })),
+        };
+      });
+
+      return { previousContacts };
+    },
+    onError: (err, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousContacts) {
+        queryClient.setQueryData(
+          ["admin", "contacts"],
+          context.previousContacts
+        );
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ["admin", "contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+    },
+  });
+}
+
+export function useContactReply() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      contactId,
+      replyMessage,
+    }: {
+      contactId: string;
+      replyMessage: string;
+    }) => replyToContact({ contactId, replyMessage }),
+    onMutate: async ({ contactId }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["admin", "contacts"] });
+
+      // Snapshot the previous value
+      const previousContacts = queryClient.getQueryData(["admin", "contacts"]);
+
+      // Optimistically update the contact with repliedAt
+      queryClient.setQueryData(["admin", "contacts"], (old: unknown) => {
+        if (!old || typeof old !== "object" || !("pages" in old)) return old;
+
+        const oldData = old as { pages: Array<{ contacts: Contact[] }> };
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            contacts: page.contacts.map((contact: Contact) =>
+              contact.id === contactId
+                ? { ...contact, repliedAt: new Date().toISOString() }
+                : contact
             ),
           })),
         };

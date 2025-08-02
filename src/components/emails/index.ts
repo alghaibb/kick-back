@@ -4,3 +4,4 @@ export * from "./ResetPasswordEmail";
 export * from "./VerifyAccountEmail";
 export * from "./GroupInviteEmail";
 export * from "./EventReminderEmail";
+export * from "./ContactReplyEmail";

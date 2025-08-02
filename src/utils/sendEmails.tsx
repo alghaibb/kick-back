@@ -5,6 +5,7 @@ import {
   VerifyAccount,
   GroupInviteEmail,
   EventReminderEmail,
+  ContactReplyEmail,
 } from "@/components/emails";
 import { env } from "@/lib/env";
 import prisma from "@/lib/prisma";
@@ -141,6 +142,28 @@ export async function sendEventReminderEmail(
         nickname: attendee.nickname || undefined,
       }))}
       eventLink={eventLink}
+    />
+  );
+}
+
+export async function sendContactReplyEmail(
+  email: string,
+  originalSubject: string,
+  originalMessage: string,
+  adminReply: string,
+  adminName: string
+) {
+  const firstName = await getUserFirstNameByEmail(email);
+
+  await sendEmail(
+    email,
+    `Re: ${originalSubject}`,
+    <ContactReplyEmail
+      userFirstName={firstName}
+      originalSubject={originalSubject}
+      originalMessage={originalMessage}
+      adminReply={adminReply}
+      adminName={adminName}
     />
   );
 }

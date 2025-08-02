@@ -18,6 +18,8 @@ import {
   Trash2,
   User,
   Loader2,
+  Reply,
+  CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -25,6 +27,8 @@ import {
   useDeleteContact,
 } from "@/hooks/queries/useAdminContacts";
 import { AdminContactsSkeleton } from "./AdminContactsSkeleton";
+import { useModal } from "@/hooks/use-modal";
+import { ContactReplyModal } from "./ContactReplyModal";
 
 interface Contact {
   id: string;
@@ -35,6 +39,7 @@ interface Contact {
   message: string;
   userId: string | null;
   createdAt: string;
+  repliedAt?: string | null;
   user?: {
     id: string;
     firstName: string;
@@ -55,6 +60,7 @@ export function AdminContactsClient() {
   } = useAdminContacts();
 
   const deleteContactMutation = useDeleteContact();
+  const { open } = useModal();
 
   const handleDeleteContact = async (contactId: string) => {
     try {
@@ -62,6 +68,15 @@ export function AdminContactsClient() {
     } catch (error) {
       console.error("Failed to delete contact:", error);
     }
+  };
+
+  const handleReplyToContact = (contact: Contact) => {
+    open("contact-reply", {
+      contactId: contact.id,
+      contactEmail: contact.email,
+      contactSubject: contact.subject,
+      contactMessage: contact.message,
+    });
   };
 
   const getInitials = (firstName: string, lastName: string | null) => {
@@ -170,6 +185,15 @@ export function AdminContactsClient() {
                               Registered User
                             </Badge>
                           )}
+                          {contact.repliedAt && (
+                            <Badge
+                              variant="default"
+                              className="text-xs bg-green-500/10 text-green-600 border-green-500/20"
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Replied
+                            </Badge>
+                          )}
                         </div>
 
                         {/* Email */}
@@ -201,8 +225,8 @@ export function AdminContactsClient() {
                           </div>
                         </div>
 
-                        {/* Timestamp */}
-                        <div className="flex items-center gap-2">
+                        {/* Timestamps */}
+                        <div className="flex items-center gap-4">
                           <p className="text-xs text-muted-foreground">
                             Sent on{" "}
                             {formatDate(contact.createdAt, {
@@ -211,6 +235,16 @@ export function AdminContactsClient() {
                               locale: "en-GB",
                             })}
                           </p>
+                          {contact.repliedAt && (
+                            <p className="text-xs text-green-600">
+                              Replied on{" "}
+                              {formatDate(contact.repliedAt, {
+                                includeTime: true,
+                                format: "default",
+                                locale: "en-GB",
+                              })}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -221,6 +255,13 @@ export function AdminContactsClient() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleReplyToContact(contact)}
+                          disabled={!!contact.repliedAt}
+                        >
+                          <Reply className="mr-2 h-4 w-4" />
+                          {contact.repliedAt ? "Already Replied" : "Reply"}
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDeleteContact(contact.id)}
                           className="text-destructive"
@@ -257,6 +298,9 @@ export function AdminContactsClient() {
           </CardContent>
         </div>
       </div>
+
+      {/* Contact Reply Modal */}
+      <ContactReplyModal />
     </div>
   );
 }

@@ -37,11 +37,19 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(total / limit);
 
+    const mappedContacts = contacts.map((contact) => ({
+      ...contact,
+      createdAt: contact.createdAt.toISOString(),
+      repliedAt: contact.repliedAt?.toISOString() || null,
+    }));
+
+    console.log(
+      "API returning contacts with repliedAt:",
+      mappedContacts.map((c) => ({ id: c.id, repliedAt: c.repliedAt }))
+    );
+
     return NextResponse.json({
-      contacts: contacts.map((contact) => ({
-        ...contact,
-        createdAt: contact.createdAt.toISOString(),
-      })),
+      contacts: mappedContacts,
       pagination: {
         page,
         limit,

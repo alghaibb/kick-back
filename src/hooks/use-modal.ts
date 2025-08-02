@@ -14,7 +14,8 @@ export type ModalType =
   | "recover-user"
   | "edit-user"
   | "reply-comment"
-  | "edit-comment";
+  | "edit-comment"
+  | "contact-reply";
 
 interface ModalState {
   type: ModalType | null;
@@ -110,6 +111,11 @@ interface ModalState {
         hasOnboarded: boolean;
         accounts?: Array<{ provider: string }>;
       };
+      // Contact reply modal fields
+      contactId?: string;
+      contactEmail?: string;
+      contactSubject?: string;
+      contactMessage?: string;
     }
   ) => void;
   close: () => void;
