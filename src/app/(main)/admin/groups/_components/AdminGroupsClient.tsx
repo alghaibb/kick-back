@@ -319,10 +319,10 @@ export function AdminGroupsClient() {
                           {/* Members */}
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground">Members:</span>
-                            <div className="flex -space-x-2">
+                            <div className="flex -space-x-1">
                               {group.members.slice(0, 5).map((member) => (
-                                <Avatar key={member.id} className="h-6 w-6 border-2 border-background">
-                                  <AvatarImage src={member.user.image || undefined} />
+                                <Avatar key={member.id} className="h-8 w-8 border-2 border-background hover:scale-110 transition-transform">
+                                  <AvatarImage src={member.user.image || undefined} alt={`${member.user.firstName} ${member.user.lastName}`} />
                                   <AvatarFallback className="text-xs bg-primary/10 text-primary">
                                     {getInitials(member.user.firstName, member.user.lastName)}
                                   </AvatarFallback>
