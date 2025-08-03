@@ -40,6 +40,11 @@ const EditGroupModal = lazy(() =>
     default: m.EditGroupModal,
   }))
 );
+const DeleteGroupModal = lazy(() =>
+  import("./groups/_components/DeleteGroupModal").then((m) => ({
+    default: m.DeleteGroupModal,
+  }))
+);
 const InviteGroupModal = lazy(() =>
   import("./groups/_components/InviteGroupModal").then((m) => ({
     default: m.InviteGroupModal,
@@ -69,6 +74,9 @@ export default function MainLayout({
       </Suspense>
       <Suspense fallback={null}>
         <EditGroupModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <DeleteGroupModal />
       </Suspense>
       <Suspense fallback={null}>
         <EditEventModal />

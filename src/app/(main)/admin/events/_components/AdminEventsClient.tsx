@@ -86,7 +86,6 @@ export function AdminEventsClient() {
   const { open } = useModal();
 
   const handleDeleteEvent = (event: Event) => {
-    console.log("Opening delete modal for event:", event.name);
     open("delete-event", {
       eventId: event.id,
       eventName: event.name,
