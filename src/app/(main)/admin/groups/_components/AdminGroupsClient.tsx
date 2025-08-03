@@ -1,6 +1,5 @@
 "use client";
 
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,7 +17,6 @@ import {
   MoreHorizontal,
   Trash2,
   Edit,
-  User,
   Calendar,
   Search,
   RefreshCw,
@@ -106,7 +104,7 @@ export function AdminGroupsClient() {
     refetch();
   };
 
-  const filteredGroups = data?.pages.flatMap((page: any) => page.groups) || [];
+  const filteredGroups = data?.pages.flatMap((page) => page.groups) || [];
 
   // Filter groups based on search and filter
   const displayGroups = filteredGroups.filter((group: Group) => {

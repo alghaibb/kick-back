@@ -117,30 +117,32 @@ export function AdminEventsClient() {
     refetch();
   };
 
-  const filteredEvents = data?.pages.flatMap((page: any) => page.events) || [];
+  const filteredEvents = data?.pages.flatMap((page) => page.events) || [];
   const totalEvents = data?.pages[0]?.pagination.total || 0;
 
   // Filter events based on search and filter
-  const displayEvents = filteredEvents.filter((event: Event) => {
-    const matchesSearch =
-      event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.user.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
+  const displayEvents = (filteredEvents as unknown as Event[]).filter(
+    (event: Event) => {
+      const matchesSearch =
+        event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.user.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const eventDate = new Date(event.date);
-    const now = new Date();
+      const eventDate = new Date(event.date);
+      const now = new Date();
 
-    let matchesFilter = true;
-    if (eventFilter === "upcoming") {
-      matchesFilter = eventDate >= now;
-    } else if (eventFilter === "past") {
-      matchesFilter = eventDate < now;
+      let matchesFilter = true;
+      if (eventFilter === "upcoming") {
+        matchesFilter = eventDate >= now;
+      } else if (eventFilter === "past") {
+        matchesFilter = eventDate < now;
+      }
+
+      return matchesSearch && matchesFilter;
     }
-
-    return matchesSearch && matchesFilter;
-  });
+  );
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-background via-background to-muted/10 pt-16 md:pt-20 pb-16">
@@ -262,7 +264,7 @@ export function AdminEventsClient() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
-                  {displayEvents.map((event: Event) => {
+                  {(displayEvents as Event[]).map((event: Event) => {
                     const eventDate = new Date(event.date);
                     const isUpcoming = eventDate >= new Date();
 
