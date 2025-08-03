@@ -25,13 +25,17 @@ import {
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
 import { LoadingButton } from "@/components/ui/button";
-import { useEditEvent } from "@/hooks/mutations/useEventMutations";
+import {
+  useEditEvent,
+  useAdminEditEvent,
+} from "@/hooks/mutations/useEventMutations";
 
 interface EditEventFormProps {
   eventId: string;
   initialValues: CreateEventValues;
   groups: { id: string; name: string }[];
   onSuccess?: () => void;
+  isAdmin?: boolean;
 }
 
 export default function EditEventForm({
@@ -39,8 +43,10 @@ export default function EditEventForm({
   initialValues,
   groups,
   onSuccess,
+  isAdmin = false,
 }: EditEventFormProps) {
   const editEventMutation = useEditEvent();
+  const adminEditEventMutation = useAdminEditEvent();
 
   const form = useForm<CreateEventValues>({
     resolver: zodResolver(createEventSchema),
@@ -48,7 +54,9 @@ export default function EditEventForm({
   });
 
   function onSubmit(values: CreateEventValues) {
-    editEventMutation.mutate(
+    const mutation = isAdmin ? adminEditEventMutation : editEventMutation;
+
+    mutation.mutate(
       { eventId, values },
       {
         onSuccess: () => {
@@ -57,6 +65,10 @@ export default function EditEventForm({
       }
     );
   }
+
+  const isLoading = isAdmin
+    ? adminEditEventMutation.isPending
+    : editEventMutation.isPending;
 
   return (
     <Form {...form}>
@@ -127,7 +139,9 @@ export default function EditEventForm({
                     }
                   }}
                   mode="single"
-                  disabled={(date) => isBefore(startOfDay(date), startOfDay(new Date()))}
+                  disabled={(date) =>
+                    isBefore(startOfDay(date), startOfDay(new Date()))
+                  }
                 />
               </FormControl>
               <FormMessage />
@@ -152,31 +166,28 @@ export default function EditEventForm({
           name="groupId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assign to Group (optional)</FormLabel>
-              <Select
-                value={field.value ?? undefined}
-                onValueChange={field.onChange}
-              >
+              <FormLabel>Group (Optional)</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a group (optional)" />
+                    <SelectValue placeholder="Select a group" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
+                  <SelectItem value="">No Group</SelectItem>
                   {groups.map((group) => (
                     <SelectItem key={group.id} value={group.id}>
                       {group.name}
                     </SelectItem>
                   ))}
-                  <SelectItem value="__create__">+ Create New Group</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
             </FormItem>
           )}
         />
-        <LoadingButton type="submit" loading={editEventMutation.isPending}>
-          {editEventMutation.isPending ? "Saving..." : "Save Changes"}
+        <LoadingButton type="submit" className="w-full" loading={isLoading}>
+          {isAdmin ? "Update Event (Admin)" : "Update Event"}
         </LoadingButton>
       </form>
     </Form>

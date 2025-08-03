@@ -116,6 +116,8 @@ interface ModalState {
       contactEmail?: string;
       contactSubject?: string;
       contactMessage?: string;
+      // Admin edit event field
+      isAdmin?: boolean;
     }
   ) => void;
   close: () => void;

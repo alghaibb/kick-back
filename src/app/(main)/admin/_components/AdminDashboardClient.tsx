@@ -136,7 +136,7 @@ export function AdminDashboardClient() {
       title: "Manage Groups",
       description: "Oversee user groups and community management",
       icon: Users2,
-      href: "/groups",
+      href: "/admin/groups",
       color: "text-orange-600",
       bgColor: "bg-orange-100 dark:bg-orange-900/20",
       badge: totalGroups > 0 ? `${totalGroups} groups` : null,

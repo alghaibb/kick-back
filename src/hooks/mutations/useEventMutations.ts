@@ -7,6 +7,7 @@ import {
   editEventAction,
   deleteEventAction
 } from "@/app/(main)/events/actions";
+import { adminEditEventAction } from "@/app/(main)/admin/actions";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
 import { CreateEventValues } from "@/validations/events/createEventSchema";
 
@@ -90,6 +91,77 @@ export function useDeleteEvent() {
     onError: (error: Error) => {
       console.error("Delete event error:", error);
       toast.error(error.message || "Failed to delete event");
+    },
+  });
+}
+
+export function useAdminEditEvent() {
+  const queryClient = useQueryClient();
+  const { invalidateDashboard } = useDashboardInvalidation();
+
+  return useMutation({
+    mutationFn: async ({ eventId, values }: { eventId: string; values: CreateEventValues }) => {
+      const result = await adminEditEventAction(eventId, values);
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onMutate: async ({ eventId, values }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["admin-events"] });
+
+      // Snapshot the previous value
+      const previousEvents = queryClient.getQueryData(["admin-events"]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["admin-events"], (old: any) => {
+        if (!old?.pages) return old;
+        
+        return {
+          ...old,
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            events: page.events.map((event: any) => 
+              event.id === eventId 
+                ? {
+                    ...event,
+                    name: values.name,
+                    description: values.description || null,
+                    date: new Date(`${values.date}T${values.time}`).toISOString(),
+                    location: values.location || null,
+                    groupId: values.groupId || null,
+                  }
+                : event
+            ),
+          })),
+        };
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousEvents };
+    },
+    onError: (err, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousEvents) {
+        queryClient.setQueryData(["admin-events"], context.previousEvents);
+      }
+      console.error("Admin edit event error:", err);
+      toast.error(err.message || "Failed to update event");
+    },
+    onSuccess: () => {
+      toast.success("Event updated successfully!");
+      // Invalidate events data to show updated event
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-events"] });
+      // Invalidate calendar data to show updated event
+      queryClient.invalidateQueries({ queryKey: ["calendar"] });
+      // Invalidate dashboard stats in case event dates changed
+      invalidateDashboard();
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ["admin-events"] });
     },
   });
 } 

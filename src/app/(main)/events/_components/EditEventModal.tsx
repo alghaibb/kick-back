@@ -26,6 +26,7 @@ export default function EditEventModal() {
         initialValues={initialValues}
         groups={data.groups}
         onSuccess={close}
+        isAdmin={data.isAdmin}
       />
     </GenericModal>
   );

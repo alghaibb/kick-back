@@ -105,6 +105,7 @@ export function AdminEventsClient() {
       location: event.location || "",
       groupId: event.groupId || "",
       groups: event.group ? [event.group] : [],
+      isAdmin: true,
     });
   };
 
