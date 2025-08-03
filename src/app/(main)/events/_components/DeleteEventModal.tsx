@@ -10,6 +10,8 @@ export function DeleteEventModal() {
   const { type, close, data } = useModal();
   const deleteEventMutation = useDeleteEvent();
 
+  console.log("DeleteEventModal - type:", type, "data:", data);
+
   const handleDelete = () => {
     if (!data?.eventId) return;
     deleteEventMutation.mutate(data.eventId, {
