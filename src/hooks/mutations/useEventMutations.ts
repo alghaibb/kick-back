@@ -120,7 +120,7 @@ export function useAdminEditEvent() {
 
         return {
           ...old,
-          pages: old.pages.map((page: { events: any[] }) => ({
+          pages: old.pages.map((page: { events: Array<{ id: string }> }) => ({
             ...page,
             events: page.events.map((event: { id: string }) =>
               event.id === eventId
