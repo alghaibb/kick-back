@@ -84,7 +84,7 @@ export const EventInviteEmail = ({
             </Button>
 
             <Text style={text}>
-              If you can't make it, feel free to decline. This invite will
+              If you can&apos;t make it, feel free to decline. This invite will
               expire soon.
             </Text>
 

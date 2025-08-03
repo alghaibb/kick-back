@@ -9,10 +9,7 @@ import { useModal } from "@/hooks/use-modal";
 import { Loader2, Mail, CheckCircle, XCircle, Info } from "lucide-react";
 import { toast } from "sonner";
 import { inviteToEventAction } from "../actions";
-import {
-  inviteToEventFormSchema,
-  type InviteToEventFormValues,
-} from "@/validations/events/inviteToEventSchema";
+import { inviteToEventFormSchema } from "@/validations/events/inviteToEventSchema";
 
 export function InviteToEventModal() {
   const { type, close, data } = useModal();
@@ -93,6 +90,7 @@ export function InviteToEventModal() {
 
       setEmail("");
     } catch (error) {
+      console.error("Error inviting to event:", error);
       toast.error("Please enter valid email addresses");
     } finally {
       setIsLoading(false);
@@ -113,7 +111,7 @@ export function InviteToEventModal() {
       showCancel={false}
     >
       <div className="text-sm text-muted-foreground mb-4">
-        Send invitations to "{eventName}" via email
+        Send invitations to &quot;{eventName}&quot; via email
       </div>
 
       {/* Instructions */}

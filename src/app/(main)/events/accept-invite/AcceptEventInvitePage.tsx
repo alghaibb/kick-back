@@ -54,7 +54,7 @@ export function AcceptEventInvitePage({ token }: AcceptEventInvitePageProps) {
       }
 
       setInviteData(data);
-    } catch (error) {
+    } catch {
       setError("Failed to load invitation");
     } finally {
       setLoading(false);
@@ -78,7 +78,7 @@ export function AcceptEventInvitePage({ token }: AcceptEventInvitePageProps) {
 
       toast.success(data.message || "Successfully joined the event!");
       router.push(`/events/${data.event.id}`);
-    } catch (error) {
+    } catch {
       toast.error("Failed to accept invitation");
     } finally {
       setAccepting(false);

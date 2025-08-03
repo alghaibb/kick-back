@@ -299,6 +299,7 @@ export async function inviteToEventAction(eventId: string, email: string) {
   try {
     inviteToEventSchema.parse({ email });
   } catch (error) {
+    console.error("Invalid email format:", error);
     return { error: "Invalid email format" };
   }
 
