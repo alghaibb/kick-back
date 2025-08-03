@@ -7,6 +7,7 @@ interface StatsData {
   totalUsers: number;
   activeEvents: number;
   contactMessages: number;
+  pendingContactMessages: number;
   totalGroups: number;
 }
 
@@ -36,7 +37,7 @@ export async function GET() {
     }
 
     // Get counts in parallel for better performance with optimized queries
-    const [totalUsers, activeEvents, contactMessages, totalGroups, recentActivity] =
+    const [totalUsers, activeEvents, contactMessages, pendingContactMessages, totalGroups, recentActivity] =
       await Promise.all([
         prisma.user.count({
           where: { deletedAt: null }, // Only count active users
@@ -49,6 +50,11 @@ export async function GET() {
           },
         }),
         prisma.contact.count(),
+        prisma.contact.count({
+          where: {
+            repliedAt: null, // Only count messages that haven't been replied to
+          },
+        }),
         prisma.group.count(),
         // Get recent activity metrics
         prisma.user.count({
@@ -86,6 +92,7 @@ export async function GET() {
       totalUsers,
       activeEvents,
       contactMessages,
+      pendingContactMessages,
       totalGroups,
       recentActivity,
       growth: {

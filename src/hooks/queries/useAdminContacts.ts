@@ -150,6 +150,9 @@ export function useDeleteContact() {
       // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["admin", "contacts"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+
+      // Clear the stats cache by making a DELETE request
+      fetch("/api/admin/stats", { method: "DELETE" }).catch(console.error);
     },
   });
 }
@@ -205,6 +208,9 @@ export function useContactReply() {
       // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["admin", "contacts"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+
+      // Clear the stats cache by making a DELETE request
+      fetch("/api/admin/stats", { method: "DELETE" }).catch(console.error);
     },
   });
 }

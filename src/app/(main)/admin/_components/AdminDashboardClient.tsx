@@ -48,6 +48,7 @@ export function AdminDashboardClient() {
     totalUsers = 0,
     activeEvents = 0,
     contactMessages = 0,
+    pendingContactMessages = 0,
     totalGroups = 0,
     recentActivity = 0,
     growth = {
@@ -88,7 +89,7 @@ export function AdminDashboardClient() {
       color: "text-purple-600",
       bgColor: "bg-purple-100 dark:bg-purple-900/20",
       href: "/admin/contacts",
-      subtitle: "Pending messages",
+      subtitle: `${pendingContactMessages} pending`,
     },
     {
       title: "Total Groups",
@@ -118,8 +119,9 @@ export function AdminDashboardClient() {
       href: "/admin/contacts",
       color: "text-purple-600",
       bgColor: "bg-purple-100 dark:bg-purple-900/20",
-      badge: contactMessages > 0 ? `${contactMessages} pending` : null,
-      urgent: contactMessages > 10,
+      badge:
+        pendingContactMessages > 0 ? `${pendingContactMessages} pending` : null,
+      urgent: pendingContactMessages > 10,
     },
     {
       title: "Browse Events",
@@ -228,60 +230,58 @@ export function AdminDashboardClient() {
             {/* Modern Stats Grid with Gradient Effects */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
               {statsCards.map((stat) => (
-                <Link key={stat.title} href={stat.href}>
-                  <div className="relative group">
-                    {/* Animated gradient border */}
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500 group-hover:animate-pulse" />
-                    <Card className="relative h-full border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <CardContent className="relative p-5 md:p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="relative">
-                            <div
-                              className={`absolute inset-0 ${stat.bgColor} blur-xl opacity-60`}
+                <div key={stat.title} className="relative group">
+                  {/* Animated gradient border */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500 group-hover:animate-pulse" />
+                  <Card className="relative h-full border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <CardContent className="relative p-5 md:p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="relative">
+                          <div
+                            className={`absolute inset-0 ${stat.bgColor} blur-xl opacity-60`}
+                          />
+                          <div
+                            className={`relative p-3 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-transform duration-300`}
+                          >
+                            <stat.icon
+                              className={`h-5 w-5 md:h-6 md:w-6 ${stat.color}`}
                             />
-                            <div
-                              className={`relative p-3 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-transform duration-300`}
-                            >
-                              <stat.icon
-                                className={`h-5 w-5 md:h-6 md:w-6 ${stat.color}`}
-                              />
-                            </div>
                           </div>
-                          {stat.growth !== undefined && stat.growth !== 0 && (
-                            <div
-                              className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                                stat.growth > 0
-                                  ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                                  : "bg-red-500/10 text-red-600 dark:text-red-400"
-                              }`}
-                            >
-                              {stat.growth > 0 ? (
-                                <TrendingUp className="h-3 w-3" />
-                              ) : (
-                                <TrendingDown className="h-3 w-3" />
-                              )}
-                              {Math.abs(stat.growth).toFixed(1)}%
-                            </div>
-                          )}
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground/80 mb-1">
-                            {stat.title}
+                        {stat.growth !== undefined && stat.growth !== 0 && (
+                          <div
+                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
+                              stat.growth > 0
+                                ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                                : "bg-red-500/10 text-red-600 dark:text-red-400"
+                            }`}
+                          >
+                            {stat.growth > 0 ? (
+                              <TrendingUp className="h-3 w-3" />
+                            ) : (
+                              <TrendingDown className="h-3 w-3" />
+                            )}
+                            {Math.abs(stat.growth).toFixed(1)}%
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground/80 mb-1">
+                          {stat.title}
+                        </p>
+                        <p className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2 bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
+                          {stat.value.toLocaleString()}
+                        </p>
+                        {stat.subtitle && (
+                          <p className="text-xs text-muted-foreground/70">
+                            {stat.subtitle}
                           </p>
-                          <p className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2 bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
-                            {stat.value.toLocaleString()}
-                          </p>
-                          {stat.subtitle && (
-                            <p className="text-xs text-muted-foreground/70">
-                              {stat.subtitle}
-                            </p>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </Link>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               ))}
             </div>
 
