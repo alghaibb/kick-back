@@ -167,7 +167,10 @@ export default function EditEventForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Group (Optional)</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value || ""}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a group" />
