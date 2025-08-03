@@ -127,7 +127,7 @@ export function AdminDashboardClient() {
       title: "Browse Events",
       description: "Monitor all events and their status across the platform",
       icon: Calendar,
-      href: "/events",
+      href: "/admin/events",
       color: "text-green-600",
       bgColor: "bg-green-100 dark:bg-green-900/20",
       badge: activeEvents > 0 ? `${activeEvents} active` : null,
