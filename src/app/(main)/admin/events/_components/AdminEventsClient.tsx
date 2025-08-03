@@ -197,21 +197,24 @@ export function AdminEventsClient() {
 
       {/* Search and Filter Controls */}
       <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
+        <div className="space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search events, descriptions, locations, or creators..."
               value={searchTerm}
               onChange={(e) => updateFilter("search", e.target.value)}
-              className="pl-10"
+              className="pl-10 h-11"
             />
           </div>
-          <div className="flex gap-2">
+          {/* Filter Buttons */}
+          <div className="flex flex-wrap gap-2">
             <Button
               variant={eventFilter === "all" ? "default" : "outline"}
               size="sm"
               onClick={() => updateFilter("eventFilter", "all")}
+              className="flex-1 sm:flex-none min-w-[100px] h-9"
             >
               All Events
             </Button>
@@ -219,6 +222,7 @@ export function AdminEventsClient() {
               variant={eventFilter === "upcoming" ? "default" : "outline"}
               size="sm"
               onClick={() => updateFilter("eventFilter", "upcoming")}
+              className="flex-1 sm:flex-none min-w-[100px] h-9"
             >
               Upcoming
             </Button>
@@ -226,6 +230,7 @@ export function AdminEventsClient() {
               variant={eventFilter === "past" ? "default" : "outline"}
               size="sm"
               onClick={() => updateFilter("eventFilter", "past")}
+              className="flex-1 sm:flex-none min-w-[100px] h-9"
             >
               Past
             </Button>
@@ -273,8 +278,8 @@ export function AdminEventsClient() {
                         key={event.id}
                         className="p-4 sm:p-6 md:p-8 hover:bg-muted/20 transition-colors"
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                          <div className="flex items-start gap-3 sm:gap-4 md:gap-6 flex-1 min-w-0">
+                        <div className="flex flex-col gap-4">
+                          <div className="flex items-start gap-3 sm:gap-4 md:gap-6">
                             <Avatar className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 flex-shrink-0">
                               <AvatarImage
                                 src={event.user.image ?? undefined}
@@ -289,50 +294,61 @@ export function AdminEventsClient() {
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               {/* Header with event name and status */}
-                              <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
-                                <h3 className="font-semibold text-sm sm:text-base md:text-lg text-foreground">
+                              <div className="flex flex-wrap items-center gap-2 mb-3">
+                                <h3 className="font-semibold text-base sm:text-lg text-foreground">
                                   {event.name}
                                 </h3>
-                                <Badge
-                                  variant={isUpcoming ? "default" : "secondary"}
-                                  className={`text-xs ${
-                                    isUpcoming
-                                      ? "bg-green-500/10 text-green-600 border-green-500/20"
-                                      : "bg-gray-500/10 text-gray-600 border-gray-500/20"
-                                  }`}
-                                >
-                                  {isUpcoming ? "Upcoming" : "Past"}
-                                </Badge>
-                                {event.group && (
-                                  <Badge variant="outline" className="text-xs">
-                                    Group Event
+                                <div className="flex flex-wrap gap-1">
+                                  <Badge
+                                    variant={
+                                      isUpcoming ? "default" : "secondary"
+                                    }
+                                    className={`text-xs ${
+                                      isUpcoming
+                                        ? "bg-green-500/10 text-green-600 border-green-500/20"
+                                        : "bg-gray-500/10 text-gray-600 border-gray-500/20"
+                                    }`}
+                                  >
+                                    {isUpcoming ? "Upcoming" : "Past"}
                                   </Badge>
-                                )}
+                                  {event.group && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      Group Event
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Creator info */}
-                              <div className="mb-2 sm:mb-3">
-                                <p className="text-xs sm:text-sm text-muted-foreground">
+                              <div className="mb-3">
+                                <p className="text-sm text-muted-foreground">
                                   <span className="font-medium text-foreground">
                                     Created by:
                                   </span>{" "}
-                                  {event.user.firstName} {event.user.lastName} (
-                                  {event.user.email})
+                                  {event.user.firstName} {event.user.lastName}
+                                  <br className="sm:hidden" />
+                                  <span className="hidden sm:inline"> (</span>
+                                  <span className="sm:hidden"> - </span>
+                                  {event.user.email}
+                                  <span className="hidden sm:inline">)</span>
                                 </p>
                               </div>
 
                               {/* Event details */}
-                              <div className="mb-2 sm:mb-3">
+                              <div className="mb-3">
                                 {event.description && (
                                   <div className="mb-2">
-                                    <p className="text-xs sm:text-sm text-muted-foreground">
+                                    <p className="text-sm text-muted-foreground">
                                       {event.description}
                                     </p>
                                   </div>
                                 )}
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 flex-shrink-0" />
                                     <span className="text-muted-foreground">
                                       {formatDate(event.date, {
                                         includeTime: true,
@@ -342,15 +358,15 @@ export function AdminEventsClient() {
                                     </span>
                                   </div>
                                   {event.location && (
-                                    <div className="flex items-center gap-1">
-                                      <MapPin className="h-3 w-3" />
+                                    <div className="flex items-center gap-2">
+                                      <MapPin className="h-4 w-4 flex-shrink-0" />
                                       <span className="text-muted-foreground">
                                         {event.location}
                                       </span>
                                     </div>
                                   )}
-                                  <div className="flex items-center gap-1">
-                                    <Users className="h-3 w-3" />
+                                  <div className="flex items-center gap-2">
+                                    <Users className="h-4 w-4 flex-shrink-0" />
                                     <span className="text-muted-foreground">
                                       {event._count.attendees} attendees
                                     </span>
@@ -360,8 +376,8 @@ export function AdminEventsClient() {
 
                               {/* Group info */}
                               {event.group && (
-                                <div className="mb-2 sm:mb-3">
-                                  <p className="text-xs sm:text-sm text-muted-foreground">
+                                <div className="mb-3">
+                                  <p className="text-sm text-muted-foreground">
                                     <span className="font-medium text-foreground">
                                       Group:
                                     </span>{" "}
@@ -372,8 +388,8 @@ export function AdminEventsClient() {
 
                               {/* Attendees list */}
                               {event.attendees.length > 0 && (
-                                <div className="mb-2 sm:mb-3">
-                                  <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+                                <div className="mb-3">
+                                  <p className="text-sm text-muted-foreground mb-2">
                                     <span className="font-medium text-foreground">
                                       Attendees:
                                     </span>
@@ -425,8 +441,8 @@ export function AdminEventsClient() {
                               )}
 
                               {/* Created date */}
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <p className="text-xs text-muted-foreground">
+                              <div className="mb-3">
+                                <p className="text-sm text-muted-foreground">
                                   Created on{" "}
                                   {formatDate(event.createdAt, {
                                     includeTime: true,
@@ -439,13 +455,13 @@ export function AdminEventsClient() {
                           </div>
 
                           {/* Dropdown Menu - Admin actions */}
-                          <div className="flex justify-end sm:flex-shrink-0">
+                          <div className="flex justify-end">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 sm:h-9 sm:w-9"
+                                  className="h-10 w-10"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>

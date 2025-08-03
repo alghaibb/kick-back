@@ -22,6 +22,11 @@ Kick Back helps you:
 - RSVP system with status tracking
 - Event comments and reactions
 - Photo sharing for each event
+- **Individual event invitations** - Invite people directly to events without requiring them to be in a group
+- **Leave event functionality** - Attendees can leave events they're no longer interested in
+- **Multiple invite support** - Invite multiple people at once using comma-separated emails
+- **Email + in-app notifications** for event invitations
+- **Accept/decline invitations** via notifications or email links
 
 ### 👥 Groups
 
@@ -37,6 +42,9 @@ Kick Back helps you:
 - SMS reminders for events
 - In-app notification center
 - Notification preferences (opt in/out for different types)
+- **Event invitation notifications** - Get notified when invited to events
+- **Group invitation notifications** - Accept/decline group invites directly from notifications
+- **Real-time notification cleanup** - Notifications disappear after accepting/declining invitations
 
 ### 📱 PWA Support
 
@@ -71,6 +79,18 @@ Kick Back helps you:
 - Phone number for SMS reminders
 - All settings can be updated later in Profile & Settings pages
 
+### 🔧 Admin Panel
+
+- **Comprehensive dashboard** with real-time statistics and growth metrics
+- **User management** - View, edit, delete, and recover user accounts
+- **Event management** - Browse, edit, and manage all events across the platform
+- **Group management** - Monitor and manage groups with member details
+- **Contact management** - Handle contact form submissions and reply to users
+- **Advanced analytics** - Track user growth, event creation, and platform activity
+- **Admin-only actions** - Edit any event, manage user roles, and platform-wide operations
+- **Responsive design** - Full admin functionality on mobile and desktop
+- **Real-time stats** - Live updates with caching for optimal performance
+
 ### 🎨 Custom Backgrounds
 
 - **Personalized Experience** - Upload your own background images or choose from curated gradients
@@ -90,6 +110,8 @@ Kick Back helps you:
 - **Shadcn UI** - Accessible component library
 - **Framer Motion** - Smooth animations
 - **React Query** - Data fetching and caching
+- **Zustand** - State management for modals and global state
+- **Zod** - Schema validation and type safety
 
 ### Backend
 
@@ -100,6 +122,7 @@ Kick Back helps you:
 - **Resend** - Email service
 - **Twilio** - SMS service
 - **Vercel Blob** - File uploads
+- **Rate Limiting** - API protection and abuse prevention
 
 ### PWA & Notifications
 
@@ -263,6 +286,7 @@ The app uses PostgreSQL (Neon via Vercel) with these models:
 - **CommentReaction** - Emoji reactions on comments
 - **EventPhoto** - Photos shared at events
 - **EventPhotoLike** - Photo likes and reactions
+- **EventInvite** - Individual event invitations (no group required)
 
 ### 🔔 Notifications & Communication
 
@@ -273,6 +297,7 @@ The app uses PostgreSQL (Neon via Vercel) with these models:
 ### 📊 Notification Types
 
 - `GROUP_INVITE` - Group invitation notifications
+- `EVENT_INVITE` - Individual event invitation notifications
 - `EVENT_REMINDER` - Event reminder notifications
 - `EVENT_COMMENT` - New comment notifications
 - `EVENT_PHOTO` - New photo notifications
@@ -339,6 +364,9 @@ The app uses both **API Routes** and **Server Actions** for different purposes:
 - `createEventAction()` - Create new event with timezone handling
 - `editEventAction()` - Update event details
 - `deleteEventAction()` - Delete event
+- `inviteToEventAction()` - Send individual event invitations
+- `acceptEventInviteAction()` - Accept event invitations
+- `leaveEventAction()` - Leave an event (for attendees)
 - `createCommentAction()` - Add comment to event
 - `createReplyAction()` - Reply to comment
 - `editCommentAction()` - Edit comment
@@ -367,6 +395,15 @@ The app uses both **API Routes** and **Server Actions** for different purposes:
 - `deleteAccountAction()` - Delete user account
 - `onboarding()` - Complete user onboarding
 
+### 🔧 Admin (Server Actions)
+
+- `adminEditEventAction()` - Admin can edit any event on the platform
+- `replyToContact()` - Reply to contact form submissions
+- `deleteContact()` - Delete contact messages
+- `editUserAction()` - Edit user profiles and settings
+- `deleteUserAction()` - Delete user accounts
+- `recoverUserAction()` - Recover deleted user accounts
+
 ### 📱 API Routes
 
 - `GET /api/events` - List events
@@ -379,6 +416,21 @@ The app uses both **API Routes** and **Server Actions** for different purposes:
 - `POST /api/blob/upload` - File uploads
 - `POST /api/cron/send-event-reminders` - Send event reminders
 - `POST /api/cron/clean-events` - Clean old events
+
+### 🔧 Admin API Routes
+
+- `GET /api/admin/stats` - Admin dashboard statistics
+- `GET /api/admin/users` - List all users with pagination
+- `GET /api/admin/contacts` - List contact form submissions
+- `GET /api/admin/deleted-users` - List deleted user accounts
+- `GET /api/admin/events` - List all events with attendee details
+- `GET /api/admin/groups` - List all groups with member details
+
+### 🎉 Event Invitation API Routes
+
+- `GET /api/events/invites/[inviteId]` - Get event invitation details
+- `POST /api/events/invites/[inviteId]/accept` - Accept event invitation
+- `POST /api/events/invites/[inviteId]/decline` - Decline event invitation
 
 ## PWA Features
 
@@ -466,4 +518,5 @@ If you run into issues:
 ---
 
 Built with ❤️ using Next.js, TypeScript, and modern web technologies.
+
 # Force Vercel rebuild

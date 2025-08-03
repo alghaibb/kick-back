@@ -186,21 +186,24 @@ export function AdminGroupsClient() {
           <>
             {/* Search and Filter Controls */}
             <div className="mb-6">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
+              <div className="space-y-4">
+                {/* Search Bar */}
+                <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search groups, descriptions, or creators..."
                     value={searchTerm}
                     onChange={(e) => updateFilter("search", e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-11"
                   />
                 </div>
-                <div className="flex gap-2">
+                {/* Filter Buttons */}
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant={groupFilter === "all" ? "default" : "outline"}
                     size="sm"
                     onClick={() => updateFilter("groupFilter", "all")}
+                    className="flex-1 sm:flex-none min-w-[100px] h-9"
                   >
                     All Groups
                   </Button>
@@ -208,6 +211,7 @@ export function AdminGroupsClient() {
                     variant={groupFilter === "active" ? "default" : "outline"}
                     size="sm"
                     onClick={() => updateFilter("groupFilter", "active")}
+                    className="flex-1 sm:flex-none min-w-[100px] h-9"
                   >
                     Active
                   </Button>
@@ -215,6 +219,7 @@ export function AdminGroupsClient() {
                     variant={groupFilter === "inactive" ? "default" : "outline"}
                     size="sm"
                     onClick={() => updateFilter("groupFilter", "inactive")}
+                    className="flex-1 sm:flex-none min-w-[100px] h-9"
                   >
                     Inactive
                   </Button>
@@ -242,7 +247,7 @@ export function AdminGroupsClient() {
                     {displayGroups.map((group: Group) => (
                       <div
                         key={group.id}
-                        className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:bg-card/70 transition-colors"
+                        className="flex flex-col gap-4 p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:bg-card/70 transition-colors"
                       >
                         {/* Group Image */}
                         <div className="flex-shrink-0">
@@ -263,18 +268,23 @@ export function AdminGroupsClient() {
 
                         {/* Group Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+                          <div className="flex flex-col gap-3 mb-3">
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-lg font-semibold text-foreground truncate">
+                              <div className="flex flex-wrap items-center gap-2 mb-2">
+                                <h3 className="text-lg font-semibold text-foreground">
                                   {group.name}
                                 </h3>
-                                <Badge variant="outline" className="text-xs">
-                                  {group._count.members} members
-                                </Badge>
-                                <Badge variant="secondary" className="text-xs">
-                                  {group._count.events} events
-                                </Badge>
+                                <div className="flex flex-wrap gap-1">
+                                  <Badge variant="outline" className="text-xs">
+                                    {group._count.members} members
+                                  </Badge>
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    {group._count.events} events
+                                  </Badge>
+                                </div>
                               </div>
                               <p className="text-sm text-muted-foreground mb-2">
                                 Created by{" "}
@@ -283,20 +293,20 @@ export function AdminGroupsClient() {
                                 </span>
                               </p>
                               {group.description && (
-                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                <p className="text-sm text-muted-foreground">
                                   {group.description}
                                 </p>
                               )}
                             </div>
 
                             {/* Dropdown Menu - Admin actions */}
-                            <div className="flex justify-end sm:flex-shrink-0">
+                            <div className="flex justify-end">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 sm:h-9 sm:w-9"
+                                    className="h-10 w-10"
                                   >
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
@@ -324,8 +334,8 @@ export function AdminGroupsClient() {
                           </div>
 
                           {/* Members */}
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-sm text-muted-foreground">
                               Members:
                             </span>
                             <div className="flex -space-x-1">
@@ -348,16 +358,16 @@ export function AdminGroupsClient() {
                               ))}
                             </div>
                             {group.members.length > 5 && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-sm text-muted-foreground">
                                 +{group.members.length - 5} more
                               </span>
                             )}
                           </div>
 
                           {/* Created Date */}
-                          <div className="flex items-center gap-1 mt-2">
-                            <Calendar className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
                               Created {formatDate(group.createdAt)}
                             </span>
                           </div>
