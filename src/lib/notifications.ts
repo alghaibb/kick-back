@@ -152,7 +152,7 @@ export async function notifyUser(
       });
 
       if (user?.pushNotifications) {
-      await sendPushNotification(data.userId, pushData);
+        await sendPushNotification(data.userId, pushData);
       }
     }
 
@@ -241,6 +241,13 @@ export const NotificationTemplates = {
     message: `${inviterName} invited you to join "${groupName}"`,
     pushTitle: "New Group Invitation",
     pushBody: `${inviterName} invited you to join "${groupName}". Tap to view.`,
+  }),
+
+  EVENT_INVITE: (eventName: string, inviterName: string) => ({
+    title: "Event Invitation",
+    message: `${inviterName} invited you to "${eventName}"`,
+    pushTitle: "New Event Invitation",
+    pushBody: `${inviterName} invited you to "${eventName}". Tap to view.`,
   }),
 
   EVENT_REMINDER: (eventName: string, timeUntil: string) => ({

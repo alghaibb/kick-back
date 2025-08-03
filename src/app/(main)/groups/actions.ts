@@ -310,6 +310,18 @@ export async function acceptGroupInviteAction(formData: FormData) {
         where: { id: invite.id },
         data: { status: "accepted" },
       });
+
+      // Delete the notification for this invitation
+      await tx.notification.deleteMany({
+        where: {
+          userId: session.user.id,
+          type: "GROUP_INVITE",
+          data: {
+            path: ["inviteId"],
+            equals: token,
+          },
+        },
+      });
     });
 
     revalidatePath("/groups");

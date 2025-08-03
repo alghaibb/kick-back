@@ -16,7 +16,9 @@ export type ModalType =
   | "reply-comment"
   | "edit-comment"
   | "contact-reply"
-  | "delete-group";
+  | "delete-group"
+  | "invite-event"
+  | "leave-event";
 
 interface ModalState {
   type: ModalType | null;

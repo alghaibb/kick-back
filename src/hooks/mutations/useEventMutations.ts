@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import {
   createEventAction,
   editEventAction,
-  deleteEventAction
+  deleteEventAction,
+  leaveEventAction
 } from "@/app/(main)/events/actions";
 import { adminEditEventAction } from "@/app/(main)/admin/actions";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
@@ -162,6 +163,34 @@ export function useAdminEditEvent() {
     onSettled: () => {
       // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["admin-events"] });
+    },
+  });
+}
+
+export function useLeaveEvent() {
+  const queryClient = useQueryClient();
+  const { invalidateDashboard } = useDashboardInvalidation();
+
+  return useMutation({
+    mutationFn: async (eventId: string) => {
+      const result = await leaveEventAction(eventId);
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "You have left the event");
+      // Invalidate events data to remove user from event
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate calendar data to remove user from event
+      queryClient.invalidateQueries({ queryKey: ["calendar"] });
+      // Invalidate dashboard stats to update event counts
+      invalidateDashboard();
+    },
+    onError: (error: Error) => {
+      console.error("Leave event error:", error);
+      toast.error(error.message || "Failed to leave event");
     },
   });
 } 

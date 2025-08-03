@@ -15,10 +15,15 @@ export async function POST(
     const { inviteId } = await params;
 
     // Find and validate invite
-    const invite = await prisma.groupInvite.findUnique({
-      where: { token: inviteId },
+    const invite = await prisma.eventInvite.findFirst({
+      where: {
+        token: inviteId,
+        status: "pending",
+        expiresAt: { gt: new Date() }
+      },
       include: {
-        group: { select: { id: true, name: true } },
+        event: { select: { id: true, name: true } },
+        inviter: { select: { firstName: true, email: true } },
       },
     });
 
@@ -26,13 +31,6 @@ export async function POST(
       return NextResponse.json(
         { error: "Invalid or expired invitation" },
         { status: 404 }
-      );
-    }
-
-    if (invite.status !== "pending") {
-      return NextResponse.json(
-        { error: "This invitation has already been used or cancelled" },
-        { status: 400 }
       );
     }
 
@@ -45,7 +43,7 @@ export async function POST(
 
     // Mark invite as declined and delete notification
     await prisma.$transaction(async (tx) => {
-      await tx.groupInvite.update({
+      await tx.eventInvite.update({
         where: { id: invite.id },
         data: { status: "declined" },
       });
@@ -54,7 +52,7 @@ export async function POST(
       await tx.notification.deleteMany({
         where: {
           userId: session.user.id,
-          type: "GROUP_INVITE",
+          type: "EVENT_INVITE",
           data: {
             path: ["inviteId"],
             equals: inviteId,
@@ -65,13 +63,13 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: `Declined invitation to "${invite.group.name}"`,
+      message: `You declined the invitation to "${invite.event.name}"`,
     });
   } catch (error) {
-    console.error("Decline invite error:", error);
+    console.error("Decline event invite error:", error);
     return NextResponse.json(
       { error: "Failed to decline invitation" },
       { status: 500 }
     );
   }
-}
+} 

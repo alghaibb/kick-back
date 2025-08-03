@@ -50,6 +50,16 @@ const InviteGroupModal = lazy(() =>
     default: m.InviteGroupModal,
   }))
 );
+const InviteEventModal = lazy(() =>
+  import("./events/_components/InviteToEventModal").then((m) => ({
+    default: m.InviteToEventModal,
+  }))
+);
+const LeaveEventModal = lazy(() =>
+  import("./events/_components/LeaveEventModal").then((m) => ({
+    default: m.LeaveEventModal,
+  }))
+);
 
 export default function MainLayout({
   children,
@@ -89,6 +99,12 @@ export default function MainLayout({
       </Suspense>
       <Suspense fallback={null}>
         <EditCommentModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <InviteEventModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <LeaveEventModal />
       </Suspense>
     </>
   );
