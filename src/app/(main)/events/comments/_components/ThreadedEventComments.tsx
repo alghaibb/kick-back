@@ -359,7 +359,7 @@ export default function ThreadedEventComments({
           },
           {} as Record<string, { count: number; hasUserReacted: boolean }>
         );
-      }, [comment.reactions, user?.id]);
+      }, [comment.reactions]);
 
       const canDelete = user?.id === comment.userId;
       const replyCount = comment._count?.replies || 0;

@@ -115,7 +115,7 @@ export function useAdminEditEvent() {
       const previousEvents = queryClient.getQueryData(["admin-events"]);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(["admin-events"], (old: any) => {
+      queryClient.setQueryData(["admin-events"], (old: { pages: Array<{ events: Array<{ id: string }> }> }) => {
         if (!old?.pages) return old;
 
         return {

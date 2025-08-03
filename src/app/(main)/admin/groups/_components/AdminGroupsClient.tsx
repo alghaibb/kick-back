@@ -23,6 +23,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAdminGroups } from "@/hooks/queries/useAdminGroups";
 import { AdminGroupsSkeleton } from "./AdminGroupsSkeleton";
 import { useModal } from "@/hooks/use-modal";
@@ -246,9 +247,11 @@ export function AdminGroupsClient() {
                         {/* Group Image */}
                         <div className="flex-shrink-0">
                           {group.image ? (
-                            <img
+                            <Image
                               src={group.image}
                               alt={group.name}
+                              width={64}
+                              height={64}
                               className="h-16 w-16 rounded-xl object-cover"
                             />
                           ) : (
