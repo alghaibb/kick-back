@@ -23,6 +23,7 @@ export function LeaveEventModal() {
       await leaveEventMutation.mutateAsync(eventId);
       close();
     } catch (error) {
+      console.error("Error leaving event:", error);
       // Error is handled by the mutation
     }
   };

@@ -38,7 +38,7 @@ export const EventInviteEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>You've been invited to {eventName} on Kick Back</Preview>
+      <Preview>You&apos;ve been invited to {eventName} on Kick Back</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
