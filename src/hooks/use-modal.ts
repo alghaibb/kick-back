@@ -22,7 +22,7 @@ interface ModalState {
   type: ModalType | null;
   isOpen: boolean;
   data?: {
-    isAdmin: boolean | undefined;
+    isAdmin?: boolean;
     groupId?: string;
     groupName?: string;
     eventId?: string;
