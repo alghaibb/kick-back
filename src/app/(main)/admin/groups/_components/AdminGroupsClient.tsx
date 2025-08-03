@@ -66,7 +66,8 @@ interface Group {
 export function AdminGroupsClient() {
   const { filters, updateFilter } = useFilters();
   const searchTerm = filters.search || "";
-  const groupFilter = (filters.groupFilter as "all" | "active" | "inactive") || "all";
+  const groupFilter =
+    (filters.groupFilter as "all" | "active" | "inactive") || "all";
 
   const {
     data,
@@ -106,7 +107,6 @@ export function AdminGroupsClient() {
   };
 
   const filteredGroups = data?.pages.flatMap((page: any) => page.groups) || [];
-  const totalGroups = data?.pages[0]?.pagination.total || 0;
 
   // Filter groups based on search and filter
   const displayGroups = filteredGroups.filter((group: Group) => {
@@ -276,7 +276,10 @@ export function AdminGroupsClient() {
                                 </Badge>
                               </div>
                               <p className="text-sm text-muted-foreground mb-2">
-                                Created by {group.user.firstName} {group.user.lastName}
+                                Created by{" "}
+                                <span className="font-bold text-foreground">
+                                  {group.user.firstName} {group.user.lastName}
+                                </span>
                               </p>
                               {group.description && (
                                 <p className="text-sm text-muted-foreground line-clamp-2">
@@ -297,7 +300,10 @@ export function AdminGroupsClient() {
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="w-48"
+                                >
                                   <DropdownMenuItem
                                     onClick={() => handleEditGroup(group)}
                                   >
@@ -318,13 +324,24 @@ export function AdminGroupsClient() {
 
                           {/* Members */}
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">Members:</span>
+                            <span className="text-xs text-muted-foreground">
+                              Members:
+                            </span>
                             <div className="flex -space-x-1">
                               {group.members.slice(0, 5).map((member) => (
-                                <Avatar key={member.id} className="h-8 w-8 border-2 border-background hover:scale-110 transition-transform">
-                                  <AvatarImage src={member.user.image || undefined} alt={`${member.user.firstName} ${member.user.lastName}`} />
+                                <Avatar
+                                  key={member.id}
+                                  className="h-8 w-8 border-2 border-background hover:scale-110 transition-transform"
+                                >
+                                  <AvatarImage
+                                    src={member.user.image || undefined}
+                                    alt={`${member.user.firstName} ${member.user.lastName}`}
+                                  />
                                   <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                    {getInitials(member.user.firstName, member.user.lastName)}
+                                    {getInitials(
+                                      member.user.firstName,
+                                      member.user.lastName
+                                    )}
                                   </AvatarFallback>
                                 </Avatar>
                               ))}
@@ -376,4 +393,4 @@ export function AdminGroupsClient() {
       </div>
     </div>
   );
-} 
+}

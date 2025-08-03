@@ -6,7 +6,7 @@ import { format } from "date-fns";
 
 export default function EditEventModal() {
   const { type, close, data } = useModal();
-  
+
   // Validation logic - only render if we have the required data
   if (type !== "edit-event" || !data?.eventId || !data?.groups) return null;
 
@@ -26,7 +26,7 @@ export default function EditEventModal() {
         initialValues={initialValues}
         groups={data.groups}
         onSuccess={close}
-        isAdmin={data.isAdmin}
+        isAdmin={data?.isAdmin}
       />
     </GenericModal>
   );

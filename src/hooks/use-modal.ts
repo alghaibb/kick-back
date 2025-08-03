@@ -15,12 +15,14 @@ export type ModalType =
   | "edit-user"
   | "reply-comment"
   | "edit-comment"
-  | "contact-reply";
+  | "contact-reply"
+  | "delete-group";
 
 interface ModalState {
   type: ModalType | null;
   isOpen: boolean;
   data?: {
+    isAdmin: boolean | undefined;
     groupId?: string;
     groupName?: string;
     eventId?: string;

@@ -101,10 +101,10 @@ export function useAdminEditEvent() {
 
   return useMutation({
     mutationFn: async ({ eventId, values }: { eventId: string; values: CreateEventValues }) => {
-      const result = await adminEditEventAction(eventId, values);
-      if (result?.error) {
-        throw new Error(result.error);
-      }
+      const result = await adminEditEventAction(eventId, {
+        ...values,
+        groupId: values.groupId || undefined,
+      });
       return result;
     },
     onMutate: async ({ eventId, values }) => {
@@ -117,21 +117,21 @@ export function useAdminEditEvent() {
       // Optimistically update to the new value
       queryClient.setQueryData(["admin-events"], (old: any) => {
         if (!old?.pages) return old;
-        
+
         return {
           ...old,
           pages: old.pages.map((page: any) => ({
             ...page,
-            events: page.events.map((event: any) => 
-              event.id === eventId 
+            events: page.events.map((event: any) =>
+              event.id === eventId
                 ? {
-                    ...event,
-                    name: values.name,
-                    description: values.description || null,
-                    date: new Date(`${values.date}T${values.time}`).toISOString(),
-                    location: values.location || null,
-                    groupId: values.groupId || null,
-                  }
+                  ...event,
+                  name: values.name,
+                  description: values.description || null,
+                  date: new Date(`${values.date}T${values.time}`).toISOString(),
+                  location: values.location || null,
+                  groupId: values.groupId || null,
+                }
                 : event
             ),
           })),
