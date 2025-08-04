@@ -7,7 +7,7 @@ import {
   Preview,
   Section,
   Text,
-} from '@react-email/components';
+} from "@react-email/components";
 import {
   main,
   container,
@@ -16,7 +16,7 @@ import {
   headerSection,
   logoStyle,
   domain,
-} from './styles/sharedEmailStyles';
+} from "./styles/sharedEmailStyles";
 
 interface GroupInviteEmailProps {
   userFirstName?: string;
@@ -49,9 +49,9 @@ export const GroupInviteEmail = ({
             />
           </Section>
           <Section>
-            <Text style={text}>Hey {userFirstName ?? 'there'},</Text>
+            <Text style={text}>Hey {userFirstName ?? "there"},</Text>
             <Text style={text}>
-              <strong>{inviterName}</strong> has invited you to join the group{' '}
+              <strong>{inviterName}</strong> has invited you to join the group{" "}
               <b>{groupName}</b> on <b>Kick Back</b>.
             </Text>
 
