@@ -17,7 +17,6 @@ import {
   MoreHorizontal,
   Trash2,
   Edit,
-  Calendar,
   Search,
   RefreshCw,
   Image as ImageIcon,
@@ -247,8 +246,38 @@ export function AdminGroupsClient() {
                     {displayGroups.map((group: Group) => (
                       <div
                         key={group.id}
-                        className="flex flex-col gap-4 p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:bg-card/70 transition-colors"
+                        className="flex flex-col gap-4 p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:bg-card/70 transition-colors relative"
                       >
+                        {/* Dropdown Menu - Admin actions - Top Right */}
+                        <div className="absolute top-4 right-4">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={() => handleEditGroup(group)}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Group
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteGroup(group)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Group
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
                         {/* Group Image */}
                         <div className="flex-shrink-0">
                           {group.image ? (
@@ -298,39 +327,6 @@ export function AdminGroupsClient() {
                                 </p>
                               )}
                             </div>
-
-                            {/* Dropdown Menu - Admin actions */}
-                            <div className="flex justify-end">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-10 w-10"
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                  align="end"
-                                  className="w-48"
-                                >
-                                  <DropdownMenuItem
-                                    onClick={() => handleEditGroup(group)}
-                                  >
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Edit Group
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleDeleteGroup(group)}
-                                    className="text-destructive"
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Group
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
                           </div>
 
                           {/* Members */}
@@ -348,7 +344,7 @@ export function AdminGroupsClient() {
                                     src={member.user.image || undefined}
                                     alt={`${member.user.firstName} ${member.user.lastName}`}
                                   />
-                                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                  <AvatarFallback className="text-xs">
                                     {getInitials(
                                       member.user.firstName,
                                       member.user.lastName
@@ -356,20 +352,24 @@ export function AdminGroupsClient() {
                                   </AvatarFallback>
                                 </Avatar>
                               ))}
+                              {group.members.length > 5 && (
+                                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center border-2 border-background">
+                                  <span className="text-xs text-muted-foreground">
+                                    +{group.members.length - 5}
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                            {group.members.length > 5 && (
-                              <span className="text-sm text-muted-foreground">
-                                +{group.members.length - 5} more
-                              </span>
-                            )}
                           </div>
 
-                          {/* Created Date */}
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              Created {formatDate(group.createdAt)}
-                            </span>
+                          {/* Created date */}
+                          <div className="text-sm text-muted-foreground">
+                            Created on{" "}
+                            {formatDate(group.createdAt, {
+                              includeTime: true,
+                              format: "default",
+                              locale: "en-GB",
+                            })}
                           </div>
                         </div>
                       </div>

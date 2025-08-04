@@ -276,8 +276,38 @@ export function AdminEventsClient() {
                     return (
                       <div
                         key={event.id}
-                        className="p-4 sm:p-6 md:p-8 hover:bg-muted/20 transition-colors"
+                        className="p-4 sm:p-6 md:p-8 hover:bg-muted/20 transition-colors relative"
                       >
+                        {/* Dropdown Menu - Admin actions - Top Right */}
+                        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 sm:h-9 sm:w-9"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={() => handleEditEvent(event)}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Event
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteEvent(event)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Event
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
                         <div className="flex flex-col gap-4">
                           <div className="flex items-start gap-3 sm:gap-4 md:gap-6">
                             <Avatar className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 flex-shrink-0">
@@ -452,36 +482,6 @@ export function AdminEventsClient() {
                                 </p>
                               </div>
                             </div>
-                          </div>
-
-                          {/* Dropdown Menu - Admin actions */}
-                          <div className="flex justify-end">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-10 w-10"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem
-                                  onClick={() => handleEditEvent(event)}
-                                >
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Edit Event
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteEvent(event)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete Event
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
                           </div>
                         </div>
                       </div>
