@@ -3,9 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { AutosizeTextarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
 import { LocationInput } from "@/components/ui/location-input";
-import { isBefore, startOfDay } from "date-fns";
+import { SmartDateTimePicker } from "@/components/ui/smart-datetime-picker";
 import {
   Select,
   SelectContent,
@@ -120,42 +119,20 @@ export function CreateEventForm({
           name="date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Date</FormLabel>
+              <FormLabel>Date & Time</FormLabel>
               <FormControl>
-                <Calendar
-                  selected={field.value ? new Date(field.value) : undefined}
-                  onSelect={(date) => {
-                    if (date) {
-                      // Convert to YYYY-MM-DD format
-                      const year = date.getFullYear();
-                      const month = String(date.getMonth() + 1).padStart(
-                        2,
-                        "0"
-                      );
-                      const day = String(date.getDate()).padStart(2, "0");
-                      field.onChange(`${year}-${month}-${day}`);
-                    } else {
-                      field.onChange("");
-                    }
+                <SmartDateTimePicker
+                  date={field.value}
+                  time={form.watch("time")}
+                  onDateChange={(date) => {
+                    field.onChange(date);
+                    form.trigger("date");
                   }}
-                  mode="single"
-                  disabled={(date) =>
-                    isBefore(startOfDay(date), startOfDay(new Date()))
-                  }
+                  onTimeChange={(time) => {
+                    form.setValue("time", time);
+                    form.trigger("time");
+                  }}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Time</FormLabel>
-              <FormControl>
-                <Input type="time" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

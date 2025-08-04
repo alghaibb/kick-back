@@ -32,47 +32,112 @@ export function LocationInput({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCustom, setIsCustom] = useState(false);
-  const [inputValue, setInputValue] = useState(value);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Use debounced search
-  const { debouncedValue: debouncedSearch } = useDebounce(inputValue, 300);
-
-  // Format address to show only essential parts
-  const formatAddress = (displayName: string): string => {
-    const parts = displayName.split(", ");
-
-    // Filter out administrative divisions and keep essential parts
-    const essentialParts = parts.filter((part) => {
-      const lowerPart = part.toLowerCase();
-      return (
-        !lowerPart.includes("city of") &&
-        !lowerPart.includes("borough of") &&
-        !lowerPart.includes("district of") &&
-        !lowerPart.includes("county of") &&
-        !lowerPart.includes("region of") &&
-        !lowerPart.includes("municipality of") &&
-        !lowerPart.includes("shire of")
-      );
-    });
-
-    return essentialParts.join(", ");
-  };
+  const {
+    value: inputValue,
+    debouncedValue: debouncedSearch,
+    setValue: setInputValue,
+  } = useDebounce(value, 300);
 
   // Debounced search function
   const searchLocations = useCallback(
     async (query: string): Promise<NominatimResult[]> => {
       if (query.length < 3) return [];
 
+      // Format address to show only essential parts
+      const formatAddress = (displayName: string): string => {
+        const parts = displayName.split(", ");
+
+        // Filter out administrative divisions and keep essential parts
+        const essentialParts = parts.filter((part) => {
+          const lowerPart = part.toLowerCase();
+          return (
+            !lowerPart.startsWith("city of ") &&
+            !lowerPart.startsWith("borough of ") &&
+            !lowerPart.startsWith("district of ") &&
+            !lowerPart.startsWith("county of ") &&
+            !lowerPart.startsWith("region of ") &&
+            !lowerPart.startsWith("municipality of ") &&
+            !lowerPart.startsWith("shire of ") &&
+            !lowerPart.includes(" on the ") && // Filter out "on the Park" type phrases
+            !lowerPart.includes(" estate") && // Filter out estate names
+            !lowerPart.includes(" village") && // Filter out village names
+            !lowerPart.includes(" complex") && // Filter out complex names
+            !lowerPart.includes(" center") && // Filter out center names
+            !lowerPart.includes(" centre") // Filter out centre names
+          );
+        });
+
+        // Clean up and remove duplicates
+        const cleanedParts = [
+          ...new Set(
+            essentialParts
+              .map((part) => part.trim())
+              .filter((part) => part.length > 0)
+          ),
+        ];
+
+        // Organize address parts in proper order: street, suburb, postcode, city, state, country
+        const postcodeParts = cleanedParts.filter(
+          (part) => part.match(/^\d{4}$/) // 4-digit postcodes only
+        );
+
+        const streetParts = cleanedParts.filter(
+          (part) =>
+            (part.toLowerCase().includes("street") ||
+              part.toLowerCase().includes("road") ||
+              part.toLowerCase().includes("avenue") ||
+              part.toLowerCase().includes("drive") ||
+              part.toLowerCase().includes("lane") ||
+              part.toLowerCase().includes("walk") ||
+              part.toLowerCase().includes("court") ||
+              part.toLowerCase().includes("place") ||
+              part.toLowerCase().includes("close") ||
+              part.toLowerCase().includes("crescent") ||
+              part.toLowerCase().includes("way") ||
+              (/\d/.test(part) && !part.match(/^\d{4}$/))) && // Contains numbers but not 4-digit postcodes
+            !postcodeParts.includes(part)
+        );
+
+        const suburbParts = cleanedParts.filter(
+          (part) =>
+            !streetParts.includes(part) &&
+            !postcodeParts.includes(part) &&
+            !part.toLowerCase().includes("melbourne") &&
+            !part.toLowerCase().includes("victoria") &&
+            !part.toLowerCase().includes("australia")
+        );
+
+        const cityStateCountryParts = cleanedParts.filter(
+          (part) =>
+            !streetParts.includes(part) &&
+            !suburbParts.includes(part) &&
+            !postcodeParts.includes(part)
+        );
+
+        // Combine in proper order: street, suburb, postcode, city/state/country
+        return [
+          ...streetParts,
+          ...suburbParts,
+          ...postcodeParts,
+          ...cityStateCountryParts,
+        ].join(", ");
+      };
+
       try {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&countrycodes=us,ca,gb,au,nz`
         );
 
-        if (!response.ok) return [];
+        if (!response.ok) {
+          return [];
+        }
 
         const results = await response.json();
-        return results.map(
+
+        const formattedResults = results.map(
           (result: {
             display_name: string;
             lat: string;
@@ -85,6 +150,8 @@ export function LocationInput({
             type: result.type,
           })
         );
+
+        return formattedResults;
       } catch (error) {
         console.error("Location search error:", error);
         return [];
@@ -148,11 +215,6 @@ export function LocationInput({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Sync input value with prop value
-  useEffect(() => {
-    setInputValue(value);
-  }, [value]);
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
