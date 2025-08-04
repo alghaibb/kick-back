@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { AutosizeTextarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import { LocationInput } from "@/components/ui/location-input";
 import { isBefore, startOfDay } from "date-fns";
 import {
   Select,
@@ -104,7 +105,11 @@ export function CreateEventForm({
             <FormItem>
               <FormLabel>Location</FormLabel>
               <FormControl>
-                <Input placeholder="Location (optional)" {...field} />
+                <LocationInput
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  placeholder="Location (optional)"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
