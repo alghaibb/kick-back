@@ -18,6 +18,8 @@ Kick Back helps you:
 ### 🎉 Events
 
 - Create events with location, time, description, and photos
+- **Smart Date/Time Picker** - Enhanced event creation with quick options ("In 1 hour", "Tonight", "Tomorrow morning") and popular time suggestions
+- **Location Autocomplete** - Real address suggestions with proper formatting (street, suburb, postcode, city, state, country)
 - Event list view to see all your upcoming events
 - RSVP system with status tracking
 - Event comments and reactions
