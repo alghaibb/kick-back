@@ -18,9 +18,7 @@ export function WelcomeSection({
   // Handle authentication issues
   useEffect(() => {
     if (isUnauthenticated || error?.message === "UNAUTHORIZED") {
-      console.log(
-        "User not authenticated in WelcomeSection, redirecting to login"
-      );
+      // User not authenticated, redirecting to login
       router.replace("/login");
     }
   }, [isUnauthenticated, error, router]);

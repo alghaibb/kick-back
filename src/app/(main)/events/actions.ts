@@ -19,13 +19,6 @@ function createEventDateTime(
   timeStr: string,
   timezone: string
 ): Date {
-  // Create datetime string in ISO format
-  const dateTimeString = `${dateStr}T${timeStr}:00`;
-
-  // Create a date that represents the input time in the user's timezone
-  // We'll use the opposite approach: create what we want the final time to be
-  // in the user's timezone, then find what UTC time that corresponds to
-
   // Parse components
   const [year, month, day] = dateStr.split("-").map(Number);
   const [hour, minute] = timeStr.split(":").map(Number);
@@ -61,16 +54,6 @@ function createEventDateTime(
     Date.UTC(year, month - 1, day, hour - offsetHours, minute - offsetMinutes)
   );
 
-  console.log("✅ DEBUG createEventDateTime:", {
-    input: { dateStr, timeStr, timezone },
-    dateTimeString,
-    timezoneName,
-    offsetHours,
-    offsetMinutes,
-    utcDate: utcDate.toISOString(),
-    verifyUserTime: utcDate.toLocaleString("en-US", { timeZone: timezone }),
-  });
-
   return utcDate;
 }
 
@@ -97,13 +80,6 @@ export async function createEventAction(values: CreateEventValues) {
         groupId: groupId || null,
         createdBy: session.user.id,
       },
-    });
-
-    // Return debug info for client-side logging (temporary)
-    console.log("Event created with date:", {
-      originalInput: { date, time },
-      processedDateTime: eventDateTime.toISOString(),
-      savedDate: event.date.toISOString(),
     });
 
     // Create creator as confirmed attendee

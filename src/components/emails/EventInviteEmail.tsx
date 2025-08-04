@@ -42,6 +42,7 @@ export const EventInviteEmail = ({
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`${domain}/logo.png`}
               alt="Kick Back"
