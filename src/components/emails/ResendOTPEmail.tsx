@@ -6,7 +6,7 @@ import {
   Preview,
   Section,
   Text,
-} from '@react-email/components';
+} from "@react-email/components";
 import {
   container,
   domain,
@@ -14,7 +14,7 @@ import {
   logoStyle,
   main,
   text,
-} from './styles/sharedEmailStyles';
+} from "./styles/sharedEmailStyles";
 
 interface KickBackResendOTPEmailProps {
   userFirstname: string;
@@ -35,7 +35,8 @@ export const ResendOTPEmail = ({
             <img
               src={`${domain}/logo.png`}
               alt="Kick Back"
-              width="80"
+              width="120"
+              height="120"
               style={logoStyle}
             />
           </Section>
@@ -43,16 +44,16 @@ export const ResendOTPEmail = ({
           <Section>
             <Text style={text}>Hello {userFirstname},</Text>
             <Text style={text}>
-              You requested a new OTP for verifying your <b>Kick Back</b>{' '}
+              You requested a new OTP for verifying your <b>Kick Back</b>{" "}
               account. Use the code below:
             </Text>
 
             <Text
               style={{
                 ...text,
-                fontSize: '24px',
-                fontWeight: 'bold',
-                textAlign: 'center',
+                fontSize: "24px",
+                fontWeight: "bold",
+                textAlign: "center",
               }}
             >
               {otp}

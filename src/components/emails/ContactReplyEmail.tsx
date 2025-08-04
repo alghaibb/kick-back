@@ -42,7 +42,8 @@ export const ContactReplyEmail = ({
             <img
               src={`${domain}/logo.png`}
               alt="Kick Back"
-              width="80"
+              width="120"
+              height="120"
               style={logoStyle}
             />
           </Section>

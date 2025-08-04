@@ -8,6 +8,15 @@ import {
   Section,
   Text,
 } from '@react-email/components';
+import {
+  main,
+  container,
+  text,
+  button,
+  headerSection,
+  logoStyle,
+  domain,
+} from './styles/sharedEmailStyles';
 
 interface GroupInviteEmailProps {
   userFirstName?: string;
@@ -30,6 +39,15 @@ export const GroupInviteEmail = ({
       </Preview>
       <Body style={main}>
         <Container style={container}>
+          <Section style={headerSection}>
+            <img
+              src={`${domain}/logo.png`}
+              alt="Kick Back"
+              width="120"
+              height="120"
+              style={logoStyle}
+            />
+          </Section>
           <Section>
             <Text style={text}>Hey {userFirstName ?? 'there'},</Text>
             <Text style={text}>
@@ -55,31 +73,3 @@ export const GroupInviteEmail = ({
 };
 
 export default GroupInviteEmail;
-
-// Styles
-const main = { backgroundColor: '#f8fafc', padding: '10px 0' };
-const container = {
-  backgroundColor: '#ffffff',
-  border: '1px solid #e5e7eb',
-  padding: '40px',
-  borderRadius: '8px',
-};
-const text = {
-  fontSize: '16px',
-  fontFamily: "'Arial', sans-serif",
-  color: '#374151',
-  lineHeight: '24px',
-};
-const button = {
-  backgroundColor: '#09090b',
-  borderRadius: '6px',
-  color: '#ffffff',
-  fontFamily: "'Arial', sans-serif",
-  fontSize: '16px',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  display: 'block',
-  width: '200px',
-  padding: '12px',
-  margin: '20px auto',
-};

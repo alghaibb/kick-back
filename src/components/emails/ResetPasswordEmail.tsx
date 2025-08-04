@@ -31,7 +31,13 @@ export const ResetPasswordEmail = ({ userFirstName, resetPasswordLink }: KickBac
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
-            <img src={`${domain}/logo.png`} alt="Kick Back" width="80" style={logoStyle} />
+            <img 
+              src={`${domain}/logo.png`} 
+              alt="Kick Back" 
+              width="120" 
+              height="120" 
+              style={logoStyle} 
+            />
           </Section>
 
           <Section>
