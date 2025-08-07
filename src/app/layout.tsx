@@ -3,6 +3,7 @@ import { ActiveThemeProvider } from "@/providers/ActiveThemeProvider";
 import QueryProvider from "@/providers/QueryProvider";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { NotificationNavigationHandler } from "@/components/NotificationNavigationHandler";
+import { SplashScreen } from "@/components/SplashScreen";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Poppins } from "next/font/google";
@@ -170,11 +171,13 @@ export default function RootLayout({
         >
           <QueryProvider>
             <ActiveThemeProvider>
-              <PageTracker />
-              <div className="min-h-screen flex flex-col">{children}</div>
-              <Toaster richColors closeButton theme="light" />
-              <PWAInstallPrompt />
-              <NotificationNavigationHandler />
+              <SplashScreen>
+                <PageTracker />
+                <div className="min-h-screen flex flex-col">{children}</div>
+                <Toaster richColors closeButton theme="light" />
+                <PWAInstallPrompt />
+                <NotificationNavigationHandler />
+              </SplashScreen>
             </ActiveThemeProvider>
           </QueryProvider>
         </ThemeProvider>
