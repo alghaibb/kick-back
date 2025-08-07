@@ -61,16 +61,11 @@ export const env = createEnv({
     NEXT_PUBLIC_FACEBOOK_APP_ID: z
       .string()
       .min(1, "NEXT_PUBLIC_FACEBOOK_APP_ID is required"),
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z
-      .string()
-      .min(1, "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is required"),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
     NEXT_PUBLIC_FACEBOOK_APP_ID: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID,
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:
-      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
   },
 });
