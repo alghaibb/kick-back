@@ -41,6 +41,47 @@ export async function notifyGroupInvite(data: {
   );
 }
 
+// Trigger notification when someone gets invited to an event
+export async function notifyEventInvite(data: {
+  userId: string;
+  eventId: string;
+  eventName: string;
+  inviterName: string;
+  inviteId: string;
+}) {
+  const template = NotificationTemplates.EVENT_INVITE(
+    data.eventName,
+    data.inviterName
+  );
+
+  await notifyUser(
+    {
+      userId: data.userId,
+      type: "EVENT_INVITE",
+      title: template.title,
+      message: template.message,
+      data: {
+        type: "EVENT_INVITE",
+        eventId: data.eventId,
+        inviteId: data.inviteId,
+      },
+    },
+    {
+      title: template.pushTitle,
+      body: template.pushBody,
+      data: {
+        type: "EVENT_INVITE",
+        eventId: data.eventId,
+        inviteId: data.inviteId,
+      },
+      actions: [
+        { action: "view", title: "View Invite" },
+        { action: "dismiss", title: "Dismiss" },
+      ],
+    }
+  );
+}
+
 // Example: Trigger notification when someone comments on an event
 export async function notifyEventComment(data: {
   eventId: string;

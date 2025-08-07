@@ -5,3 +5,4 @@ export * from "./VerifyAccountEmail";
 export * from "./GroupInviteEmail";
 export * from "./EventReminderEmail";
 export * from "./ContactReplyEmail";
+export * from "./EventInviteEmail";

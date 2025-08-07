@@ -4,6 +4,7 @@ interface AdminStats {
   totalUsers: number;
   activeEvents: number;
   contactMessages: number;
+  pendingContactMessages: number;
   totalGroups: number;
   recentActivity: number;
   growth: {
@@ -62,9 +63,9 @@ export function useAdminStats() {
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       // Don't retry on auth errors or rate limit errors
-      if (error instanceof Error && 
-          (error.message.includes('Forbidden') || 
-           error.message.includes('Rate limit'))) {
+      if (error instanceof Error &&
+        (error.message.includes('Forbidden') ||
+          error.message.includes('Rate limit'))) {
         return false;
       }
       return failureCount < 2;

@@ -53,8 +53,8 @@ export const EventReminderEmail = ({
           <Section style={header}>
             <Img
               src={`${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`}
-              width="40"
-              height="40"
+              width="120"
+              height="120"
               alt="Kick Back"
               style={logo}
             />

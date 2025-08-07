@@ -798,3 +798,116 @@ export async function replyToContact(data: ContactReplyValues) {
     throw new AdminActionError("Failed to send reply", "INTERNAL_ERROR", 500);
   }
 }
+
+// Admin-specific event editing action
+export async function adminEditEventAction(
+  eventId: string,
+  values: {
+    name: string;
+    description?: string;
+    date: string;
+    time: string;
+    location?: string;
+    groupId?: string;
+  }
+) {
+  try {
+    // Validate action and data
+    validateAdminAction("edit_event", { eventId, values });
+
+    // Check admin permissions with audit logging
+    await requireAdminWithAudit("edit_event", `event:${eventId}`, true);
+
+    // Validate input
+    const { date, name, description, groupId, location, time } = values;
+
+    if (!name.trim()) {
+      throw new AdminActionError("Event name is required", "VALIDATION_ERROR", 400);
+    }
+
+    if (!date || !time) {
+      throw new AdminActionError("Event date and time are required", "VALIDATION_ERROR", 400);
+    }
+
+    // Parse date and time
+    const eventDateTime = new Date(`${date}T${time}`);
+    if (isNaN(eventDateTime.getTime())) {
+      throw new AdminActionError("Invalid date or time format", "VALIDATION_ERROR", 400);
+    }
+
+    // Check if event exists
+    const existingEvent = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: {
+        id: true,
+        groupId: true,
+        createdBy: true,
+      },
+    });
+
+    if (!existingEvent) {
+      throw new AdminActionError("Event not found", "NOT_FOUND", 404);
+    }
+
+    // Update event with admin override
+    const updatedEvent = await prisma.event.update({
+      where: { id: eventId },
+      data: {
+        name: name.trim(),
+        description: description?.trim() || null,
+        location: location?.trim() || null,
+        date: eventDateTime,
+        groupId: groupId || null,
+      },
+    });
+
+    // Handle group changes if needed
+    if (existingEvent.groupId !== groupId) {
+      // Remove existing attendees (except creator)
+      await prisma.eventAttendee.deleteMany({
+        where: {
+          eventId,
+          NOT: {
+            userId: existingEvent.createdBy,
+          },
+        },
+      });
+
+      // Add new group members if group is specified
+      if (groupId) {
+        const newGroupMembers = await prisma.groupMember.findMany({
+          where: { groupId },
+          select: { userId: true },
+        });
+
+        await prisma.eventAttendee.createMany({
+          data: [
+            ...newGroupMembers
+              .filter((m) => m.userId !== existingEvent.createdBy)
+              .map((m) => ({
+                userId: m.userId,
+                eventId,
+              })),
+          ],
+          skipDuplicates: true,
+        });
+      }
+    }
+
+    revalidatePath("/admin/events");
+    revalidatePath("/events");
+    revalidatePath("/calendar");
+
+    return { success: true, event: updatedEvent };
+  } catch (error) {
+    console.error("Error editing event as admin:", error);
+    if (error instanceof AdminActionError) {
+      throw error;
+    }
+    throw new AdminActionError(
+      "An error occurred while editing the event.",
+      "INTERNAL_ERROR",
+      500
+    );
+  }
+}

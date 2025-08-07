@@ -15,12 +15,16 @@ export type ModalType =
   | "edit-user"
   | "reply-comment"
   | "edit-comment"
-  | "contact-reply";
+  | "contact-reply"
+  | "delete-group"
+  | "invite-event"
+  | "leave-event";
 
 interface ModalState {
   type: ModalType | null;
   isOpen: boolean;
   data?: {
+    isAdmin?: boolean;
     groupId?: string;
     groupName?: string;
     eventId?: string;
@@ -116,6 +120,8 @@ interface ModalState {
       contactEmail?: string;
       contactSubject?: string;
       contactMessage?: string;
+      // Admin edit event field
+      isAdmin?: boolean;
     }
   ) => void;
   close: () => void;

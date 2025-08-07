@@ -6,19 +6,19 @@ import {
   createEventSchema,
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
+import { inviteToEventSchema } from "@/validations/events/inviteToEventSchema";
 import { notifyEventCreated } from "@/lib/notification-triggers";
+import { sendEventInviteEmail } from "@/utils/sendEmails";
+import { generateToken } from "@/utils/tokens";
+import { revalidatePath } from "next/cache";
+import { rateLimit } from "@/lib/rate-limiter";
+import { notifyEventInvite } from "@/lib/notification-triggers";
+
 function createEventDateTime(
   dateStr: string,
   timeStr: string,
   timezone: string
 ): Date {
-  // Create datetime string in ISO format
-  const dateTimeString = `${dateStr}T${timeStr}:00`;
-
-  // Create a date that represents the input time in the user's timezone
-  // We'll use the opposite approach: create what we want the final time to be
-  // in the user's timezone, then find what UTC time that corresponds to
-
   // Parse components
   const [year, month, day] = dateStr.split("-").map(Number);
   const [hour, minute] = timeStr.split(":").map(Number);
@@ -54,16 +54,6 @@ function createEventDateTime(
     Date.UTC(year, month - 1, day, hour - offsetHours, minute - offsetMinutes)
   );
 
-  console.log("✅ DEBUG createEventDateTime:", {
-    input: { dateStr, timeStr, timezone },
-    dateTimeString,
-    timezoneName,
-    offsetHours,
-    offsetMinutes,
-    utcDate: utcDate.toISOString(),
-    verifyUserTime: utcDate.toLocaleString("en-US", { timeZone: timezone }),
-  });
-
   return utcDate;
 }
 
@@ -90,13 +80,6 @@ export async function createEventAction(values: CreateEventValues) {
         groupId: groupId || null,
         createdBy: session.user.id,
       },
-    });
-
-    // Return debug info for client-side logging (temporary)
-    console.log("Event created with date:", {
-      originalInput: { date, time },
-      processedDateTime: eventDateTime.toISOString(),
-      savedDate: event.date.toISOString(),
     });
 
     // Create creator as confirmed attendee
@@ -266,5 +249,305 @@ export async function editEventAction(
   } catch (error) {
     console.error("Error editing event:", error);
     return { error: "An error occurred while editing the event." };
+  }
+}
+
+export async function inviteToEventAction(eventId: string, email: string) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    return { error: "Not authenticated" };
+  }
+
+  // Rate limiting
+  const limiter = rateLimit({ interval: 3600000 });
+  try {
+    await limiter.check(50, "email", session.user.id);
+  } catch (error) {
+    console.error("Rate limit error:", error);
+    return { error: "Too many invite requests. Please try again later." };
+  }
+
+  if (!eventId || !email) {
+    return { error: "Invalid input" };
+  }
+
+  // Validate email using Zod schema
+  try {
+    inviteToEventSchema.parse({ email });
+  } catch (error) {
+    console.error("Invalid email format:", error);
+    return { error: "Invalid email format" };
+  }
+
+  try {
+    // Check if event exists and user has permission
+    const event = await prisma.event.findFirst({
+      where: {
+        id: eventId,
+        createdBy: session.user.id,
+      },
+    });
+
+    if (!event) {
+      return {
+        error: "Event not found or you don't have permission to invite people",
+      };
+    }
+
+    // Check if user with this email exists
+    const invitedUser = await prisma.user.findUnique({ where: { email } });
+    if (!invitedUser) {
+      return { error: "No user with this email exists." };
+    }
+
+    // Check if user is already an attendee
+    const existingAttendee = await prisma.eventAttendee.findFirst({
+      where: {
+        eventId,
+        userId: invitedUser.id,
+      },
+    });
+
+    if (existingAttendee) {
+      return { error: "User is already invited to this event" };
+    }
+
+    // Check if there's already a pending invite
+    const existingInvite = await prisma.eventInvite.findFirst({
+      where: {
+        eventId,
+        email,
+        status: "pending",
+      },
+    });
+
+    if (existingInvite) {
+      return { error: "An invitation has already been sent to this email" };
+    }
+
+    // Clean up any expired or old invitations for this event/email combination
+    await prisma.eventInvite.deleteMany({
+      where: {
+        eventId,
+        email,
+        OR: [
+          { status: { not: "pending" } },
+          { expiresAt: { lt: new Date() } }
+        ]
+      }
+    });
+
+    // Generate invite token
+    const token = generateToken();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // Create invite
+    const invite = await prisma.eventInvite.create({
+      data: {
+        eventId,
+        email,
+        invitedBy: session.user.id,
+        token,
+        expiresAt,
+        status: "pending",
+      },
+    });
+
+    // Send email
+    try {
+      await sendEventInviteEmail(
+        email,
+        session.user.firstName || session.user.email,
+        event.name,
+        event.date,
+        event.location,
+        token
+      );
+    } catch (emailError) {
+      // If email fails, delete the invite and return error
+      await prisma.eventInvite.delete({ where: { id: invite.id } });
+      console.error("Failed to send invite email:", emailError);
+      return { error: "Failed to send invitation email. Please try again." };
+    }
+
+    // Send in-app notification to invited user
+    try {
+      await notifyEventInvite({
+        userId: invitedUser.id,
+        eventId: event.id,
+        eventName: event.name,
+        inviterName: session.user.firstName || session.user.email,
+        inviteId: token,
+      });
+    } catch (notificationError) {
+      console.error(
+        "Failed to send event invite notification:",
+        notificationError
+      );
+      // Don't fail the invite if notification fails
+    }
+
+    revalidatePath("/events");
+    return { success: true, invite };
+  } catch (error) {
+    console.error("Event invite error:", error);
+
+    // Handle Prisma unique constraint violation
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+      return { error: "An invitation has already been sent to this email for this event" };
+    }
+
+    return { error: "Failed to send invitation" };
+  }
+}
+
+export async function leaveEventAction(eventId: string) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    return { error: "Not authenticated" };
+  }
+
+  try {
+    // Check if user is an attendee of this event
+    const attendee = await prisma.eventAttendee.findFirst({
+      where: {
+        eventId,
+        userId: session.user.id,
+      },
+      include: {
+        event: {
+          select: {
+            id: true,
+            name: true,
+            createdBy: true,
+          },
+        },
+      },
+    });
+
+    if (!attendee) {
+      return { error: "You are not attending this event" };
+    }
+
+    // Don't allow event creator to leave their own event
+    if (attendee.event.createdBy === session.user.id) {
+      return { error: "You cannot leave an event you created. You can delete the event instead." };
+    }
+
+    // Remove user from event
+    await prisma.eventAttendee.delete({
+      where: {
+        id: attendee.id,
+      },
+    });
+
+    // Also mark any pending invites as declined
+    await prisma.eventInvite.updateMany({
+      where: {
+        eventId,
+        email: session.user.email,
+        status: "pending",
+      },
+      data: {
+        status: "declined",
+      },
+    });
+
+    revalidatePath("/events");
+    revalidatePath("/dashboard");
+    return {
+      success: true,
+      message: `You have left "${attendee.event.name}"`,
+      eventName: attendee.event.name
+    };
+  } catch (error) {
+    console.error("Leave event error:", error);
+    return { error: "Failed to leave event" };
+  }
+}
+
+export async function acceptEventInviteAction(token: string) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    return { error: "Not authenticated" };
+  }
+
+  try {
+    // Find the invite
+    const invite = await prisma.eventInvite.findFirst({
+      where: {
+        token,
+        status: "pending",
+        expiresAt: { gt: new Date() },
+      },
+      include: {
+        event: true,
+        inviter: {
+          select: { firstName: true, email: true },
+        },
+      },
+    });
+
+    if (!invite) {
+      return { error: "Invalid or expired invitation" };
+    }
+
+    // Check if user is already an attendee
+    const existingAttendee = await prisma.eventAttendee.findFirst({
+      where: {
+        eventId: invite.eventId,
+        userId: session.user.id,
+      },
+    });
+
+    if (existingAttendee) {
+      // Mark invite as accepted even though user is already an attendee
+      await prisma.eventInvite.update({
+        where: { id: invite.id },
+        data: { status: "accepted" },
+      });
+      return { error: "You are already invited to this event" };
+    }
+
+    // Add user to event and mark invite as accepted
+    await prisma.$transaction(async (tx) => {
+      // Add user to event
+      await tx.eventAttendee.create({
+        data: {
+          eventId: invite.eventId,
+          userId: session.user.id,
+          rsvpStatus: "pending",
+        },
+      });
+
+      // Mark invite as accepted
+      await tx.eventInvite.update({
+        where: { id: invite.id },
+        data: { status: "accepted" },
+      });
+
+      // Delete the notification for this invitation
+      await tx.notification.deleteMany({
+        where: {
+          userId: session.user.id,
+          type: "EVENT_INVITE",
+          data: {
+            path: ["inviteId"],
+            equals: token,
+          },
+        },
+      });
+    });
+
+    revalidatePath("/events");
+    revalidatePath("/dashboard");
+    return {
+      success: true,
+      event: invite.event,
+      message: `Successfully joined "${invite.event.name}"!`
+    };
+  } catch (error) {
+    console.error("Accept event invite error:", error);
+    return { error: "Failed to accept invitation" };
   }
 }

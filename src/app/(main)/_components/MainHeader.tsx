@@ -33,10 +33,6 @@ export function MainHeader({
     }
   };
 
-  const handleLogoClick = () => {
-    console.log("Logo clicked - this should navigate");
-  };
-
   return (
     <header
       className={cn(
@@ -74,7 +70,6 @@ export function MainHeader({
             <Link
               href="/"
               className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
-              onClick={handleLogoClick}
             >
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-sm">

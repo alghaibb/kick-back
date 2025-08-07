@@ -1,4 +1,3 @@
-import { AdminAccessGuard } from "./_components/AdminAccessGuard";
 import { AdminDashboardClient } from "./_components/AdminDashboardClient";
 import type { Metadata } from "next";
 
@@ -19,9 +18,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  return (
-    <AdminAccessGuard>
-      <AdminDashboardClient />
-    </AdminAccessGuard>
-  );
+  return <AdminDashboardClient />;
 }

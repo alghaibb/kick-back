@@ -10,45 +10,46 @@ datasource db {
 }
 
 model User {
-  id                  String               @id @default(cuid())
-  firstName           String
-  lastName            String?
-  originalFirstName   String?
-  originalLastName    String?
-  email               String               @unique
-  nickname            String?
-  password            String?
-  emailVerified       DateTime?
-  image               String?
-  hasOnboarded        Boolean              @default(false)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  deletedAt           DateTime?
+  id                   String               @id @default(cuid())
+  firstName            String
+  lastName             String?
+  originalFirstName    String?
+  originalLastName     String?
+  email                String               @unique
+  nickname             String?
+  password             String?
+  emailVerified        DateTime?
+  image                String?
+  hasOnboarded         Boolean              @default(false)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  deletedAt            DateTime?
   permanentlyDeletedAt DateTime?
-  phoneNumber         String?              @unique
-  reminderTime        String               @default("09:00")
-  reminderType        String               @default("email")
-  timezone            String?
-  notificationOptIn   Boolean              @default(true)
-  inAppNotifications  Boolean              @default(true)
-  pushNotifications   Boolean              @default(false)
-  dashboardBackground String?
-  role                UserRole              @default(USER)
-  accounts            Account[]
-  CommentReaction     CommentReaction[]
-  EventAttendee       EventAttendee[]
-  eventComments       EventComment[]
-  photoLikes          EventPhotoLike[]
-  eventPhotos         EventPhoto[]
-  groupInvites        GroupInvite[]        @relation("GroupInvites")
-  groupMembers        GroupMember[]
-  magicLinkTokens     MagicLinkToken[]
-  notifications       Notification[]
-  pushSubscriptions   PushSubscription[]
-  resetPasswordTokens ResetPasswordToken[]
-  sessions            Session[]
-  verificationOTPs    VerificationOTP[]
-  contacts            Contact[]
+  phoneNumber          String?              @unique
+  reminderTime         String               @default("09:00")
+  reminderType         String               @default("email")
+  timezone             String?
+  notificationOptIn    Boolean              @default(true)
+  inAppNotifications   Boolean              @default(true)
+  pushNotifications    Boolean              @default(false)
+  dashboardBackground  String?
+  role                 UserRole             @default(USER)
+  accounts             Account[]
+  CommentReaction      CommentReaction[]
+  EventAttendee        EventAttendee[]
+  eventComments        EventComment[]
+  photoLikes           EventPhotoLike[]
+  eventPhotos          EventPhoto[]
+  groupInvites         GroupInvite[]        @relation("GroupInvites")
+  groupMembers         GroupMember[]
+  magicLinkTokens      MagicLinkToken[]
+  notifications        Notification[]
+  pushSubscriptions    PushSubscription[]
+  resetPasswordTokens  ResetPasswordToken[]
+  sessions             Session[]
+  verificationOTPs     VerificationOTP[]
+  contacts             Contact[]
+  eventInvites         EventInvite[]        @relation("EventInvites")
 
   @@map("users")
 }
@@ -200,6 +201,7 @@ model Event {
   comments    EventComment[]
   photos      EventPhoto[]
   group       Group?          @relation(fields: [groupId], references: [id])
+  EventInvite EventInvite[]
 
   @@index([createdBy])
   @@index([date])
@@ -251,7 +253,7 @@ model EventComment {
   @@index([userId])
   @@index([parentId])
   @@index([eventId, createdAt])
-  @@index([eventId, parentId]) 
+  @@index([eventId, parentId])
   @@map("event_comments")
 }
 
@@ -268,6 +270,25 @@ model CommentReaction {
   @@index([commentId])
   @@index([userId])
   @@map("comment_reactions")
+}
+
+model EventInvite {
+  id        String   @id @default(cuid())
+  eventId   String
+  email     String
+  invitedBy String
+  token     String   @unique
+  status    String   @default("pending")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  inviter   User     @relation("EventInvites", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, email])
+  @@index([token])
+  @@index([email])
+  @@map("event_invites")
 }
 
 model EventPhoto {
@@ -334,6 +355,7 @@ model PushSubscription {
 
 enum NotificationType {
   GROUP_INVITE
+  EVENT_INVITE
   EVENT_REMINDER
   EVENT_COMMENT
   EVENT_PHOTO
@@ -351,7 +373,7 @@ enum UserRole {
 }
 
 model Contact {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   firstName String
   lastName  String?
   email     String
@@ -359,8 +381,8 @@ model Contact {
   message   String
   userId    String?
   repliedAt DateTime?
-  createdAt DateTime @default(now())
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime  @default(now())
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([createdAt])

@@ -3,8 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { AutosizeTextarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { isBefore, startOfDay } from "date-fns";
+import { SmartDateTimePicker } from "@/components/ui/smart-datetime-picker";
+import { LocationInput } from "@/components/ui/location-input";
 import {
   Select,
   SelectContent,
@@ -25,13 +25,17 @@ import {
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
 import { LoadingButton } from "@/components/ui/button";
-import { useEditEvent } from "@/hooks/mutations/useEventMutations";
+import {
+  useEditEvent,
+  useAdminEditEvent,
+} from "@/hooks/mutations/useEventMutations";
 
 interface EditEventFormProps {
   eventId: string;
   initialValues: CreateEventValues;
   groups: { id: string; name: string }[];
   onSuccess?: () => void;
+  isAdmin?: boolean;
 }
 
 export default function EditEventForm({
@@ -39,8 +43,10 @@ export default function EditEventForm({
   initialValues,
   groups,
   onSuccess,
+  isAdmin = false,
 }: EditEventFormProps) {
   const editEventMutation = useEditEvent();
+  const adminEditEventMutation = useAdminEditEvent();
 
   const form = useForm<CreateEventValues>({
     resolver: zodResolver(createEventSchema),
@@ -48,7 +54,9 @@ export default function EditEventForm({
   });
 
   function onSubmit(values: CreateEventValues) {
-    editEventMutation.mutate(
+    const mutation = isAdmin ? adminEditEventMutation : editEventMutation;
+
+    mutation.mutate(
       { eventId, values },
       {
         onSuccess: () => {
@@ -57,6 +65,10 @@ export default function EditEventForm({
       }
     );
   }
+
+  const isLoading = isAdmin
+    ? adminEditEventMutation.isPending
+    : editEventMutation.isPending;
 
   return (
     <Form {...form}>
@@ -97,7 +109,11 @@ export default function EditEventForm({
             <FormItem>
               <FormLabel>Location</FormLabel>
               <FormControl>
-                <Input placeholder="Location (optional)" {...field} />
+                <LocationInput
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  placeholder="Location (optional)"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -108,40 +124,20 @@ export default function EditEventForm({
           name="date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Date</FormLabel>
+              <FormLabel>Date & Time</FormLabel>
               <FormControl>
-                <Calendar
-                  selected={field.value ? new Date(field.value) : undefined}
-                  onSelect={(date) => {
-                    if (date) {
-                      // Convert to YYYY-MM-DD format
-                      const year = date.getFullYear();
-                      const month = String(date.getMonth() + 1).padStart(
-                        2,
-                        "0"
-                      );
-                      const day = String(date.getDate()).padStart(2, "0");
-                      field.onChange(`${year}-${month}-${day}`);
-                    } else {
-                      field.onChange("");
-                    }
+                <SmartDateTimePicker
+                  date={field.value}
+                  time={form.watch("time")}
+                  onDateChange={(date) => {
+                    field.onChange(date);
+                    form.trigger("date");
                   }}
-                  mode="single"
-                  disabled={(date) => isBefore(startOfDay(date), startOfDay(new Date()))}
+                  onTimeChange={(time) => {
+                    form.setValue("time", time);
+                    form.trigger("time");
+                  }}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Time</FormLabel>
-              <FormControl>
-                <Input type="time" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -152,31 +148,33 @@ export default function EditEventForm({
           name="groupId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assign to Group (optional)</FormLabel>
+              <FormLabel>Group (Optional)</FormLabel>
               <Select
-                value={field.value ?? undefined}
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value === "none" ? null : value);
+                }}
+                defaultValue={field.value || "none"}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a group (optional)" />
+                    <SelectValue placeholder="Select a group" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
+                  <SelectItem value="none">No Group</SelectItem>
                   {groups.map((group) => (
                     <SelectItem key={group.id} value={group.id}>
                       {group.name}
                     </SelectItem>
                   ))}
-                  <SelectItem value="__create__">+ Create New Group</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
             </FormItem>
           )}
         />
-        <LoadingButton type="submit" loading={editEventMutation.isPending}>
-          {editEventMutation.isPending ? "Saving..." : "Save Changes"}
+        <LoadingButton type="submit" className="w-full" loading={isLoading}>
+          {isAdmin ? "Update Event (Admin)" : "Update Event"}
         </LoadingButton>
       </form>
     </Form>

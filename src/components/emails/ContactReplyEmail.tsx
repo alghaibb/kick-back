@@ -39,10 +39,12 @@ export const ContactReplyEmail = ({
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`${domain}/logo.png`}
               alt="Kick Back"
-              width="80"
+              width="120"
+              height="120"
               style={logoStyle}
             />
           </Section>

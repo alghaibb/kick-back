@@ -34,10 +34,13 @@ export const button = {
 
 export const headerSection = {
   textAlign: 'center' as const,
-  marginBottom: '24px',
+  marginBottom: '32px',
 };
 
 export const logoStyle = {
   margin: '0 auto',
-  borderRadius: '8px',
+  borderRadius: '12px',
+  width: '120px',
+  height: '120px',
+  objectFit: 'contain' as const,
 };

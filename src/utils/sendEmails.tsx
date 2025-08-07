@@ -4,6 +4,7 @@ import {
   ResetPasswordEmail,
   VerifyAccount,
   GroupInviteEmail,
+  EventInviteEmail,
   EventReminderEmail,
   ContactReplyEmail,
 } from "@/components/emails";
@@ -105,6 +106,39 @@ export async function sendGroupInviteEmail(
       userFirstName={firstName}
       inviterName={inviterName}
       groupName={groupName}
+      inviteLink={inviteLink}
+    />
+  );
+}
+
+export async function sendEventInviteEmail(
+  email: string,
+  inviterName: string,
+  eventName: string,
+  eventDate: Date,
+  eventLocation: string | null,
+  inviteToken: string
+) {
+  const firstName = await getUserFirstNameByEmail(email);
+  const inviteLink = `${env.NEXT_PUBLIC_BASE_URL}/events/accept-invite?token=${inviteToken}`;
+  const formattedDate = eventDate.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  await sendEmail(
+    email,
+    `You've been invited to ${eventName} on Kick Back`,
+    <EventInviteEmail
+      userFirstName={firstName}
+      inviterName={inviterName}
+      eventName={eventName}
+      eventDate={formattedDate}
+      eventLocation={eventLocation || undefined}
       inviteLink={inviteLink}
     />
   );

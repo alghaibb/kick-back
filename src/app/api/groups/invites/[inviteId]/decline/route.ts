@@ -43,10 +43,24 @@ export async function POST(
       );
     }
 
-    // Mark invite as declined
-    await prisma.groupInvite.update({
-      where: { id: invite.id },
-      data: { status: "declined" },
+    // Mark invite as declined and delete notification
+    await prisma.$transaction(async (tx) => {
+      await tx.groupInvite.update({
+        where: { id: invite.id },
+        data: { status: "declined" },
+      });
+
+      // Delete the notification for this invitation
+      await tx.notification.deleteMany({
+        where: {
+          userId: session.user.id,
+          type: "GROUP_INVITE",
+          data: {
+            path: ["inviteId"],
+            equals: inviteId,
+          },
+        },
+      });
     });
 
     return NextResponse.json({

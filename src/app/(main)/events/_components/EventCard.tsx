@@ -2,10 +2,15 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useModal } from "@/hooks/use-modal";
 import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Mail, LogOut } from "lucide-react";
 import { RSVPButtons } from "@/components/RSVPButtons";
 import { motion } from "framer-motion";
 import { cardHoverVariants } from "@/lib/animationVariants";
@@ -105,37 +110,75 @@ export function EventCard({
 
       <footer className="flex justify-end gap-1 border-t pt-2 mt-2">
         {createdByCurrentUser && !disabled && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon-responsive"
+              onClick={() =>
+                open("invite-event", {
+                  eventId: id,
+                  eventName: name,
+                })
+              }
+              aria-label="Invite to Event"
+            >
+              <Mail className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-responsive"
+              onClick={() =>
+                open("edit-event", {
+                  eventId: id,
+                  name,
+                  description,
+                  date,
+                  time,
+                  location,
+                  groupId,
+                  groups,
+                })
+              }
+              className="text-muted-foreground hover:text-primary"
+              aria-label="Edit Event"
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+          </>
+        )}
+        {!createdByCurrentUser && !disabled && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-responsive"
+                onClick={() =>
+                  open("leave-event", { eventId: id, eventName: name })
+                }
+                className="text-muted-foreground hover:text-orange-600"
+                aria-label="Leave Event"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Leave this event</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {createdByCurrentUser && !disabled && (
           <Button
             variant="ghost"
             size="icon-responsive"
             onClick={() =>
-              open("edit-event", {
-                eventId: id,
-                name,
-                description,
-                date,
-                time,
-                location,
-                groupId,
-                groups,
-              })
+              open("delete-event", { eventId: id, eventName: name })
             }
-            className="text-muted-foreground hover:text-primary"
-            aria-label="Edit Event"
+            className="text-muted-foreground hover:text-destructive"
+            aria-label="Delete Event"
           >
-            <Pencil className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" />
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="icon-responsive"
-          onClick={() => open("delete-event", { eventId: id, eventName: name })}
-          className="text-muted-foreground hover:text-destructive"
-          disabled={disabled}
-          aria-label="Delete Event"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
       </footer>
     </motion.div>
   );
