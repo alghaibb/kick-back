@@ -13,6 +13,14 @@ import { generateToken } from "@/utils/tokens";
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limiter";
 import { notifyEventInvite } from "@/lib/notification-triggers";
+import {
+  suggestLocationOptionSchema,
+  voteLocationOptionSchema,
+  closeLocationPollSchema,
+  type SuggestLocationOptionValues,
+  type VoteLocationOptionValues,
+  type CloseLocationPollValues,
+} from "@/validations/events/eventPollSchema";
 
 function createEventDateTime(
   dateStr: string,
@@ -146,6 +154,318 @@ export async function createEventAction(values: CreateEventValues) {
   } catch (error) {
     console.error("Error creating event:", error);
     return { error: "An error occurred. Please try again." };
+  }
+}
+
+// Location poll helpers
+function buildDedupeKey(
+  addressFormatted: string,
+  latitude?: number,
+  longitude?: number
+): string {
+  if (typeof latitude === "number" && typeof longitude === "number") {
+    const lat = latitude.toFixed(4);
+    const lng = longitude.toFixed(4);
+    return `${lat}|${lng}`;
+  }
+  const normalized = addressFormatted
+    .toLowerCase()
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return normalized;
+}
+
+export async function suggestLocationOptionAction(
+  values: SuggestLocationOptionValues
+) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" } as const;
+    }
+
+    const { eventId, label, addressFormatted, latitude, longitude } =
+      suggestLocationOptionSchema.parse(values);
+
+    // Verify access: host or attendee
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      include: {
+        attendees: {
+          where: { userId: session.user.id },
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!event) {
+      return { error: "Event not found" } as const;
+    }
+
+    // Only allow suggestions if no official location set
+    if (event.location) {
+      return { error: "Location already set for this event" } as const;
+    }
+
+    const isHost = event.createdBy === session.user.id;
+    const isAttendee = event.attendees.length > 0;
+    if (!isHost && !isAttendee) {
+      return { error: "Access denied" } as const;
+    }
+
+    const dedupeKey = buildDedupeKey(addressFormatted, latitude, longitude);
+
+    const result = await prisma.$transaction(async (tx) => {
+      // Ensure one open poll
+      let poll = await tx.eventPoll.findFirst({
+        where: { eventId, status: "open" },
+        select: { id: true },
+      });
+
+      if (!poll) {
+        poll = await tx.eventPoll.create({
+          data: {
+            eventId,
+            status: "open",
+            createdBy: session.user.id,
+          },
+          select: { id: true },
+        });
+      }
+
+      // Upsert option by dedupeKey
+      let option = await tx.eventPollOption.findFirst({
+        where: { pollId: poll.id, dedupeKey },
+        select: { id: true },
+      });
+
+      if (!option) {
+        option = await tx.eventPollOption.create({
+          data: {
+            pollId: poll.id,
+            label,
+            addressFormatted,
+            latitude: latitude ?? null,
+            longitude: longitude ?? null,
+            dedupeKey,
+            suggestedBy: session.user.id,
+          },
+          select: { id: true },
+        });
+      }
+
+      // Upsert vote (one per user per poll)
+      const existingVote = await tx.eventPollVote.findFirst({
+        where: { pollId: poll.id, userId: session.user.id },
+        select: { id: true },
+      });
+
+      if (existingVote) {
+        await tx.eventPollVote.update({
+          where: { id: existingVote.id },
+          data: { optionId: option.id },
+        });
+      } else {
+        await tx.eventPollVote.create({
+          data: {
+            pollId: poll.id,
+            optionId: option.id,
+            userId: session.user.id,
+          },
+        });
+      }
+
+      return { pollId: poll.id, optionId: option.id };
+    });
+
+    return { success: true, ...result } as const;
+  } catch (error) {
+    console.error("Suggest location option error:", error);
+    return { error: "Failed to suggest location" } as const;
+  }
+}
+
+export async function voteLocationOptionAction(
+  values: VoteLocationOptionValues
+) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" } as const;
+    }
+
+    const { eventId, optionId } = voteLocationOptionSchema.parse(values);
+
+    // Verify access and find poll by event
+    const poll = await prisma.eventPoll.findFirst({
+      where: { eventId, status: "open" },
+      select: { id: true },
+    });
+    if (!poll) {
+      return { error: "No open poll" } as const;
+    }
+
+    // Verify user is host or attendee
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      include: {
+        attendees: {
+          where: { userId: session.user.id },
+          select: { id: true },
+        },
+      },
+    });
+    if (!event) return { error: "Event not found" } as const;
+    const isHost = event.createdBy === session.user.id;
+    const isAttendee = event.attendees.length > 0;
+    if (!isHost && !isAttendee) return { error: "Access denied" } as const;
+
+    const existingVote = await prisma.eventPollVote.findFirst({
+      where: { pollId: poll.id, userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (existingVote) {
+      await prisma.eventPollVote.update({
+        where: { id: existingVote.id },
+        data: { optionId, voteType: "yes" },
+      });
+    } else {
+      await prisma.eventPollVote.create({
+        data: {
+          pollId: poll.id,
+          optionId,
+          userId: session.user.id,
+          voteType: "yes",
+        },
+      });
+    }
+
+    return { success: true } as const;
+  } catch (error) {
+    console.error("Vote location option error:", error);
+    return { error: "Failed to vote" } as const;
+  }
+}
+
+export async function closeLocationPollAction(
+  values: CloseLocationPollValues
+) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" } as const;
+    }
+
+    const { eventId, winningOptionId } = closeLocationPollSchema.parse(values);
+
+    // Host only
+    const event = await prisma.event.findUnique({ where: { id: eventId } });
+    if (!event) return { error: "Event not found" } as const;
+    if (event.createdBy !== session.user.id) {
+      return { error: "Only host can close the poll" } as const;
+    }
+
+    const poll = await prisma.eventPoll.findFirst({
+      where: { eventId, status: "open" },
+      select: { id: true },
+    });
+    if (!poll) return { error: "No open poll" } as const;
+
+    await prisma.$transaction(async (tx) => {
+      // If winning not provided, pick the highest-voted
+      let chosenOptionId = winningOptionId;
+      if (!chosenOptionId) {
+        const top = await tx.eventPollOption.findFirst({
+          where: { pollId: poll!.id },
+          orderBy: [
+            { votes: { _count: "desc" } },
+            { createdAt: "asc" },
+          ],
+          select: { id: true },
+        });
+        chosenOptionId = top?.id;
+      }
+
+      if (chosenOptionId) {
+        const option = await tx.eventPollOption.findUnique({
+          where: { id: chosenOptionId },
+          select: {
+            addressFormatted: true,
+            latitude: true,
+            longitude: true,
+          },
+        });
+        if (option) {
+          await tx.event.update({
+            where: { id: eventId },
+            data: {
+              location: option.addressFormatted,
+              latitude: option.latitude ?? null,
+              longitude: option.longitude ?? null,
+            },
+          });
+        }
+      }
+
+      await tx.eventPoll.update({
+        where: { id: poll.id },
+        data: { status: "closed", closedAt: new Date() },
+      });
+    });
+
+    revalidatePath("/events");
+    revalidatePath("/calendar");
+    return { success: true } as const;
+  } catch (error) {
+    console.error("Close location poll error:", error);
+    return { error: "Failed to close poll" } as const;
+  }
+}
+
+export async function voteNoLocationOptionAction(values: VoteLocationOptionValues) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" } as const;
+    }
+
+    const { eventId, optionId } = voteLocationOptionSchema.parse(values);
+
+    const poll = await prisma.eventPoll.findFirst({
+      where: { eventId, status: "open" },
+      select: { id: true },
+    });
+    if (!poll) return { error: "No open poll" } as const;
+
+    // Verify user is host or attendee
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      include: {
+        attendees: {
+          where: { userId: session.user.id },
+          select: { id: true },
+        },
+      },
+    });
+    if (!event) return { error: "Event not found" } as const;
+    const isHost = event.createdBy === session.user.id;
+    const isAttendee = event.attendees.length > 0;
+    if (!isHost && !isAttendee) return { error: "Access denied" } as const;
+
+    await prisma.eventPollVote.upsert({
+      where: {
+        optionId_userId: { optionId, userId: session.user.id },
+      },
+      update: { optionId, voteType: "no" },
+      create: { pollId: poll.id, optionId, userId: session.user.id, voteType: "no" },
+    });
+
+    return { success: true } as const;
+  } catch (error) {
+    console.error("Vote NO option error:", error);
+    return { error: "Failed to vote no" } as const;
   }
 }
 

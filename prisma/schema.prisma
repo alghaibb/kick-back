@@ -50,6 +50,9 @@ model User {
   verificationOTPs     VerificationOTP[]
   contacts             Contact[]
   eventInvites         EventInvite[]        @relation("EventInvites")
+  EventPoll            EventPoll[]
+  EventPollOption      EventPollOption[]
+  EventPollVote        EventPollVote[]
 
   @@map("users")
 }
@@ -192,6 +195,8 @@ model Event {
   description String?
   date        DateTime
   location    String?
+  latitude    Float?
+  longitude   Float?
   createdBy   String
   groupId     String?
   createdAt   DateTime        @default(now())
@@ -202,6 +207,7 @@ model Event {
   photos      EventPhoto[]
   group       Group?          @relation(fields: [groupId], references: [id])
   EventInvite EventInvite[]
+  EventPoll   EventPoll[]
 
   @@index([createdBy])
   @@index([date])
@@ -370,6 +376,58 @@ enum NotificationType {
 enum UserRole {
   USER
   ADMIN
+}
+
+model EventPoll {
+  id        String            @id @default(cuid())
+  eventId   String
+  status    String            @default("open")
+  createdBy String
+  createdAt DateTime          @default(now())
+  closedAt  DateTime?
+  event     Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  creator   User              @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  options   EventPollOption[]
+  votes     EventPollVote[]
+
+  @@index([eventId, status])
+  @@map("event_polls")
+}
+
+model EventPollOption {
+  id               String          @id @default(cuid())
+  pollId           String
+  label            String
+  addressFormatted String
+  latitude         Float?
+  longitude        Float?
+  dedupeKey        String
+  suggestedBy      String
+  createdAt        DateTime        @default(now())
+  poll             EventPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  suggester        User            @relation(fields: [suggestedBy], references: [id], onDelete: Cascade)
+  votes            EventPollVote[]
+
+  @@unique([pollId, dedupeKey])
+  @@index([pollId])
+  @@map("event_poll_options")
+}
+
+model EventPollVote {
+  id        String          @id @default(cuid())
+  pollId    String
+  optionId  String
+  userId    String
+  voteType  String          @default("yes")
+  createdAt DateTime        @default(now())
+  poll      EventPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option    EventPollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, userId])
+  @@index([optionId])
+  @@index([pollId])
+  @@map("event_poll_votes")
 }
 
 model Contact {

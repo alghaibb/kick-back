@@ -27,6 +27,12 @@ const PhotoGallery = lazy(() =>
     default: m.PhotoGallery,
   }))
 );
+const EventLocationPoll = lazy(() =>
+  import("@/app/(main)/events/_components/EventLocationPoll").then((m) => ({
+    default: m.EventLocationPoll,
+  }))
+);
+
 import { MessageCircle, ChevronDown, ChevronUp, Camera } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -300,13 +306,19 @@ export function CalendarPageClientWithComments() {
                     <CollapsibleContent>
                       <div className="border-t p-4">
                         <Tabs defaultValue="comments" className="w-full">
-                          <TabsList className="grid w-full grid-cols-2">
+                          <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger
                               value="comments"
                               className="flex items-center gap-2"
                             >
                               <MessageCircle className="h-4 w-4" />
                               Comments
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="poll"
+                              className="flex items-center gap-2"
+                            >
+                              Poll
                             </TabsTrigger>
                             <TabsTrigger
                               value="photos"
@@ -323,6 +335,15 @@ export function CalendarPageClientWithComments() {
                               }
                             >
                               <ThreadedEventComments eventId={event.id} />
+                            </Suspense>
+                          </TabsContent>
+                          <TabsContent value="poll" className="mt-4">
+                            <Suspense
+                              fallback={
+                                <UnifiedSkeleton className="h-[160px]" />
+                              }
+                            >
+                              <EventLocationPoll eventId={event.id} />
                             </Suspense>
                           </TabsContent>
                           <TabsContent

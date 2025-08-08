@@ -20,6 +20,11 @@ interface LocationInputProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  onSelectSuggestion?: (value: {
+    displayName: string;
+    lat: number;
+    lon: number;
+  }) => void;
 }
 
 export function LocationInput({
@@ -27,6 +32,7 @@ export function LocationInput({
   onChange,
   className,
   disabled = false,
+  onSelectSuggestion,
 }: LocationInputProps) {
   const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -189,6 +195,15 @@ export function LocationInput({
   const handleSuggestionClick = (suggestion: NominatimResult) => {
     setInputValue(suggestion.display_name);
     onChange(suggestion.display_name);
+    if (onSelectSuggestion) {
+      const latNum = Number(suggestion.lat);
+      const lonNum = Number(suggestion.lon);
+      onSelectSuggestion({
+        displayName: suggestion.display_name,
+        lat: Number.isFinite(latNum) ? latNum : 0,
+        lon: Number.isFinite(lonNum) ? lonNum : 0,
+      });
+    }
     setShowSuggestions(false);
     setIsCustom(false);
   };
