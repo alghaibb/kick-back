@@ -11,7 +11,6 @@ import {
   voteNoLocationOptionAction,
 } from "@/app/(main)/events/actions";
 import { toast } from "sonner";
-import { useSession } from "next-auth/react";
 
 export function useSuggestLocationOption() {
   const queryClient = useQueryClient();
