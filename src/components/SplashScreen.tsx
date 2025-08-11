@@ -46,7 +46,7 @@ export function SplashScreen({ children }: SplashScreenProps) {
             alt="Kick Back Logo"
             width={256}
             height={256}
-            className="mb-6 select-none invert dark:invert-0"
+            className="mb-6 select-none invert"
             priority
           />
           <Spinner
