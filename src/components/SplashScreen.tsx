@@ -32,7 +32,7 @@ export function SplashScreen({ children }: SplashScreenProps) {
             className="mb-6"
             priority
           />
-          <Spinner size="xxl" stroke={false} className="text-background" />
+          <Spinner size="xxl" stroke={false}  />
         </div>
       </div>
     );
