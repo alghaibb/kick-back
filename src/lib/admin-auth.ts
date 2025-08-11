@@ -44,10 +44,12 @@ export async function checkAdminAccess(skipRateLimit = false) {
     // Update last active timestamp for admin users (if field exists in schema)
     if (isAdmin) {
       // Fire and forget - don't wait for this
-      prisma.user.update({
-        where: { id: session.user.id },
-        data: { updatedAt: new Date() },
-      }).catch(console.error);
+      prisma.user
+        .update({
+          where: { id: session.user.id },
+          data: { updatedAt: new Date() },
+        })
+        .catch(console.error);
     }
 
     return { isAdmin, error: isAdmin ? null : "Insufficient permissions" };
@@ -79,29 +81,34 @@ export async function requireAdminWithAudit(
   if (!isAdmin) {
     // Log failed admin access attempts
     console.error(`Failed admin access attempt:`, {
-      userId: session?.user?.id || 'anonymous',
+      userId: session?.user?.id || "anonymous",
       action,
       resource,
       timestamp: new Date().toISOString(),
-      ip: 'unknown', // Could be enhanced with IP tracking
+      ip: "unknown", // Could be enhanced with IP tracking
     });
 
     throw new Error(error || "Admin access required");
   }
 
   // Log successful admin actions (optional - could be stored in DB)
-  console.info(`Admin action:`, {
-    userId: session?.user?.id,
-    action,
-    resource,
-    timestamp: new Date().toISOString(),
-  });
+  if (process.env.NODE_ENV === "development") {
+    console.info(`Admin action:`, {
+      userId: session?.user?.id,
+      action,
+      resource,
+      timestamp: new Date().toISOString(),
+    });
+  }
 
   return true;
 }
 
 // Check if current user can perform action on target user
-export async function canManageUser(targetUserId: string, allowSelfEdit = false) {
+export async function canManageUser(
+  targetUserId: string,
+  allowSelfEdit = false
+) {
   const session = await getSession();
   const { isAdmin } = await checkAdminAccess(true); // Skip rate limit for read-only check
 
@@ -112,7 +119,10 @@ export async function canManageUser(targetUserId: string, allowSelfEdit = false)
   // Prevent admin from managing themselves in certain operations (like delete)
   // But allow self-editing for profile updates
   if (session?.user?.id === targetUserId && !allowSelfEdit) {
-    return { canManage: false, error: "Cannot perform this action on yourself" };
+    return {
+      canManage: false,
+      error: "Cannot perform this action on yourself",
+    };
   }
 
   // Additional checks could be added here (e.g., super admin vs regular admin)
@@ -120,15 +130,18 @@ export async function canManageUser(targetUserId: string, allowSelfEdit = false)
 }
 
 // Validate admin action permissions
-export function validateAdminAction(action: string, data: Record<string, unknown>) {
+export function validateAdminAction(
+  action: string,
+  data: Record<string, unknown>
+) {
   const allowedActions = [
-    'update_user',
-    'delete_user',
-    'recover_user',
-    'delete_contact',
-    'view_users',
-    'view_contacts',
-    'view_stats',
+    "update_user",
+    "delete_user",
+    "recover_user",
+    "delete_contact",
+    "view_users",
+    "view_contacts",
+    "view_stats",
   ];
 
   if (!allowedActions.includes(action)) {
@@ -137,29 +150,37 @@ export function validateAdminAction(action: string, data: Record<string, unknown
 
   // Validate data based on action
   switch (action) {
-    case 'update_user':
+    case "update_user":
       if (!data.userId || !data.updates) {
-        throw new Error('User ID and updates are required');
+        throw new Error("User ID and updates are required");
       }
       // Sanitize updates - only allow specific fields
-      const allowedFields = ['firstName', 'lastName', 'nickname', 'role', 'hasOnboarded'];
+      const allowedFields = [
+        "firstName",
+        "lastName",
+        "nickname",
+        "role",
+        "hasOnboarded",
+      ];
       const updates = data.updates as Record<string, unknown>;
-      const invalidFields = Object.keys(updates).filter(key => !allowedFields.includes(key));
+      const invalidFields = Object.keys(updates).filter(
+        (key) => !allowedFields.includes(key)
+      );
       if (invalidFields.length > 0) {
-        throw new Error(`Invalid fields: ${invalidFields.join(', ')}`);
+        throw new Error(`Invalid fields: ${invalidFields.join(", ")}`);
       }
       break;
 
-    case 'delete_user':
-    case 'recover_user':
+    case "delete_user":
+    case "recover_user":
       if (!data.userId) {
-        throw new Error('User ID is required');
+        throw new Error("User ID is required");
       }
       break;
 
-    case 'delete_contact':
+    case "delete_contact":
       if (!data.contactId) {
-        throw new Error('Contact ID is required');
+        throw new Error("Contact ID is required");
       }
       break;
   }

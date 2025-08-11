@@ -12,7 +12,8 @@ import {
   startOfDay,
   subMinutes,
 } from "date-fns";
-import { format as formatTz, fromZonedTime, toZonedTime } from "date-fns-tz";
+// @ts-ignore
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -159,8 +160,6 @@ export async function GET(request: Request) {
         const [reminderHour, reminderMinute] = user.reminderTime.split(":").map(Number);
         const reminderDateTime = new Date(userNow);
         reminderDateTime.setHours(reminderHour, reminderMinute, 0, 0);
-        const windowStart = subMinutes(reminderDateTime, 2);
-        const windowEnd = addMinutes(reminderDateTime, 3);
 
         continue;
       }
@@ -376,18 +375,14 @@ export async function GET(request: Request) {
           }
         }
       } else {
-
-
         // Calculate and show the next reminder window
         const [reminderHour, reminderMinute] = creatorInfo.reminderTime.split(":").map(Number);
         const reminderDateTime = new Date(creatorNow);
         reminderDateTime.setHours(reminderHour, reminderMinute, 0, 0);
-        const windowStart = subMinutes(reminderDateTime, 2);
-        const windowEnd = addMinutes(reminderDateTime, 3);
-
       }
     } else {
-
+      console.error(`❌ Creator not found for event ${event.name}`);
+      errors++;
     }
   }
 

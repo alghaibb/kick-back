@@ -761,7 +761,7 @@ export async function replyToContact(data: ContactReplyValues) {
 
     // Mark contact as replied
     try {
-      const updatedContact = await prisma.contact.update({
+      await prisma.contact.update({
         where: { id: contactId },
         data: { repliedAt: new Date() },
         select: { id: true, repliedAt: true },

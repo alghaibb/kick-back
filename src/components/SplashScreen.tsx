@@ -22,7 +22,7 @@ export function SplashScreen({ children }: SplashScreenProps) {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background dark:bg-foreground">
         <div className="text-center">
           <Image
             src="/logo.png"
