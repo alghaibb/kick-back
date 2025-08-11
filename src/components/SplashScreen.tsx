@@ -36,10 +36,10 @@ export function SplashScreen({ children }: SplashScreenProps) {
           className="pointer-events-none absolute inset-0 flex items-center justify-center"
           aria-hidden="true"
         >
-          {/* Light mode glow (subtle dark) */}
-          <div className="h-80 w-80 rounded-full blur-3xl dark:hidden bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.06),rgba(0,0,0,0)_60%)]" />
+          {/* Light mode glow (stronger + blend for visibility) */}
+          <div className="dark:hidden h-[28rem] w-[28rem] rounded-full blur-3xl bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.14)_0%,rgba(0,0,0,0.06)_50%,rgba(0,0,0,0)_75%)] opacity-80 mix-blend-multiply" />
           {/* Dark mode glow (subtle light) */}
-          <div className="h-80 w-80 rounded-full blur-3xl hidden dark:block bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(255,255,255,0)_60%)]" />
+          <div className="hidden dark:block h-80 w-80 rounded-full blur-3xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),rgba(255,255,255,0)_60%)]" />
         </div>
 
         <div className="relative text-center">
