@@ -12,3 +12,10 @@ export const inviteToEventFormSchema = z.object({
 });
 
 export type InviteToEventFormValues = z.infer<typeof inviteToEventFormSchema>;
+
+export const inviteToEventBatchSchema = z.object({
+  eventId: z.string().min(1, "Event ID is required"),
+  emails: z.array(emailField).min(1, "At least one email is required"),
+});
+
+export type InviteToEventBatchValues = z.infer<typeof inviteToEventBatchSchema>;

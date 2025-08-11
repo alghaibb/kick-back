@@ -6,7 +6,8 @@ import {
   createEventAction,
   editEventAction,
   deleteEventAction,
-  leaveEventAction
+  leaveEventAction,
+  inviteToEventBatchAction,
 } from "@/app/(main)/events/actions";
 import { adminEditEventAction } from "@/app/(main)/admin/actions";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
@@ -45,7 +46,13 @@ export function useEditEvent() {
   const { invalidateDashboard } = useDashboardInvalidation();
 
   return useMutation({
-    mutationFn: async ({ eventId, values }: { eventId: string; values: CreateEventValues }) => {
+    mutationFn: async ({
+      eventId,
+      values,
+    }: {
+      eventId: string;
+      values: CreateEventValues;
+    }) => {
       const result = await editEventAction(eventId, values);
       if (result?.error) {
         throw new Error(result.error);
@@ -101,7 +108,13 @@ export function useAdminEditEvent() {
   const { invalidateDashboard } = useDashboardInvalidation();
 
   return useMutation({
-    mutationFn: async ({ eventId, values }: { eventId: string; values: CreateEventValues }) => {
+    mutationFn: async ({
+      eventId,
+      values,
+    }: {
+      eventId: string;
+      values: CreateEventValues;
+    }) => {
       const result = await adminEditEventAction(eventId, {
         ...values,
         groupId: values.groupId || undefined,
@@ -116,28 +129,33 @@ export function useAdminEditEvent() {
       const previousEvents = queryClient.getQueryData(["admin-events"]);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(["admin-events"], (old: { pages: Array<{ events: Array<{ id: string }> }> }) => {
-        if (!old?.pages) return old;
+      queryClient.setQueryData(
+        ["admin-events"],
+        (old: { pages: Array<{ events: Array<{ id: string }> }> }) => {
+          if (!old?.pages) return old;
 
-        return {
-          ...old,
-          pages: old.pages.map((page: { events: Array<{ id: string }> }) => ({
-            ...page,
-            events: page.events.map((event: { id: string }) =>
-              event.id === eventId
-                ? {
-                  ...event,
-                  name: values.name,
-                  description: values.description || null,
-                  date: new Date(`${values.date}T${values.time}`).toISOString(),
-                  location: values.location || null,
-                  groupId: values.groupId || null,
-                }
-                : event
-            ),
-          })),
-        };
-      });
+          return {
+            ...old,
+            pages: old.pages.map((page: { events: Array<{ id: string }> }) => ({
+              ...page,
+              events: page.events.map((event: { id: string }) =>
+                event.id === eventId
+                  ? {
+                      ...event,
+                      name: values.name,
+                      description: values.description || null,
+                      date: new Date(
+                        `${values.date}T${values.time}`
+                      ).toISOString(),
+                      location: values.location || null,
+                      groupId: values.groupId || null,
+                    }
+                  : event
+              ),
+            })),
+          };
+        }
+      );
 
       // Return a context object with the snapshotted value
       return { previousEvents };
@@ -193,4 +211,34 @@ export function useLeaveEvent() {
       toast.error(error.message || "Failed to leave event");
     },
   });
-} 
+}
+
+export function useInviteToEventBatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { eventId: string; emails: string[] }) => {
+      const result = await inviteToEventBatchAction(data.eventId, data.emails);
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      return result as {
+        success?: boolean;
+        succeeded?: string[];
+        failed?: string[];
+      };
+    },
+    onSuccess: (data) => {
+      const ok = data?.succeeded?.length ?? 0;
+      const bad = data?.failed?.length ?? 0;
+      if (ok) toast.success(`Invited ${ok} ${ok === 1 ? "person" : "people"}`);
+      if (bad) toast.error(`Failed to invite ${bad}`);
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (error: Error) => {
+      console.error("Batch invite to event error:", error);
+      toast.error(error.message || "Failed to send invitations");
+    },
+  });
+}

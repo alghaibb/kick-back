@@ -14,10 +14,11 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { ChipsInput, type Chip } from "@/components/ui/chips-input";
+import { useUserSearch } from "@/hooks/queries/useUserSearch";
 import { LoadingButton } from "@/components/ui/button";
 import { useState } from "react";
-import { useInviteToGroup } from "@/hooks/mutations/useGroupMutations";
+import { useInviteToGroupBatch } from "@/hooks/mutations/useGroupMutations";
 import {
   Select,
   SelectContent,
@@ -38,7 +39,7 @@ export function InviteGroupForm({
   onSuccess,
 }: InviteGroupFormProps) {
   const [invitedEmails, setInvitedEmails] = useState<string[]>([]);
-  const inviteToGroupMutation = useInviteToGroup();
+  const inviteToGroupMutation = useInviteToGroupBatch();
 
   const form = useForm<InviteGroupValues>({
     resolver: zodResolver(inviteGroupSchema),
@@ -50,21 +51,55 @@ export function InviteGroupForm({
   });
 
   function onSubmit(values: InviteGroupValues) {
+    const emails = Array.from(
+      new Set(
+        [...chips.map((c) => c.value), values.email?.trim() || ""].filter(
+          Boolean
+        )
+      )
+    );
+
+    if (emails.length === 0) {
+      return;
+    }
+
     inviteToGroupMutation.mutate(
       {
         groupId: values.groupId,
-        email: values.email,
+        emails,
         role: values.role,
       },
       {
-        onSuccess: () => {
-          setInvitedEmails((prev) => [...prev, values.email]);
+        onSuccess: (res) => {
+          if (res?.succeeded?.length) {
+            setInvitedEmails((prev) => [...prev, ...res.succeeded!]);
+          }
+          setChips([]);
           form.reset({ groupId, email: "", role: "member" });
           onSuccess?.();
         },
       }
     );
   }
+
+  const [chips, setChips] = useState<Chip[]>([]);
+  const { setQuery, results, isLoading } = useUserSearch();
+
+  const suggestions: Chip[] = results.map((u) => ({
+    id: u.id,
+    value: u.email,
+    label: u.nickname || u.firstName || u.email,
+  }));
+
+  const handleChipsChange = (next: Chip[]) => {
+    setChips(next);
+    const last = next[next.length - 1];
+    if (last) {
+      form.setValue("email", last.value, { shouldValidate: true });
+    } else {
+      form.setValue("email", "", { shouldValidate: true });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -81,14 +116,17 @@ export function InviteGroupForm({
           <FormField
             control={form.control}
             name="email"
-            render={({ field }) => (
+            render={() => (
               <FormItem>
-                <FormLabel>Email Address</FormLabel>
+                <FormLabel>Invite</FormLabel>
                 <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="Enter email address"
-                    {...field}
+                  <ChipsInput
+                    value={chips}
+                    onChange={handleChipsChange}
+                    placeholder="Type a name or email, press , to add"
+                    onQueryChange={setQuery}
+                    suggestions={suggestions}
+                    isLoading={isLoading}
                   />
                 </FormControl>
                 <FormMessage />

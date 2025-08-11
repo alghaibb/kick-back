@@ -14,7 +14,7 @@
     "lint": "next lint",
     "start": "next start",
     "fix-recovered-user": "tsx scripts/fix-recovered-user.ts",
-    "build:start": "next build && next start",
+    "build:start": "pnpm prisma generate && next build && next start",
     "type-check": "tsc --noEmit",
     "postinstall": "prisma generate"
   },

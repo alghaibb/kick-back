@@ -6,7 +6,10 @@ import {
   createEventSchema,
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
-import { inviteToEventSchema } from "@/validations/events/inviteToEventSchema";
+import {
+  inviteToEventSchema,
+  inviteToEventBatchSchema,
+} from "@/validations/events/inviteToEventSchema";
 import { notifyEventCreated } from "@/lib/notification-triggers";
 import { sendEventInviteEmail } from "@/utils/sendEmails";
 import { generateToken } from "@/utils/tokens";
@@ -349,9 +352,7 @@ export async function voteLocationOptionAction(
   }
 }
 
-export async function closeLocationPollAction(
-  values: CloseLocationPollValues
-) {
+export async function closeLocationPollAction(values: CloseLocationPollValues) {
   try {
     const session = await getSession();
     if (!session?.user?.id) {
@@ -379,10 +380,7 @@ export async function closeLocationPollAction(
       if (!chosenOptionId) {
         const top = await tx.eventPollOption.findFirst({
           where: { pollId: poll!.id },
-          orderBy: [
-            { votes: { _count: "desc" } },
-            { createdAt: "asc" },
-          ],
+          orderBy: [{ votes: { _count: "desc" } }, { createdAt: "asc" }],
           select: { id: true },
         });
         chosenOptionId = top?.id;
@@ -424,7 +422,9 @@ export async function closeLocationPollAction(
   }
 }
 
-export async function voteNoLocationOptionAction(values: VoteLocationOptionValues) {
+export async function voteNoLocationOptionAction(
+  values: VoteLocationOptionValues
+) {
   try {
     const session = await getSession();
     if (!session?.user?.id) {
@@ -459,7 +459,12 @@ export async function voteNoLocationOptionAction(values: VoteLocationOptionValue
         optionId_userId: { optionId, userId: session.user.id },
       },
       update: { optionId, voteType: "no" },
-      create: { pollId: poll.id, optionId, userId: session.user.id, voteType: "no" },
+      create: {
+        pollId: poll.id,
+        optionId,
+        userId: session.user.id,
+        voteType: "no",
+      },
     });
 
     return { success: true } as const;
@@ -572,19 +577,25 @@ export async function editEventAction(
   }
 }
 
-export async function inviteToEventAction(eventId: string, email: string) {
+export async function inviteToEventAction(
+  eventId: string,
+  email: string,
+  skipRateLimit: boolean = false
+) {
   const session = await getSession();
   if (!session?.user?.id) {
     return { error: "Not authenticated" };
   }
 
   // Rate limiting
-  const limiter = rateLimit({ interval: 3600000 });
-  try {
-    await limiter.check(50, "email", session.user.id);
-  } catch (error) {
-    console.error("Rate limit error:", error);
-    return { error: "Too many invite requests. Please try again later." };
+  if (!skipRateLimit) {
+    const limiter = rateLimit({ interval: 3600000 });
+    try {
+      await limiter.check(50, "email", `event-invite:${session.user.id}`);
+    } catch (error) {
+      console.error("Rate limit error:", error);
+      return { error: "Too many invite requests. Please try again later." };
+    }
   }
 
   if (!eventId || !email) {
@@ -650,11 +661,8 @@ export async function inviteToEventAction(eventId: string, email: string) {
       where: {
         eventId,
         email,
-        OR: [
-          { status: { not: "pending" } },
-          { expiresAt: { lt: new Date() } }
-        ]
-      }
+        OR: [{ status: { not: "pending" } }, { expiresAt: { lt: new Date() } }],
+      },
     });
 
     // Generate invite token
@@ -713,11 +721,57 @@ export async function inviteToEventAction(eventId: string, email: string) {
     console.error("Event invite error:", error);
 
     // Handle Prisma unique constraint violation
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
-      return { error: "An invitation has already been sent to this email for this event" };
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      return {
+        error:
+          "An invitation has already been sent to this email for this event",
+      };
     }
 
     return { error: "Failed to send invitation" };
+  }
+}
+
+export async function inviteToEventBatchAction(
+  eventId: string,
+  emails: string[]
+) {
+  try {
+    const parsed = inviteToEventBatchSchema.parse({ eventId, emails });
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" };
+    }
+    const limiter = rateLimit({ interval: 3600000 });
+    try {
+      await limiter.check(50, "email", `event-invite:${session.user.id}`);
+    } catch (error) {
+      console.error("Rate limit error:", error);
+      return { error: "Too many invite requests. Please try again later." };
+    }
+    const results = await Promise.allSettled(
+      parsed.emails.map((email) =>
+        inviteToEventAction(parsed.eventId, email, true)
+      )
+    );
+
+    const succeeded: string[] = [];
+    const failed: string[] = [];
+    results.forEach((r, idx) => {
+      const em = parsed.emails[idx];
+      if (r.status === "fulfilled" && !r.value?.error) succeeded.push(em);
+      else failed.push(em);
+    });
+
+    return { success: true, succeeded, failed };
+  } catch (error) {
+    console.error("Batch event invite error:", error);
+    return { error: "Failed to send some invitations" };
   }
 }
 
@@ -751,7 +805,10 @@ export async function leaveEventAction(eventId: string) {
 
     // Don't allow event creator to leave their own event
     if (attendee.event.createdBy === session.user.id) {
-      return { error: "You cannot leave an event you created. You can delete the event instead." };
+      return {
+        error:
+          "You cannot leave an event you created. You can delete the event instead.",
+      };
     }
 
     // Remove user from event
@@ -778,7 +835,7 @@ export async function leaveEventAction(eventId: string) {
     return {
       success: true,
       message: `You have left "${attendee.event.name}"`,
-      eventName: attendee.event.name
+      eventName: attendee.event.name,
     };
   } catch (error) {
     console.error("Leave event error:", error);
@@ -864,7 +921,7 @@ export async function acceptEventInviteAction(token: string) {
     return {
       success: true,
       event: invite.event,
-      message: `Successfully joined "${invite.event.name}"!`
+      message: `Successfully joined "${invite.event.name}"!`,
     };
   } catch (error) {
     console.error("Accept event invite error:", error);

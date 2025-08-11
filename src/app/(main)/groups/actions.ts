@@ -11,6 +11,7 @@ import {
 import {
   acceptInviteSchema,
   inviteGroupSchema,
+  inviteGroupBatchSchema,
 } from "@/validations/group/inviteGroupSchema";
 import { revalidatePath } from "next/cache";
 import { notifyGroupInvite } from "@/lib/notification-triggers";
@@ -57,19 +58,24 @@ export async function createGroupAction(values: CreateGroupValues) {
   }
 }
 
-export async function inviteToGroupAction(formData: FormData) {
+export async function inviteToGroupAction(
+  formData: FormData,
+  skipRateLimit: boolean = false
+) {
   const session = await getSession();
   if (!session?.user?.id) {
     return { error: "Not authenticated" };
   }
 
   // Rate limiting
-  const limiter = rateLimit({ interval: 3600000 }); // 1 hour
-  try {
-    await limiter.check(10, "email", session.user.id);
-  } catch (error) {
-    console.error("Rate limit error:", error);
-    return { error: "Too many invite requests. Please try again later." };
+  if (!skipRateLimit) {
+    const limiter = rateLimit({ interval: 3600000 }); // 1 hour
+    try {
+      await limiter.check(10, "email", `group-invite:${session.user.id}`);
+    } catch (error) {
+      console.error("Rate limit error:", error);
+      return { error: "Too many invite requests. Please try again later." };
+    }
   }
 
   const raw = Object.fromEntries(formData.entries());
@@ -208,6 +214,60 @@ export async function inviteToGroupAction(formData: FormData) {
   } catch (error) {
     console.error("Group invite error:", error);
     return { error: "Failed to send invitation" };
+  }
+}
+
+export async function inviteToGroupBatchAction(data: {
+  groupId: string;
+  emails: string[];
+  role: string;
+}) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = inviteGroupBatchSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      error: parsed.error.flatten().formErrors.join(", ") || "Invalid input",
+    };
+  }
+
+  const { groupId, emails, role } = parsed.data;
+
+  try {
+    // Single rate-limit check for the whole batch
+    const limiter = rateLimit({ interval: 3600000 });
+    try {
+      await limiter.check(10, "email", `group-invite:${session.user.id}`);
+    } catch (error) {
+      console.error("Rate limit error:", error);
+      return { error: "Too many invite requests. Please try again later." };
+    }
+
+    const results = await Promise.allSettled(
+      emails.map(async (email) => {
+        const fd = new FormData();
+        fd.append("groupId", groupId);
+        fd.append("email", email);
+        fd.append("role", role);
+        return await inviteToGroupAction(fd, true);
+      })
+    );
+
+    const succeeded: string[] = [];
+    const failed: string[] = [];
+    results.forEach((r, idx) => {
+      const em = emails[idx];
+      if (r.status === "fulfilled" && !r.value?.error) succeeded.push(em);
+      else failed.push(em);
+    });
+
+    return { success: true, succeeded, failed };
+  } catch (error) {
+    console.error("Batch group invite error:", error);
+    return { error: "Failed to send some invitations" };
   }
 }
 

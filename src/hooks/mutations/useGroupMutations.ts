@@ -6,6 +6,7 @@ import {
   deleteGroupAction,
   leaveGroupAction,
   inviteToGroupAction,
+  inviteToGroupBatchAction,
   updateGroupMemberRoleAction,
   removeGroupMemberAction,
 } from "@/app/(main)/groups/actions";
@@ -96,6 +97,42 @@ export function useInviteToGroup() {
     onError: (error: Error) => {
       console.error("Invite to group error:", error);
       toast.error(error.message || "Failed to send invitation");
+    },
+  });
+}
+
+export function useInviteToGroupBatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      groupId: string;
+      emails: string[];
+      role: string;
+    }) => {
+      const result = await inviteToGroupBatchAction(data);
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      return result as {
+        success?: boolean;
+        succeeded?: string[];
+        failed?: string[];
+      };
+    },
+    onSuccess: (data, variables) => {
+      const ok = data?.succeeded?.length ?? 0;
+      const bad = data?.failed?.length ?? 0;
+      if (ok) toast.success(`Invited ${ok} ${ok === 1 ? "person" : "people"}`);
+      if (bad) toast.error(`Failed to invite ${bad}`);
+      queryClient.invalidateQueries({
+        queryKey: ["group-invites", variables.groupId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (error: Error) => {
+      console.error("Batch invite to group error:", error);
+      toast.error(error.message || "Failed to send invitations");
     },
   });
 }

@@ -2,18 +2,27 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+// Removed Input - replaced by ChipsInput
+import { ChipsInput, type Chip } from "@/components/ui/chips-input";
+import { useUserSearch } from "@/hooks/queries/useUserSearch";
 import { Label } from "@/components/ui/label";
 import { GenericModal } from "@/components/ui/generic-modal";
 import { useModal } from "@/hooks/use-modal";
 import { Loader2, Mail, CheckCircle, XCircle, Info } from "lucide-react";
 import { toast } from "sonner";
-import { inviteToEventAction } from "../actions";
+import { inviteToEventBatchAction } from "../actions";
 import { inviteToEventFormSchema } from "@/validations/events/inviteToEventSchema";
 
 export function InviteToEventModal() {
   const { type, close, data } = useModal();
   const [email, setEmail] = useState("");
+  const [chips, setChips] = useState<Chip[]>([]);
+  const { setQuery, results, isLoading: isSearching } = useUserSearch();
+  const suggestions: Chip[] = results.map((u) => ({
+    id: u.id,
+    value: u.email,
+    label: u.nickname || u.firstName || u.email,
+  }));
   const [isLoading, setIsLoading] = useState(false);
   const [invitedEmails, setInvitedEmails] = useState<string[]>([]);
 
@@ -27,16 +36,21 @@ export function InviteToEventModal() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email.trim()) {
+    const allEmails = [
+      ...chips.map((c) => c.value),
+      ...email
+        .split(",")
+        .map((e) => e.trim())
+        .filter(Boolean),
+    ];
+
+    if (allEmails.length === 0) {
       toast.error("Please enter at least one email address");
       return;
     }
 
     // Parse comma-separated emails
-    const emailList = email
-      .split(",")
-      .map((e) => e.trim())
-      .filter((e) => e.length > 0);
+    const emailList = Array.from(new Set(allEmails));
 
     if (emailList.length === 0) {
       toast.error("Please enter at least one valid email address");
@@ -49,26 +63,12 @@ export function InviteToEventModal() {
         emails: emailList,
       });
       setIsLoading(true);
-
-      // Send invitations to each email
-      const results = await Promise.allSettled(
-        validatedData.emails.map(async (emailAddress) => {
-          return await inviteToEventAction(eventId, emailAddress);
-        })
+      const batchResult = await inviteToEventBatchAction(
+        eventId,
+        validatedData.emails
       );
-
-      // Process results
-      const successfulEmails: string[] = [];
-      const failedEmails: string[] = [];
-
-      results.forEach((result, index) => {
-        const emailAddress = validatedData.emails[index];
-        if (result.status === "fulfilled" && !result.value?.error) {
-          successfulEmails.push(emailAddress);
-        } else {
-          failedEmails.push(emailAddress);
-        }
-      });
+      const successfulEmails: string[] = batchResult?.succeeded || [];
+      const failedEmails: string[] = batchResult?.failed || [];
 
       // Show results
       if (successfulEmails.length > 0) {
@@ -89,6 +89,7 @@ export function InviteToEventModal() {
       }
 
       setEmail("");
+      setChips([]);
     } catch (error) {
       console.error("Error inviting to event:", error);
       toast.error("Please enter valid email addresses");
@@ -133,15 +134,16 @@ export function InviteToEventModal() {
         <div className="space-y-2">
           <Label htmlFor="email">Email Addresses</Label>
           <div className="flex gap-2">
-            <Input
-              id="email"
-              type="text"
-              placeholder="friend@example.com, colleague@work.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-              className="flex-1"
-            />
+            <div className="flex-1">
+              <ChipsInput
+                value={chips}
+                onChange={setChips}
+                placeholder="Type a name or email, press , to add"
+                onQueryChange={setQuery}
+                suggestions={suggestions}
+                isLoading={isSearching}
+              />
+            </div>
             <Button
               type="submit"
               disabled={isLoading || !email.trim()}
