@@ -157,7 +157,6 @@ export const deleteResetPasswordToken = async (token: string) => {
     });
 
     if (!existingToken) {
-      console.log("No token found for deletion.");
       return;
     }
 

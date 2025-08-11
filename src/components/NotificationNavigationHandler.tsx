@@ -9,7 +9,6 @@ export function NotificationNavigationHandler() {
 
     const handleMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === "navigate") {
-        console.log("Received navigation message:", event.data.url);
         // Use Next.js router to navigate
         window.location.href = event.data.url;
       }

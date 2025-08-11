@@ -35,16 +35,11 @@ export function GroupInviteManager({
     refetchInvites,
   } = useGroupInvites(groupId);
 
-  // Log component initialization for debugging
-  console.log(`GroupInviteManager initialized for group ${groupId}`);
-
   function handleCancelInvite(inviteId: string) {
-    console.log(`Cancelling invite ${inviteId} for group ${groupId}`);
     cancelInvite(inviteId);
   }
 
   function handleResendInvite(inviteId: string) {
-    console.log(`Resending invite ${inviteId} for group ${groupId}`);
     resendInvite(inviteId);
   }
 

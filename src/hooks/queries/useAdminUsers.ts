@@ -337,7 +337,6 @@ export function useEditUserProfile() {
       }
     },
     onMutate: async ({ userId, data }) => {
-      console.log("Optimistic update starting for user:", userId, data);
 
       // Cancel ALL admin users queries to prevent race conditions
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
@@ -351,15 +350,15 @@ export function useEditUserProfile() {
       const updateUser = (user: User) =>
         user.id === userId
           ? {
-              ...user,
-              firstName: data.firstName,
-              lastName: data.lastName,
-              nickname: data.nickname,
-              role: data.role,
-              hasOnboarded: data.hasOnboarded,
-              image: data.image !== undefined ? data.image || null : user.image,
-              updatedAt: new Date().toISOString(),
-            }
+            ...user,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            nickname: data.nickname,
+            role: data.role,
+            hasOnboarded: data.hasOnboarded,
+            image: data.image !== undefined ? data.image || null : user.image,
+            updatedAt: new Date().toISOString(),
+          }
           : user;
 
       // Update ALL queries that match the pattern
@@ -399,10 +398,6 @@ export function useEditUserProfile() {
       return { allQueryData };
     },
     onSuccess: (result, { userId }) => {
-      console.log(
-        "Edit user success, updating cache with server data:",
-        result
-      );
 
       // Update cache with actual server response
       const updateUserWithServerData = (user: User) =>
@@ -447,7 +442,6 @@ export function useEditUserProfile() {
       });
     },
     onError: (_err, _variables, context) => {
-      console.log("Edit user error, rolling back optimistic updates");
 
       // Rollback all queries to their previous state
       if (context?.allQueryData) {

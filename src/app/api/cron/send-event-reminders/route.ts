@@ -22,15 +22,10 @@ export async function GET(request: Request) {
 
   // Allow either Vercel cron (upstash-signature) or manual trigger with CRON_SECRET
   if (!isVercelCron && authHeader !== `Bearer ${env.CRON_SECRET}`) {
-    console.log("❌ Authorization failed - neither Vercel cron nor valid CRON_SECRET");
-    console.log("Has upstash signature:", !!isVercelCron);
-    console.log("Auth header:", authHeader);
     return new Response("Unauthorized", {
       status: 401,
     });
   }
-
-  console.log("🔐 Cron job triggered", isVercelCron ? "(Vercel)" : "(Manual)");
 
   // Get events for the next 2 days to account for timezone differences
   const today = new Date();
@@ -38,16 +33,6 @@ export async function GET(request: Request) {
   const dayAfter = addDays(today, 2);
   const startDate = startOfDay(tomorrow);
   const endDate = endOfDay(dayAfter);
-
-  console.log(`🕐 Current server time: ${new Date().toISOString()}`);
-  console.log(`📅 Today: ${format(today, "yyyy-MM-dd")}`);
-  console.log(`📅 Tomorrow: ${format(tomorrow, "yyyy-MM-dd")}`);
-  console.log(`📅 Day after: ${format(dayAfter, "yyyy-MM-dd")}`);
-
-  console.log("📆 Checking events from", {
-    from: startDate.toISOString(),
-    to: endDate.toISOString(),
-  });
 
   const events = await prisma.event.findMany({
     where: {
@@ -82,8 +67,6 @@ export async function GET(request: Request) {
     },
   });
 
-  console.log(`📊 Found ${events.length} event(s) for the next 2 days.`);
-
   let emailsSent = 0;
   let smsSent = 0;
   let errors = 0;
@@ -107,11 +90,7 @@ export async function GET(request: Request) {
 
     const isInWindow = userTime >= windowStart && userTime <= windowEnd;
 
-    if (isInWindow) {
-      console.log(
-        `⏰ Within reminder window: ${formatTz(userTime, "HH:mm:ss", { timeZone: "UTC" })} vs ${reminderTime} (±1-2min)`
-      );
-    }
+
 
     return isInWindow;
   };
@@ -129,8 +108,7 @@ export async function GET(request: Request) {
   };
 
   for (const event of events) {
-    console.log(`📍 Event: "${event.name}" on ${event.date.toISOString()}`);
-    console.log(`📊 Event has ${event.attendees.length} attendees`);
+
 
     const creatorInfo = await prisma.user.findUnique({
       where: { id: event.createdBy },
@@ -161,30 +139,21 @@ export async function GET(request: Request) {
 
       // 🚨 NEW: Only send reminders to confirmed attendees
       if (attendee.rsvpStatus !== 'yes') {
-        console.log(`⏭️ Skipping ${user.email} - RSVP status: ${attendee.rsvpStatus}`);
         continue;
       }
 
       const userTimezone = user.timezone || "UTC";
       const userNow = toZonedTime(new Date(), userTimezone);
 
-      console.log(`👤 Checking ${user.email} | Timezone: ${userTimezone} | RSVP: ${attendee.rsvpStatus}`);
-      console.log(
-        `⏰ User time: ${formatTz(userNow, "HH:mm", { timeZone: userTimezone })} | Reminder time: ${user.reminderTime}`
-      );
+
 
       // Check if event is tomorrow in user's timezone and if it's within reminder window
       if (!isEventTomorrow(event.date, userTimezone)) {
-        console.log(`⏭️ Event not tomorrow for ${user.email}, skipping`);
-        console.log(`   📅 Event date in user TZ: ${formatTz(toZonedTime(event.date, userTimezone), "yyyy-MM-dd HH:mm", { timeZone: userTimezone })}`);
-        console.log(`   📅 Tomorrow range: ${formatTz(startOfDay(addDays(userNow, 1)), "yyyy-MM-dd", { timeZone: userTimezone })} to ${formatTz(endOfDay(addDays(userNow, 1)), "yyyy-MM-dd", { timeZone: userTimezone })}`);
         continue;
       }
 
       if (!isWithinReminderWindow(userNow, user.reminderTime)) {
-        console.log(`⏰ Not within reminder window for ${user.email}`);
-        console.log(`   ⏰ Current user time: ${formatTz(userNow, "HH:mm:ss", { timeZone: userTimezone })}`);
-        console.log(`   ⏰ Reminder time: ${user.reminderTime}`);
+
 
         // Calculate and show the next reminder window
         const [reminderHour, reminderMinute] = user.reminderTime.split(":").map(Number);
@@ -192,7 +161,7 @@ export async function GET(request: Request) {
         reminderDateTime.setHours(reminderHour, reminderMinute, 0, 0);
         const windowStart = subMinutes(reminderDateTime, 2);
         const windowEnd = addMinutes(reminderDateTime, 3);
-        console.log(`   ⏰ Window: ${formatTz(windowStart, "HH:mm:ss", { timeZone: userTimezone })} to ${formatTz(windowEnd, "HH:mm:ss", { timeZone: userTimezone })}`);
+
         continue;
       }
 
@@ -202,22 +171,17 @@ export async function GET(request: Request) {
       const todayStartUTC = fromZonedTime(todayInUserTz, userTimezone);
 
       if (attendee.lastReminderSent && attendee.lastReminderSent >= todayStartUTC) {
-        console.log(`✅ Reminder already sent today for ${user.email}`);
-        console.log(`   📅 Last sent: ${attendee.lastReminderSent.toISOString()}`);
-        console.log(`   📅 Today starts (UTC): ${todayStartUTC.toISOString()}`);
-        console.log(`   📅 Today starts (${userTimezone}): ${formatTz(todayInUserTz, "yyyy-MM-dd HH:mm:ss", { timeZone: userTimezone })}`);
+
         continue;
       }
 
-      console.log(`🚀 PROCEEDING TO SEND REMINDER to ${user.email}`);
-      console.log(`   📧 Reminder type: ${user.reminderType}`);
-      console.log(`   📱 Phone number: ${user.phoneNumber || 'N/A'}`);
+
 
       let reminderSent = false;
 
       if (user.reminderType === "email" || user.reminderType === "both") {
         try {
-          console.log(`📧 Sending reminder email to ${user.email}`);
+
           await sendEventReminderEmail(
             user.email,
             event.name,
@@ -243,9 +207,7 @@ export async function GET(request: Request) {
           const country = detectCountryForSMS(user.phoneNumber, user.timezone);
           const formattedPhone = formatToE164(user.phoneNumber, country);
           if (!formattedPhone) {
-            console.warn(
-              `⚠️ Invalid phone for ${user.email}: ${user.phoneNumber}`
-            );
+
             errors++;
             continue;
           }
@@ -272,7 +234,7 @@ export async function GET(request: Request) {
             .filter(Boolean)
             .join("\n");
 
-          console.log(`📱 Sending SMS to ${formattedPhone}`);
+
           await sendSMS(formattedPhone, smsBody, {
             timezone: userTimezone,
             fallbackCountry: "AU"
@@ -292,7 +254,7 @@ export async function GET(request: Request) {
             where: { id: attendee.id },
             data: { lastReminderSent: new Date() },
           });
-          console.log(`✅ Updated lastReminderSent timestamp for ${user.email}`);
+
         } catch (error) {
           console.error(`❌ Failed to update lastReminderSent for ${user.email}:`, error);
         }
@@ -303,18 +265,11 @@ export async function GET(request: Request) {
       const creatorTimezone = creatorInfo.timezone || "UTC";
       const creatorNow = toZonedTime(new Date(), creatorTimezone);
 
-      console.log(
-        `🧑‍💼 Creator: ${creatorInfo.email} | Time: ${formatTz(creatorNow, "HH:mm", { timeZone: creatorTimezone })} | Reminder: ${creatorInfo.reminderTime}`
-      );
-      console.log(`🧑‍💼 Creator timezone: ${creatorTimezone} | Reminder type: ${creatorInfo.reminderType}`);
+
 
       // Check if event is tomorrow in creator's timezone and if it's within reminder window
       if (!isEventTomorrow(event.date, creatorTimezone)) {
-        console.log(
-          `⏭️ Event not tomorrow for creator ${creatorInfo.email}, skipping`
-        );
-        console.log(`   📅 Event date in creator TZ: ${formatTz(toZonedTime(event.date, creatorTimezone), "yyyy-MM-dd HH:mm", { timeZone: creatorTimezone })}`);
-        console.log(`   📅 Tomorrow range: ${formatTz(startOfDay(addDays(creatorNow, 1)), "yyyy-MM-dd", { timeZone: creatorTimezone })} to ${formatTz(endOfDay(addDays(creatorNow, 1)), "yyyy-MM-dd", { timeZone: creatorTimezone })}`);
+
       } else if (isWithinReminderWindow(creatorNow, creatorInfo.reminderTime)) {
 
         // Check if creator already received reminder today (DUPLICATE PROTECTION)
@@ -326,12 +281,11 @@ export async function GET(request: Request) {
 
         // NEW: Only send creator reminders if they confirmed attendance
         if (creatorAsAttendee && creatorAsAttendee.rsvpStatus !== 'yes') {
-          console.log(`⏭️ Skipping creator ${creatorInfo.email} - RSVP status: ${creatorAsAttendee.rsvpStatus}`);
+
         } else if (creatorAsAttendee?.lastReminderSent && creatorAsAttendee.lastReminderSent >= todayStartUTC) {
-          console.log(`✅ Creator reminder already sent today as attendee for ${creatorInfo.email}`);
-          console.log(`   📅 Last sent: ${creatorAsAttendee.lastReminderSent.toISOString()}`);
+
         } else {
-          console.log(`🚀 PROCEEDING TO SEND REMINDER to creator ${creatorInfo.email}`);
+
 
           // Add a flag to track if reminder was sent for this creator
           let creatorReminderSent = false;
@@ -341,7 +295,7 @@ export async function GET(request: Request) {
             creatorInfo.reminderType === "both"
           ) {
             try {
-              console.log(`📧 Sending email to creator ${creatorInfo.email}`);
+
               await sendEventReminderEmail(
                 creatorInfo.email,
                 event.name,
@@ -367,9 +321,7 @@ export async function GET(request: Request) {
               const country = detectCountryForSMS(creatorInfo.phoneNumber, creatorInfo.timezone);
               const formattedPhone = formatToE164(creatorInfo.phoneNumber, country);
               if (!formattedPhone) {
-                console.warn(
-                  `⚠️ Invalid creator phone: ${creatorInfo.phoneNumber}`
-                );
+
                 errors++;
               } else {
                 const eventDateInCreatorTz = toZonedTime(
@@ -396,7 +348,7 @@ export async function GET(request: Request) {
                   .filter(Boolean)
                   .join("\n");
 
-                console.log(`📱 Sending SMS to creator ${formattedPhone}`);
+
                 await sendSMS(formattedPhone, smsBody, {
                   timezone: creatorTimezone,
                   fallbackCountry: "AU"
@@ -417,16 +369,14 @@ export async function GET(request: Request) {
                 where: { id: creatorAsAttendee.id },
                 data: { lastReminderSent: new Date() },
               });
-              console.log(`✅ Updated lastReminderSent timestamp for creator as attendee ${creatorInfo.email}`);
+
             } catch (error) {
               console.error(`❌ Failed to update lastReminderSent for creator as attendee ${creatorInfo.email}:`, error);
             }
           }
         }
       } else {
-        console.log(`⏰ Creator not within reminder window`);
-        console.log(`   ⏰ Current creator time: ${formatTz(creatorNow, "HH:mm:ss", { timeZone: creatorTimezone })}`);
-        console.log(`   ⏰ Reminder time: ${creatorInfo.reminderTime}`);
+
 
         // Calculate and show the next reminder window
         const [reminderHour, reminderMinute] = creatorInfo.reminderTime.split(":").map(Number);
@@ -434,16 +384,14 @@ export async function GET(request: Request) {
         reminderDateTime.setHours(reminderHour, reminderMinute, 0, 0);
         const windowStart = subMinutes(reminderDateTime, 2);
         const windowEnd = addMinutes(reminderDateTime, 3);
-        console.log(`   ⏰ Window: ${formatTz(windowStart, "HH:mm:ss", { timeZone: creatorTimezone })} to ${formatTz(windowEnd, "HH:mm:ss", { timeZone: creatorTimezone })}`);
+
       }
     } else {
-      console.log(`❌ No creator info found for event ${event.name}`);
+
     }
   }
 
-  console.log(
-    `✅ Done. Emails: ${emailsSent} | SMS: ${smsSent} | Errors: ${errors}`
-  );
+
 
   return NextResponse.json({
     success: true,

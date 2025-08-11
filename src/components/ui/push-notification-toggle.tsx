@@ -63,9 +63,6 @@ export default function PushNotificationToggle() {
     if (isIOS && isPWA) {
       if (dbPreference && !deviceEnabled) {
         // Database says enabled but device permission denied - sync to disabled
-        console.log(
-          "iOS PWA: Auto-syncing database to disabled (device permission denied)"
-        );
         updateDbPreference(false)
           .then(() => {
             queryClient.setQueryData(["user"], (oldData: User | undefined) => {
@@ -78,9 +75,6 @@ export default function PushNotificationToggle() {
           });
       } else if (!dbPreference && deviceEnabled) {
         // Database says disabled but device permission granted - sync to enabled
-        console.log(
-          "iOS PWA: Auto-syncing database to enabled (device permission granted)"
-        );
         updateDbPreference(true)
           .then(() => {
             queryClient.setQueryData(["user"], (oldData: User | undefined) => {
@@ -106,7 +100,6 @@ export default function PushNotificationToggle() {
 
   // Defensive check for user data
   if (!user) {
-    console.log("PushNotificationToggle: No user data");
     return null;
   }
 
@@ -121,19 +114,7 @@ export default function PushNotificationToggle() {
     );
   };
 
-  // Debug logging for mobile issues
-  console.log("PushNotificationToggle: User data:", {
-    id: user.id,
-    pushNotifications: user.pushNotifications,
-    isSupported,
-    isSubscribed,
-    currentState,
-    isPWA,
-    hasFallback,
-    isIOS,
-    permission,
-    isSafariIOS: isSafariIOS(),
-  });
+  // Debug logging removed for production
 
   const handleToggle = async () => {
     if (isLoading || isEnabling) return;

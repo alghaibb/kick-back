@@ -112,7 +112,6 @@ export function DebugPanel() {
       {/* Test Error Button */}
       <button
         onClick={() => {
-          console.log("Testing error boundary...");
           throw new Error("Test error to check error boundary");
         }}
         className="fixed top-4 right-4 z-50 bg-orange-500 text-white px-3 py-2 rounded-md text-sm font-bold shadow-lg"
@@ -196,9 +195,7 @@ export function DebugPanel() {
               </button>
               <button
                 onClick={() => {
-                  console.log("Manual test log");
                   console.error("Manual test error");
-                  console.warn("Manual test warning");
                 }}
                 className="bg-blue-600 px-3 py-1 rounded text-sm"
               >

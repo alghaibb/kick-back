@@ -41,8 +41,8 @@ async function clearSessionCookies() {
       });
     } catch (error) {
       // Ignore errors when trying to clear cookies that don't exist
-      console.log(
-        `[clearSessionCookies] Could not clear cookie ${tokenName}:`,
+      console.error(
+        "[clearSessionCookies] Could not clear cookie:",
         error
       );
     }
@@ -75,7 +75,6 @@ export async function getSession() {
     }
 
     if (!sessionToken) {
-      console.log("[getSession] No session token found in cookies");
       return null;
     }
 
@@ -85,14 +84,10 @@ export async function getSession() {
     });
 
     if (!session) {
-      console.log(
-        "[getSession] No session found in database for token - clearing invalid cookies"
-      );
 
       // Clear invalid session cookies so user doesn't need to manually clear them
       try {
         await clearSessionCookies();
-        console.log("[getSession] Cleared invalid session cookies");
       } catch (error) {
         console.error(
           "[getSession] Failed to clear invalid session cookies:",
@@ -105,7 +100,6 @@ export async function getSession() {
 
     // Check if session is expired
     if (new Date(session.expires) < new Date()) {
-      console.log("[getSession] Session expired, cleaning up");
 
       // Clean up expired session from database
       try {
@@ -119,7 +113,6 @@ export async function getSession() {
       // Clear expired session cookies so user doesn't need to manually clear them
       try {
         await clearSessionCookies();
-        console.log("[getSession] Cleared expired session cookies");
       } catch (error) {
         console.error(
           "[getSession] Failed to clear expired session cookies:",
@@ -132,9 +125,6 @@ export async function getSession() {
 
     // Check if user is soft deleted
     if (session.user.deletedAt) {
-      console.log(
-        "[getSession] User is soft deleted, returning session with deleted flag"
-      );
 
       // Return the session but mark the user as deleted
       // This allows the frontend to handle the soft-deleted state

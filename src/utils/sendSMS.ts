@@ -20,7 +20,7 @@ export async function sendSMS(
   // Use provided country or detect it from phone number/timezone
   const detectedCountry = country || detectCountryForSMS(to, timezone);
 
-  console.log(`📱 Sending SMS to ${to} using country: ${detectedCountry} (${getCountryName(detectedCountry)})`);
+
 
   const formattedNumber = formatToE164(to, detectedCountry);
 

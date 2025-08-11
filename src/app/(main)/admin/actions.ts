@@ -766,7 +766,7 @@ export async function replyToContact(data: ContactReplyValues) {
         data: { repliedAt: new Date() },
         select: { id: true, repliedAt: true },
       });
-      console.log("Contact updated with repliedAt:", updatedContact);
+
     } catch (error) {
       console.error("Failed to update contact repliedAt:", error);
       // Continue with email sending even if update fails

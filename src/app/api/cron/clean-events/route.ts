@@ -9,11 +9,10 @@ export async function GET(req: Request) {
 
   // Allow either Vercel cron (upstash-signature) or manual trigger with CRON_SECRET
   if (!isVercelCron && authHeader !== `Bearer ${env.CRON_SECRET}`) {
-    console.log("❌ Clean events cron - authorization failed");
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  console.log("🧹 Clean events cron triggered", isVercelCron ? "(Vercel)" : "(Manual)");
+
 
   const now = new Date();
 

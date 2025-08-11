@@ -8,14 +8,11 @@ const isSafari =
 // We'll detect PWA mode through other means
 const isStandalone = false; // Will be determined by client-side detection
 
-console.log(
-  "Service Worker: iOS Safari PWA detected:",
-  isIOS && isSafari && isStandalone
-);
+
 
 // Enhanced service worker for iOS PWA persistence
 self.addEventListener("install", (event) => {
-  console.log("Service Worker installing...");
+
   // Force the waiting service worker to become the active service worker
   self.skipWaiting();
 
@@ -37,7 +34,7 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  console.log("Service Worker activating...");
+
   // Ensure the service worker takes control immediately
   event.waitUntil(self.clients.claim());
 
@@ -57,7 +54,6 @@ self.addEventListener("activate", (event) => {
 
 // iOS-specific PWA persistence
 if (isIOS && isSafari) {
-  console.log("iOS Safari detected - enabling persistence features");
 
   // Keep the service worker alive and cache critical resources
   self.addEventListener("fetch", (event) => {
@@ -105,7 +101,7 @@ self.addEventListener("unhandledrejection", (event) => {
 
 // Push notification handling
 self.addEventListener("push", (event) => {
-  console.log("Push event received:", event);
+
 
   try {
     let data = {};
@@ -148,7 +144,7 @@ self.addEventListener("push", (event) => {
 
 // Notification click handling
 self.addEventListener("notificationclick", (event) => {
-  console.log("Notification clicked:", event);
+
 
   event.notification.close();
 
@@ -195,29 +191,29 @@ self.addEventListener("notificationclick", (event) => {
     targetUrl = "/dashboard";
   }
 
-  console.log("Navigating to:", targetUrl);
+
 
   // Handle navigation - prioritize opening the PWA app
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
-        console.log("Found clients:", clientList.length);
+
 
         // First, try to find and focus an existing PWA window
         for (const client of clientList) {
-          console.log("Checking client:", client.url);
+
           if (client.url.includes(self.location.origin) && "focus" in client) {
-            console.log("Found existing app window, focusing and navigating");
+
             // Focus the existing window first
             return client.focus().then(() => {
               // Then navigate to the target URL
               if ("navigate" in client) {
-                console.log("Navigating to:", targetUrl);
+
                 return client.navigate(targetUrl);
               } else {
                 // Fallback: reload with new URL
-                console.log("Fallback navigation to:", targetUrl);
+
                 return client.navigate(targetUrl);
               }
             });
@@ -225,7 +221,7 @@ self.addEventListener("notificationclick", (event) => {
         }
 
         // If no existing window found, open the PWA app
-        console.log("No existing window found, opening PWA app at:", targetUrl);
+
         if (clients.openWindow) {
           return clients.openWindow(targetUrl);
         }
@@ -234,7 +230,7 @@ self.addEventListener("notificationclick", (event) => {
         console.error("Error handling notification click:", error);
         // Fallback: try to open the app anyway
         if (clients.openWindow) {
-          console.log("Fallback: opening app at:", targetUrl);
+
           return clients.openWindow(targetUrl);
         }
       })
@@ -243,7 +239,7 @@ self.addEventListener("notificationclick", (event) => {
 
 // Push subscription change handling
 self.addEventListener("pushsubscriptionchange", (event) => {
-  console.log("Push subscription changed:", event);
+
 
   try {
     event.waitUntil(
@@ -275,7 +271,7 @@ self.addEventListener("pushsubscriptionchange", (event) => {
 
 // Message handling for iOS PWA
 self.addEventListener("message", (event) => {
-  console.log("Service Worker message received:", event.data);
+
 
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();

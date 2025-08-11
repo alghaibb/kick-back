@@ -43,11 +43,6 @@ export async function GET(request: NextRequest) {
       repliedAt: contact.repliedAt?.toISOString() || null,
     }));
 
-    console.log(
-      "API returning contacts with repliedAt:",
-      mappedContacts.map((c) => ({ id: c.id, repliedAt: c.repliedAt }))
-    );
-
     return NextResponse.json({
       contacts: mappedContacts,
       pagination: {

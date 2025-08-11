@@ -86,7 +86,7 @@ export function useRefreshAdminStats() {
     try {
       await fetch("/api/admin/stats", { method: "DELETE" });
     } catch (error) {
-      console.warn("Failed to clear server cache:", error);
+      console.error("Failed to clear server cache:", error);
     }
 
     // Invalidate and refetch client cache

@@ -6,7 +6,7 @@ import { PrismaClient } from '@/generated/prisma';
 const prisma = new PrismaClient();
 
 async function fixExistingGroupMembers() {
-  console.log("🔧 Starting to fix existing group members...");
+
 
   try {
     // Get all groups with their members and events
@@ -33,8 +33,7 @@ async function fixExistingGroupMembers() {
     let totalAdded = 0;
 
     for (const group of groups) {
-      console.log(`\n📂 Processing group: ${group.name}`);
-      console.log(`👥 Members: ${group.members.length}, Events: ${group.events.length}`);
+
 
       for (const event of group.events) {
         const existingAttendeeIds = event.attendees.map(a => a.userId);
@@ -43,7 +42,7 @@ async function fixExistingGroupMembers() {
         );
 
         if (missingMembers.length > 0) {
-          console.log(`  📅 Event "${event.name}": Adding ${missingMembers.length} missing members`);
+
 
           await prisma.eventAttendee.createMany({
             data: missingMembers.map(member => ({
@@ -59,7 +58,7 @@ async function fixExistingGroupMembers() {
       }
     }
 
-    console.log(`\n✅ Done! Added ${totalAdded} missing attendee records.`);
+
 
   } catch (error) {
     console.error("❌ Error:", error);

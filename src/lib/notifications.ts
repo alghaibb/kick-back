@@ -65,7 +65,6 @@ export async function sendPushNotification(
     });
 
     if (subscriptions.length === 0) {
-      console.log(`No push subscriptions found for user ${userId}`);
       return;
     }
 
@@ -120,15 +119,11 @@ export async function sendPushNotification(
           await prisma.pushSubscription.delete({
             where: { id: subscription.id },
           });
-          console.log(`Removed invalid subscription ${subscription.id}`);
         }
       }
     });
 
     await Promise.allSettled(promises);
-    console.log(
-      `Sent push notification to ${subscriptions.length} devices for user ${userId}`
-    );
   } catch (error) {
     console.error("Failed to send push notification:", error);
   }

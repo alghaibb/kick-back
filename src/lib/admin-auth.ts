@@ -78,7 +78,7 @@ export async function requireAdminWithAudit(
 
   if (!isAdmin) {
     // Log failed admin access attempts
-    console.warn(`Failed admin access attempt:`, {
+    console.error(`Failed admin access attempt:`, {
       userId: session?.user?.id || 'anonymous',
       action,
       resource,

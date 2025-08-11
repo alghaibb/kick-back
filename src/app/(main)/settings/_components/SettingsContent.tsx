@@ -12,11 +12,6 @@ export function SettingsContent() {
   const router = useRouter();
   const { data: settingsData, isLoading, error } = useSettings();
 
-  // Debug logging for mobile issues
-  console.log("SettingsContent: Auth user:", authUser?.id);
-  console.log("SettingsContent: Settings data:", settingsData?.user?.id);
-  console.log("SettingsContent: Error:", error);
-
   // Redirect if not authenticated
   useEffect(() => {
     if (!authUser) {
