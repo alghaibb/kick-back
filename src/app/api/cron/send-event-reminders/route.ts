@@ -12,7 +12,6 @@ import {
   startOfDay,
   subMinutes,
 } from "date-fns";
-// @ts-ignore
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { NextResponse } from "next/server";
 
