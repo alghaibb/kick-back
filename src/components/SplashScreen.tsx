@@ -26,7 +26,7 @@ export function SplashScreen({ children }: SplashScreenProps) {
   if (isLoading) {
     return (
       <div
-        className={`fixed inset-0 z-50 flex items-center justify-center bg-foreground text-background transition-opacity duration-300 ease-out motion-reduce:transition-none ${isExiting ? "opacity-0" : "opacity-100"}`}
+        className={`fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground dark:bg-foreground dark:text-background transition-opacity duration-300 ease-out motion-reduce:transition-none ${isExiting ? "opacity-0" : "opacity-100"}`}
         role="status"
         aria-live="polite"
         aria-busy="true"
@@ -36,7 +36,10 @@ export function SplashScreen({ children }: SplashScreenProps) {
           className="pointer-events-none absolute inset-0 flex items-center justify-center"
           aria-hidden="true"
         >
-          <div className="h-80 w-80 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(255,255,255,0)_60%)] blur-3xl" />
+          {/* Light mode glow (subtle dark) */}
+          <div className="h-80 w-80 rounded-full blur-3xl dark:hidden bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.06),rgba(0,0,0,0)_60%)]" />
+          {/* Dark mode glow (subtle light) */}
+          <div className="h-80 w-80 rounded-full blur-3xl hidden dark:block bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(255,255,255,0)_60%)]" />
         </div>
 
         <div className="relative text-center">
@@ -51,7 +54,7 @@ export function SplashScreen({ children }: SplashScreenProps) {
           <Spinner
             size="xxl"
             stroke={false}
-            className="text-background motion-reduce:animate-none"
+            className="text-foreground dark:text-background motion-reduce:animate-none"
           />
           <span className="sr-only">Loading Kick Back</span>
         </div>
