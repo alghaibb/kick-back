@@ -502,7 +502,11 @@ export function useRevokeUserSessions() {
         if (!queryData) return;
 
         // Infinite queries shape: { pages: UsersResponse[] }
-        if (Array.isArray((queryData as any).pages)) {
+        if (
+          typeof queryData === "object" &&
+          queryData !== null &&
+          Array.isArray((queryData as { pages?: unknown }).pages)
+        ) {
           const infiniteData = queryData as { pages: UsersResponse[] };
           queryClient.setQueryData(queryKey, {
             ...infiniteData,
@@ -515,7 +519,11 @@ export function useRevokeUserSessions() {
         }
 
         // Regular query shape: UsersResponse
-        if ((queryData as any).users) {
+        if (
+          typeof queryData === "object" &&
+          queryData !== null &&
+          (queryData as { users?: unknown }).users
+        ) {
           const regularData = queryData as UsersResponse;
           queryClient.setQueryData(queryKey, {
             ...regularData,
@@ -528,11 +536,15 @@ export function useRevokeUserSessions() {
       toast.success("Session revoked");
       return { allQueryData };
     },
-    onError: (error, _vars, context) => {
+    onError: (
+      error,
+      _vars,
+      context: { allQueryData?: Array<[unknown, unknown]> } | undefined
+    ) => {
       // Rollback cache if we changed it
       if (context?.allQueryData) {
-        context.allQueryData.forEach(([queryKey, queryData]: any) => {
-          queryClient.setQueryData(queryKey, queryData);
+        context.allQueryData.forEach(([queryKey, queryData]) => {
+          queryClient.setQueryData(queryKey as unknown[], queryData);
         });
       }
       console.error("Revoke sessions mutation error:", error);
