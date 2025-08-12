@@ -484,13 +484,59 @@ export function useRevokeUserSessions() {
       if ("error" in res) throw new Error(res.error);
       return res;
     },
-    onMutate: async () => {
+    onMutate: async ({ userId }) => {
       // Cancel to prevent flicker; modal closes immediately from caller
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
+
+      // Snapshot all user-related queries
+      const allQueryData = queryClient.getQueriesData({
+        queryKey: ["admin", "users"],
+      });
+
+      // Helper to update activeSessionId to null
+      const updateUserSession = (user: User) =>
+        user.id === userId ? { ...user, activeSessionId: null } : user;
+
+      // Apply optimistic update across all queries (regular and infinite)
+      allQueryData.forEach(([queryKey, queryData]) => {
+        if (!queryData) return;
+
+        // Infinite queries shape: { pages: UsersResponse[] }
+        if (
+          Array.isArray((queryData as any).pages)
+        ) {
+          const infiniteData = queryData as { pages: UsersResponse[] };
+          queryClient.setQueryData(queryKey, {
+            ...infiniteData,
+            pages: infiniteData.pages.map((page: UsersResponse) => ({
+              ...page,
+              users: page.users.map(updateUserSession),
+            })),
+          });
+          return;
+        }
+
+        // Regular query shape: UsersResponse
+        if ((queryData as any).users) {
+          const regularData = queryData as UsersResponse;
+          queryClient.setQueryData(queryKey, {
+            ...regularData,
+            users: regularData.users.map(updateUserSession),
+          });
+          return;
+        }
+      });
+
       toast.success("Sessions revoked");
-      return {};
+      return { allQueryData };
     },
-    onError: (error) => {
+    onError: (error, _vars, context) => {
+      // Rollback cache if we changed it
+      if (context?.allQueryData) {
+        context.allQueryData.forEach(([queryKey, queryData]: any) => {
+          queryClient.setQueryData(queryKey, queryData);
+        });
+      }
       console.error("Revoke sessions mutation error:", error);
       toast.error((error as Error)?.message || "Failed to revoke sessions");
     },
