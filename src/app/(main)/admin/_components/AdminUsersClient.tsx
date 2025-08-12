@@ -351,7 +351,12 @@ function AdminUsersData({
                           </div>
                           <div className="flex items-center gap-1">
                             <span className="text-xs">Sess:</span>
-                            <Badge variant={user.activeSessionId ? "secondary" : "outline"} className="font-mono text-[10px]">
+                            <Badge
+                              variant={
+                                user.activeSessionId ? "secondary" : "outline"
+                              }
+                              className="font-mono text-[10px]"
+                            >
                               {user.activeSessionId ?? "null"}
                             </Badge>
                           </div>

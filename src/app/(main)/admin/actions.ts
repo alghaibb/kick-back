@@ -943,7 +943,7 @@ export async function revokeUserSessions(
     }
 
     // Ensure user exists and is not soft-deleted
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
       where: { id: userId, deletedAt: null },
       select: { id: true },
     });
