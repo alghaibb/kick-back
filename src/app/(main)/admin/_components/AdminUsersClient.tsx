@@ -64,6 +64,7 @@ interface User {
   updatedAt: string;
   hasPassword?: boolean;
   accounts?: Array<{ provider: string }>;
+  activeSessionId?: string | null;
   _count?: {
     groupMembers: number;
     eventComments: number;
@@ -280,6 +281,7 @@ function AdminUsersData({
                 <TableHeader>
                   <TableRow>
                     <TableHead>User ID</TableHead>
+                    <TableHead>Nickname</TableHead>
                     <TableHead>User</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Activity</TableHead>
@@ -294,6 +296,11 @@ function AdminUsersData({
                       <TableCell>
                         <div className="text-sm font-mono text-muted-foreground">
                           {user.id}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-mono text-muted-foreground">
+                          {user.nickname}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -341,6 +348,12 @@ function AdminUsersData({
                           <div className="flex items-center gap-1">
                             <MessageSquare className="h-3 w-3" />
                             {user._count?.eventComments ?? 0}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs">Sess:</span>
+                            <Badge variant={user.activeSessionId ? "secondary" : "outline"} className="font-mono text-[10px]">
+                              {user.activeSessionId ?? "null"}
+                            </Badge>
                           </div>
                         </div>
                       </TableCell>

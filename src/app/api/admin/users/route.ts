@@ -67,6 +67,11 @@ export async function GET(request: NextRequest) {
           createdAt: true,
           updatedAt: true,
           password: true,
+          sessions: {
+            select: { id: true, expires: true },
+            take: 1,
+            orderBy: { expires: "desc" },
+          },
           accounts: {
             select: {
               provider: true,
@@ -94,9 +99,21 @@ export async function GET(request: NextRequest) {
 
     // Transform users to include hasPassword boolean without exposing actual password
     const transformedUsers = users.map((user) => ({
-      ...user,
-      hasPassword: Boolean(user.password), // Convert password to boolean
-      password: undefined, // Remove actual password from response
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      image: user.image,
+      nickname: user.nickname,
+      role: user.role,
+      hasOnboarded: user.hasOnboarded,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      accounts: user.accounts,
+      _count: user._count,
+      hasPassword: Boolean(user.password),
+      password: undefined,
+      activeSessionId: user.sessions?.[0]?.id ?? null,
     }));
 
     const total = totalCount;

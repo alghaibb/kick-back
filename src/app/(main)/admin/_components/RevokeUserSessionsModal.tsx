@@ -5,7 +5,6 @@ import { Button, LoadingButton } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
 import { useRevokeUserSessions } from "@/hooks/queries/useAdminUsers";
 import { LogOut } from "lucide-react";
-import { useState } from "react";
 
 export default function RevokeUserSessionsModal() {
   const { type, data, close } = useModal();

@@ -26,6 +26,7 @@ interface User {
   updatedAt: string;
   hasPassword?: boolean;
   accounts?: Array<{ provider: string }>;
+  activeSessionId?: string | null;
   _count?: {
     groupMembers: number;
     eventComments: number;
@@ -339,7 +340,6 @@ export function useEditUserProfile() {
       }
     },
     onMutate: async ({ userId, data }) => {
-
       // Cancel ALL admin users queries to prevent race conditions
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
 
@@ -352,15 +352,15 @@ export function useEditUserProfile() {
       const updateUser = (user: User) =>
         user.id === userId
           ? {
-            ...user,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            nickname: data.nickname,
-            role: data.role,
-            hasOnboarded: data.hasOnboarded,
-            image: data.image !== undefined ? data.image || null : user.image,
-            updatedAt: new Date().toISOString(),
-          }
+              ...user,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              nickname: data.nickname,
+              role: data.role,
+              hasOnboarded: data.hasOnboarded,
+              image: data.image !== undefined ? data.image || null : user.image,
+              updatedAt: new Date().toISOString(),
+            }
           : user;
 
       // Update ALL queries that match the pattern
@@ -400,7 +400,6 @@ export function useEditUserProfile() {
       return { allQueryData };
     },
     onSuccess: (result, { userId }) => {
-
       // Update cache with actual server response
       const updateUserWithServerData = (user: User) =>
         user.id === userId ? { ...user, ...result.user } : user;
@@ -444,7 +443,6 @@ export function useEditUserProfile() {
       });
     },
     onError: (_err, _variables, context) => {
-
       // Rollback all queries to their previous state
       if (context?.allQueryData) {
         context.allQueryData.forEach(([queryKey, queryData]) => {
