@@ -142,6 +142,7 @@ export function InviteToEventModal() {
                 onQueryChange={setQuery}
                 suggestions={suggestions}
                 isLoading={isSearching}
+                validateEmailOnly
               />
             </div>
             <Button

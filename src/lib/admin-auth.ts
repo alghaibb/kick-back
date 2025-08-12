@@ -19,7 +19,8 @@ export async function checkAdminAccess(skipRateLimit = false) {
     if (!skipRateLimit) {
       try {
         await adminRateLimit.check(50); // 50 requests per minute per admin (more lenient)
-      } catch {
+      } catch (error) {
+        console.error("Admin rate limit exceeded:", error);
         return { isAdmin: false, error: "Rate limit exceeded" };
       }
     }

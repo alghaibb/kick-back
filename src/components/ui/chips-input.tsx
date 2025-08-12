@@ -20,6 +20,7 @@ interface ChipsInputProps {
   suggestions?: Chip[];
   isLoading?: boolean;
   className?: string;
+  validateEmailOnly?: boolean;
 }
 
 export function ChipsInput({
@@ -31,11 +32,20 @@ export function ChipsInput({
   suggestions = [],
   isLoading,
   className,
+  validateEmailOnly = false,
 }: ChipsInputProps) {
   const [input, setInput] = React.useState("");
   const containerRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);
+  const [activeIndex, setActiveIndex] = React.useState<number>(-1);
+  const listboxId = React.useId();
+
+  const isValidEmail = (text: string) => {
+    return /^(?:[a-zA-Z0-9_.'%+-]+)@(?:[a-zA-Z0-9.-]+)\.[a-zA-Z]{2,}$/.test(
+      text
+    );
+  };
 
   const addChip = (chip: Chip) => {
     if (value.some((c) => c.value.toLowerCase() === chip.value.toLowerCase())) {
@@ -58,10 +68,41 @@ export function ChipsInput({
       removeChip(value.length - 1);
       return;
     }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpen(true);
+      setActiveIndex((idx) =>
+        Math.min((idx < 0 ? -1 : idx) + 1, suggestions.length - 1)
+      );
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((idx) =>
+        Math.max((idx < 0 ? suggestions.length : idx) - 1, -1)
+      );
+      return;
+    }
+    if (e.key === "Escape") {
+      setOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+    if (e.key === "Enter") {
+      if (open && activeIndex >= 0 && activeIndex < suggestions.length) {
+        e.preventDefault();
+        addChip(suggestions[activeIndex]);
+        setActiveIndex(-1);
+        return;
+      }
+    }
     if (e.key === "," || e.key === "Enter" || e.key === "Tab") {
       e.preventDefault();
       const trimmed = input.trim();
       if (trimmed !== "") {
+        if (validateEmailOnly && !isValidEmail(trimmed)) {
+          return;
+        }
         addChip({ label: trimmed, value: trimmed });
       }
     }
@@ -90,10 +131,14 @@ export function ChipsInput({
         className={cn(
           "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30",
           "border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm",
-          "ring-offset-background focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] ring-offset-2",
+          "ring-offset-background focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ring-offset-2",
           "flex-wrap items-center gap-1",
           disabled && "opacity-50"
         )}
+        role="combobox"
+        aria-expanded={open}
+        aria-owns={listboxId}
+        aria-haspopup="listbox"
       >
         {value.map((chip, idx) => (
           <Badge
@@ -121,23 +166,41 @@ export function ChipsInput({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           disabled={disabled}
+          aria-autocomplete="list"
+          aria-controls={listboxId}
+          aria-activedescendant={
+            activeIndex >= 0 && suggestions[activeIndex]
+              ? `${listboxId}-option-${activeIndex}`
+              : undefined
+          }
         />
       </div>
 
       {open && (suggestions.length > 0 || isLoading) && (
-        <div className="mt-1 max-h-56 w-full overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+        <div
+          id={listboxId}
+          role="listbox"
+          className="mt-1 max-h-56 w-full overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+        >
           {isLoading && (
             <div className="px-2 py-1 text-xs text-muted-foreground">
               Searching…
             </div>
           )}
           {!isLoading &&
-            suggestions.map((s) => (
+            suggestions.map((s, idx) => (
               <button
                 key={s.value}
                 type="button"
                 onClick={() => addChip(s)}
-                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-accent hover:text-accent-foreground"
+                role="option"
+                id={`${listboxId}-option-${idx}`}
+                aria-selected={idx === activeIndex}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-accent hover:text-accent-foreground",
+                  idx === activeIndex && "bg-accent text-accent-foreground"
+                )}
+                onMouseEnter={() => setActiveIndex(idx)}
               >
                 {s.label}
                 <span className="ml-auto text-xs text-muted-foreground">

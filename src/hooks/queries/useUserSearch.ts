@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useDebounce } from "@/hooks/use-debounced-search";
+import { useQuery } from "@tanstack/react-query";
 
 export interface UserSuggestion {
   id: string;
@@ -18,46 +18,22 @@ export function useUserSearch() {
     debouncedValue,
     setValue: setQuery,
   } = useDebounce("", 300);
-  const [results, setResults] = useState<UserSuggestion[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    (async () => {
+  const { data, isFetching } = useQuery({
+    queryKey: ["user-search", debouncedValue],
+    queryFn: async ({ signal }) => {
       const q = debouncedValue.trim();
-      if (q.length < 2) {
-        setResults([]);
-        return;
-      }
-      setIsLoading(true);
-      try {
-        const params = new URLSearchParams({ q, limit: "8" });
-        const res = await fetch(`/api/users/search?${params.toString()}`, {
-          signal: controller.signal,
-        });
-        if (!res.ok) {
-          setResults([]);
-          setIsLoading(false);
-          return;
-        }
-        const data: { users: UserSuggestion[] } = await res.json();
-        setResults(data.users || []);
-      } catch (error: unknown) {
-        const err = error as { name?: string };
-        if (err?.name === "AbortError") {
-          return;
-        }
-        console.error("User search fetch error:", error);
-        setResults([]);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
+      if (q.length < 2) return { users: [] as UserSuggestion[] };
+      const params = new URLSearchParams({ q, limit: "8", excludeSelf: "1" });
+      const res = await fetch(`/api/users/search?${params.toString()}`, {
+        signal,
+      });
+      if (!res.ok) return { users: [] as UserSuggestion[] };
+      const payload: { users: UserSuggestion[] } = await res.json();
+      return payload;
+    },
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+  });
 
-    return () => {
-      controller.abort();
-    };
-  }, [debouncedValue]);
-
-  return { query, setQuery, results, isLoading };
+  return { query, setQuery, results: data?.users ?? [], isLoading: isFetching };
 }

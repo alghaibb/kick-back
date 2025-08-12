@@ -127,6 +127,7 @@ export function InviteGroupForm({
                     onQueryChange={setQuery}
                     suggestions={suggestions}
                     isLoading={isLoading}
+                    validateEmailOnly
                   />
                 </FormControl>
                 <FormMessage />

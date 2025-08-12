@@ -225,14 +225,23 @@ export function useInviteToEventBatch() {
       return result as {
         success?: boolean;
         succeeded?: string[];
-        failed?: string[];
+        failed?: Array<{ email: string; error: string }> | string[];
       };
     },
     onSuccess: (data) => {
-      const ok = data?.succeeded?.length ?? 0;
-      const bad = data?.failed?.length ?? 0;
+      const ok = (data?.succeeded?.length ?? 0) as number;
+      const failed = (data?.failed ?? []) as Array<{
+        email: string;
+        error: string;
+      }>;
       if (ok) toast.success(`Invited ${ok} ${ok === 1 ? "person" : "people"}`);
-      if (bad) toast.error(`Failed to invite ${bad}`);
+      if (failed.length) {
+        const details = failed
+          .slice(0, 3)
+          .map((f) => `${f.email}: ${f.error}`)
+          .join("\n");
+        toast.error(`Failed to invite ${failed.length}\n${details}`);
+      }
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },

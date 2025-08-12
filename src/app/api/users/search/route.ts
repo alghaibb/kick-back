@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const q = (searchParams.get("q") || "").trim();
     const limit = Math.min(parseInt(searchParams.get("limit") || "8", 10), 20);
+    const excludeSelf = searchParams.get("excludeSelf") === "1";
 
     if (q.length < 2) {
       return NextResponse.json({ users: [] satisfies UserSuggestion[] });
@@ -35,6 +36,9 @@ export async function GET(request: NextRequest) {
           { lastName: { contains: q, mode: "insensitive" } },
           { nickname: { contains: q, mode: "insensitive" } },
         ],
+        ...(excludeSelf && session.user?.email
+          ? { email: { not: session.user.email } }
+          : {}),
       },
       select: {
         id: true,

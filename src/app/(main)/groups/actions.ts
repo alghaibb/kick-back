@@ -252,16 +252,19 @@ export async function inviteToGroupBatchAction(data: {
         fd.append("groupId", groupId);
         fd.append("email", email);
         fd.append("role", role);
-        return await inviteToGroupAction(fd, true);
+        const res = await inviteToGroupAction(fd, true);
+        if (res?.error) return { email, ok: false, error: res.error } as const;
+        return { email, ok: true } as const;
       })
     );
 
     const succeeded: string[] = [];
-    const failed: string[] = [];
-    results.forEach((r, idx) => {
-      const em = emails[idx];
-      if (r.status === "fulfilled" && !r.value?.error) succeeded.push(em);
-      else failed.push(em);
+    const failed: { email: string; error: string }[] = [];
+    results.forEach((r) => {
+      if (r.status === "fulfilled") {
+        if (r.value.ok) succeeded.push(r.value.email);
+        else failed.push({ email: r.value.email, error: r.value.error });
+      }
     });
 
     return { success: true, succeeded, failed };

@@ -755,17 +755,22 @@ export async function inviteToEventBatchAction(
       return { error: "Too many invite requests. Please try again later." };
     }
     const results = await Promise.allSettled(
-      parsed.emails.map((email) =>
-        inviteToEventAction(parsed.eventId, email, true)
-      )
+      parsed.emails.map(async (email) => {
+        const res = await inviteToEventAction(parsed.eventId, email, true);
+        if (res?.error) {
+          return { email, ok: false, error: res.error } as const;
+        }
+        return { email, ok: true } as const;
+      })
     );
 
     const succeeded: string[] = [];
-    const failed: string[] = [];
-    results.forEach((r, idx) => {
-      const em = parsed.emails[idx];
-      if (r.status === "fulfilled" && !r.value?.error) succeeded.push(em);
-      else failed.push(em);
+    const failed: { email: string; error: string }[] = [];
+    results.forEach((r) => {
+      if (r.status === "fulfilled") {
+        if (r.value.ok) succeeded.push(r.value.email);
+        else failed.push({ email: r.value.email, error: r.value.error });
+      }
     });
 
     return { success: true, succeeded, failed };

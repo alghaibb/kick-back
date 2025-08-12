@@ -114,7 +114,8 @@ export function SmartDateTimePicker({
     try {
       const date = parseISO(dateStr);
       return format(date, "EEEE, MMMM d, yyyy");
-    } catch {
+    } catch (error) {
+      console.error("Invalid date in SmartDateTimePicker:", error);
       return "Invalid date";
     }
   };
@@ -126,7 +127,8 @@ export function SmartDateTimePicker({
       const date = new Date();
       date.setHours(parseInt(hours), parseInt(minutes));
       return format(date, "h:mm a");
-    } catch {
+    } catch (error) {
+      console.error("Invalid time in SmartDateTimePicker:", error);
       return "Invalid time";
     }
   };
