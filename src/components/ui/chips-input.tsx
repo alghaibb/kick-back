@@ -137,8 +137,8 @@ export function ChipsInput({
         )}
         role="combobox"
         aria-expanded={open}
-        aria-owns={listboxId}
         aria-haspopup="listbox"
+        aria-controls={listboxId}
       >
         {value.map((chip, idx) => (
           <Badge

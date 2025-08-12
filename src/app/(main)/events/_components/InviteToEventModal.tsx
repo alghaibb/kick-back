@@ -68,7 +68,10 @@ export function InviteToEventModal() {
         validatedData.emails
       );
       const successfulEmails: string[] = batchResult?.succeeded || [];
-      const failedEmails: string[] = batchResult?.failed || [];
+      const failedRaw = (batchResult?.failed || []) as Array<
+        string | { email: string; error: string }
+      >;
+      const failedCount = failedRaw.length;
 
       // Show results
       if (successfulEmails.length > 0) {
@@ -80,12 +83,12 @@ export function InviteToEventModal() {
         setInvitedEmails((prev) => [...prev, ...successfulEmails]);
       }
 
-      if (failedEmails.length > 0) {
-        const message =
-          failedEmails.length === 1
-            ? `Failed to send invitation to ${failedEmails[0]}`
-            : `Failed to send invitations to ${failedEmails.length} people`;
-        toast.error(message);
+      if (failedCount > 0) {
+        const samples = failedRaw
+          .slice(0, 3)
+          .map((f) => (typeof f === "string" ? f : `${f.email}: ${f.error}`))
+          .join("\n");
+        toast.error(`Failed to send ${failedCount}\n${samples}`);
       }
 
       setEmail("");
