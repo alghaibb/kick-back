@@ -17,8 +17,8 @@ export default function RevokeUserSessionsModal() {
     try {
       setIsLoading(true);
       const res = await revokeUserSessions(data.revokeUserId!);
-      if ((res as any)?.error) {
-        console.error("Revoke sessions error:", (res as any).error);
+      if ("error" in res) {
+        console.error("Revoke sessions error:", res.error);
       }
       close();
     } catch (error) {
@@ -34,7 +34,8 @@ export default function RevokeUserSessionsModal() {
       title="Revoke User Sessions"
       description={
         <span>
-          This will sign out <strong>{data.revokeUserEmail || "this user"}</strong> from all
+          This will sign out{" "}
+          <strong>{data.revokeUserEmail || "this user"}</strong> from all
           devices immediately. The account will remain active.
         </span>
       }
@@ -58,5 +59,3 @@ export default function RevokeUserSessionsModal() {
     </GenericModal>
   );
 }
-
-

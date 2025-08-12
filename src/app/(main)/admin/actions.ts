@@ -924,7 +924,9 @@ export async function adminEditEventAction(
 }
 
 // Revoke all active sessions for a user (admin only)
-export async function revokeUserSessions(userId: string) {
+export async function revokeUserSessions(
+  userId: string
+): Promise<{ success: true } | { error: string }> {
   try {
     await requireAdminWithAudit(
       "revoke_user_sessions",
