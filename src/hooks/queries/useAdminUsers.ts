@@ -8,7 +8,9 @@ import {
   deleteUser as deleteUserAction,
   recoverUser as recoverUserAction,
   editUserProfile as editUserProfileAction,
+  revokeUserSessions as revokeUserSessionsAction,
 } from "@/app/(main)/admin/actions";
+import { toast } from "sonner";
 import type { EditUserInput } from "@/validations/admin/editUserSchema";
 
 interface User {
@@ -473,4 +475,29 @@ export function usePrefetchAdminUsers() {
       staleTime: 2 * 60 * 1000,
     });
   };
+}
+
+// Revoke user sessions mutation (optimistic UX)
+export function useRevokeUserSessions() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      const res = await revokeUserSessionsAction(userId);
+      if ("error" in res) throw new Error(res.error);
+      return res;
+    },
+    onMutate: async () => {
+      // Cancel to prevent flicker; modal closes immediately from caller
+      await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
+      toast.success("Sessions revoked");
+      return {};
+    },
+    onError: (error) => {
+      console.error("Revoke sessions mutation error:", error);
+      toast.error((error as Error)?.message || "Failed to revoke sessions");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
 }

@@ -3,28 +3,22 @@
 import { GenericModal } from "@/components/ui/generic-modal";
 import { Button, LoadingButton } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
-import { revokeUserSessions } from "@/app/(main)/admin/actions";
+import { useRevokeUserSessions } from "@/hooks/queries/useAdminUsers";
 import { LogOut } from "lucide-react";
 import { useState } from "react";
 
 export default function RevokeUserSessionsModal() {
   const { type, data, close } = useModal();
-  const [isLoading, setIsLoading] = useState(false);
+  const revokeMutation = useRevokeUserSessions();
 
   if (type !== "revoke-user-sessions" || !data?.revokeUserId) return null;
 
   const handleRevoke = async () => {
     try {
-      setIsLoading(true);
-      const res = await revokeUserSessions(data.revokeUserId!);
-      if ("error" in res) {
-        console.error("Revoke sessions error:", res.error);
-      }
+      await revokeMutation.mutateAsync({ userId: data.revokeUserId! });
       close();
     } catch (error) {
       console.error("Revoke sessions error:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -49,8 +43,8 @@ export default function RevokeUserSessionsModal() {
         <LoadingButton
           variant="default"
           onClick={handleRevoke}
-          loading={isLoading}
-          disabled={isLoading}
+          loading={revokeMutation.isPending}
+          disabled={revokeMutation.isPending}
           icon={<LogOut className="h-4 w-4" />}
         >
           Revoke Sessions
