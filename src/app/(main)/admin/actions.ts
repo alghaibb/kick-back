@@ -950,6 +950,12 @@ export async function revokeUserSessions(
 
     // Delete all sessions for this user
     await prisma.session.deleteMany({ where: { userId } });
+    // Also delete push subscriptions so the user re-consents next time (optional hard reset)
+    try {
+      await prisma.pushSubscription.deleteMany({ where: { userId } });
+    } catch (error) {
+      console.error("Failed to delete push subscriptions on revoke:", error);
+    }
 
     // Optional: bump updatedAt to invalidate cached user objects
     await prisma.user.update({

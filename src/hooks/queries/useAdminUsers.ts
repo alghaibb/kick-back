@@ -142,10 +142,12 @@ export function useAdminUsersInfinite(params: Omit<UsersParams, "page"> = {}) {
         : undefined;
     },
     initialPageParam: 1,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
     gcTime: 5 * 60 * 1000,
     retry: 2,
     refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 }
 

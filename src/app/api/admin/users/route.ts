@@ -138,13 +138,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Add cache headers for better performance
-    response.headers.set(
-      "Cache-Control",
-      search
-        ? "private, no-cache"
-        : "public, s-maxage=30, stale-while-revalidate=60"
-    );
+    // Admin data should not be cached to avoid stale reads and data leakage
+    response.headers.set("Cache-Control", "private, no-store, max-age=0");
 
     return response;
   } catch (error) {
