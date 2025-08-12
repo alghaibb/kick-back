@@ -413,7 +413,7 @@ function AdminUsersData({
                                   onClick={() => handleRevokeSessions(user)}
                                 >
                                   <LogOut className="mr-2 h-4 w-4" />
-                                  Revoke Sessions
+                                  Revoke Session
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() =>

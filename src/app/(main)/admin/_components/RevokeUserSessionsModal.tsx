@@ -46,7 +46,7 @@ export default function RevokeUserSessionsModal() {
           disabled={revokeMutation.isPending}
           icon={<LogOut className="h-4 w-4" />}
         >
-          Revoke Sessions
+          Revoke Session
         </LoadingButton>
       </div>
     </GenericModal>

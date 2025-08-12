@@ -502,9 +502,7 @@ export function useRevokeUserSessions() {
         if (!queryData) return;
 
         // Infinite queries shape: { pages: UsersResponse[] }
-        if (
-          Array.isArray((queryData as any).pages)
-        ) {
+        if (Array.isArray((queryData as any).pages)) {
           const infiniteData = queryData as { pages: UsersResponse[] };
           queryClient.setQueryData(queryKey, {
             ...infiniteData,
@@ -527,7 +525,7 @@ export function useRevokeUserSessions() {
         }
       });
 
-      toast.success("Sessions revoked");
+      toast.success("Session revoked");
       return { allQueryData };
     },
     onError: (error, _vars, context) => {
