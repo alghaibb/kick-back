@@ -928,11 +928,8 @@ export async function revokeUserSessions(
   userId: string
 ): Promise<{ success: true } | { error: string }> {
   try {
-    await requireAdminWithAudit(
-      "revoke_user_sessions",
-      `user:${userId}`,
-      false
-    );
+    // Skip rate limit for this admin read/maintenance action
+    await requireAdminWithAudit("revoke_user_sessions", `user:${userId}`, true);
 
     if (!userId || typeof userId !== "string") {
       throw new AdminActionError(
