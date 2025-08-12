@@ -35,6 +35,7 @@ import {
   Search,
   Shield,
   Trash2,
+  LogOut,
   User,
   Users,
   Edit,
@@ -165,6 +166,13 @@ function AdminUsersData({
 
   const handleEditUser = (user: User) => {
     open("edit-user", { user });
+  };
+
+  const handleRevokeSessions = (user: User) => {
+    open("revoke-user-sessions", {
+      revokeUserId: user.id,
+      revokeUserEmail: user.email,
+    });
   };
 
   const getInitials = (firstName: string, lastName: string | null) => {
@@ -383,6 +391,12 @@ function AdminUsersData({
                                     Remove Admin
                                   </DropdownMenuItem>
                                 )}
+                                <DropdownMenuItem
+                                  onClick={() => handleRevokeSessions(user)}
+                                >
+                                  <LogOut className="mr-2 h-4 w-4" />
+                                  Revoke Sessions
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() =>
                                     handleDeleteUser(

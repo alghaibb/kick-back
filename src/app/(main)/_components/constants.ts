@@ -10,6 +10,7 @@ import {
   Trash2,
   BarChart3,
   MessageSquare,
+  LogOut,
 } from "lucide-react";
 
 export const navigation = [
@@ -29,6 +30,7 @@ export const adminNavigation = [
   { name: "Events", href: "/admin/events", icon: Calendar },
   { name: "Deleted Users", href: "/admin/deleted-users", icon: Trash2 },
   { name: "Contacts", href: "/admin/contacts", icon: MessageSquare },
+  { name: "Sessions", href: "/admin/sessions", icon: LogOut },
 ] as const;
 
 export type NavigationItem = (typeof navigation)[number];

@@ -1,4 +1,5 @@
 import { AdminDashboardClient } from "./_components/AdminDashboardClient";
+import RevokeUserSessionsModal from "./_components/RevokeUserSessionsModal";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -18,5 +19,10 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  return <AdminDashboardClient />;
+  return (
+    <>
+      <AdminDashboardClient />
+      <RevokeUserSessionsModal />
+    </>
+  );
 }

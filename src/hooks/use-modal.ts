@@ -18,7 +18,8 @@ export type ModalType =
   | "contact-reply"
   | "delete-group"
   | "invite-event"
-  | "leave-event";
+  | "leave-event"
+  | "revoke-user-sessions";
 
 interface ModalState {
   type: ModalType | null;
@@ -68,6 +69,9 @@ interface ModalState {
       hasOnboarded: boolean;
       accounts?: Array<{ provider: string }>;
     };
+    // Revoke sessions
+    revokeUserId?: string;
+    revokeUserEmail?: string;
   };
   open: (
     type: ModalType,
@@ -122,6 +126,9 @@ interface ModalState {
       contactMessage?: string;
       // Admin edit event field
       isAdmin?: boolean;
+      // Revoke sessions
+      revokeUserId?: string;
+      revokeUserEmail?: string;
     }
   ) => void;
   close: () => void;

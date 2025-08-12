@@ -766,7 +766,6 @@ export async function replyToContact(data: ContactReplyValues) {
         data: { repliedAt: new Date() },
         select: { id: true, repliedAt: true },
       });
-
     } catch (error) {
       console.error("Failed to update contact repliedAt:", error);
       // Continue with email sending even if update fails
@@ -822,17 +821,29 @@ export async function adminEditEventAction(
     const { date, name, description, groupId, location, time } = values;
 
     if (!name.trim()) {
-      throw new AdminActionError("Event name is required", "VALIDATION_ERROR", 400);
+      throw new AdminActionError(
+        "Event name is required",
+        "VALIDATION_ERROR",
+        400
+      );
     }
 
     if (!date || !time) {
-      throw new AdminActionError("Event date and time are required", "VALIDATION_ERROR", 400);
+      throw new AdminActionError(
+        "Event date and time are required",
+        "VALIDATION_ERROR",
+        400
+      );
     }
 
     // Parse date and time
     const eventDateTime = new Date(`${date}T${time}`);
     if (isNaN(eventDateTime.getTime())) {
-      throw new AdminActionError("Invalid date or time format", "VALIDATION_ERROR", 400);
+      throw new AdminActionError(
+        "Invalid date or time format",
+        "VALIDATION_ERROR",
+        400
+      );
     }
 
     // Check if event exists
@@ -909,5 +920,49 @@ export async function adminEditEventAction(
       "INTERNAL_ERROR",
       500
     );
+  }
+}
+
+// Revoke all active sessions for a user (admin only)
+export async function revokeUserSessions(userId: string) {
+  try {
+    await requireAdminWithAudit(
+      "revoke_user_sessions",
+      `user:${userId}`,
+      false
+    );
+
+    if (!userId || typeof userId !== "string") {
+      throw new AdminActionError(
+        "Valid user ID is required",
+        "INVALID_INPUT",
+        400
+      );
+    }
+
+    // Ensure user exists and is not soft-deleted
+    const user = await prisma.user.findUnique({
+      where: { id: userId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new AdminActionError("User not found", "NOT_FOUND", 404);
+    }
+
+    // Delete all sessions for this user
+    await prisma.session.deleteMany({ where: { userId } });
+
+    // Optional: bump updatedAt to invalidate cached user objects
+    await prisma.user.update({
+      where: { id: userId },
+      data: { updatedAt: new Date() },
+      select: { id: true },
+    });
+
+    return { success: true } as const;
+  } catch (error) {
+    console.error("Revoke sessions error:", error);
+    if (error instanceof AdminActionError) throw error;
+    return { error: "Failed to revoke sessions" } as const;
   }
 }
