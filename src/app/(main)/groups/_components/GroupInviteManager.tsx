@@ -131,9 +131,9 @@ export function GroupInviteManager({
                 {pendingInvites.map((invite) => (
                   <div
                     key={invite.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg"
                   >
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-start sm:items-center gap-3">
                       {getStatusIcon(invite.status)}
                       <div>
                         <p className="font-medium">{invite.email}</p>
@@ -149,7 +149,7 @@ export function GroupInviteManager({
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-2 sm:self-auto">
                       {getStatusBadge(invite.status)}
                       {!isExpired(invite.expiresAt) && (
                         <>
@@ -160,9 +160,7 @@ export function GroupInviteManager({
                             disabled={isResending}
                           >
                             <RefreshCw
-                              className={`h-3 w-3 ${
-                                isResending ? "animate-spin" : ""
-                              }`}
+                              className={`h-3 w-3 ${isResending ? "animate-spin" : ""}`}
                             />
                           </Button>
                           <Button
@@ -188,9 +186,9 @@ export function GroupInviteManager({
                   {otherInvites.map((invite) => (
                     <div
                       key={invite.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg"
                     >
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-start sm:items-center gap-3">
                         {getStatusIcon(invite.status)}
                         <div>
                           <p className="font-medium">{invite.email}</p>
@@ -200,7 +198,7 @@ export function GroupInviteManager({
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-2 sm:self-auto">
                         {getStatusBadge(invite.status)}
                       </div>
                     </div>

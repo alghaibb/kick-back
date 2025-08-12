@@ -161,7 +161,7 @@ export function ChipsInput({
         <input
           ref={inputRef}
           className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-base md:text-sm"
-          placeholder={placeholder}
+          placeholder={value.length > 0 ? "" : placeholder}
           value={input}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
