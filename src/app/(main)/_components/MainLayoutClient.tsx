@@ -48,7 +48,7 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
       case "amber":
         return "bg-gradient-to-br from-background via-background to-amber-50/30 dark:to-amber-950/30";
       case "purple":
-        return "bg-gradient-to-br from-background via-background to-violet-50/30 dark:to-violet-950/30";
+        return "bg-gradient-to-br from-background via-background to-purple-50/30 dark:to-purple-950/30";
       case "rose":
         return "bg-gradient-to-br from-background via-background to-rose-50/30 dark:to-rose-950/30";
       case "emerald":

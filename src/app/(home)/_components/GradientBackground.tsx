@@ -10,7 +10,7 @@ const HERO_GRADIENTS = {
   amber:
     "radial-gradient(110% 80% at 60% 0%, rgba(255,210,80,0.08) 0%, rgba(255,210,80,0.04) 60%, var(--background) 100%)",
   purple:
-    "radial-gradient(110% 80% at 60% 0%, rgba(139,92,246,0.08) 0%, rgba(139,92,246,0.04) 60%, var(--background) 100%)",
+    "radial-gradient(110% 80% at 60% 0%, rgba(147,51,234,0.08) 0%, rgba(147,51,234,0.04) 60%, var(--background) 100%)",
   rose: "radial-gradient(110% 80% at 60% 0%, rgba(244,63,94,0.08) 0%, rgba(244,63,94,0.04) 60%, var(--background) 100%)",
   emerald:
     "radial-gradient(110% 80% at 60% 0%, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.04) 60%, var(--background) 100%)",

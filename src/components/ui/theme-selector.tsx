@@ -50,7 +50,7 @@ export function ThemeSelector() {
       case "amber":
         return "bg-amber-500";
       case "purple":
-        return "bg-violet-500";
+        return "bg-purple-600";
       case "rose":
         return "bg-rose-500";
       case "emerald":

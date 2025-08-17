@@ -309,20 +309,20 @@ body {
 /* Premium Themes - Beautiful colors that work great in both light and dark modes */
 .theme-purple,
 .theme-purple-scaled {
-  --primary: #8b5cf6; /* violet-500 */
+  --primary: #9333ea; /* purple-600 */
   --primary-foreground: #fafafa; /* neutral-50 */
-  --primary-8: color-mix(in oklab, #8b5cf6 8%, transparent);
-  --primary-50: color-mix(in oklab, #8b5cf6 50%, transparent);
-  --accent: #f3e8ff; /* violet-50 */
-  --accent-foreground: #581c87; /* violet-900 */
+  --primary-8: color-mix(in oklab, #9333ea 8%, transparent);
+  --primary-50: color-mix(in oklab, #9333ea 50%, transparent);
+  --accent: #faf5ff; /* purple-50 */
+  --accent-foreground: #581c87; /* purple-900 */
 
   @variant dark {
-    --primary: #a78bfa; /* violet-400 */
+    --primary: #a855f7; /* purple-500 */
     --primary-foreground: #0a0a0a; /* neutral-950 */
-    --primary-8: color-mix(in oklab, #a78bfa 8%, transparent);
-    --primary-50: color-mix(in oklab, #a78bfa 50%, transparent);
-    --accent: #2e1065; /* violet-950 */
-    --accent-foreground: #e9d5ff; /* violet-200 */
+    --primary-8: color-mix(in oklab, #a855f7 8%, transparent);
+    --primary-50: color-mix(in oklab, #a855f7 50%, transparent);
+    --accent: #2e1065; /* purple-950 */
+    --accent-foreground: #e9d5ff; /* purple-200 */
   }
 }
 
@@ -451,10 +451,10 @@ body {
 
 /* Premium theme border colors */
 .theme-purple {
-  --color-border: #8b5cf6; /* violet-500 */
+  --color-border: #9333ea; /* purple-600 */
 }
 .theme-purple:hover {
-  --color-border: #7c3aed; /* darker violet */
+  --color-border: #7c3aed; /* darker purple */
 }
 
 .theme-rose {
@@ -499,7 +499,7 @@ body {
 
 /* Theme-specific focus rings for better accessibility */
 .theme-purple:focus-within {
-  --ring: #8b5cf6;
+  --ring: #9333ea;
 }
 
 .theme-rose:focus-within {
