@@ -26,13 +26,18 @@ export async function POST(request: Request) {
 
     if (existingSubscription) {
       // Update if it belongs to a different user (device switched users)
-      if (existingSubscription.userId !== session.user.id) {
+      // or if it was previously disabled
+      if (
+        existingSubscription.userId !== session.user.id ||
+        existingSubscription.disabled
+      ) {
         await prisma.pushSubscription.update({
           where: { endpoint },
           data: {
             userId: session.user.id,
             p256dh,
             auth,
+            disabled: false,
           },
         });
       }

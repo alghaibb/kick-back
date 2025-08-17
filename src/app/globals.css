@@ -255,12 +255,16 @@ body {
   --primary-foreground: var(--color-blue-50);
   --primary-8: color-mix(in oklab, var(--color-blue-600) 8%, transparent);
   --primary-50: color-mix(in oklab, var(--color-blue-600) 50%, transparent);
+  --accent: #eff6ff; /* blue-50 */
+  --accent-foreground: #1e3a8a; /* blue-900 */
 
   @variant dark {
     --primary: var(--color-blue-500);
     --primary-foreground: var(--color-blue-50);
     --primary-8: color-mix(in oklab, var(--color-blue-500) 8%, transparent);
     --primary-50: color-mix(in oklab, var(--color-blue-500) 50%, transparent);
+    --accent: #172554; /* blue-950 */
+    --accent-foreground: #bfdbfe; /* blue-200 */
   }
 }
 
@@ -270,12 +274,16 @@ body {
   --primary-foreground: #000000;
   --primary-8: color-mix(in oklab, #39ff14 8%, transparent);
   --primary-50: color-mix(in oklab, #39ff14 50%, transparent);
+  --accent: #f0fdf4; /* green-50 */
+  --accent-foreground: #14532d; /* green-900 */
 
   @variant dark {
     --primary: #39ff14;
     --primary-foreground: #000000;
     --primary-8: color-mix(in oklab, #39ff14 8%, transparent);
     --primary-50: color-mix(in oklab, #39ff14 50%, transparent);
+    --accent: #052e16; /* green-950 */
+    --accent-foreground: #bbf7d0; /* green-200 */
   }
 }
 
@@ -285,12 +293,131 @@ body {
   --primary-foreground: var(--color-amber-50);
   --primary-8: color-mix(in oklab, var(--color-amber-600) 8%, transparent);
   --primary-50: color-mix(in oklab, var(--color-amber-600) 50%, transparent);
+  --accent: #fffbeb; /* amber-50 */
+  --accent-foreground: #78350f; /* amber-900 */
 
   @variant dark {
     --primary: var(--color-amber-500);
     --primary-foreground: var(--color-amber-50);
     --primary-8: color-mix(in oklab, var(--color-amber-500) 8%, transparent);
     --primary-50: color-mix(in oklab, var(--color-amber-500) 50%, transparent);
+    --accent: #451a03; /* amber-950 */
+    --accent-foreground: #fde68a; /* amber-200 */
+  }
+}
+
+/* Premium Themes - Beautiful colors that work great in both light and dark modes */
+.theme-purple,
+.theme-purple-scaled {
+  --primary: #8b5cf6; /* violet-500 */
+  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-8: color-mix(in oklab, #8b5cf6 8%, transparent);
+  --primary-50: color-mix(in oklab, #8b5cf6 50%, transparent);
+  --accent: #f3e8ff; /* violet-50 */
+  --accent-foreground: #581c87; /* violet-900 */
+
+  @variant dark {
+    --primary: #a78bfa; /* violet-400 */
+    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-8: color-mix(in oklab, #a78bfa 8%, transparent);
+    --primary-50: color-mix(in oklab, #a78bfa 50%, transparent);
+    --accent: #2e1065; /* violet-950 */
+    --accent-foreground: #e9d5ff; /* violet-200 */
+  }
+}
+
+.theme-rose,
+.theme-rose-scaled {
+  --primary: #f43f5e; /* rose-500 */
+  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-8: color-mix(in oklab, #f43f5e 8%, transparent);
+  --primary-50: color-mix(in oklab, #f43f5e 50%, transparent);
+  --accent: #ffe4e6; /* rose-50 */
+  --accent-foreground: #9f1239; /* rose-900 */
+
+  @variant dark {
+    --primary: #fb7185; /* rose-400 */
+    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-8: color-mix(in oklab, #fb7185 8%, transparent);
+    --primary-50: color-mix(in oklab, #fb7185 50%, transparent);
+    --accent: #4c0519; /* rose-950 */
+    --accent-foreground: #fecdd3; /* rose-200 */
+  }
+}
+
+.theme-emerald,
+.theme-emerald-scaled {
+  --primary: #10b981; /* emerald-500 */
+  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-8: color-mix(in oklab, #10b981 8%, transparent);
+  --primary-50: color-mix(in oklab, #10b981 50%, transparent);
+  --accent: #ecfdf5; /* emerald-50 */
+  --accent-foreground: #064e3b; /* emerald-900 */
+
+  @variant dark {
+    --primary: #34d399; /* emerald-400 */
+    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-8: color-mix(in oklab, #34d399 8%, transparent);
+    --primary-50: color-mix(in oklab, #34d399 50%, transparent);
+    --accent: #022c22; /* emerald-950 */
+    --accent-foreground: #a7f3d0; /* emerald-200 */
+  }
+}
+
+.theme-indigo,
+.theme-indigo-scaled {
+  --primary: #6366f1; /* indigo-500 */
+  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-8: color-mix(in oklab, #6366f1 8%, transparent);
+  --primary-50: color-mix(in oklab, #6366f1 50%, transparent);
+  --accent: #eef2ff; /* indigo-50 */
+  --accent-foreground: #312e81; /* indigo-900 */
+
+  @variant dark {
+    --primary: #818cf8; /* indigo-400 */
+    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-8: color-mix(in oklab, #818cf8 8%, transparent);
+    --primary-50: color-mix(in oklab, #818cf8 50%, transparent);
+    --accent: #1e1b4b; /* indigo-950 */
+    --accent-foreground: #c7d2fe; /* indigo-200 */
+  }
+}
+
+.theme-teal,
+.theme-teal-scaled {
+  --primary: #14b8a6; /* teal-500 */
+  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-8: color-mix(in oklab, #14b8a6 8%, transparent);
+  --primary-50: color-mix(in oklab, #14b8a6 50%, transparent);
+  --accent: #f0fdfa; /* teal-50 */
+  --accent-foreground: #134e4a; /* teal-900 */
+
+  @variant dark {
+    --primary: #2dd4bf; /* teal-400 */
+    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-8: color-mix(in oklab, #2dd4bf 8%, transparent);
+    --primary-50: color-mix(in oklab, #2dd4bf 50%, transparent);
+    --accent: #042f2e; /* teal-950 */
+    --accent-foreground: #99f6e4; /* teal-200 */
+  }
+}
+
+.theme-violet,
+.theme-violet-scaled {
+  --primary: #8b5cf6; /* violet-500 */
+  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-8: color-mix(in oklab, #8b5cf6 8%, transparent);
+  --primary-50: color-mix(in oklab, #8b5cf6 50%, transparent);
+  --accent: #f3e8ff; /* violet-50 */
+  --accent-foreground: #581c87; /* violet-900 */
+
+  @variant dark {
+    --primary: #a78bfa; /* violet-400 */
+    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-8: color-mix(in oklab, #a78bfa 8%, transparent);
+    --primary-50: color-mix(in oklab, #a78bfa 50%, transparent);
+    --accent: #2e1065; /* violet-950 */
+    --accent-foreground: #e9d5ff; /* violet-200 */
   }
 }
 
@@ -320,6 +447,79 @@ body {
 }
 .theme-amber:hover {
   --color-border: #d97706; /* darker amber */
+}
+
+/* Premium theme border colors */
+.theme-purple {
+  --color-border: #8b5cf6; /* violet-500 */
+}
+.theme-purple:hover {
+  --color-border: #7c3aed; /* darker violet */
+}
+
+.theme-rose {
+  --color-border: #f43f5e; /* rose-500 */
+}
+.theme-rose:hover {
+  --color-border: #e11d48; /* darker rose */
+}
+
+.theme-emerald {
+  --color-border: #10b981; /* emerald-500 */
+}
+.theme-emerald:hover {
+  --color-border: #059669; /* darker emerald */
+}
+
+.theme-indigo {
+  --color-border: #6366f1; /* indigo-500 */
+}
+.theme-indigo:hover {
+  --color-border: #4f46e5; /* darker indigo */
+}
+
+.theme-teal {
+  --color-border: #14b8a6; /* teal-500 */
+}
+.theme-teal:hover {
+  --color-border: #0d9488; /* darker teal */
+}
+
+.theme-violet {
+  --color-border: #8b5cf6; /* violet-500 */
+}
+.theme-violet:hover {
+  --color-border: #7c3aed; /* darker violet */
+}
+
+/* Enhanced theme transitions and effects */
+.theme-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Theme-specific focus rings for better accessibility */
+.theme-purple:focus-within {
+  --ring: #8b5cf6;
+}
+
+.theme-rose:focus-within {
+  --ring: #f43f5e;
+}
+
+.theme-emerald:focus-within {
+  --ring: #10b981;
+}
+
+.theme-indigo:focus-within {
+  --ring: #6366f1;
+}
+
+.theme-teal:focus-within {
+  --ring: #14b8a6;
+}
+
+.theme-violet:focus-within {
+  --ring: #8b5cf6;
 }
 
 /* Custom background text styling for better contrast */

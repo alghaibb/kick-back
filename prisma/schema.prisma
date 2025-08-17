@@ -351,6 +351,7 @@ model PushSubscription {
   endpoint  String   @unique
   p256dh    String
   auth      String
+  disabled  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -181,6 +181,20 @@ const authConfig: NextAuthConfig = {
           throw new Error("Failed to create session");
         }
 
+        // Re-enable push subscriptions for this user when they log in
+        try {
+          await prisma.pushSubscription.updateMany({
+            where: { userId },
+            data: { disabled: false },
+          });
+        } catch (error) {
+          console.error(
+            "Failed to re-enable push subscriptions on login:",
+            error
+          );
+          // Don't fail the login if this fails
+        }
+
         return sessionToken;
       }
       return defaultEncode(params);

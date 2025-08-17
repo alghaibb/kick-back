@@ -950,11 +950,16 @@ export async function revokeUserSessions(
 
     // Delete all sessions for this user
     await prisma.session.deleteMany({ where: { userId } });
-    // Also delete push subscriptions so the user re-consents next time (optional hard reset)
+
+    // Disable push subscriptions instead of deleting them
+    // This preserves user preferences while ensuring security
     try {
-      await prisma.pushSubscription.deleteMany({ where: { userId } });
+      await prisma.pushSubscription.updateMany({
+        where: { userId },
+        data: { disabled: true },
+      });
     } catch (error) {
-      console.error("Failed to delete push subscriptions on revoke:", error);
+      console.error("Failed to disable push subscriptions on revoke:", error);
     }
 
     // Optional: bump updatedAt to invalidate cached user objects

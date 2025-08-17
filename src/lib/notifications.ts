@@ -59,9 +59,12 @@ export async function sendPushNotification(
   notification: PushNotificationData
 ) {
   try {
-    // Get user's push subscriptions
+    // Get user's enabled push subscriptions only
     const subscriptions = await prisma.pushSubscription.findMany({
-      where: { userId },
+      where: {
+        userId,
+        disabled: false, // Only get enabled subscriptions
+      },
     });
 
     if (subscriptions.length === 0) {

@@ -47,6 +47,18 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
         return "bg-gradient-to-br from-background via-background to-green-50/30 dark:to-green-950/30";
       case "amber":
         return "bg-gradient-to-br from-background via-background to-amber-50/30 dark:to-amber-950/30";
+      case "purple":
+        return "bg-gradient-to-br from-background via-background to-violet-50/30 dark:to-violet-950/30";
+      case "rose":
+        return "bg-gradient-to-br from-background via-background to-rose-50/30 dark:to-rose-950/30";
+      case "emerald":
+        return "bg-gradient-to-br from-background via-background to-emerald-50/30 dark:to-emerald-950/30";
+      case "indigo":
+        return "bg-gradient-to-br from-background via-background to-indigo-50/30 dark:to-indigo-950/30";
+      case "teal":
+        return "bg-gradient-to-br from-background via-background to-teal-50/30 dark:to-teal-950/30";
+      case "violet":
+        return "bg-gradient-to-br from-background via-background to-violet-50/30 dark:to-violet-950/30";
       default:
         return "bg-gradient-to-br from-background via-background to-muted/20";
     }
@@ -75,7 +87,7 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
   return (
     <div
       className={cn(
-        "min-h-screen transition-all duration-500 ease-in-out",
+        "min-h-screen transition-all duration-500 ease-in-out theme-transition",
         getThemeBackground(),
         // Add a class when custom background is active for text styling
         user?.dashboardBackground && "custom-background-active"
