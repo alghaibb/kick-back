@@ -50,12 +50,12 @@ export default function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email address</FormLabel>
+              <FormLabel htmlFor="email">Email address</FormLabel>
               <FormControl>
                 <Input
                   placeholder="Enter your email"
                   type="email"
-                  className="w-full px-4 py-3 rounded-xl border border-input bg-background/50 backdrop-blur-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all duration-200 ease-in-out"
+                  id="email"
                   {...field}
                 />
               </FormControl>
@@ -69,11 +69,11 @@ export default function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel htmlFor="password">Password</FormLabel>
               <FormControl>
                 <PasswordInput
                   placeholder="Enter your password"
-                  className="w-full px-4 py-3 rounded-xl border border-input bg-background/50 backdrop-blur-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all duration-200 ease-in-out"
+                  id="password"
                   {...field}
                 />
               </FormControl>
@@ -95,7 +95,7 @@ export default function LoginForm() {
         <LoadingButton type="submit" className="w-full" loading={isPending}>
           {isPending ? "Logging in..." : "Log in"}
         </LoadingButton>
-        
+
         <div className="flex items-center w-full my-8">
           <div className="flex-1 border-t border-border" />
           <span className="mx-4 text-muted-foreground">or</span>

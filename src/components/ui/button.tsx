@@ -8,33 +8,35 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default:
+          "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground/90",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground/90",
         outline:
-          "border-input bg-background hover:bg-accent hover:text-accent-foreground border",
-        outlineSecondary: "border border-primary text-primary",
+          "border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground border",
+        outlineSecondary:
+          "border border-primary text-primary hover:text-primary/80",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:text-secondary-foreground/90",
+        ghost: "text-foreground hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary hover:text-primary/80 underline-offset-4 hover:underline",
         expandIcon:
-          "group relative text-primary-foreground bg-primary hover:bg-primary/90",
+          "group relative text-primary-foreground hover:text-primary-foreground/90 bg-primary hover:bg-primary/90",
         ringHover:
-          "bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90 hover:ring-2 hover:ring-primary/90 hover:ring-offset-2",
+          "bg-primary text-primary-foreground hover:text-primary-foreground/90 transition-all duration-300 hover:bg-primary/90 hover:ring-2 hover:ring-primary/90 hover:ring-offset-2",
         shine:
-          "text-primary-foreground animate-shine bg-gradient-to-r from-primary via-primary/75 to-primary bg-[length:400%_100%] dark:text-secondary-foreground ",
+          "text-primary-foreground hover:text-primary-foreground/90 animate-shine bg-gradient-to-r from-primary via-primary/75 to-primary bg-[length:400%_100%] dark:text-secondary-foreground ",
         gooeyRight:
           "text-primary-foreground relative bg-primary z-0 overflow-hidden transition-all duration-500 before:absolute before:inset-0 before:-z-10 before:translate-x-[150%] before:translate-y-[150%] before:scale-[2.5] before:rounded-[100%] before:bg-gradient-to-r from-zinc-400 before:transition-transform before:duration-1000  hover:before:translate-x-[0%] hover:before:translate-y-[0%] dark:text-secondary-foreground ",
         gooeyLeft:
           "text-primary-foreground relative bg-primary z-0 overflow-hidden transition-all duration-500 after:absolute after:inset-0 after:-z-10 after:translate-x-[-150%] after:translate-y-[150%] after:scale-[2.5] after:rounded-[100%] after:bg-gradient-to-l from-zinc-400 after:transition-transform after:duration-1000  hover:after:translate-x-[0%] hover:after:translate-y-[0%] dark:text-secondary-foreground ",
         linkHover1:
-          "relative after:absolute after:bg-primary after:bottom-2 after:h-[1px] after:w-2/3 after:origin-bottom-left after:scale-x-100 hover:after:origin-bottom-right hover:after:scale-x-0 after:transition-transform after:ease-in-out after:duration-300 text-primary dark:text-secondary-foreground",
+          "relative after:absolute after:bg-primary after:bottom-2 after:h-[1px] after:w-2/3 after:origin-bottom-left after:scale-x-100 hover:after:origin-bottom-right hover:after:scale-x-0 after:transition-transform after:ease-in-out after:duration-300 text-primary hover:text-primary/80 dark:text-secondary-foreground",
         linkHover2:
-          "relative after:absolute after:bg-primary after:bottom-2 after:h-[2px] after:w-2/3 after:origin-bottom-right after:scale-x-0 hover:after:origin-bottom-left hover:after:scale-x-100 after:transition-transform after:ease-in-out after:duration-300 text-primary dark:text-secondary-foreground",
-        basic: "hover:text-foreground/50 duration-200",
+          "relative after:absolute after:bg-primary after:bottom-2 after:h-[2px] after:w-2/3 after:origin-bottom-right after:scale-x-0 hover:after:origin-bottom-left hover:after:scale-x-100 after:transition-transform after:ease-in-out after:duration-300 text-primary hover:text-primary/80 dark:text-secondary-foreground",
+        basic: "text-foreground hover:text-foreground/70 duration-200",
         modernHover:
-          "bg-background text-primary border border-primary font-semibold shadow-none hover:translate-y-[-4px] hover:translate-x-[-2px] hover:shadow-[2px_5px_0_0_rgba(74,115,235,1)] active:translate-y-[2px] active:translate-x-[1px] active:shadow-[2px_5px_0_0_rgba(66,115,244,1)] transition-all duration-300 dark:text-foreground",
+          "bg-background text-primary hover:text-primary/80 border border-primary font-semibold shadow-none hover:translate-y-[-4px] hover:translate-x-[-2px] hover:shadow-[2px_5px_0_0_rgba(74,115,235,1)] active:translate-y-[2px] active:translate-x-[1px] active:shadow-[2px_5px_0_0_rgba(66,115,244,1)] transition-all duration-300 dark:text-foreground",
       },
       size: {
         default: "h-10 px-4 py-2",

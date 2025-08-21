@@ -252,7 +252,7 @@ body {
 .theme-blue,
 .theme-blue-scaled {
   --primary: var(--color-blue-600);
-  --primary-foreground: var(--color-blue-50);
+  --primary-foreground: #ffffff; /* white for better contrast */
   --primary-8: color-mix(in oklab, var(--color-blue-600) 8%, transparent);
   --primary-50: color-mix(in oklab, var(--color-blue-600) 50%, transparent);
   --accent: #eff6ff; /* blue-50 */
@@ -260,7 +260,7 @@ body {
 
   @variant dark {
     --primary: var(--color-blue-500);
-    --primary-foreground: var(--color-blue-50);
+    --primary-foreground: #ffffff; /* white for better contrast */
     --primary-8: color-mix(in oklab, var(--color-blue-500) 8%, transparent);
     --primary-50: color-mix(in oklab, var(--color-blue-500) 50%, transparent);
     --accent: #172554; /* blue-950 */
@@ -290,7 +290,7 @@ body {
 .theme-amber,
 .theme-amber-scaled {
   --primary: var(--color-amber-600);
-  --primary-foreground: var(--color-amber-50);
+  --primary-foreground: #ffffff; /* white for better contrast */
   --primary-8: color-mix(in oklab, var(--color-amber-600) 8%, transparent);
   --primary-50: color-mix(in oklab, var(--color-amber-600) 50%, transparent);
   --accent: #fffbeb; /* amber-50 */
@@ -298,7 +298,7 @@ body {
 
   @variant dark {
     --primary: var(--color-amber-500);
-    --primary-foreground: var(--color-amber-50);
+    --primary-foreground: #ffffff; /* white for better contrast */
     --primary-8: color-mix(in oklab, var(--color-amber-500) 8%, transparent);
     --primary-50: color-mix(in oklab, var(--color-amber-500) 50%, transparent);
     --accent: #451a03; /* amber-950 */
@@ -310,7 +310,7 @@ body {
 .theme-purple,
 .theme-purple-scaled {
   --primary: #9333ea; /* purple-600 */
-  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-foreground: #ffffff; /* white for better contrast */
   --primary-8: color-mix(in oklab, #9333ea 8%, transparent);
   --primary-50: color-mix(in oklab, #9333ea 50%, transparent);
   --accent: #faf5ff; /* purple-50 */
@@ -318,7 +318,7 @@ body {
 
   @variant dark {
     --primary: #a855f7; /* purple-500 */
-    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-foreground: #ffffff; /* white for better contrast */
     --primary-8: color-mix(in oklab, #a855f7 8%, transparent);
     --primary-50: color-mix(in oklab, #a855f7 50%, transparent);
     --accent: #2e1065; /* purple-950 */
@@ -329,7 +329,7 @@ body {
 .theme-rose,
 .theme-rose-scaled {
   --primary: #f43f5e; /* rose-500 */
-  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-foreground: #ffffff; /* white for better contrast */
   --primary-8: color-mix(in oklab, #f43f5e 8%, transparent);
   --primary-50: color-mix(in oklab, #f43f5e 50%, transparent);
   --accent: #ffe4e6; /* rose-50 */
@@ -337,7 +337,7 @@ body {
 
   @variant dark {
     --primary: #fb7185; /* rose-400 */
-    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-foreground: #ffffff; /* white for better contrast */
     --primary-8: color-mix(in oklab, #fb7185 8%, transparent);
     --primary-50: color-mix(in oklab, #fb7185 50%, transparent);
     --accent: #4c0519; /* rose-950 */
@@ -348,7 +348,7 @@ body {
 .theme-emerald,
 .theme-emerald-scaled {
   --primary: #10b981; /* emerald-500 */
-  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-foreground: #ffffff; /* white for better contrast */
   --primary-8: color-mix(in oklab, #10b981 8%, transparent);
   --primary-50: color-mix(in oklab, #10b981 50%, transparent);
   --accent: #ecfdf5; /* emerald-50 */
@@ -356,7 +356,7 @@ body {
 
   @variant dark {
     --primary: #34d399; /* emerald-400 */
-    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-foreground: #ffffff; /* white for better contrast */
     --primary-8: color-mix(in oklab, #34d399 8%, transparent);
     --primary-50: color-mix(in oklab, #34d399 50%, transparent);
     --accent: #022c22; /* emerald-950 */
@@ -367,7 +367,7 @@ body {
 .theme-indigo,
 .theme-indigo-scaled {
   --primary: #6366f1; /* indigo-500 */
-  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-foreground: #ffffff; /* white for better contrast */
   --primary-8: color-mix(in oklab, #6366f1 8%, transparent);
   --primary-50: color-mix(in oklab, #6366f1 50%, transparent);
   --accent: #eef2ff; /* indigo-50 */
@@ -375,7 +375,7 @@ body {
 
   @variant dark {
     --primary: #818cf8; /* indigo-400 */
-    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-foreground: #ffffff; /* white for better contrast */
     --primary-8: color-mix(in oklab, #818cf8 8%, transparent);
     --primary-50: color-mix(in oklab, #818cf8 50%, transparent);
     --accent: #1e1b4b; /* indigo-950 */
@@ -386,7 +386,7 @@ body {
 .theme-teal,
 .theme-teal-scaled {
   --primary: #14b8a6; /* teal-500 */
-  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-foreground: #ffffff; /* white for better contrast */
   --primary-8: color-mix(in oklab, #14b8a6 8%, transparent);
   --primary-50: color-mix(in oklab, #14b8a6 50%, transparent);
   --accent: #f0fdfa; /* teal-50 */
@@ -394,7 +394,7 @@ body {
 
   @variant dark {
     --primary: #2dd4bf; /* teal-400 */
-    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-foreground: #ffffff; /* white for better contrast */
     --primary-8: color-mix(in oklab, #2dd4bf 8%, transparent);
     --primary-50: color-mix(in oklab, #2dd4bf 50%, transparent);
     --accent: #042f2e; /* teal-950 */
@@ -405,7 +405,7 @@ body {
 .theme-violet,
 .theme-violet-scaled {
   --primary: #8b5cf6; /* violet-500 */
-  --primary-foreground: #fafafa; /* neutral-50 */
+  --primary-foreground: #ffffff; /* white for better contrast */
   --primary-8: color-mix(in oklab, #8b5cf6 8%, transparent);
   --primary-50: color-mix(in oklab, #8b5cf6 50%, transparent);
   --accent: #f3e8ff; /* violet-50 */
@@ -413,7 +413,7 @@ body {
 
   @variant dark {
     --primary: #a78bfa; /* violet-400 */
-    --primary-foreground: #0a0a0a; /* neutral-950 */
+    --primary-foreground: #ffffff; /* white for better contrast */
     --primary-8: color-mix(in oklab, #a78bfa 8%, transparent);
     --primary-50: color-mix(in oklab, #a78bfa 50%, transparent);
     --accent: #2e1065; /* violet-950 */
