@@ -1,10 +1,11 @@
 "use client";
 
-import { Button, LoadingButton } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { GenericModal } from "@/components/ui/generic-modal";
 import { useModal } from "@/hooks/use-modal";
 import { useLeaveEvent } from "@/hooks/mutations/useEventMutations";
 import { LogOut } from "lucide-react";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 
 export function LeaveEventModal() {
   const { type, close, data } = useModal();
@@ -52,14 +53,16 @@ export function LeaveEventModal() {
         <Button variant="outline" onClick={close}>
           Cancel
         </Button>
-        <LoadingButton
+        <EnhancedLoadingButton
           variant="destructive"
           onClick={handleLeaveEvent}
-          disabled={leaveEventMutation.isPending}
           loading={leaveEventMutation.isPending}
+          disabled={leaveEventMutation.isPending}
+          action="update"
+          loadingText="Leaving Event..."
         >
-          {leaveEventMutation.isPending ? <>Leaving...</> : <>Leave Event</>}
-        </LoadingButton>
+          Leave Event
+        </EnhancedLoadingButton>
       </div>
     </GenericModal>
   );

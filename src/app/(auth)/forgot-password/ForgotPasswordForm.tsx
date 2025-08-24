@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import {
   Form,
   FormControl,
@@ -62,9 +62,15 @@ export default function ForgotPasswordForm() {
           )}
         />
 
-        <LoadingButton type="submit" className="w-full" loading={isPending}>
-          {isPending ? "Sending Reset Link" : "Send Reset Link"}
-        </LoadingButton>
+        <EnhancedLoadingButton
+          type="submit"
+          className="w-full"
+          loading={isPending}
+          action="send"
+          loadingText="Sending Reset Link..."
+        >
+          Send Reset Link
+        </EnhancedLoadingButton>
 
         <div className="flex items-center w-full my-8">
           <div className="flex-1 border-t border-border" />

@@ -1,10 +1,11 @@
 "use client";
 
 import { GenericModal } from "@/components/ui/generic-modal";
-import { Button, LoadingButton } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
 import { useDeleteUser } from "@/hooks/queries/useAdminUsers";
 import { Trash2, AlertTriangle } from "lucide-react";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 
 export function DeleteUserModal() {
   const { type, data, close } = useModal();
@@ -62,15 +63,17 @@ export function DeleteUserModal() {
           >
             Cancel
           </Button>
-          <LoadingButton
+          <EnhancedLoadingButton
             variant="destructive"
+            action="delete"
+            loadingText="Deleting..."
             onClick={handleDelete}
             loading={deleteUserMutation.isPending}
             disabled={deleteUserMutation.isPending}
             icon={<Trash2 className="h-4 w-4" />}
           >
             Delete User
-          </LoadingButton>
+          </EnhancedLoadingButton>
         </div>
       </div>
     </GenericModal>

@@ -27,6 +27,7 @@ import { useAdminGroups } from "@/hooks/queries/useAdminGroups";
 import { AdminGroupsSkeleton } from "./AdminGroupsSkeleton";
 import { useModal } from "@/hooks/use-modal";
 import { useFilters } from "@/providers/FilterProvider";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface Group {
   id: string;
@@ -100,10 +101,6 @@ export function AdminGroupsClient() {
     return (firstName[0] || "" + (lastName?.[0] || "")).toUpperCase();
   };
 
-  const handleRefresh = () => {
-    refetch();
-  };
-
   const filteredGroups = data?.pages.flatMap((page) => page.groups) || [];
 
   // Filter groups based on search and filter
@@ -160,13 +157,15 @@ export function AdminGroupsClient() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleRefresh}
+                  onClick={() => refetch()}
                   disabled={isRefetching}
                   className="flex-shrink-0"
                 >
-                  <RefreshCw
-                    className={`h-4 w-4 mr-2 ${isRefetching ? "animate-spin" : ""}`}
-                  />
+                  {isRefetching ? (
+                    <ActionLoader action="sync" size="sm" className="mr-2" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
                   Refresh
                 </Button>
               </div>
@@ -389,7 +388,11 @@ export function AdminGroupsClient() {
                   >
                     {isFetchingNextPage ? (
                       <>
-                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        <ActionLoader
+                          action="sync"
+                          size="sm"
+                          className="mr-2"
+                        />
                         Loading...
                       </>
                     ) : (

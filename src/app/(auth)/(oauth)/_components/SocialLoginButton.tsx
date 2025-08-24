@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { useState, useTransition } from "react";
 import { FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
@@ -15,7 +15,7 @@ export function SocialLoginButton() {
 
   return (
     <div className="space-y-3">
-      <LoadingButton
+      <EnhancedLoadingButton
         type="button"
         className="w-full gap-3"
         onClick={() => {
@@ -24,16 +24,14 @@ export function SocialLoginButton() {
         }}
         disabled={isGooglePending || isFacebookPending}
         loading={activeProvider === "google" && isGooglePending}
+        action="admin"
+        loadingText="Logging in with Google..."
       >
         <FcGoogle className="size-5" />
-        <span>
-          {isGooglePending && activeProvider === "google"
-            ? "Logging in with Google..."
-            : "Continue with Google"}
-        </span>
-      </LoadingButton>
+        <span>Continue with Google</span>
+      </EnhancedLoadingButton>
 
-      <LoadingButton
+      <EnhancedLoadingButton
         type="button"
         className="w-full gap-3"
         onClick={() => {
@@ -42,14 +40,12 @@ export function SocialLoginButton() {
         }}
         disabled={isGooglePending || isFacebookPending}
         loading={activeProvider === "facebook" && isFacebookPending}
+        action="admin"
+        loadingText="Logging in with Facebook..."
       >
         <FaFacebook className="size-5 text-[#1877F2]" />
-        <span>
-          {isFacebookPending && activeProvider === "facebook"
-            ? "Logging in with Facebook..."
-            : "Continue with Facebook"}
-        </span>
-      </LoadingButton>
+        <span>Continue with Facebook</span>
+      </EnhancedLoadingButton>
     </div>
   );
 }

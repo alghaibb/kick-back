@@ -25,9 +25,10 @@ import { AdminDashboardSkeleton } from "./AdminDashboardSkeleton";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/date-utils";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 export function AdminDashboardClient() {
-  const { data: stats, isLoading, error, isRefetching } = useAdminStats();
+  const { data: stats, isLoading, error, isRefetching, refetch } = useAdminStats();
   const refreshStats = useRefreshAdminStats();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -177,15 +178,18 @@ export function AdminDashboardClient() {
                   </div>
                 </div>
                 <Button
-                  onClick={handleRefresh}
+                  variant="outline"
                   size="sm"
+                  onClick={() => refetch()}
                   disabled={isRefreshing || isRefetching}
-                  className="shrink-0 w-full sm:w-auto bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg transition-all hover:shadow-xl hover:scale-105"
+                  className="flex-shrink-0"
                 >
-                  <RefreshCw
-                    className={`h-4 w-4 mr-2 ${isRefreshing || isRefetching ? "animate-spin" : ""}`}
-                  />
-                  Refresh Data
+                  {isRefreshing || isRefetching ? (
+                    <ActionLoader action="sync" size="sm" className="mr-2" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Refresh
                 </Button>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

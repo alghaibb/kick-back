@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Image, Upload, X, Palette, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 // Professional preset background options - optimized for text readability
 const PRESET_BACKGROUNDS = [
@@ -196,6 +197,8 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
   };
 
   const currentBackground = user?.dashboardBackground;
+  const isLoading =
+    uploadMutation.isUploading || updateBackgroundMutation.isPending;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -332,9 +335,13 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
                       }
                       className="w-full sm:w-auto"
                     >
-                      {uploadMutation.isUploading ? (
+                      {isLoading ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                          <ActionLoader
+                            action="sync"
+                            size="sm"
+                            className="mr-2"
+                          />
                           Uploading...
                         </>
                       ) : (

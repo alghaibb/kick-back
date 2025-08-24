@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { CheckCircle, Clock, Mail, RefreshCw, X, XCircle } from "lucide-react";
 import { useGroupInvites } from "@/hooks/queries/useGroupInvites";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface GroupInviteManagerProps {
   groupId: string;
@@ -91,10 +92,13 @@ export function GroupInviteManager({
             size="sm"
             onClick={() => refetchInvites()}
             disabled={isLoading || isCanceling || isResending}
+            className="h-8 px-3"
           >
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-            />
+            {isLoading ? (
+              <ActionLoader action="sync" size="sm" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </CardHeader>
@@ -114,7 +118,7 @@ export function GroupInviteManager({
         )}
         {isLoading ? (
           <div className="text-center py-8 text-muted-foreground">
-            <RefreshCw className="h-8 w-8 mx-auto mb-4 animate-spin" />
+            <ActionLoader action="sync" size="lg" className="mx-auto mb-4" />
             <p>Loading invitations...</p>
           </div>
         ) : pendingInvites.length === 0 && otherInvites.length === 0 ? (
@@ -158,10 +162,13 @@ export function GroupInviteManager({
                             size="sm"
                             onClick={() => handleResendInvite(invite.id)}
                             disabled={isResending}
+                            className="h-8 px-3"
                           >
-                            <RefreshCw
-                              className={`h-3 w-3 ${isResending ? "animate-spin" : ""}`}
-                            />
+                            {isResending ? (
+                              <ActionLoader action="send" size="sm" />
+                            ) : (
+                              <RefreshCw className="h-3 w-3" />
+                            )}
                           </Button>
                           <Button
                             variant="outline"

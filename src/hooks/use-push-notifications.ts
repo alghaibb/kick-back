@@ -14,7 +14,7 @@ const isSafari =
 const isStandalone =
   typeof window !== "undefined" &&
   (window.navigator as Navigator & { standalone?: boolean })?.standalone ===
-  true;
+    true;
 
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
@@ -63,8 +63,6 @@ export function usePushNotifications() {
     try {
       // For iOS Safari PWA, check if notifications are enabled in device settings
       if (isIOS && isSafari && isStandalone) {
-
-
         // Cache the initial permission to prevent changes on route navigation
         if (initialPermission.current === null) {
           initialPermission.current = Notification.permission;
@@ -100,7 +98,6 @@ export function usePushNotifications() {
       }
 
       // Don't let this error bubble up to cause error boundary
-
     } finally {
       setIsLoading(false);
       hasInitialized.current = true;
@@ -138,8 +135,6 @@ export function usePushNotifications() {
     try {
       // iOS Safari PWA specific handling
       if (isIOS && isSafari && isStandalone) {
-
-
         // For iOS Safari PWA, we need to register service worker differently
         const registration = await navigator.serviceWorker.register(
           "/push-sw.js?v=" + Date.now(),
@@ -160,7 +155,7 @@ export function usePushNotifications() {
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(
               env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-            ),
+            ) as BufferSource,
           });
         }
 
@@ -206,7 +201,7 @@ export function usePushNotifications() {
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(
             env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-          ),
+          ) as BufferSource,
         });
       }
 
@@ -242,7 +237,6 @@ export function usePushNotifications() {
           const isEnabled = currentPermission === "granted";
           setIsSubscribed(isEnabled);
           setHasFallback(isEnabled);
-
         } catch (permError) {
           console.error(
             "Failed to check iOS Safari PWA permission:",
@@ -331,7 +325,8 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
     .replace(/_/g, "/");
 
   const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
+  const buffer = new ArrayBuffer(rawData.length);
+  const outputArray = new Uint8Array(buffer);
 
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);

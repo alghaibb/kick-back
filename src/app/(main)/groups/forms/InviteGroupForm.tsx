@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { ChipsInput, type Chip } from "@/components/ui/chips-input";
 import { useUserSearch } from "@/hooks/queries/useUserSearch";
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { useState } from "react";
 import { useInviteToGroupBatch } from "@/hooks/mutations/useGroupMutations";
 import {
@@ -160,15 +160,15 @@ export function InviteGroupForm({
             )}
           />
 
-          <LoadingButton
+          <EnhancedLoadingButton
             type="submit"
             className="w-full"
             loading={inviteToGroupMutation.isPending}
+            action="invite"
+            loadingText="Sending Invitation..."
           >
-            {inviteToGroupMutation.isPending
-              ? "Sending Invitation..."
-              : "Send Invitation"}
-          </LoadingButton>
+            Send Invitation
+          </EnhancedLoadingButton>
         </form>
       </Form>
 

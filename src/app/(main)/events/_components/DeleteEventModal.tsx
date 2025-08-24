@@ -2,7 +2,8 @@
 
 import { GenericModal } from "@/components/ui/generic-modal";
 import { ResponsiveModalFooter } from "@/components/ui/responsive-modal";
-import { Button, LoadingButton } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { useModal } from "@/hooks/use-modal";
 import { useDeleteEvent } from "@/hooks/mutations/useEventMutations";
 
@@ -22,9 +23,9 @@ export function DeleteEventModal() {
   if (type !== "delete-event") return null;
 
   return (
-    <GenericModal 
-      type="delete-event" 
-      title="Delete Event" 
+    <GenericModal
+      type="delete-event"
+      title="Delete Event"
       className="space-y-4"
       showCancel={false}
     >
@@ -34,14 +35,19 @@ export function DeleteEventModal() {
         cannot be undone.
       </p>
       <ResponsiveModalFooter className="flex flex-col md:flex-row space-y-4 md:space-y-0">
-        <Button onClick={close} variant="outline">Cancel</Button>
-        <LoadingButton
+        <Button onClick={close} variant="outline">
+          Cancel
+        </Button>
+        <EnhancedLoadingButton
           variant="destructive"
           onClick={handleDelete}
           loading={deleteEventMutation.isPending}
+          disabled={deleteEventMutation.isPending}
+          action="delete"
+          loadingText="Deleting Event..."
         >
-          {deleteEventMutation.isPending ? "Deleting..." : "Delete Event"}
-        </LoadingButton>
+          Delete Event
+        </EnhancedLoadingButton>
       </ResponsiveModalFooter>
     </GenericModal>
   );

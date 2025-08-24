@@ -50,6 +50,7 @@ import { useFilters } from "@/providers/FilterProvider";
 import { useModal } from "@/hooks/use-modal";
 import { formatDate } from "@/lib/date-utils";
 import EditUserModal from "./EditUserModal";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface User {
   id: string;
@@ -442,7 +443,7 @@ function AdminUsersData({
             {isFetchingNextPage && (
               <div className="flex items-center justify-center py-4 border-t">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <ActionLoader action="sync" size="sm" />
                   Loading more users...
                 </div>
               </div>
@@ -471,7 +472,7 @@ function AdminUsersData({
             >
               {isFetchingNextPage ? (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  <ActionLoader action="sync" size="sm" className="mr-2" />
                   Loading more...
                 </>
               ) : (

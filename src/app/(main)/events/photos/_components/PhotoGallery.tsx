@@ -15,7 +15,6 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ActionLoader } from "@/components/ui/loading-animations";
 import {
   ResponsiveModal,
   ResponsiveModalContent,
@@ -86,12 +86,16 @@ export function PhotoGallery({ eventId }: PhotoGalleryProps) {
         {[...Array(6)].map((_, i) => (
           <Card key={i}>
             <CardContent className="p-4">
-              <Skeleton className="w-full h-48 rounded-lg mb-3" />
+              <div className="w-full h-48 rounded-lg mb-3 bg-muted/20 flex items-center justify-center">
+                <ActionLoader action="process" size="lg" />
+              </div>
               <div className="flex items-center gap-2">
-                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="h-8 w-8 rounded-full bg-muted/20 flex items-center justify-center">
+                  <ActionLoader action="process" size="sm" />
+                </div>
                 <div className="flex-1">
-                  <Skeleton className="h-4 w-24 mb-1" />
-                  <Skeleton className="h-3 w-16" />
+                  <div className="h-4 w-24 mb-1 bg-muted/20 rounded" />
+                  <div className="h-3 w-16 bg-muted/20 rounded" />
                 </div>
               </div>
             </CardContent>
@@ -150,7 +154,7 @@ export function PhotoGallery({ eventId }: PhotoGalleryProps) {
                         />
                         {photo.isUploading && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                            <ActionLoader action="process" size="lg" />
                           </div>
                         )}
                       </div>
@@ -352,7 +356,7 @@ export function PhotoGallery({ eventId }: PhotoGalleryProps) {
             >
               {deleteMutation.isPending ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <ActionLoader action="delete" size="sm" className="mr-2" />
                   Deleting...
                 </>
               ) : (

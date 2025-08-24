@@ -5,6 +5,7 @@ import { useRSVPMutation, useRSVPStatus } from "@/hooks/mutations/useRSVP";
 import type { RSVPStatus } from "@/types/rsvp";
 import { Check, X, HelpCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface RSVPButtonsProps {
   eventId: string;
@@ -92,12 +93,14 @@ export function RSVPButtons({
             className={cn(
               "min-w-[80px] transition-all duration-200",
               isActive && button.activeClass,
-              isPending && rsvpMutation.variables?.status === button.status && "opacity-60"
+              isPending &&
+                rsvpMutation.variables?.status === button.status &&
+                "opacity-60"
             )}
           >
-            {/* Show spinner for the button being clicked, otherwise show the regular icon */}
+            {/* Show custom loader for the button being clicked, otherwise show the regular icon */}
             {isPending && rsvpMutation.variables?.status === button.status ? (
-              <Clock className="w-4 h-4 mr-1 animate-spin" />
+              <ActionLoader action="update" size="sm" className="mr-1" />
             ) : (
               <Icon className="w-4 h-4 mr-1" />
             )}

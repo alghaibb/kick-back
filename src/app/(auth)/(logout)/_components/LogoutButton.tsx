@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { useAuth } from "@/hooks/use-auth";
 
 type ButtonVariants =
@@ -33,14 +33,16 @@ export default function LogoutButton({
   const { logout, isLoggingOut } = useAuth();
 
   return (
-    <LoadingButton
+    <EnhancedLoadingButton
       onClick={logout}
       loading={isLoggingOut}
       disabled={isLoggingOut}
       className={className}
       variant={variant}
+      action="admin"
+      loadingText="Logging Out..."
     >
-      {isLoggingOut ? "Logging Out..." : children || "Log Out"}
-    </LoadingButton>
+      {children || "Log Out"}
+    </EnhancedLoadingButton>
   );
 }

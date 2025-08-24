@@ -529,6 +529,16 @@ body {
   position: relative; /* Ensure proper stacking context */
 }
 
+/* Shimmer animation for button effects */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Dark mode specific styling for text-muted-foreground when gradient background is active */
 .dark.custom-background-active .text-muted-foreground {
   /* Change text-muted-foreground to text-background in dark mode with custom gradient */

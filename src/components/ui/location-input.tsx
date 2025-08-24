@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MapPin, Edit, Search, Loader2 } from "lucide-react";
+import { MapPin, Edit, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounced-search";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface NominatimResult {
   display_name: string;
@@ -275,9 +276,11 @@ export function LocationInput({
 
         {/* Loading Indicator */}
         {isLoading && !isCustom && (
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          </div>
+          <ActionLoader
+            action="sync"
+            size="sm"
+            className="text-muted-foreground"
+          />
         )}
 
         {/* Search Icon */}

@@ -25,7 +25,7 @@ import {
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
 import { useState } from "react";
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { useModal } from "@/hooks/use-modal";
 import { useCreateEvent } from "@/hooks/mutations/useEventMutations";
 
@@ -174,9 +174,14 @@ export function CreateEventForm({
           )}
         />
 
-        <LoadingButton type="submit" loading={createEventMutation.isPending}>
-          {createEventMutation.isPending ? "Creating Event..." : "Create Event"}
-        </LoadingButton>
+        <EnhancedLoadingButton
+          type="submit"
+          loading={createEventMutation.isPending}
+          action="create"
+          loadingText="Creating Event..."
+        >
+          Create Event
+        </EnhancedLoadingButton>
       </form>
     </Form>
   );

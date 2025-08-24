@@ -24,7 +24,7 @@ import {
   createEventSchema,
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import {
   useEditEvent,
   useAdminEditEvent,
@@ -173,9 +173,15 @@ export default function EditEventForm({
             </FormItem>
           )}
         />
-        <LoadingButton type="submit" className="w-full" loading={isLoading}>
+        <EnhancedLoadingButton
+          type="submit"
+          className="w-full"
+          loading={isLoading}
+          action="update"
+          loadingText="Updating..."
+        >
           {isAdmin ? "Update Event (Admin)" : "Update Event"}
-        </LoadingButton>
+        </EnhancedLoadingButton>
       </form>
     </Form>
   );

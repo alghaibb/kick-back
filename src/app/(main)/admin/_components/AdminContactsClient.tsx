@@ -17,7 +17,6 @@ import {
   MoreHorizontal,
   Trash2,
   User,
-  Loader2,
   Reply,
   CheckCircle,
   RefreshCw,
@@ -30,6 +29,7 @@ import {
 import { AdminContactsSkeleton } from "./AdminContactsSkeleton";
 import { useModal } from "@/hooks/use-modal";
 import { ContactReplyModal } from "./ContactReplyModal";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface Contact {
   id: string;
@@ -86,10 +86,6 @@ export function AdminContactsClient() {
     return (firstName[0] || "" + (lastName?.[0] || "")).toUpperCase();
   };
 
-  const handleRefresh = () => {
-    refetch();
-  };
-
   const contacts = data?.pages.flatMap((page) => page.contacts) || [];
   const totalContacts = data?.pages[0]?.pagination.total || 0;
 
@@ -129,13 +125,15 @@ export function AdminContactsClient() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleRefresh}
+                  onClick={() => refetch()}
                   disabled={isRefetching}
                   className="flex-shrink-0"
                 >
-                  <RefreshCw
-                    className={`h-4 w-4 mr-2 ${isRefetching ? "animate-spin" : ""}`}
-                  />
+                  {isRefetching ? (
+                    <ActionLoader action="sync" size="sm" className="mr-2" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
                   Refresh
                 </Button>
               </div>
@@ -315,7 +313,11 @@ export function AdminContactsClient() {
                     >
                       {isFetchingNextPage ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <ActionLoader
+                            action="sync"
+                            size="sm"
+                            className="mr-2"
+                          />
                           Loading...
                         </>
                       ) : (

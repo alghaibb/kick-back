@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import {
   Form,
   FormControl,
@@ -361,17 +361,19 @@ export default function EditUserModal() {
                     className="hidden"
                     disabled={imageUpload.isUploading}
                   />
-                  <LoadingButton
+                  <EnhancedLoadingButton
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => imageUpload.imageRef.current?.click()}
                     disabled={imageUpload.isUploading}
                     loading={imageUpload.isUploading}
+                    action="upload"
+                    loadingText="Uploading..."
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     {imageUpload.displayUrl ? "Change Image" : "Upload Image"}
-                  </LoadingButton>
+                  </EnhancedLoadingButton>
                   <p className="text-xs text-muted-foreground">
                     Max 2MB • JPEG, PNG, WebP, GIF
                   </p>
@@ -498,17 +500,19 @@ export default function EditUserModal() {
 
           {/* Form Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <LoadingButton
+            <EnhancedLoadingButton
               type="button"
               variant="outline"
               onClick={close}
               disabled={editUserMutation.isPending}
             >
               Cancel
-            </LoadingButton>
-            <LoadingButton
+            </EnhancedLoadingButton>
+            <EnhancedLoadingButton
               type="submit"
               loading={editUserMutation.isPending}
+              action="update"
+              loadingText="Updating..."
               disabled={
                 !form.formState.isValid ||
                 !hasChanges ||
@@ -516,7 +520,7 @@ export default function EditUserModal() {
               }
             >
               {hasChanges ? "Update User" : "No Changes"}
-            </LoadingButton>
+            </EnhancedLoadingButton>
           </div>
         </form>
       </Form>

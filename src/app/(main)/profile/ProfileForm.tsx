@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -185,16 +185,16 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 )}
               />
 
-              <LoadingButton
+              <EnhancedLoadingButton
                 type="submit"
                 loading={profileMutation.isPending || imageUpload.isUploading}
+                action="save"
+                loadingText="Updating..."
                 className="w-full"
                 disabled={!canSubmit || imageUpload.isUploading}
               >
-                {profileMutation.isPending || imageUpload.isUploading
-                  ? "Updating..."
-                  : "Update Profile"}
-              </LoadingButton>
+                Update Profile
+              </EnhancedLoadingButton>
             </form>
           </Form>
         </CardContent>

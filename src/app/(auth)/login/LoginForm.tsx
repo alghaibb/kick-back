@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, LoadingButton } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import {
   Form,
   FormControl,
@@ -92,9 +93,15 @@ export default function LoginForm() {
           </Button>
         </div>
 
-        <LoadingButton type="submit" className="w-full" loading={isPending}>
-          {isPending ? "Logging in..." : "Log in"}
-        </LoadingButton>
+        <EnhancedLoadingButton 
+          type="submit" 
+          className="w-full" 
+          loading={isPending}
+          action="admin"
+          loadingText="Logging in..."
+        >
+          Log in
+        </EnhancedLoadingButton>
 
         <div className="flex items-center w-full my-8">
           <div className="flex-1 border-t border-border" />

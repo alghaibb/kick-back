@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { createGroupAction } from "../actions";
@@ -146,16 +146,15 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
           label="Group Image"
           imageUpload={imageUpload}
         />
-        <LoadingButton
+        <EnhancedLoadingButton
           type="submit"
           className="w-full"
           loading={createGroupMutation.isPending || imageUpload.isUploading}
-          disabled={imageUpload.isUploading}
+          action="create"
+          loadingText="Creating..."
         >
-          {createGroupMutation.isPending || imageUpload.isUploading
-            ? "Creating..."
-            : "Create Group"}
-        </LoadingButton>
+          Create Group
+        </EnhancedLoadingButton>
       </form>
     </Form>
   );

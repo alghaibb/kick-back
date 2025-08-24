@@ -32,7 +32,6 @@ import {
   SortDesc,
   ChevronDown,
   ChevronUp,
-  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/use-auth";
@@ -58,6 +57,7 @@ import {
 } from "@/hooks/useImageUploadForm";
 import { toast } from "sonner";
 import { useModal } from "@/hooks/use-modal";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface ThreadedEventCommentsProps {
   eventId: string;
@@ -94,7 +94,11 @@ function ThreadedRepliesSection({
   if (isLoadingReplies) {
     return (
       <div className="flex justify-center py-4">
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <ActionLoader
+          action="sync"
+          size="sm"
+          className="text-muted-foreground"
+        />
       </div>
     );
   }
@@ -206,7 +210,7 @@ function ThreadedRepliesSection({
             className="text-xs text-muted-foreground hover:text-foreground"
           >
             {isFetchingNextReplies ? (
-              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+              <ActionLoader action="sync" size="sm" className="mr-1" />
             ) : null}
             Show more replies
           </Button>
@@ -878,7 +882,7 @@ export default function ThreadedEventComments({
                     )}
                   >
                     {createCommentMutation.isPending ? (
-                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      <ActionLoader action="send" size="sm" className="mr-1" />
                     ) : (
                       <Send className="h-3 w-3 mr-1" />
                     )}
@@ -895,7 +899,7 @@ export default function ThreadedEventComments({
       <div className="space-y-4">
         {isLoadingComments ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <ActionLoader action="sync" size="lg" />
           </div>
         ) : allComments.length > 0 ? (
           <>
@@ -910,7 +914,7 @@ export default function ThreadedEventComments({
                   variant="outline"
                 >
                   {isFetchingNextComments ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <ActionLoader action="sync" size="sm" className="mr-2" />
                   ) : null}
                   Load More Comments
                 </Button>

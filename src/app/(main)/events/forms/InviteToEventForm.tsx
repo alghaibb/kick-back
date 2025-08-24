@@ -17,7 +17,7 @@ import {
   inviteToEventFormSchema,
   type InviteToEventFormValues,
 } from "@/validations/events/inviteToEventSchema";
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { useInviteToEventBatch } from "@/hooks/mutations/useEventMutations";
 
 interface InviteToEventFormProps {
@@ -100,13 +100,15 @@ export function InviteToEventForm({
           )}
         />
 
-        <LoadingButton
+        <EnhancedLoadingButton
           type="submit"
           loading={inviteMutation.isPending}
+          action="send"
+          loadingText="Sending Invitations..."
           className="w-full sm:w-auto"
         >
-          {inviteMutation.isPending ? "Sending Invitations..." : "Send"}
-        </LoadingButton>
+          Send
+        </EnhancedLoadingButton>
 
         {invitedEmails.length > 0 && (
           <div className="space-y-1">

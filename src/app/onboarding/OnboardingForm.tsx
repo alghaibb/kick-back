@@ -14,7 +14,7 @@ import {
 } from "@/validations/onboardingSchema";
 
 import { Input } from "@/components/ui/input";
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import {
   Form,
   FormControl,
@@ -322,16 +322,16 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
         </div>
 
         {/* Submit Button */}
-        <LoadingButton
+        <EnhancedLoadingButton
           type="submit"
           className="w-full"
           loading={onboardingMutation.isPending || imageUpload.isUploading}
+          action="create"
+          loadingText="Setting up your profile..."
           disabled={onboardingMutation.isPending || imageUpload.isUploading}
         >
-          {onboardingMutation.isPending || imageUpload.isUploading
-            ? "Setting up your profile..."
-            : "Complete Setup"}
-        </LoadingButton>
+          Complete Setup
+        </EnhancedLoadingButton>
       </form>
     </Form>
   );

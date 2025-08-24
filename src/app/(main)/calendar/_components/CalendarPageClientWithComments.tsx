@@ -7,6 +7,7 @@ import { format, isSameDay, startOfDay } from "date-fns";
 import { useCalendar } from "@/hooks/queries/useCalendar";
 import { formatDate } from "@/lib/date-utils";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 // Lazy load heavy components
 const FullCalendar = lazy(() =>
@@ -95,7 +96,14 @@ export function CalendarPageClientWithComments() {
   };
 
   if (isLoading) {
-    return <UnifiedSkeleton variant="simple" />;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <ActionLoader action="sync" size="lg" />
+          <p className="text-muted-foreground">Loading calendar...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {

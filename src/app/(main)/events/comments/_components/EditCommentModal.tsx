@@ -7,7 +7,7 @@ import { GenericModal } from "@/components/ui/generic-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Save, ImageIcon, Loader2 } from "lucide-react";
+import { Save, ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/use-auth";
 import { useModal } from "@/hooks/use-modal";
@@ -21,6 +21,7 @@ import {
   EditCommentValues,
 } from "@/validations/events/createCommentSchema";
 import { toast } from "sonner";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 export function EditCommentModal() {
   const { user } = useAuth();
@@ -182,7 +183,7 @@ export function EditCommentModal() {
                   }
                 >
                   {editCommentMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <ActionLoader action="save" size="sm" className="mr-2" />
                   ) : (
                     <Save className="h-4 w-4 mr-2" />
                   )}

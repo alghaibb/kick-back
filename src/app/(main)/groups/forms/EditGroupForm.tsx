@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { editGroupAction } from "../actions";
@@ -153,15 +153,14 @@ export default function EditGroupForm({
           label="Group Image"
           imageUpload={imageUpload}
         />
-        <LoadingButton
+        <EnhancedLoadingButton
           type="submit"
           loading={editGroupMutation.isPending || imageUpload.isUploading}
-          disabled={imageUpload.isUploading}
+          action="save"
+          loadingText="Saving..."
         >
-          {editGroupMutation.isPending || imageUpload.isUploading
-            ? "Saving..."
-            : "Save Changes"}
-        </LoadingButton>
+          Save Changes
+        </EnhancedLoadingButton>
       </form>
     </Form>
   );

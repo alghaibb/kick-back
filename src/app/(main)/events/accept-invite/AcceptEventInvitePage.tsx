@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, XCircle, Loader2, Calendar, MapPin } from "lucide-react";
+import { CheckCircle, XCircle, Calendar, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface AcceptEventInvitePageProps {
   token?: string;
@@ -96,7 +97,7 @@ export function AcceptEventInvitePage({ token }: AcceptEventInvitePageProps) {
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/10 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <ActionLoader action="sync" size="lg" className="mx-auto mb-4" />
             <p className="text-muted-foreground">Loading invitation...</p>
           </CardContent>
         </Card>
@@ -182,7 +183,7 @@ export function AcceptEventInvitePage({ token }: AcceptEventInvitePageProps) {
             >
               {accepting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <ActionLoader action="update" size="sm" className="mr-2" />
                   Accepting...
                 </>
               ) : (

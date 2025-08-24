@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Sparkles, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface WelcomeSectionProps {
   subtitle?: string;
@@ -29,7 +30,11 @@ export function WelcomeSection({
       <div className="space-y-3 sm:space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 mx-auto sm:mx-0">
-            <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary animate-spin" />
+            {isLoading ? (
+              <ActionLoader action="sync" size="sm" className="text-primary" />
+            ) : (
+              <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+            )}
           </div>
           <div className="text-center sm:text-left">
             <div className="h-8 bg-muted rounded animate-pulse mb-2" />

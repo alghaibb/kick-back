@@ -7,7 +7,7 @@ import {
   AcceptInviteValues,
 } from "@/validations/group/inviteGroupSchema";
 import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { useTransition, useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { acceptGroupInviteAction } from "../actions";
@@ -18,9 +18,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { InviteData } from "@/types/invite-data";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface AcceptInviteFormProps {
   token: string;
@@ -107,7 +108,7 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 animate-spin" />
+            <ActionLoader action="sync" size="sm" />
             Validating Invitation
           </CardTitle>
           <CardDescription>
@@ -133,12 +134,14 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LoadingButton
+          <EnhancedLoadingButton
             onClick={() => router.push("/dashboard")}
             className="w-full"
+            action="update"
+            loadingText="Going to Dashboard..."
           >
             Go to Dashboard
-          </LoadingButton>
+          </EnhancedLoadingButton>
         </CardContent>
       </Card>
     );
@@ -162,12 +165,14 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
           <div className="text-sm text-muted-foreground mb-4">
             Redirecting you to the groups page...
           </div>
-          <LoadingButton
+          <EnhancedLoadingButton
             onClick={() => router.push("/groups")}
             className="w-full"
+            action="update"
+            loadingText="Going to Groups..."
           >
             Go to Groups
-          </LoadingButton>
+          </EnhancedLoadingButton>
         </CardContent>
       </Card>
     );
@@ -206,14 +211,16 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
                 </FormItem>
               )}
             />
-            <LoadingButton
+            <EnhancedLoadingButton
               type="submit"
               className="w-full"
               loading={isPending}
               disabled={isPending}
+              action="update"
+              loadingText="Accepting Invite..."
             >
-              {isPending ? "Accepting..." : "Accept Invitation"}
-            </LoadingButton>
+              Accept Invitation
+            </EnhancedLoadingButton>
           </form>
         </Form>
       </CardContent>

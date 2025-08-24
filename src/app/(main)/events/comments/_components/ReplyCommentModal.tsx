@@ -7,7 +7,7 @@ import { GenericModal } from "@/components/ui/generic-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, ImageIcon, Loader2 } from "lucide-react";
+import { Send, ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/use-auth";
 import { useModal } from "@/hooks/use-modal";
@@ -21,6 +21,7 @@ import {
   ReplyCommentValues,
 } from "@/validations/events/createCommentSchema";
 import { toast } from "sonner";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 export function ReplyCommentModal() {
   const { user } = useAuth();
@@ -167,7 +168,7 @@ export function ReplyCommentModal() {
                   }
                 >
                   {createReplyMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <ActionLoader action="send" size="sm" className="mr-2" />
                   ) : (
                     <Send className="h-4 w-4 mr-2" />
                   )}

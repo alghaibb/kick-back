@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Bell, Check, X, Clock } from "lucide-react";
+import { Bell, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import { NotificationType } from "@/generated/prisma";
 import { useSmartPolling } from "@/hooks/useSmartPolling";
 import { toast } from "sonner";
 import { deleteNotificationAction } from "@/app/api/notifications/actions";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface Notification {
   id: string;
@@ -412,7 +413,11 @@ export default function NotificationBell() {
                             className="h-8 px-3 flex-1 sm:flex-none"
                           >
                             {acceptInviteMutation.isPending ? (
-                              <Clock className="h-3 w-3 animate-spin mr-1" />
+                              <ActionLoader
+                                action="update"
+                                size="sm"
+                                className="mr-1"
+                              />
                             ) : (
                               <Check className="h-3 w-3 mr-1" />
                             )}
@@ -431,7 +436,11 @@ export default function NotificationBell() {
                             className="h-8 px-3 flex-1 sm:flex-none"
                           >
                             {declineInviteMutation.isPending ? (
-                              <Clock className="h-3 w-3 animate-spin mr-1" />
+                              <ActionLoader
+                                action="update"
+                                size="sm"
+                                className="mr-1"
+                              />
                             ) : (
                               <X className="h-3 w-3 mr-1" />
                             )}
@@ -505,7 +514,11 @@ export default function NotificationBell() {
                             className="h-8 px-3 flex-1 sm:flex-none"
                           >
                             {acceptEventInviteMutation.isPending ? (
-                              <Clock className="h-3 w-3 animate-spin mr-1" />
+                              <ActionLoader
+                                action="update"
+                                size="sm"
+                                className="mr-1"
+                              />
                             ) : (
                               <Check className="h-3 w-3 mr-1" />
                             )}
@@ -524,7 +537,11 @@ export default function NotificationBell() {
                             className="h-8 px-3 flex-1 sm:flex-none"
                           >
                             {declineEventInviteMutation.isPending ? (
-                              <Clock className="h-3 w-3 animate-spin mr-1" />
+                              <ActionLoader
+                                action="update"
+                                size="sm"
+                                className="mr-1"
+                              />
                             ) : (
                               <X className="h-3 w-3 mr-1" />
                             )}

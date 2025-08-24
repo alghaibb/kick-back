@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, LoadingButton } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import {
   Form,
   FormControl,
@@ -150,9 +151,15 @@ export default function CreateAccountForm() {
           )}
         />
 
-        <LoadingButton type="submit" className="w-full" loading={isPending}>
-          {isPending ? "Creating Your Account..." : "Create Account"}
-        </LoadingButton>
+        <EnhancedLoadingButton
+          type="submit"
+          className="w-full"
+          loading={isPending}
+          action="create"
+          loadingText="Creating Account..."
+        >
+          Create Account
+        </EnhancedLoadingButton>
 
         <div className="flex items-center w-full my-8">
           <div className="flex-1 border-t border-border" />

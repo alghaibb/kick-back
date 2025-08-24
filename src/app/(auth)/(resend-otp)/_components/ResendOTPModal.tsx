@@ -1,6 +1,7 @@
 'use client';
 
-import { Button, LoadingButton } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { EnhancedLoadingButton } from '@/components/ui/enhanced-loading-button';
 import {
   Form,
   FormControl,
@@ -119,18 +120,15 @@ export default function ResendOTPModal() {
             <ResponsiveModalClose asChild>
               <Button variant="outline">Cancel</Button>
             </ResponsiveModalClose>
-            <LoadingButton
+            <EnhancedLoadingButton
               type="submit"
+              className="w-full"
               loading={isPending}
-              disabled={isPending || cooldown > 0}
-              className="w-full md:w-auto"
+              action="send"
+              loadingText="Sending OTP..."
             >
-              {isPending
-                ? 'Resending...'
-                : cooldown > 0
-                ? `Retry in ${cooldown}s`
-                : 'Resend OTP'}
-            </LoadingButton>
+              Send OTP
+            </EnhancedLoadingButton>
           </ResponsiveModalFooter>
         </form>
       </Form>

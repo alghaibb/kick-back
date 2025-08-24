@@ -7,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Camera, Upload, X } from "lucide-react";
+import {
+  ActionLoader,
+  ProgressLoader,
+} from "@/components/ui/loading-animations";
 import { useUploadPhoto } from "@/hooks/mutations/usePhotoMutations";
 import {
   uploadPhotoSchema,
@@ -71,11 +75,13 @@ export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
           Add Photos
           {isUploading && (
             <div className="flex items-center gap-2 ml-auto">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              <ActionLoader action="upload" size="sm" />
               {uploadProgress && uploadProgress > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {uploadProgress}%
-                </span>
+                <ProgressLoader
+                  progress={uploadProgress}
+                  size="sm"
+                  showPercentage={false}
+                />
               )}
             </div>
           )}
@@ -123,7 +129,11 @@ export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
                     {isUploading && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                         <div className="text-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                          <ActionLoader
+                            action="upload"
+                            size="lg"
+                            className="mx-auto mb-2"
+                          />
                           <p className="text-sm text-white">
                             {uploadProgress && uploadProgress > 0
                               ? `${uploadProgress}%`
@@ -174,7 +184,7 @@ export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
           >
             {isUploading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <ActionLoader action="upload" size="sm" className="mr-2" />
                 Uploading...
               </>
             ) : (

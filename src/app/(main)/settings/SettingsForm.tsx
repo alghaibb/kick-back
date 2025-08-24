@@ -1,6 +1,7 @@
 "use client";
 
-import { LoadingButton, Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -280,9 +281,11 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                   </FormItem>
                 )}
               />
-              <LoadingButton
+              <EnhancedLoadingButton
                 type="submit"
                 loading={settingsMutation.isPending}
+                action="save"
+                loadingText="Updating..."
                 className="w-full"
                 disabled={
                   !isSettingsDirty ||
@@ -292,7 +295,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                 }
               >
                 Update Reminder Settings
-              </LoadingButton>
+              </EnhancedLoadingButton>
             </form>
           </Form>
         </CardContent>
@@ -363,14 +366,16 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                     </FormItem>
                   )}
                 />
-                <LoadingButton
+                <EnhancedLoadingButton
                   type="submit"
                   loading={passwordMutation.isPending}
+                  action="save"
+                  loadingText="Changing Password..."
                   className="w-full"
                   disabled={!isPasswordDirty || !isPasswordValid}
                 >
                   Change Password
-                </LoadingButton>
+                </EnhancedLoadingButton>
               </form>
             </Form>
           </CardContent>
@@ -396,15 +401,17 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
                 your account within 30 days after deletion.
               </p>
             </div>
-            <LoadingButton
+            <EnhancedLoadingButton
               variant="destructive"
               loading={deleteAccountMutation.isPending}
+              action="delete"
+              loadingText="Processing..."
               onClick={() => {
                 open("delete-account");
               }}
             >
               Delete Account
-            </LoadingButton>
+            </EnhancedLoadingButton>
           </div>
         </CardContent>
       </Card>
@@ -417,9 +424,11 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
         showCancel={false}
       >
         <div className="flex flex-col gap-3 p-6">
-          <LoadingButton
+          <EnhancedLoadingButton
             variant="destructive"
             loading={deleteAccountMutation.isPending}
+            action="delete"
+            loadingText="Deleting..."
             onClick={() => {
               useModal.getState().close();
               deleteAccountMutation.mutate();
@@ -427,7 +436,7 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
             className="w-full"
           >
             Yes, Delete My Account
-          </LoadingButton>
+          </EnhancedLoadingButton>
           <Button
             variant="outline"
             onClick={() => useModal.getState().close()}

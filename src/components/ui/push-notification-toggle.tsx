@@ -16,6 +16,7 @@ import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { useAuth, type User } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 export default function PushNotificationToggle() {
   const {
@@ -345,7 +346,7 @@ export default function PushNotificationToggle() {
 
           {isEnabling && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              <ActionLoader action="sync" size="sm" />
               Setting up push notifications...
             </div>
           )}
@@ -531,7 +532,7 @@ export default function PushNotificationToggle() {
 
         {isEnabling && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+            <ActionLoader action="sync" size="sm" />
             Setting up push notifications...
           </div>
         )}

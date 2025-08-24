@@ -6,7 +6,7 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import {
   Form,
   FormControl,
@@ -88,9 +88,15 @@ export default function ResetPasswordForm() {
           )}
         />
 
-        <LoadingButton type="submit" className="w-full" loading={isPending}>
-          {isPending ? "Resetting Password..." : "Reset Password"}
-        </LoadingButton>
+        <EnhancedLoadingButton
+          type="submit"
+          className="w-full"
+          loading={isPending}
+          action="save"
+          loadingText="Resetting Password..."
+        >
+          Reset Password
+        </EnhancedLoadingButton>
       </form>
     </Form>
   );

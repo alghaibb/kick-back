@@ -10,6 +10,7 @@ import { useRecoverAccountMutation } from "@/hooks/mutations/useSettingsMutation
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ActionLoader } from "@/components/ui/loading-animations";
 
 interface RecoveryState {
   email: string;
@@ -149,10 +150,7 @@ export function RecoverAccountClient() {
                 className="w-full"
               >
                 {state.isChecking ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Checking...
-                  </>
+                  <ActionLoader action="sync" size="sm" className="mr-2" />
                 ) : (
                   "Check Account"
                 )}
@@ -174,10 +172,7 @@ export function RecoverAccountClient() {
                 className="w-full"
               >
                 {recoverMutation.isPending ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Recovering...
-                  </>
+                  <ActionLoader action="sync" size="sm" className="mr-2" />
                 ) : (
                   <>
                     <RotateCcw className="mr-2 h-4 w-4" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import {
   Form,
   FormControl,
@@ -64,15 +64,15 @@ export default function MagicLinkLoginForm() {
           )}
         />
 
-        <LoadingButton
+        <EnhancedLoadingButton
           type="submit"
           className="w-full"
           loading={isPending}
-          disabled={isPending}
+          action="send"
+          loadingText="Sending Magic Link..."
         >
-          {isPending ? "Sending Magic Link..." : "Login with Magic Link"}
-        </LoadingButton>
-
+          Send Magic Link
+        </EnhancedLoadingButton>
       </form>
     </Form>
   );
