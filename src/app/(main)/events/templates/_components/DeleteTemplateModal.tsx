@@ -30,11 +30,9 @@ export function DeleteTemplateModal() {
       showCancel={false}
     >
       <p className="text-sm text-muted-foreground">
-        Are you sure you want to delete
-        {" "}
-        <span className="font-semibold">{data?.templateName}</span>?
-        {" "}
-        This action cannot be undone.
+        Are you sure you want to delete{" "}
+        <span className="font-semibold">{data?.templateName}</span>? This action
+        cannot be undone.
       </p>
       <ResponsiveModalFooter className="flex flex-col md:flex-row space-y-4 md:space-y-0">
         <Button onClick={close} variant="outline">
@@ -54,5 +52,3 @@ export function DeleteTemplateModal() {
     </GenericModal>
   );
 }
-
-

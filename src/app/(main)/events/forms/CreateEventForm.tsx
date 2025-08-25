@@ -175,7 +175,7 @@ export function CreateEventForm({
                 )}
                 {selectedTemplate?.location && (
                   <span className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
+                    <MapPin className="h-5 w-5 shrink-0" strokeWidth={2} />
                     {selectedTemplate.location}
                   </span>
                 )}

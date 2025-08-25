@@ -41,10 +41,7 @@ export function EventTemplatesList() {
   const modal = useModal();
   const [applyingId, setApplyingId] = useState<string | null>(null);
 
-  const handleDelete = (template: {
-    id: string;
-    name: string;
-  }) => {
+  const handleDelete = (template: { id: string; name: string }) => {
     modal.open("delete-template", {
       templateId: template.id,
       templateName: template.name,
@@ -196,7 +193,9 @@ export function EventTemplatesList() {
                       Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDelete({ id: template.id, name: template.name })}
+                      onClick={() =>
+                        handleDelete({ id: template.id, name: template.name })
+                      }
                       className="text-destructive"
                       disabled={deleteMutation.isPending}
                     >
@@ -217,7 +216,7 @@ export function EventTemplatesList() {
                 )}
                 {template.location && (
                   <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
+                    <MapPin className="h-5 w-5 shrink-0" strokeWidth={2} />
                     {template.location}
                   </div>
                 )}
