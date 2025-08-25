@@ -33,7 +33,13 @@ import { useEventTemplates } from "@/hooks/queries/useEventTemplates";
 import { useCreateEventTemplate } from "@/hooks/mutations/useEventTemplateMutations";
 import { Bookmark, Clock, MapPin } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SmartLoader } from "@/components/ui/loading-animations";
 
@@ -53,8 +59,11 @@ export function CreateEventForm({
   const modal = useModal();
   const createEventMutation = useCreateEvent();
   const createTemplateMutation = useCreateEventTemplate();
-  const { data: templates = [], isLoading: templatesLoading } = useEventTemplates();
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const { data: templates = [], isLoading: templatesLoading } =
+    useEventTemplates();
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    null
+  );
   const selectedTemplate = useMemo(
     () => templates.find((t) => t.id === selectedTemplateId) ?? null,
     [templates, selectedTemplateId]
@@ -116,28 +125,24 @@ export function CreateEventForm({
             <Label className="text-sm font-medium">
               Use Template (optional)
             </Label>
-            <Select onValueChange={(id) => { setSelectedTemplateId(id); loadTemplate(id); }}>
-              <SelectTrigger>
+            <Select
+              onValueChange={(id) => {
+                if (id === "__none__") {
+                  setSelectedTemplateId(null);
+                  return;
+                }
+                setSelectedTemplateId(id);
+                loadTemplate(id);
+              }}
+            >
+              <SelectTrigger className="truncate">
                 <SelectValue placeholder="Choose a template to pre-fill" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__none__">No template</SelectItem>
                 {templates.map((template) => (
                   <SelectItem key={template.id} value={template.id}>
-                    <div className="flex items-center gap-2">
-                      <Bookmark className="h-4 w-4" />
-                      <span className="font-medium">{template.name}</span>
-                      {template.group && (
-                        <Badge variant="secondary" className="text-[10px] ml-1">
-                          {template.group.name}
-                        </Badge>
-                      )}
-                      {template.time && (
-                        <span className="ml-2 text-xs text-muted-foreground">{template.time}</span>
-                      )}
-                      {template.location && (
-                        <span className="ml-2 text-xs text-muted-foreground">{template.location}</span>
-                      )}
-                    </div>
+                    {template.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -157,18 +162,27 @@ export function CreateEventForm({
                   {selectedTemplate?.name || "Preview"}
                 </CardTitle>
                 <CardDescription>
-                  {selectedTemplate?.description || "Select a template to preview details"}
+                  {selectedTemplate?.description ||
+                    "Select a template to preview details"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                 {selectedTemplate?.time && (
-                  <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{selectedTemplate.time}</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {selectedTemplate.time}
+                  </span>
                 )}
                 {selectedTemplate?.location && (
-                  <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{selectedTemplate.location}</span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    {selectedTemplate.location}
+                  </span>
                 )}
                 {selectedTemplate?.group?.name && (
-                  <Badge variant="outline" className="text-xs">{selectedTemplate.group.name}</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {selectedTemplate.group.name}
+                  </Badge>
                 )}
               </CardContent>
             </Card>

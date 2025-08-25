@@ -30,7 +30,10 @@ import {
 } from "lucide-react";
 import { useModal } from "@/hooks/use-modal";
 import { useState } from "react";
-import { SkeletonLoader, ActionLoader } from "@/components/ui/loading-animations";
+import {
+  SkeletonLoader,
+  ActionLoader,
+} from "@/components/ui/loading-animations";
 
 export function EventTemplatesList() {
   const { data: templates = [], isLoading, error } = useEventTemplates();
