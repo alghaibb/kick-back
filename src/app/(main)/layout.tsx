@@ -70,6 +70,11 @@ const EditTemplateModal = lazy(() =>
     default: m.EditTemplateModal,
   }))
 );
+const DeleteTemplateModal = lazy(() =>
+  import("./events/templates/_components/DeleteTemplateModal").then((m) => ({
+    default: m.DeleteTemplateModal,
+  }))
+);
 
 export default function MainLayout({
   children,
@@ -121,6 +126,9 @@ export default function MainLayout({
       </Suspense>
       <Suspense fallback={null}>
         <EditTemplateModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <DeleteTemplateModal />
       </Suspense>
     </>
   );

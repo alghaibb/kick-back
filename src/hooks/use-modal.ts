@@ -11,6 +11,7 @@ export type ModalType =
   | "edit-template"
   | "delete-photo"
   | "delete-comment"
+  | "delete-template"
   | "delete-account"
   | "delete-user"
   | "recover-user"
