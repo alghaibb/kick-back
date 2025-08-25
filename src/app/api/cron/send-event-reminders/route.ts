@@ -142,6 +142,11 @@ export async function GET(request: Request) {
         continue;
       }
 
+      // Skip if this user is the creator - they'll get their reminder in the creator section
+      if (user.email === creatorInfo?.email) {
+        continue;
+      }
+
       const userTimezone = user.timezone || "UTC";
       const userNow = toZonedTime(new Date(), userTimezone);
 

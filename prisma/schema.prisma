@@ -50,6 +50,7 @@ model User {
   verificationOTPs     VerificationOTP[]
   contacts             Contact[]
   eventInvites         EventInvite[]        @relation("EventInvites")
+  eventTemplates       EventTemplate[]
   EventPoll            EventPoll[]
   EventPollOption      EventPollOption[]
   EventPollVote        EventPollVote[]
@@ -139,16 +140,17 @@ model RateLimitCounter {
 }
 
 model Group {
-  id          String        @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
   description String?
   image       String?
   createdBy   String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   events      Event[]
   invites     GroupInvite[]
   members     GroupMember[]
+  templates   EventTemplate[]
 
   @@index([createdBy])
   @@map("groups")
@@ -446,4 +448,22 @@ model Contact {
   @@index([userId])
   @@index([createdAt])
   @@map("contacts")
+}
+
+model EventTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  location    String?
+  time        String?
+  groupId     String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  creator     User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  group       Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  @@index([createdBy])
+  @@index([groupId])
+  @@map("event_templates")
 }
