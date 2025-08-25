@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LoadingButton } from "@/components/ui/button";
+import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import {
   createEventTemplateSchema,
   type CreateEventTemplateValues,
@@ -169,8 +169,10 @@ export function EventTemplateForm({
               <FormItem>
                 <FormLabel>Default Group (optional)</FormLabel>
                 <Select
-                  value={field.value ?? undefined}
-                  onValueChange={field.onChange}
+                  value={field.value ?? "none"}
+                  onValueChange={(value) =>
+                    field.onChange(value === "none" ? null : value)
+                  }
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -178,7 +180,7 @@ export function EventTemplateForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">No group</SelectItem>
+                    <SelectItem value="none">No group</SelectItem>
                     {groups.map((group) => (
                       <SelectItem key={group.id} value={group.id}>
                         {group.name}
@@ -191,19 +193,18 @@ export function EventTemplateForm({
             )}
           />
 
-          <LoadingButton
+          <EnhancedLoadingButton
             type="submit"
             loading={mutation.isPending}
+            disabled={mutation.isPending}
             className="w-full"
+            action={isEditing ? "update" : "create"}
+            loadingText={
+              isEditing ? "Updating Template..." : "Creating Template..."
+            }
           >
-            {mutation.isPending
-              ? isEditing
-                ? "Updating Template..."
-                : "Creating Template..."
-              : isEditing
-                ? "Update Template"
-                : "Create Template"}
-          </LoadingButton>
+            {isEditing ? "Update Template" : "Create Template"}
+          </EnhancedLoadingButton>
         </form>
       </Form>
     </div>

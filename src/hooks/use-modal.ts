@@ -7,6 +7,8 @@ export type ModalType =
   | "create-event"
   | "edit-event"
   | "delete-event"
+  | "create-template"
+  | "edit-template"
   | "delete-photo"
   | "delete-comment"
   | "delete-account"
@@ -72,6 +74,13 @@ interface ModalState {
     // Revoke sessions
     revokeUserId?: string;
     revokeUserEmail?: string;
+    // Template fields
+    templateId?: string;
+    templateName?: string;
+    templateDescription?: string | null;
+    templateLocation?: string | null;
+    templateTime?: string | null;
+    templateGroupId?: string | null;
   };
   open: (
     type: ModalType,
@@ -129,6 +138,13 @@ interface ModalState {
       // Revoke sessions
       revokeUserId?: string;
       revokeUserEmail?: string;
+      // Template fields
+      templateId?: string;
+      templateName?: string;
+      templateDescription?: string | null;
+      templateLocation?: string | null;
+      templateTime?: string | null;
+      templateGroupId?: string | null;
     }
   ) => void;
   close: () => void;

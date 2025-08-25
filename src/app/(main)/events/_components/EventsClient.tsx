@@ -17,8 +17,6 @@ import { filterAndSortEvents, defaultFilters } from "@/lib/event-filters";
 import type { EventFilters as EventFiltersType } from "@/lib/event-filters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventTemplatesList } from "../templates/_components/EventTemplatesList";
-import { Button } from "@/components/ui/button";
-import { useModal } from "@/hooks/use-modal";
 
 export function EventsClient() {
   const { data, isLoading, error } = useEvents();

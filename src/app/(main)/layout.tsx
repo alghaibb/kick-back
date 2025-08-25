@@ -60,6 +60,16 @@ const LeaveEventModal = lazy(() =>
     default: m.LeaveEventModal,
   }))
 );
+const CreateTemplateModal = lazy(() =>
+  import("./events/templates/_components/CreateTemplateModal").then((m) => ({
+    default: m.CreateTemplateModal,
+  }))
+);
+const EditTemplateModal = lazy(() =>
+  import("./events/templates/_components/EditTemplateModal").then((m) => ({
+    default: m.EditTemplateModal,
+  }))
+);
 
 export default function MainLayout({
   children,
@@ -105,6 +115,12 @@ export default function MainLayout({
       </Suspense>
       <Suspense fallback={null}>
         <LeaveEventModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <CreateTemplateModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <EditTemplateModal />
       </Suspense>
     </>
   );

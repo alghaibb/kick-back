@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,46 +29,11 @@ import {
   Plus,
 } from "lucide-react";
 import { useModal } from "@/hooks/use-modal";
-import { useGroups } from "@/hooks/queries/useGroups";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { EventTemplateForm } from "@/app/(main)/events/forms/EventTemplateForm";
 
-interface EventTemplatesListProps {
-  onEditTemplate?: (template: {
-    id: string;
-    name: string;
-    description: string | null;
-    location: string | null;
-    time: string | null;
-    groupId: string | null;
-  }) => void;
-}
-
-type EditingTemplate = {
-  id: string;
-  name: string;
-  description: string | null;
-  location: string | null;
-  time: string | null;
-  groupId: string | null;
-};
-
-export function EventTemplatesList({
-  onEditTemplate,
-}: EventTemplatesListProps) {
+export function EventTemplatesList() {
   const { data: templates = [], isLoading, error } = useEventTemplates();
-  const { data: groupsData } = useGroups();
-  const groups = groupsData ? [...groupsData.groupsOwned, ...groupsData.groupsIn] : [];
   const deleteMutation = useDeleteEventTemplate();
   const modal = useModal();
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] =
-    useState<EditingTemplate | null>(null);
 
   const handleDelete = (templateId: string) => {
     if (confirm("Are you sure you want to delete this template?")) {
@@ -77,13 +41,42 @@ export function EventTemplatesList({
     }
   };
 
-  const handleUseTemplate = (template: any) => {
+  const handleUseTemplate = (template: {
+    id: string;
+    name: string;
+    description: string | null;
+    location: string | null;
+    time: string | null;
+    groupId: string | null;
+  }) => {
     modal.open("create-event", {
       name: template.name,
-      description: template.description,
-      location: template.location,
-      time: template.time,
-      groupId: template.groupId,
+      description: template.description ?? undefined,
+      location: template.location ?? undefined,
+      time: template.time ?? undefined,
+      groupId: template.groupId ?? undefined,
+    });
+  };
+
+  const handleCreateTemplate = () => {
+    modal.open("create-template");
+  };
+
+  const handleEditTemplate = (template: {
+    id: string;
+    name: string;
+    description: string | null;
+    location: string | null;
+    time: string | null;
+    groupId: string | null;
+  }) => {
+    modal.open("edit-template", {
+      templateId: template.id,
+      templateName: template.name,
+      templateDescription: template.description,
+      templateLocation: template.location,
+      templateTime: template.time,
+      templateGroupId: template.groupId,
     });
   };
 
@@ -104,39 +97,22 @@ export function EventTemplatesList({
     );
   }
 
-  const handleCloseModals = () => {
-    setIsCreateModalOpen(false);
-    setEditingTemplate(null);
-  };
-
   if (templates.length === 0) {
     return (
-      <>
-        <Card className="text-center py-8">
-          <CardContent className="pt-6">
-            <Bookmark className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <CardTitle className="mb-2">No Templates Yet</CardTitle>
-            <CardDescription className="mb-4">
-              Create your first event template to save time when creating
-              similar events.
-            </CardDescription>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Template
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Create Template Modal */}
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create Event Template</DialogTitle>
-            </DialogHeader>
-            <EventTemplateForm groups={groups} onSuccess={handleCloseModals} />
-          </DialogContent>
-        </Dialog>
-      </>
+      <Card className="text-center py-8">
+        <CardContent className="pt-6">
+          <Bookmark className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <CardTitle className="mb-2">No Templates Yet</CardTitle>
+          <CardDescription className="mb-4">
+            Create your first event template to save time when creating similar
+            events.
+          </CardDescription>
+          <Button onClick={handleCreateTemplate}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Template
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -144,7 +120,7 @@ export function EventTemplatesList({
     <div className="space-y-4">
       {/* Create Template Button */}
       <div className="flex justify-end">
-        <Button onClick={() => setIsCreateModalOpen(true)}>
+        <Button onClick={handleCreateTemplate}>
           <Plus className="h-4 w-4 mr-2" />
           New Template
         </Button>
@@ -180,7 +156,7 @@ export function EventTemplatesList({
                       Use Template
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setEditingTemplate(template)}
+                      onClick={() => handleEditTemplate(template)}
                     >
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
@@ -227,35 +203,6 @@ export function EventTemplatesList({
           </Card>
         ))}
       </div>
-
-      {/* Create Template Modal */}
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create Event Template</DialogTitle>
-          </DialogHeader>
-          <EventTemplateForm groups={groups} onSuccess={handleCloseModals} />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Template Modal */}
-      <Dialog
-        open={!!editingTemplate}
-        onOpenChange={() => setEditingTemplate(null)}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Event Template</DialogTitle>
-          </DialogHeader>
-          {editingTemplate && (
-            <EventTemplateForm
-              groups={groups}
-              editingTemplate={editingTemplate}
-              onSuccess={handleCloseModals}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

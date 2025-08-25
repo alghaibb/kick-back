@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { AutosizeTextarea } from "@/components/ui/textarea";
 import { LocationInput } from "@/components/ui/location-input";
 import { SmartDateTimePicker } from "@/components/ui/smart-datetime-picker";
-import { Button } from "@/components/ui/button";
+
 import {
   Select,
   SelectContent,
@@ -31,7 +31,7 @@ import { useModal } from "@/hooks/use-modal";
 import { useCreateEvent } from "@/hooks/mutations/useEventMutations";
 import { useEventTemplates } from "@/hooks/queries/useEventTemplates";
 import { useCreateEventTemplate } from "@/hooks/mutations/useEventTemplateMutations";
-import { Bookmark, Plus } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 interface CreateEventFormProps {
