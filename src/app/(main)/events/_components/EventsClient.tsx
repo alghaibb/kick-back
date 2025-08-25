@@ -11,10 +11,14 @@ import {
 import { formatDate } from "@/lib/date-utils";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Calendar, Clock, History, AlertCircle } from "lucide-react";
+import { Calendar, Clock, History, AlertCircle, Bookmark } from "lucide-react";
 import EventFilters from "./EventFilters";
 import { filterAndSortEvents, defaultFilters } from "@/lib/event-filters";
 import type { EventFilters as EventFiltersType } from "@/lib/event-filters";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EventTemplatesList } from "../templates/_components/EventTemplatesList";
+import { Button } from "@/components/ui/button";
+import { useModal } from "@/hooks/use-modal";
 
 export function EventsClient() {
   const { data, isLoading, error } = useEvents();
@@ -149,43 +153,60 @@ export function EventsClient() {
   );
 
   return (
-    <div className="space-y-8">
-      {/* Search and Filters */}
-      <EventFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        groups={groups}
-        eventCount={filteredEvents.length}
-      />
+    <Tabs defaultValue="events" className="space-y-6">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="events" className="flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          Events
+        </TabsTrigger>
+        <TabsTrigger value="templates" className="flex items-center gap-2">
+          <Bookmark className="h-4 w-4" />
+          Templates
+        </TabsTrigger>
+      </TabsList>
 
-      <div className="space-y-12">
-        {/* Today's Events */}
-        <EventSection
-          title="Today's Events"
-          icon={Clock}
-          events={todayEvents}
-          emptyMessage="No events scheduled for today. Why not create one?"
-          iconColor="from-primary/20 to-primary/30 text-primary"
+      <TabsContent value="events" className="space-y-8">
+        {/* Search and Filters */}
+        <EventFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          groups={groups}
+          eventCount={filteredEvents.length}
         />
 
-        {/* Upcoming Events */}
-        <EventSection
-          title="Upcoming Events"
-          icon={Calendar}
-          events={upcomingEvents}
-          emptyMessage="No upcoming events. Start planning your next gathering!"
-          iconColor="from-primary/20 to-primary/30 text-primary"
-        />
+        <div className="space-y-12">
+          {/* Today's Events */}
+          <EventSection
+            title="Today's Events"
+            icon={Clock}
+            events={todayEvents}
+            emptyMessage="No events scheduled for today. Why not create one?"
+            iconColor="from-primary/20 to-primary/30 text-primary"
+          />
 
-        {/* Past Events */}
-        <EventSection
-          title="Past Events"
-          icon={History}
-          events={pastEvents}
-          emptyMessage="No past events to show."
-          iconColor="from-muted/20 to-muted/30 text-muted-foreground"
-        />
-      </div>
-    </div>
+          {/* Upcoming Events */}
+          <EventSection
+            title="Upcoming Events"
+            icon={Calendar}
+            events={upcomingEvents}
+            emptyMessage="No upcoming events. Start planning your next gathering!"
+            iconColor="from-primary/20 to-primary/30 text-primary"
+          />
+
+          {/* Past Events */}
+          <EventSection
+            title="Past Events"
+            icon={History}
+            events={pastEvents}
+            emptyMessage="No past events to show."
+            iconColor="from-muted/20 to-muted/30 text-muted-foreground"
+          />
+        </div>
+      </TabsContent>
+
+      <TabsContent value="templates" className="space-y-6">
+        <EventTemplatesList />
+      </TabsContent>
+    </Tabs>
   );
 }
