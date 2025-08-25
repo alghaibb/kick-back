@@ -29,11 +29,14 @@ import {
   Plus,
 } from "lucide-react";
 import { useModal } from "@/hooks/use-modal";
+import { useState } from "react";
+import { SkeletonLoader, ActionLoader } from "@/components/ui/loading-animations";
 
 export function EventTemplatesList() {
   const { data: templates = [], isLoading, error } = useEventTemplates();
   const deleteMutation = useDeleteEventTemplate();
   const modal = useModal();
+  const [applyingId, setApplyingId] = useState<string | null>(null);
 
   const handleDelete = (templateId: string) => {
     if (confirm("Are you sure you want to delete this template?")) {
@@ -82,9 +85,19 @@ export function EventTemplatesList() {
 
   if (isLoading) {
     return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="text-muted-foreground mt-2">Loading templates...</p>
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i} className="p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <SkeletonLoader type="avatar" />
+              <div className="flex-1 space-y-2">
+                <SkeletonLoader type="text" />
+                <SkeletonLoader type="text" className="w-2/3" />
+              </div>
+            </div>
+            <SkeletonLoader type="card" />
+          </Card>
+        ))}
       </div>
     );
   }
@@ -126,7 +139,7 @@ export function EventTemplatesList() {
         </Button>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {templates.map((template) => (
           <Card key={template.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
@@ -150,10 +163,24 @@ export function EventTemplatesList() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      onClick={() => handleUseTemplate(template)}
+                      onClick={() => {
+                        setApplyingId(template.id);
+                        handleUseTemplate(template);
+                        setTimeout(() => setApplyingId(null), 600);
+                      }}
+                      disabled={applyingId === template.id}
                     >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Use Template
+                      {applyingId === template.id ? (
+                        <span className="flex items-center gap-2">
+                          <ActionLoader action="create" size="sm" />
+                          Applying...
+                        </span>
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Use Template
+                        </>
+                      )}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleEditTemplate(template)}

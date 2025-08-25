@@ -25,14 +25,17 @@ import {
   createEventSchema,
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { useModal } from "@/hooks/use-modal";
 import { useCreateEvent } from "@/hooks/mutations/useEventMutations";
 import { useEventTemplates } from "@/hooks/queries/useEventTemplates";
 import { useCreateEventTemplate } from "@/hooks/mutations/useEventTemplateMutations";
-import { Bookmark } from "lucide-react";
+import { Bookmark, Clock, MapPin } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { SmartLoader } from "@/components/ui/loading-animations";
 
 interface CreateEventFormProps {
   groups: { id: string; name: string }[];
@@ -50,7 +53,12 @@ export function CreateEventForm({
   const modal = useModal();
   const createEventMutation = useCreateEvent();
   const createTemplateMutation = useCreateEventTemplate();
-  const { data: templates = [] } = useEventTemplates();
+  const { data: templates = [], isLoading: templatesLoading } = useEventTemplates();
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const selectedTemplate = useMemo(
+    () => templates.find((t) => t.id === selectedTemplateId) ?? null,
+    [templates, selectedTemplateId]
+  );
 
   // Check if we have template data from modal
   const templateData = modal.data;
@@ -108,7 +116,7 @@ export function CreateEventForm({
             <Label className="text-sm font-medium">
               Use Template (optional)
             </Label>
-            <Select onValueChange={loadTemplate}>
+            <Select onValueChange={(id) => { setSelectedTemplateId(id); loadTemplate(id); }}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a template to pre-fill" />
               </SelectTrigger>
@@ -117,17 +125,53 @@ export function CreateEventForm({
                   <SelectItem key={template.id} value={template.id}>
                     <div className="flex items-center gap-2">
                       <Bookmark className="h-4 w-4" />
-                      <span>{template.name}</span>
+                      <span className="font-medium">{template.name}</span>
                       {template.group && (
-                        <span className="text-xs text-muted-foreground">
-                          ({template.group.name})
-                        </span>
+                        <Badge variant="secondary" className="text-[10px] ml-1">
+                          {template.group.name}
+                        </Badge>
+                      )}
+                      {template.time && (
+                        <span className="ml-2 text-xs text-muted-foreground">{template.time}</span>
+                      )}
+                      {template.location && (
+                        <span className="ml-2 text-xs text-muted-foreground">{template.location}</span>
                       )}
                     </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {templatesLoading && (
+              <div className="relative h-0">
+                <div className="absolute right-2 -top-8">
+                  <SmartLoader context="data" action="load" size="sm" />
+                </div>
+              </div>
+            )}
+
+            {/* Live Preview */}
+            <Card className="mt-2">
+              <CardHeader>
+                <CardTitle className="text-base">
+                  {selectedTemplate?.name || "Preview"}
+                </CardTitle>
+                <CardDescription>
+                  {selectedTemplate?.description || "Select a template to preview details"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                {selectedTemplate?.time && (
+                  <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{selectedTemplate.time}</span>
+                )}
+                {selectedTemplate?.location && (
+                  <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{selectedTemplate.location}</span>
+                )}
+                {selectedTemplate?.group?.name && (
+                  <Badge variant="outline" className="text-xs">{selectedTemplate.group.name}</Badge>
+                )}
+              </CardContent>
+            </Card>
           </div>
         )}
 
