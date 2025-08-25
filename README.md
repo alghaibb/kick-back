@@ -29,6 +29,11 @@ Kick Back helps you:
 - **Multiple invite support** - Invite multiple people at once using comma-separated emails
 - **Email + in-app notifications** for event invitations
 - **Accept/decline invitations** via notifications or email links
+- **Event Templates** - Save reusable event configurations to speed up creating similar events
+  - Template management page with create, edit, delete functionality
+  - Pre-fill event forms from saved templates
+  - Save events as templates while creating
+  - User-scoped templates with group permission validation
 
 ### 👥 Groups
 
@@ -283,6 +288,7 @@ The app uses PostgreSQL (Neon via Vercel) with these models:
 ### 🎉 Events & Activities
 
 - **Event** - Events with details, location, and timing
+- **EventTemplate** - Reusable event templates with default settings
 - **EventAttendee** - Event RSVPs and attendance tracking
 - **EventComment** - Comments and replies on events
 - **CommentReaction** - Emoji reactions on comments
@@ -366,6 +372,11 @@ The app uses both **API Routes** and **Server Actions** for different purposes:
 - `createEventAction()` - Create new event with timezone handling
 - `editEventAction()` - Update event details
 - `deleteEventAction()` - Delete event
+- `createEventTemplateAction()` - Create reusable event template
+- `editEventTemplateAction()` - Update event template
+- `deleteEventTemplateAction()` - Delete event template
+- `getUserEventTemplatesAction()` - Get user's event templates
+- `getEventTemplateAction()` - Get specific event template
 - `inviteToEventAction()` - Send individual event invitations
 - `acceptEventInviteAction()` - Accept event invitations
 - `leaveEventAction()` - Leave an event (for attendees)
