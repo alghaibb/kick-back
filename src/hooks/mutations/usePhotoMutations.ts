@@ -198,9 +198,7 @@ export function useLikePhoto() {
                     ...photo._count,
                     likes: Math.max(
                       0,
-                      wasLiked
-                        ? photo._count.likes - 1
-                        : photo._count.likes + 1
+                      wasLiked ? photo._count.likes - 1 : photo._count.likes + 1
                     ),
                   },
                 };

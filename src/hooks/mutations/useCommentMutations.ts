@@ -120,7 +120,7 @@ export function useCreateComment() {
         }
       });
 
-      // Show immediate success feedback
+      // Show immediate success feedback (no network wait)
       toast.success(values.parentId ? "Reply posted!" : "Comment posted!");
 
       return { rollbackFunctions, eventId: values.eventId };

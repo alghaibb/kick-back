@@ -37,6 +37,8 @@ async function fetchEventCommentsPage(
     `/api/events/${eventId}/comments?${params.toString()}`,
     {
       credentials: "include",
+      cache: "no-store",
+      headers: { "cache-control": "no-store" },
     }
   );
 
@@ -65,6 +67,8 @@ async function fetchRepliesPage(
     `/api/events/${eventId}/comments/${commentId}/replies?${params.toString()}`,
     {
       credentials: "include",
+      cache: "no-store",
+      headers: { "cache-control": "no-store" },
     }
   );
 
@@ -89,7 +93,7 @@ export function useInfiniteEventComments(
     enabled: !!eventId,
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
-    staleTime: 1 * 1000, // 1 second - ultra-fresh data
+    staleTime: 0, // instant UI with optimistic updates
     gcTime: 10 * 60 * 1000,
     refetchInterval: pollingInterval,
     refetchOnWindowFocus: false,
@@ -113,7 +117,7 @@ export function useInfiniteReplies(
     enabled: enabled && !!eventId && !!commentId,
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
-    staleTime: 1 * 1000, // 1 second - ultra-fresh data
+    staleTime: 0, // instant UI with optimistic updates
     gcTime: 10 * 60 * 1000,
     refetchInterval: pollingInterval,
     refetchOnWindowFocus: false,
