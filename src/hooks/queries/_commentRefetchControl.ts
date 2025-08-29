@@ -8,5 +8,3 @@ export function getEventCommentsSuppressRemaining(eventId: string): number {
   const until = suppressUntilByEvent.get(eventId) || 0;
   return Math.max(0, until - Date.now());
 }
-
-
