@@ -163,6 +163,7 @@ export function useLikePhoto() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ["photo-like"],
     mutationFn: async (data: { photoId: string; eventId: string }) => {
       // Fire and forget - don't wait for server response for instant feel
       likePhotoAction({ photoId: data.photoId }).catch((error) => {
@@ -189,15 +190,18 @@ export function useLikePhoto() {
           return {
             photos: old.photos.map((photo) => {
               if (photo.id === photoId) {
-                const wasLiked = photo.isLikedByUser;
+                const wasLiked = photo.isLikedByUser === true;
                 return {
                   ...photo,
                   isLikedByUser: !wasLiked,
                   _count: {
                     ...photo._count,
-                    likes: wasLiked
-                      ? photo._count.likes - 1
-                      : photo._count.likes + 1,
+                    likes: Math.max(
+                      0,
+                      wasLiked
+                        ? photo._count.likes - 1
+                        : photo._count.likes + 1
+                    ),
                   },
                 };
               }

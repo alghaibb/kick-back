@@ -68,7 +68,7 @@ export function useEventPhotos(eventId: string) {
     queryKey: ["event-photos", eventId],
     queryFn: () => fetchEventPhotos(eventId),
     enabled: !!eventId,
-    staleTime: 10 * 1000, // 10 seconds - reduce unnecessary refetches
+    staleTime: 0, // keep fresh to align with optimistic likes
     gcTime: 10 * 60 * 1000,
     refetchInterval: getPollingInterval(),
     refetchOnWindowFocus: true, // Re-enable for instant updates
