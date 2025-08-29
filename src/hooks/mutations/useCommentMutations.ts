@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { suppressEventCommentsRefetch } from "@/hooks/queries/_commentRefetchControl";
 import {
   CreateCommentValues,
   ReplyCommentValues,
@@ -81,25 +82,27 @@ export function useCreateComment() {
 
       infiniteQueries.forEach((query) => {
         const oldData = query.state.data as
-          | { pages: Array<{ comments: EventCommentData[] }>; pageParams: unknown[] }
+          | {
+              pages: Array<{ comments: EventCommentData[] }>;
+              pageParams: unknown[];
+            }
           | undefined;
         if (!oldData?.pages?.length) return;
         const sortBy = (query.queryKey[2] as string) || "newest";
         const firstPage = oldData.pages[0];
-        const newFirstComments =
-          values.parentId
-            ? firstPage.comments.map((c) =>
-                c.id === values.parentId
-                  ? {
-                      ...c,
-                      replies: [tempComment, ...c.replies],
-                      _count: { ...c._count, replies: c._count.replies + 1 },
-                    }
-                  : c
-              )
-            : sortBy === "oldest"
-              ? [...firstPage.comments, tempComment]
-              : [tempComment, ...firstPage.comments];
+        const newFirstComments = values.parentId
+          ? firstPage.comments.map((c) =>
+              c.id === values.parentId
+                ? {
+                    ...c,
+                    replies: [tempComment, ...c.replies],
+                    _count: { ...c._count, replies: c._count.replies + 1 },
+                  }
+                : c
+            )
+          : sortBy === "oldest"
+            ? [...firstPage.comments, tempComment]
+            : [tempComment, ...firstPage.comments];
 
         rollbackFunctions.push(() => {
           queryClient.setQueryData(query.queryKey, oldData);
@@ -107,7 +110,10 @@ export function useCreateComment() {
 
         queryClient.setQueryData(query.queryKey, {
           ...oldData,
-          pages: [{ ...firstPage, comments: newFirstComments }, ...oldData.pages.slice(1)],
+          pages: [
+            { ...firstPage, comments: newFirstComments },
+            ...oldData.pages.slice(1),
+          ],
         });
       });
 
@@ -160,6 +166,8 @@ export function useCreateComment() {
       // Show immediate success feedback (no network wait)
       toast.success(values.parentId ? "Reply posted!" : "Comment posted!");
 
+      // Suppress background refetch briefly to avoid bounce overwriting optimistic item
+      suppressEventCommentsRefetch(values.eventId, 800);
       return { rollbackFunctions, eventId: values.eventId };
     },
     onSuccess: (_data, variables) => {
@@ -271,11 +279,7 @@ export function useCreateReply() {
           refetchType: "inactive",
         });
         queryClient.invalidateQueries({
-          queryKey: [
-            "infinite-replies",
-            variables.eventId,
-            variables.parentId,
-          ],
+          queryKey: ["infinite-replies", variables.eventId, variables.parentId],
           refetchType: "inactive",
         });
       }, 600);

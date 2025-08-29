@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { getEventCommentsSuppressRemaining } from "@/hooks/queries/_commentRefetchControl";
 import { useSmartPolling } from "@/hooks/useSmartPolling";
 
 export interface CommentReaction {
@@ -77,7 +78,11 @@ export function useEventComments(
     enabled: !!eventId,
     staleTime: 0, // make comments feel instant after optimistic updates
     gcTime: 10 * 60 * 1000,
-    refetchInterval: pollingInterval,
+    refetchInterval: () => {
+      const remain = getEventCommentsSuppressRemaining(eventId);
+      if (remain > 0) return remain;
+      return pollingInterval;
+    },
     refetchOnWindowFocus: false, // Keep disabled to prevent scroll jumps
     refetchOnReconnect: true,
     placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
