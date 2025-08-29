@@ -39,17 +39,20 @@ export function useCalendar() {
   const query = useQuery({
     queryKey: ["calendar"],
     queryFn: async (): Promise<CalendarResponse> => {
-      const response = await fetch("/api/calendar");
+      const response = await fetch("/api/calendar", {
+        cache: "no-store",
+        headers: { "cache-control": "no-store" },
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch calendar events");
       }
       const data = await response.json();
       return data;
     },
-    staleTime: 1 * 1000, // 1 second - ultra-fresh data for instant RSVP updates
+    staleTime: 0, // force fresh to avoid bouncing after optimistic update
     gcTime: 15 * 60 * 1000,
     refetchInterval: pollingInterval,
-    refetchOnWindowFocus: true, // Re-enable for instant updates when switching tabs
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });
 

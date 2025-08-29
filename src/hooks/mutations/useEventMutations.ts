@@ -325,9 +325,9 @@ export function useMoveEvent() {
       console.error("Move event error:", err);
       toast.error(err.message || "Failed to move event");
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["calendar"] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["calendar"], refetchType: "active" });
+      await queryClient.invalidateQueries({ queryKey: ["events"], refetchType: "active" });
     },
   });
 }
