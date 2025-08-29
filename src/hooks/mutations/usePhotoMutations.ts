@@ -211,7 +211,7 @@ export function useLikePhoto() {
       const lockId = Math.random().toString(36).slice(2);
       return { previousPhotos, eventId, lockId };
     },
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, , context) => {
       // Only rollback and show error if something went really wrong
       console.error("Photo like error:", error);
       if (context?.previousPhotos && context?.eventId) {
@@ -222,7 +222,7 @@ export function useLikePhoto() {
       }
       // Don't show toast error - likes should feel instant even if they fail
     },
-    onSuccess: (_data, variables, _ctx) => {
+    onSuccess: (_data, variables) => {
       // Delay background sync slightly to avoid bouncing against write
       setTimeout(() => {
         queryClient.invalidateQueries({
