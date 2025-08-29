@@ -173,21 +173,7 @@ export function useLikePhoto() {
       return { success: true }; // Always return success for optimistic UI
     },
     onMutate: async ({ photoId, eventId }) => {
-      // If there is a pending like mutation on this photo, do nothing to avoid double toggles
-      const isMutatingSame = queryClient
-        .getMutationCache()
-        .getAll()
-        .some((m) => {
-          const v = m.state.variables as
-            | { photoId?: string; eventId?: string }
-            | undefined;
-          return (
-            m.state.status === "pending" &&
-            v?.photoId === photoId &&
-            v?.eventId === eventId
-          );
-        });
-      if (isMutatingSame) return;
+      // Allow rapid toggles; keep UI instant and let server resolve final state
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["event-photos", eventId] });
 
@@ -225,8 +211,7 @@ export function useLikePhoto() {
         }
       );
 
-      // Suppress polling refresh for this photo briefly to avoid bounce
-      suppressPhotoLikeRefetch(photoId, 800);
+      // Keep polling as-is for real-time feel
       return { previousPhotos, eventId };
     },
     onError: (error: Error, variables, context) => {

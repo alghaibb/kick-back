@@ -204,12 +204,17 @@ export function useCreateReply() {
       }
       return result;
     },
-    // Similar optimistic logic as useCreateComment but specifically for replies
     onMutate: async (values) => {
       if (!user?.id) return;
 
       await queryClient.cancelQueries({
         queryKey: ["event-comments", values.eventId],
+      });
+      await queryClient.cancelQueries({
+        queryKey: ["infinite-event-comments", values.eventId],
+      });
+      await queryClient.cancelQueries({
+        queryKey: ["infinite-replies", values.eventId, values.parentId],
       });
 
       const previousComments = queryClient.getQueryData([
@@ -265,6 +270,53 @@ export function useCreateReply() {
         }
       );
 
+      // Optimistically bump parent's reply count in infinite comments pages
+      const infCommentQueries = queryClient
+        .getQueryCache()
+        .findAll({ queryKey: ["infinite-event-comments", values.eventId] });
+      infCommentQueries.forEach((q) => {
+        const key = q.queryKey;
+        const prev = queryClient.getQueryData<{
+          pages: Array<{ comments: EventCommentData[] }>;
+          pageParams: unknown[];
+        }>(key);
+        if (!prev?.pages) return;
+        const pages = prev.pages.map((page) => ({
+          ...page,
+          comments: page.comments.map((c) =>
+            c.id === values.parentId
+              ? {
+                  ...c,
+                  _count: { ...c._count, replies: (c._count.replies || 0) + 1 },
+                }
+              : c
+          ),
+        }));
+        queryClient.setQueryData(key, { ...prev, pages });
+      });
+
+      // Optimistically prepend reply to infinite replies first page
+      const infRepliesKey = [
+        "infinite-replies",
+        values.eventId,
+        values.parentId,
+      ];
+      const prevReplies = queryClient.getQueryData<{
+        pages: Array<{ replies: EventCommentData[] }>;
+        pageParams: unknown[];
+      }>(infRepliesKey);
+      if (prevReplies?.pages?.length) {
+        const first = prevReplies.pages[0];
+        const pages = [
+          { ...first, replies: [tempReply, ...(first.replies || [])] },
+          ...prevReplies.pages.slice(1),
+        ];
+        queryClient.setQueryData(infRepliesKey, { ...prevReplies, pages });
+      }
+
+      // Suppress polling briefly to avoid bounce
+      suppressEventCommentsRefetch(values.eventId, 2000);
+
       toast.success("Reply added!");
       return { previousComments, eventId: values.eventId };
     },
@@ -301,7 +353,9 @@ export function useToggleReaction() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (values: CommentReactionValues) => {
+    mutationFn: async (
+      values: CommentReactionValues & { eventId?: string }
+    ) => {
       try {
         // Fire and forget - don't wait for server response for instant feel
         const result = await toggleReactionAction(values);
@@ -319,13 +373,11 @@ export function useToggleReaction() {
         return { success: true };
       }
     },
-    onMutate: async ({ commentId, emoji }) => {
+    onMutate: async ({ commentId, emoji, eventId }) => {
       if (!user?.id) return;
 
       // Cancel outgoing refetches for all comment-related queries
-      await queryClient.cancelQueries({
-        queryKey: ["event-comments"],
-      });
+      await queryClient.cancelQueries({ queryKey: ["event-comments"] });
       await queryClient.cancelQueries({
         queryKey: ["infinite-event-comments"],
       });
@@ -386,12 +438,13 @@ export function useToggleReaction() {
         });
       });
 
-      // Update infinite replies queries
+      // Update infinite replies queries (only for same event if provided)
       const infiniteRepliesQueries = queryCache.findAll({
         queryKey: ["infinite-replies"],
       });
 
       infiniteRepliesQueries.forEach((query) => {
+        if (eventId && query.queryKey[1] !== eventId) return;
         const oldData = query.state.data as {
           pages: Array<{ replies: EventCommentData[] }>;
           pageParams: unknown[];

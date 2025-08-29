@@ -52,19 +52,16 @@ export function PhotoGallery({ eventId }: PhotoGalleryProps) {
   // Track per-photo pending like mutations to disable only the active one
   const pendingLikePhotoIds = useMutationState<string | undefined>({
     filters: { mutationKey: ["photo-like"], status: "pending" },
-    select: (m) => (m.state.variables as { photoId?: string } | undefined)?.photoId,
+    select: (m) =>
+      (m.state.variables as { photoId?: string } | undefined)?.photoId,
   }).filter(Boolean) as string[];
   const pendingLikeSet = new Set(pendingLikePhotoIds);
 
-  const handleLike = async (photoId: string, e: React.MouseEvent) => {
+  const handleLike = (photoId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user?.id) return;
 
-    try {
-      await likeMutation.mutateAsync({ photoId, eventId });
-    } catch (error) {
-      console.error("Like error:", error);
-    }
+    likeMutation.mutate({ photoId, eventId });
   };
 
   const handleDeleteClick = (photoId: string, e: React.MouseEvent) => {
@@ -184,7 +181,9 @@ export function PhotoGallery({ eventId }: PhotoGalleryProps) {
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={(e) => handleLike(photo.id, e)}
-                          disabled={pendingLikeSet.has(photo.id) || photo.isUploading}
+                          disabled={
+                            pendingLikeSet.has(photo.id) || photo.isUploading
+                          }
                           className={cn(
                             "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm transition-colors",
                             photo.isLikedByUser

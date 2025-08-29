@@ -274,20 +274,14 @@ export default function ThreadedEventComments({
   // Handlers
   const handleCommentSubmit = async (values: CreateCommentValues) => {
     try {
-      // Optimistic: fire-and-forget the upload+save, submit immediately
       if (commentImageUpload.currentFile) {
-        void commentImageUpload
-          .uploadImage(commentImageUpload.currentFile)
-          .then((url) => {
-            createCommentMutation.mutate({
-              ...values,
-              imageUrl: url || undefined,
-            });
-          })
-          .catch((error) => console.error("Comment image upload error:", error));
-        // Submit immediately without waiting, no imageUrl yet
-        createCommentMutation.mutate({ ...values, imageUrl: undefined });
+        // Upload first, then create the comment ONCE with the real image URL to avoid duplicates
+        const url = await commentImageUpload.uploadImage(
+          commentImageUpload.currentFile
+        );
+        createCommentMutation.mutate({ ...values, imageUrl: url || undefined });
       } else {
+        // No image: create immediately
         createCommentMutation.mutate({ ...values, imageUrl: undefined });
       }
 
@@ -299,7 +293,7 @@ export default function ThreadedEventComments({
   };
 
   const handleReaction = (commentId: string, emoji: string) => {
-    toggleReactionMutation.mutate({ commentId, emoji });
+    toggleReactionMutation.mutate({ commentId, emoji, eventId });
   };
 
   const handleDeleteComment = (commentId: string) => {

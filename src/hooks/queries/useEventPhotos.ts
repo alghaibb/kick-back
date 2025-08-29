@@ -71,16 +71,7 @@ export function useEventPhotos(eventId: string) {
     enabled: !!eventId,
     staleTime: 0, // keep fresh to align with optimistic likes
     gcTime: 10 * 60 * 1000,
-    refetchInterval: (q) => {
-      // Delay polling if a like was just optimistically toggled
-      const data = q.state.data as { photos: EventPhotoData[] } | undefined;
-      const suppress = (data?.photos || []).reduce((max, p) => {
-        const remain = getPhotoLikeSuppressRemaining(p.id);
-        return Math.max(max, remain);
-      }, 0);
-      if (suppress > 0) return suppress;
-      return getPollingInterval();
-    },
+    refetchInterval: getPollingInterval(),
     refetchOnWindowFocus: true, // Re-enable for instant updates
     refetchOnReconnect: true,
     // Optimize network requests
