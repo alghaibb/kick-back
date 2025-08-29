@@ -207,8 +207,9 @@ export function useLikePhoto() {
         }
       );
 
-      // Instant feedback - no toast needed, the heart animation is the feedback
-      return { previousPhotos, eventId };
+      // Lock to prevent overlapping invalidations during optimistic window
+      const lockId = Math.random().toString(36).slice(2);
+      return { previousPhotos, eventId, lockId };
     },
     onError: (error: Error, variables, context) => {
       // Only rollback and show error if something went really wrong
@@ -221,12 +222,14 @@ export function useLikePhoto() {
       }
       // Don't show toast error - likes should feel instant even if they fail
     },
-    onSuccess: (data, variables) => {
-      // Background sync - invalidate to get fresh data for all users
-      queryClient.invalidateQueries({
-        queryKey: ["event-photos", variables.eventId],
-        refetchType: "active",
-      });
+    onSuccess: (_data, variables, _ctx) => {
+      // Delay background sync slightly to avoid bouncing against write
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ["event-photos", variables.eventId],
+          refetchType: "inactive",
+        });
+      }, 400);
     },
   });
 }

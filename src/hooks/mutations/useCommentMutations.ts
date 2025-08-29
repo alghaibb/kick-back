@@ -125,14 +125,18 @@ export function useCreateComment() {
 
       return { rollbackFunctions, eventId: values.eventId };
     },
-    onSuccess: (data, variables) => {
-      // Invalidate all comment queries for this event (background sync)
-      queryClient.invalidateQueries({
-        queryKey: ["event-comments", variables.eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["infinite-event-comments", variables.eventId],
-      });
+    onSuccess: (_data, variables) => {
+      // Delay background sync slightly so DB is up-to-date to avoid bounce
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ["event-comments", variables.eventId],
+          refetchType: "inactive",
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["infinite-event-comments", variables.eventId],
+          refetchType: "inactive",
+        });
+      }, 600);
     },
     onError: (error, variables, context) => {
       // Only revert on actual errors and show user-friendly message
@@ -219,16 +223,25 @@ export function useCreateReply() {
       toast.success("Reply added!");
       return { previousComments, eventId: values.eventId };
     },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["event-comments", variables.eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["infinite-event-comments", variables.eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["infinite-replies", variables.eventId, variables.parentId],
-      });
+    onSuccess: (_data, variables) => {
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ["event-comments", variables.eventId],
+          refetchType: "inactive",
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["infinite-event-comments", variables.eventId],
+          refetchType: "inactive",
+        });
+        queryClient.invalidateQueries({
+          queryKey: [
+            "infinite-replies",
+            variables.eventId,
+            variables.parentId,
+          ],
+          refetchType: "inactive",
+        });
+      }, 600);
     },
     onError: (error, variables, context) => {
       if (context?.previousComments) {

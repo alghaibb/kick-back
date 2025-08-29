@@ -256,7 +256,16 @@ export function useInviteToEventBatch() {
 
 export function useMoveEvent() {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<
+    { success?: boolean; error?: string } | undefined,
+    Error,
+    { eventId: string; newDateStr: string },
+    {
+      previous?: CalendarResponse;
+      undoneToastId?: string;
+      getUndone?: () => boolean;
+    }
+  >({
     mutationFn: async ({
       eventId,
       newDateStr,
@@ -304,25 +313,30 @@ export function useMoveEvent() {
 
       // Offer Undo via toast: revert cache and server if clicked
       const id = Math.random().toString(36).slice(2);
+      let undone = false;
       toast.success("Event moved", {
         action: {
           label: "Undo",
           onClick: () => {
-            if (previous) {
-              queryClient.setQueryData(["calendar"], previous);
-            }
+            undone = true;
+            if (previous) queryClient.setQueryData(["calendar"], previous);
             if (prevDateISO) {
-              // revert on server as well to avoid bounce on refetch
-              moveEventToDateAction(eventId, prevDateISO).catch(() => {
-                // ignore server revert error; UI already reverted
-              });
+              // Revert on server; after it resolves, do a single active refetch
+              moveEventToDateAction(eventId, prevDateISO)
+                .then(() => {
+                  queryClient.invalidateQueries({
+                    queryKey: ["calendar"],
+                    refetchType: "active",
+                  });
+                })
+                .catch(() => {});
             }
           },
         },
         id,
       });
 
-      return { previous };
+      return { previous, undoneToastId: id, getUndone: () => undone };
     },
     onError: (err, _variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
@@ -332,7 +346,9 @@ export function useMoveEvent() {
       console.error("Move event error:", err);
       toast.error(err.message || "Failed to move event");
     },
-    onSettled: async () => {
+    onSettled: async (_data, _error, _variables, context) => {
+      // If user hit Undo, we already refetched explicitly; avoid immediate bounce
+      if (context?.getUndone && context.getUndone()) return;
       await queryClient.invalidateQueries({
         queryKey: ["calendar"],
         refetchType: "active",
