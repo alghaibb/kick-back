@@ -49,6 +49,7 @@ export function FullCalendar({
   events = [],
   className,
 }: FullCalendarProps) {
+  type CalendarEvent = NonNullable<FullCalendarProps["events"]>[number];
   const { open } = useModal();
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
@@ -598,16 +599,16 @@ export function FullCalendar({
 
       {view === "list" &&
         (() => {
-          const monthEvents = events
+          const monthEvents: CalendarEvent[] = events
             .filter((ev) => isSameMonth(new Date(ev.date), currentMonth))
             .sort(
               (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
             );
-          const grouped: Record<string, typeof monthEvents> = {} as any;
+          const grouped: Record<string, CalendarEvent[]> = {};
           monthEvents.forEach((ev) => {
             const key = format(new Date(ev.date), "yyyy-MM-dd");
-            if (!grouped[key]) grouped[key] = [] as any;
-            grouped[key].push(ev as any);
+            if (!grouped[key]) grouped[key] = [];
+            grouped[key].push(ev);
           });
           const keys = Object.keys(grouped).sort();
           return keys.length === 0 ? (
