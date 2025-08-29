@@ -30,6 +30,8 @@ async function fetchEventPhotos(
 ): Promise<{ photos: EventPhotoData[] }> {
   const response = await fetch(`/api/events/${eventId}/photos`, {
     credentials: "include",
+    cache: "no-store",
+    headers: { "cache-control": "no-store" },
   });
 
   if (!response.ok) {

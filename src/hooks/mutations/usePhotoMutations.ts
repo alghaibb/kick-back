@@ -224,7 +224,8 @@ export function useLikePhoto() {
     onSuccess: (data, variables) => {
       // Background sync - invalidate to get fresh data for all users
       queryClient.invalidateQueries({
-        queryKey: ["event-photos", variables.eventId]
+        queryKey: ["event-photos", variables.eventId],
+        refetchType: "active",
       });
     },
   });

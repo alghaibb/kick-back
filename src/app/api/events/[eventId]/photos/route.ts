@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { NextResponse } from "next/server";
@@ -86,7 +88,10 @@ export async function GET(
       likes: undefined,
     }));
 
-    return NextResponse.json({ photos: photosWithLikeStatus });
+    return NextResponse.json(
+      { photos: photosWithLikeStatus },
+      { headers: { "cache-control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (error) {
     console.error("Event photos API error:", error);
     return NextResponse.json(
