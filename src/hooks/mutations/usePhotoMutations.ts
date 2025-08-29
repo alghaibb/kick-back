@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { suppressPhotoLikeRefetch } from "@/hooks/queries/_likesRefetchControl";
 import { useImageUpload } from "@/hooks/mutations/useFileUpload";
 import {
   savePhotoMetadataAction,

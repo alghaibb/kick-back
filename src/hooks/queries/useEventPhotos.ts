@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getPhotoLikeSuppressRemaining } from "@/hooks/queries/_likesRefetchControl";
 import { useState, useEffect } from "react";
 
 export interface EventPhotoData {
