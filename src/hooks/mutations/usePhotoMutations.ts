@@ -224,15 +224,7 @@ export function useLikePhoto() {
       }
       // Don't show toast error - likes should feel instant even if they fail
     },
-    onSuccess: (_data, variables) => {
-      // Delay background sync slightly to avoid bouncing against write
-      setTimeout(() => {
-        queryClient.invalidateQueries({
-          queryKey: ["event-photos", variables.eventId],
-          refetchType: "inactive",
-        });
-      }, 400);
-    },
+    // No onSuccess invalidation; rely on optimistic state + polling to refresh
   });
 }
 

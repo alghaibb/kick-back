@@ -74,7 +74,44 @@ export function useCreateComment() {
         },
       };
 
-      // Update each comment query optimistically
+      // Update each paginated comments (infinite) query optimistically
+      const infiniteQueries = queryCache.findAll({
+        queryKey: ["infinite-event-comments", values.eventId],
+      });
+
+      infiniteQueries.forEach((query) => {
+        const oldData = query.state.data as
+          | { pages: Array<{ comments: EventCommentData[] }>; pageParams: unknown[] }
+          | undefined;
+        if (!oldData?.pages?.length) return;
+        const sortBy = (query.queryKey[2] as string) || "newest";
+        const firstPage = oldData.pages[0];
+        const newFirstComments =
+          values.parentId
+            ? firstPage.comments.map((c) =>
+                c.id === values.parentId
+                  ? {
+                      ...c,
+                      replies: [tempComment, ...c.replies],
+                      _count: { ...c._count, replies: c._count.replies + 1 },
+                    }
+                  : c
+              )
+            : sortBy === "oldest"
+              ? [...firstPage.comments, tempComment]
+              : [tempComment, ...firstPage.comments];
+
+        rollbackFunctions.push(() => {
+          queryClient.setQueryData(query.queryKey, oldData);
+        });
+
+        queryClient.setQueryData(query.queryKey, {
+          ...oldData,
+          pages: [{ ...firstPage, comments: newFirstComments }, ...oldData.pages.slice(1)],
+        });
+      });
+
+      // Update each non-infinite comments query optimistically
       eventCommentQueries.forEach((query) => {
         const oldData = query.state.data as CommentsResponse | undefined;
         if (!oldData) return;
