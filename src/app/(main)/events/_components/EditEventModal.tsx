@@ -3,12 +3,14 @@ import { GenericModal } from "@/components/ui/generic-modal";
 import { useModal } from "@/hooks/use-modal";
 import EditEventForm from "../forms/EditEventForm";
 import { format } from "date-fns";
+import { useGroups } from "@/hooks/queries/useGroups";
 
 export default function EditEventModal() {
   const { type, close, data } = useModal();
+  const { data: groupsData } = useGroups();
 
-  // Validation logic - only render if we have the required data
-  if (type !== "edit-event" || !data?.eventId || !data?.groups) return null;
+  // Only require modal type and eventId; groups are fetched if not provided
+  if (type !== "edit-event" || !data?.eventId) return null;
 
   const initialValues = {
     name: data.name ?? "",
@@ -24,7 +26,11 @@ export default function EditEventModal() {
       <EditEventForm
         eventId={data.eventId}
         initialValues={initialValues}
-        groups={data.groups}
+        groups={
+          data.groups ??
+          groupsData?.groupsOwned?.concat(groupsData?.groupsIn ?? []) ??
+          []
+        }
         onSuccess={close}
         isAdmin={data?.isAdmin}
       />

@@ -10,6 +10,8 @@ export interface CalendarEvent {
   date: string;
   location: string | null;
   color?: string;
+  groupId: string | null;
+  createdBy: string;
   group: {
     id: string;
     name: string;
@@ -20,8 +22,8 @@ export interface CalendarEvent {
       id: string;
       nickname: string | null;
       firstName: string;
-      lastName: string | null;
-      image: string | null;
+      lastName?: string | null;
+      image?: string | null;
     };
     rsvpStatus: string;
   }[];

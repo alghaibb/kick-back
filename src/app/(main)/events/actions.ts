@@ -1,11 +1,13 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import type { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { getSession } from "@/lib/sessions";
 import {
   createEventSchema,
   CreateEventValues,
 } from "@/validations/events/createEventSchema";
+import { z } from "zod";
 import {
   inviteToEventSchema,
   inviteToEventBatchSchema,
@@ -157,7 +159,18 @@ export async function createEventAction(values: CreateEventValues) {
     return { success: true, event };
   } catch (error) {
     console.error("Error creating event:", error);
-    return { error: "An error occurred. Please try again." };
+    if (error instanceof z.ZodError) {
+      const message = error.issues?.[0]?.message || "Invalid input";
+      return { error: message };
+    }
+    const err = error as unknown as { message?: string } & (
+      | PrismaClientKnownRequestError
+      | Record<string, unknown>
+    );
+    if ((err as PrismaClientKnownRequestError)?.code) {
+      return { error: err.message || "Database error" };
+    }
+    return { error: err?.message || "An error occurred. Please try again." };
   }
 }
 
@@ -579,7 +592,10 @@ export async function editEventAction(
   }
 }
 
-export async function moveEventToDateAction(eventId: string, newDateISO: string) {
+export async function moveEventToDateAction(
+  eventId: string,
+  newDateISO: string
+) {
   try {
     const session = await getSession();
     if (!session?.user?.id) {

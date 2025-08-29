@@ -23,7 +23,14 @@ import { useMoveEvent } from "@/hooks/mutations/useEventMutations";
 interface FullCalendarProps {
   selected?: Date;
   onSelect?: (date: Date) => void;
-  events?: Array<{ date: string; id: string; name: string; color?: string }>;
+  events?: Array<{
+    date: string;
+    id: string;
+    name: string;
+    color?: string;
+    groupId?: string | null;
+    createdBy?: string;
+  }>;
   className?: string;
 }
 
@@ -38,10 +45,8 @@ export function FullCalendar({
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
   const moveEvent = useMoveEvent();
 
-  // Check if custom background is active
   const hasCustomBackground = !!user?.dashboardBackground;
 
-  // Group events by date for quick lookup
   const eventsByDate = React.useMemo(() => {
     const grouped: Record<
       string,
@@ -61,12 +66,10 @@ export function FullCalendar({
     return grouped;
   }, [events]);
 
-  // Get all days for the current month
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  // Get days from previous month to fill the first week
   const firstDayOfMonth = monthStart.getDay();
   const daysFromPrevMonth = Array.from({ length: firstDayOfMonth }, (_, i) => {
     const date = new Date(monthStart);
@@ -74,7 +77,6 @@ export function FullCalendar({
     return date;
   });
 
-  // Get days from next month to fill the last week
   const lastDayOfMonth = monthEnd.getDay();
   const daysFromNextMonth = Array.from(
     { length: 6 - lastDayOfMonth },
@@ -110,7 +112,6 @@ export function FullCalendar({
 
   const calendarContent = (
     <div className={cn("w-full max-w-4xl mx-auto full-calendar", className)}>
-      {/* Calendar Header */}
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <Button
           variant="outline"
@@ -135,7 +136,6 @@ export function FullCalendar({
         </Button>
       </div>
 
-      {/* Weekday Headers */}
       <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
         {weekdays.map((day) => (
           <div
@@ -147,7 +147,6 @@ export function FullCalendar({
         ))}
       </div>
 
-      {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
         {allDays.map((day, index) => {
           const dateKey = format(day, "yyyy-MM-dd");
@@ -178,7 +177,6 @@ export function FullCalendar({
                 moveEvent.mutate({ eventId, newDateISO: day.toISOString() });
               }}
             >
-              {/* Day Number */}
               <div className="flex items-center justify-between mb-1 sm:mb-2">
                 <span
                   className={cn(
@@ -190,7 +188,6 @@ export function FullCalendar({
                   {format(day, "d")}
                 </span>
 
-                {/* Create Event Button */}
                 <Button
                   size="sm"
                   variant="ghost"
@@ -212,7 +209,6 @@ export function FullCalendar({
                 </Button>
               </div>
 
-              {/* Event Indicators */}
               {dayEvents.length > 0 && (
                 <div className="space-y-0.5 sm:space-y-1">
                   {dayEvents.slice(0, 2).map((event) => (
@@ -240,6 +236,13 @@ export function FullCalendar({
                         e.dataTransfer.setData("text/event-id", event.id);
                         e.dataTransfer.effectAllowed = "move";
                       }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const openEvent = new CustomEvent("open-edit-event", {
+                          detail: { eventId: event.id },
+                        });
+                        window.dispatchEvent(openEvent);
+                      }}
                     >
                       {event.name}
                     </div>
@@ -264,7 +267,6 @@ export function FullCalendar({
         })}
       </div>
 
-      {/* Quick Actions */}
       <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-3">
         <Button
           onClick={() => handleCreateEvent(new Date())}
@@ -289,7 +291,6 @@ export function FullCalendar({
     </div>
   );
 
-  // Wrap in Card component when custom background is active
   if (hasCustomBackground) {
     return (
       <Card className="p-6 bg-card border border-border shadow-lg">
@@ -298,6 +299,5 @@ export function FullCalendar({
     );
   }
 
-  // Return without Card wrapper when no custom background
   return calendarContent;
 }

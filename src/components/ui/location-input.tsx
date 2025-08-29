@@ -48,6 +48,11 @@ export function LocationInput({
     setValue: setInputValue,
   } = useDebounce(value, 300);
 
+  // Sync internal input state when parent value changes (e.g., applying a template)
+  useEffect(() => {
+    setInputValue(value);
+  }, [value, setInputValue]);
+
   // Debounced search function
   const searchLocations = useCallback(
     async (query: string): Promise<NominatimResult[]> => {

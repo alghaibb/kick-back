@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, lazy, Suspense } from "react";
+import { useModal } from "@/hooks/use-modal";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { format, isSameDay, startOfDay } from "date-fns";
@@ -50,8 +51,29 @@ export function CalendarPageClientWithComments() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
   const { data, isLoading, error } = useCalendar();
+  const modal = useModal();
+  // Listen for edit-open events from calendar cells
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { eventId?: string };
+      if (!detail?.eventId || !data?.events) return;
+      const ev = data.events.find((x) => x.id === detail.eventId);
+      if (!ev) return;
+      // Open the edit modal with minimal required data; groups will be fetched in modal
+      modal.open("edit-event", {
+        eventId: ev.id,
+        name: ev.name,
+        description: ev.description ?? undefined,
+        location: ev.location ?? undefined,
+        date: ev.date,
+        groupId: ev.groupId ?? undefined,
+      });
+    };
+    window.addEventListener("open-edit-event", handler as EventListener);
+    return () =>
+      window.removeEventListener("open-edit-event", handler as EventListener);
+  }, [data?.events]);
 
-  // Handle navigation from notifications
   useEffect(() => {
     if (targetEventId && data?.events) {
       const targetEvent = data.events.find(
@@ -62,7 +84,6 @@ export function CalendarPageClientWithComments() {
         setSelectedDate(eventDate);
         setExpandedEvents(new Set([targetEventId]));
 
-        // Scroll to the event after a short delay to ensure DOM is updated
         setTimeout(() => {
           const eventElement = document.getElementById(
             `event-${targetEventId}`
@@ -116,7 +137,6 @@ export function CalendarPageClientWithComments() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Calendar Section - Full width */}
       <div className="w-full">
         <Suspense fallback={<UnifiedSkeleton className="h-[400px] w-full" />}>
           <FullCalendar
@@ -128,7 +148,6 @@ export function CalendarPageClientWithComments() {
         </Suspense>
       </div>
 
-      {/* Events Panel - Full width below calendar */}
       <div className="w-full">
         <div
           className="overflow-y-auto max-h-[600px]"
@@ -157,7 +176,6 @@ export function CalendarPageClientWithComments() {
                     id={`event-${event.id}`}
                     className="border rounded-lg bg-card"
                   >
-                    {/* Event Header */}
                     <div className="p-4 space-y-3">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -197,13 +215,11 @@ export function CalendarPageClientWithComments() {
                         )}
                       </div>
 
-                      {/* Attendees Summary */}
                       <div className="mt-2">
                         <div className="font-semibold text-xs mb-1">
                           Attendees:
                         </div>
 
-                        {/* Going Attendees */}
                         {event.attendees.filter((a) => a.rsvpStatus === "yes")
                           .length > 0 && (
                           <div className="mb-2">
@@ -225,7 +241,6 @@ export function CalendarPageClientWithComments() {
                           </div>
                         )}
 
-                        {/* Maybe Attendees */}
                         {event.attendees.filter((a) => a.rsvpStatus === "maybe")
                           .length > 0 && (
                           <div className="mb-2">
@@ -247,7 +262,6 @@ export function CalendarPageClientWithComments() {
                           </div>
                         )}
 
-                        {/* Not Going Attendees */}
                         {event.attendees.filter((a) => a.rsvpStatus === "no")
                           .length > 0 && (
                           <div className="mb-2">
@@ -269,7 +283,6 @@ export function CalendarPageClientWithComments() {
                           </div>
                         )}
 
-                        {/* No Response Attendees */}
                         {event.attendees.filter(
                           (a) => a.rsvpStatus === "pending"
                         ).length > 0 && (
@@ -294,7 +307,6 @@ export function CalendarPageClientWithComments() {
                       </div>
                     </div>
 
-                    {/* Discussion & Photos Toggle Button */}
                     <div className="border-t bg-muted/30">
                       <CollapsibleTrigger asChild>
                         <Button variant="ghost" size="sm" className="w-full">
@@ -310,7 +322,6 @@ export function CalendarPageClientWithComments() {
                       </CollapsibleTrigger>
                     </div>
 
-                    {/* Event Discussion & Photos Section */}
                     <CollapsibleContent>
                       <div className="border-t p-4">
                         <Tabs defaultValue="comments" className="w-full">

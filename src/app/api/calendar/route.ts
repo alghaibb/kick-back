@@ -22,7 +22,7 @@ export async function GET() {
         ],
       },
       include: {
-        group: { select: { name: true } },
+        group: { select: { id: true, name: true } },
         attendees: {
           include: {
             user: {
@@ -46,7 +46,11 @@ export async function GET() {
       location: event.location ?? undefined,
       date: event.date.toISOString(),
       color: (event as { color?: string }).color ?? undefined,
-      group: event.group ? { name: event.group.name } : undefined,
+      groupId: (event as { groupId?: string | null }).groupId ?? null,
+      createdBy: event.createdBy,
+      group: event.group
+        ? { id: event.group.id, name: event.group.name }
+        : null,
       attendees: event.attendees.map((a) => ({
         user: {
           id: a.user.id,
