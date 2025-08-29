@@ -42,6 +42,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 export function CalendarPageClientWithComments() {
   const searchParams = useSearchParams();
@@ -52,6 +60,42 @@ export function CalendarPageClientWithComments() {
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
   const { data, isLoading, error } = useCalendar();
   const modal = useModal();
+  const [openCmd, setOpenCmd] = useState(false);
+  // Keyboard shortcuts: N create, E edit selected day
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const isK = (e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey);
+      if (isK) {
+        e.preventDefault();
+        setOpenCmd((v) => !v);
+        return;
+      }
+      if (e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        modal.open("create-event", {
+          date: new Date().toISOString().slice(0, 10),
+        });
+      }
+      if (e.key.toLowerCase() === "e") {
+        const sameDayEvents = (data?.events || []).filter((ev) =>
+          isSameDay(new Date(ev.date), selectedDate)
+        );
+        if (sameDayEvents.length > 0) {
+          e.preventDefault();
+          const firstEvent = sameDayEvents.sort(
+            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+          )[0];
+          modal.open("edit-event", {
+            eventId: firstEvent.id,
+            name: firstEvent.name,
+            date: firstEvent.date,
+          });
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [modal, data?.events, selectedDate]);
   // Listen for edit-open events from calendar cells
   useEffect(() => {
     const handler = (e: Event) => {
@@ -137,6 +181,45 @@ export function CalendarPageClientWithComments() {
 
   return (
     <div className="flex flex-col gap-8">
+      <CommandDialog open={openCmd} onOpenChange={setOpenCmd}>
+        <CommandInput placeholder="Type a command or search..." />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandGroup heading="Actions">
+            <CommandItem
+              onSelect={() => {
+                setOpenCmd(false);
+                modal.open("create-event", {
+                  date: new Date().toISOString().slice(0, 10),
+                });
+              }}
+            >
+              Create event (N)
+            </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                const sameDayEvents = (data?.events || []).filter((ev) =>
+                  isSameDay(new Date(ev.date), selectedDate)
+                );
+                if (sameDayEvents.length) {
+                  const firstEvent = sameDayEvents.sort(
+                    (a, b) =>
+                      new Date(a.date).getTime() - new Date(b.date).getTime()
+                  )[0];
+                  modal.open("edit-event", {
+                    eventId: firstEvent.id,
+                    name: firstEvent.name,
+                    date: firstEvent.date,
+                  });
+                }
+                setOpenCmd(false);
+              }}
+            >
+              Edit first event (E)
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
       <div className="w-full">
         <Suspense fallback={<UnifiedSkeleton className="h-[400px] w-full" />}>
           <FullCalendar

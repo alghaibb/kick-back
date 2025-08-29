@@ -274,6 +274,9 @@ export function useMoveEvent() {
 
       // Snapshot the previous value
       const previous = queryClient.getQueryData<CalendarResponse>(["calendar"]);
+      const prevDateISO = previous?.events.find(
+        (ev) => ev.id === eventId
+      )?.date;
 
       // Optimistically update to the new value
       queryClient.setQueryData<CalendarResponse>(["calendar"], (old) => {
@@ -292,7 +295,26 @@ export function useMoveEvent() {
         };
       });
 
-      // Return a context object with the snapshotted value
+      // Offer Undo via toast: revert cache and server if clicked
+      const id = Math.random().toString(36).slice(2);
+      toast.success("Event moved", {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            if (previous) {
+              queryClient.setQueryData(["calendar"], previous);
+            }
+            if (prevDateISO) {
+              // revert on server as well to avoid bounce on refetch
+              moveEventToDateAction(eventId, prevDateISO).catch(() => {
+                // ignore server revert error; UI already reverted
+              });
+            }
+          },
+        },
+        id,
+      });
+
       return { previous };
     },
     onError: (err, _variables, context) => {

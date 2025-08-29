@@ -18,12 +18,20 @@ Kick Back helps you:
 ### 🎉 Events
 
 - Create events with location, time, description, and photos
+- Event colors: pick a color when creating/editing; colors render on the calendar
+- Drag & Drop on calendar: move events between days with an Undo toast
+- Right‑click actions on events (context menu): Edit, Move to today/tomorrow, Copy link
 - **Smart Date/Time Picker** - Enhanced event creation with quick options ("In 1 hour", "Tonight", "Tomorrow morning") and popular time suggestions
 - **Location Autocomplete** - Real address suggestions with proper formatting (street, suburb, postcode, city, state, country)
 - Event list view to see all your upcoming events
 - RSVP system with status tracking
 - Event comments and reactions
 - Photo sharing for each event
+- Keyboard shortcuts on calendar:
+  - N: create event for today
+  - E: edit first event on the selected day
+  - Cmd/Ctrl+K: open quick command palette (calendar focus)
+  - Right‑click on empty day: quick actions (create, go to day)
 - **Individual event invitations** - Invite people directly to events without requiring them to be in a group
 - **Leave event functionality** - Attendees can leave events they're no longer interested in
 - **Multiple invite support** - Invite multiple people at once using comma-separated emails
@@ -34,6 +42,14 @@ Kick Back helps you:
   - Pre-fill event forms from saved templates
   - Save events as templates while creating
   - User-scoped templates with group permission validation
+
+### 🔎 Quick Command Palette
+
+- Open with Cmd/Ctrl+K on the calendar
+- Actions available:
+  - Create event for today
+  - Edit first event on selected day
+  - More actions coming soon
 
 ### 👥 Groups
 
@@ -348,8 +364,17 @@ The app uses **Vercel Blob** for secure file storage with automatic optimization
 
 - **Vercel Blob** - Scalable file storage with CDN
 - **Automatic Optimization** - Images are optimized for web delivery
+- **Client-side Compression & Progress** - Photos are compressed before upload and show a progress bar during upload
 - **Public Access** - Files are publicly accessible via CDN
 - **Organized Structure** - Files are organized by type and user ID
+
+### 🧪 Testing Photo Upload Progress
+
+1. Open any event and navigate to the Photos section.
+2. Select one or more larger images (5–10MB) to clearly see progress.
+3. Watch the in-form progress bar while upload runs.
+4. Optional: In Chrome DevTools → Network → Throttle to "Slow 3G" to exaggerate progress.
+5. You can verify compression via the Network panel request size vs original file size.
 
 ## API Routes & Server Actions
 

@@ -68,6 +68,7 @@ export function useImageUploadForm<TFormData extends FieldValues>(
     uploadAsync,
     isUploading,
     error: uploadError,
+    progress,
     reset: resetUpload,
   } = useImageUpload({
     maxSize,
@@ -181,6 +182,7 @@ export function useImageUploadForm<TFormData extends FieldValues>(
     // Upload state
     isUploading,
     uploadError,
+    uploadProgress: progress,
 
     // Actions
     handleImageChange,

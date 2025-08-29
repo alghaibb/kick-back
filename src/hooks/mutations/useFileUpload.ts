@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export interface FileUploadOptions {
@@ -115,9 +116,17 @@ async function uploadFile(
 
 export function useFileUpload(options: FileUploadOptions = {}) {
   const { onSuccess, onError, showToasts = true } = options;
+  const [progress, setProgress] = useState<number>(0);
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => uploadFile(file, options),
+    mutationFn: (file: File) =>
+      uploadFile(file, {
+        ...options,
+        onProgress: (p) => {
+          setProgress(p);
+          options.onProgress?.(p);
+        },
+      }),
     onSuccess: (url: string) => {
       if (showToasts) {
         toast.success("File uploaded successfully!");
@@ -144,6 +153,7 @@ export function useFileUpload(options: FileUploadOptions = {}) {
     isUploading: uploadMutation.isPending,
     error: uploadMutation.error?.message || null,
     data: uploadMutation.data || null,
+    progress,
 
     // Status
     isError: uploadMutation.isError,
