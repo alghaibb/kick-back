@@ -1,6 +1,7 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { getEventCommentsSuppressRemaining } from "@/hooks/queries/_commentRefetchControl";
 import { useSmartPolling } from "@/hooks/useSmartPolling";
 import type { EventCommentData } from "./useEventComments";
 
@@ -95,7 +96,11 @@ export function useInfiniteEventComments(
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     staleTime: 0, // instant UI with optimistic updates
     gcTime: 10 * 60 * 1000,
-    refetchInterval: pollingInterval,
+    refetchInterval: () => {
+      const remain = getEventCommentsSuppressRemaining(eventId);
+      if (remain > 0) return remain;
+      return pollingInterval;
+    },
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     refetchIntervalInBackground: false,
@@ -119,7 +124,11 @@ export function useInfiniteReplies(
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     staleTime: 0, // instant UI with optimistic updates
     gcTime: 10 * 60 * 1000,
-    refetchInterval: pollingInterval,
+    refetchInterval: () => {
+      const remain = getEventCommentsSuppressRemaining(eventId);
+      if (remain > 0) return remain;
+      return pollingInterval;
+    },
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     refetchIntervalInBackground: false,

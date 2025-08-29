@@ -167,7 +167,7 @@ export function useCreateComment() {
       toast.success(values.parentId ? "Reply posted!" : "Comment posted!");
 
       // Suppress background refetch briefly to avoid bounce overwriting optimistic item
-      suppressEventCommentsRefetch(values.eventId, 800);
+      suppressEventCommentsRefetch(values.eventId, 2000);
       return { rollbackFunctions, eventId: values.eventId };
     },
     onSuccess: (_data, variables) => {
@@ -513,19 +513,119 @@ export function useDeleteComment() {
       }
       return result;
     },
+    onMutate: async ({ commentId, eventId }) => {
+      // Cancel outgoing refetches that could overwrite optimistic removal
+      await queryClient.cancelQueries({
+        queryKey: ["event-comments", eventId],
+      });
+      await queryClient.cancelQueries({
+        queryKey: ["infinite-event-comments", eventId],
+      });
+      await queryClient.cancelQueries({ queryKey: ["infinite-replies"] });
+
+      const rollbacks: Array<() => void> = [];
+
+      // Helper to remove a comment (or reply) recursively
+      const removeRecursive = (
+        list: EventCommentData[]
+      ): { list: EventCommentData[]; removed: boolean } => {
+        let removed = false;
+        const next = list
+          .map((c) => {
+            if (c.id === commentId) {
+              removed = true;
+              return null;
+            }
+            const child = removeRecursive(c.replies || []);
+            if (child.removed) removed = true;
+            return { ...c, replies: child.list } as EventCommentData;
+          })
+          .filter(Boolean) as EventCommentData[];
+        return { list: next, removed };
+      };
+
+      // Non-infinite comments
+      const nonInfiniteKey = ["event-comments", eventId];
+      const prevNonInfinite =
+        queryClient.getQueryData<CommentsResponse>(nonInfiniteKey);
+      if (prevNonInfinite) {
+        rollbacks.push(() =>
+          queryClient.setQueryData(nonInfiniteKey, prevNonInfinite)
+        );
+        const res = removeRecursive(prevNonInfinite.comments);
+        if (res.removed) {
+          queryClient.setQueryData<CommentsResponse>(nonInfiniteKey, {
+            comments: res.list,
+            totalCount: Math.max(0, (prevNonInfinite.totalCount || 0) - 1),
+          });
+        }
+      }
+
+      // Infinite comments (pages)
+      const infQueries = queryClient
+        .getQueryCache()
+        .findAll({ queryKey: ["infinite-event-comments", eventId] });
+      infQueries.forEach((q) => {
+        const key = q.queryKey;
+        const prev = queryClient.getQueryData<{
+          pages: Array<{ comments: EventCommentData[] }>;
+          pageParams: unknown[];
+        }>(key);
+        if (!prev?.pages) return;
+        rollbacks.push(() => queryClient.setQueryData(key, prev));
+        let removed = false;
+        const pages = prev.pages.map((p) => {
+          const r = removeRecursive(p.comments);
+          if (r.removed) removed = true;
+          return { ...p, comments: r.list };
+        });
+        if (removed) {
+          queryClient.setQueryData(key, { ...prev, pages });
+        }
+      });
+
+      // Infinite replies (unknown parent) -> remove from any page where present
+      const infRepliesQueries = queryClient
+        .getQueryCache()
+        .findAll({ queryKey: ["infinite-replies"] });
+      infRepliesQueries.forEach((q) => {
+        const key = q.queryKey;
+        const prev = queryClient.getQueryData<{
+          pages: Array<{ replies: EventCommentData[] }>;
+          pageParams: unknown[];
+        }>(key);
+        if (!prev?.pages) return;
+        rollbacks.push(() => queryClient.setQueryData(key, prev));
+        const pages = prev.pages.map((p) => ({
+          ...p,
+          replies: p.replies.filter((r) => r.id !== commentId),
+        }));
+        queryClient.setQueryData(key, { ...prev, pages });
+      });
+
+      suppressEventCommentsRefetch(eventId, 2000);
+      return { rollbacks, eventId };
+    },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["event-comments", variables.eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["infinite-event-comments", variables.eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["infinite-replies"],
-      });
+      // Soft sync in background after a brief delay
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ["event-comments", variables.eventId],
+          refetchType: "inactive",
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["infinite-event-comments", variables.eventId],
+          refetchType: "inactive",
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["infinite-replies"],
+          refetchType: "inactive",
+        });
+      }, 600);
       toast.success("Comment deleted");
     },
-    onError: () => {
+    onError: (_err, _vars, context) => {
+      context?.rollbacks?.forEach((rb) => rb());
       toast.error("Failed to delete comment");
     },
   });

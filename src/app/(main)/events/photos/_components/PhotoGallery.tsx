@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useMutationState } from "@tanstack/react-query";
 import { useEventPhotos } from "@/hooks/queries/useEventPhotos";
 import {
   useLikePhoto,
@@ -47,6 +48,13 @@ export function PhotoGallery({ eventId }: PhotoGalleryProps) {
   const likeMutation = useLikePhoto();
   const deleteMutation = useDeletePhoto();
   const modal = useModal();
+
+  // Track per-photo pending like mutations to disable only the active one
+  const pendingLikePhotoIds = useMutationState<string | undefined>({
+    filters: { mutationKey: ["photo-like"], status: "pending" },
+    select: (m) => (m.state.variables as { photoId?: string } | undefined)?.photoId,
+  }).filter(Boolean) as string[];
+  const pendingLikeSet = new Set(pendingLikePhotoIds);
 
   const handleLike = async (photoId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -176,7 +184,7 @@ export function PhotoGallery({ eventId }: PhotoGalleryProps) {
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={(e) => handleLike(photo.id, e)}
-                          disabled={likeMutation.isPending || photo.isUploading}
+                          disabled={pendingLikeSet.has(photo.id) || photo.isUploading}
                           className={cn(
                             "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm transition-colors",
                             photo.isLikedByUser
