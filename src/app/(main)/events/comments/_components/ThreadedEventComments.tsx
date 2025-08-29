@@ -58,6 +58,7 @@ import {
 import { toast } from "sonner";
 import { useModal } from "@/hooks/use-modal";
 import { ActionLoader } from "@/components/ui/loading-animations";
+import { UnifiedSkeleton } from "@/components/ui/skeleton";
 
 interface ThreadedEventCommentsProps {
   eventId: string;
@@ -93,12 +94,11 @@ function ThreadedRepliesSection({
 
   if (isLoadingReplies) {
     return (
-      <div className="flex justify-center py-4">
-        <ActionLoader
-          action="sync"
-          size="sm"
-          className="text-muted-foreground"
-        />
+      <div className="py-2">
+        <div className="flex justify-center mb-2">
+          <ActionLoader action="sync" size="sm" className="text-muted-foreground" />
+        </div>
+        <UnifiedSkeleton variant="list-rows" count={2} />
       </div>
     );
   }
@@ -898,8 +898,11 @@ export default function ThreadedEventComments({
       {/* Comments list */}
       <div className="space-y-4">
         {isLoadingComments ? (
-          <div className="flex justify-center py-8">
-            <ActionLoader action="sync" size="lg" />
+          <div className="py-4">
+            <div className="flex justify-center mb-3">
+              <ActionLoader action="sync" size="lg" />
+            </div>
+            <UnifiedSkeleton variant="list-rows" count={6} />
           </div>
         ) : allComments.length > 0 ? (
           <>

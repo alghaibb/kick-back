@@ -36,7 +36,7 @@ export default function Page() {
       />
 
       <PageErrorBoundary title="Events Page">
-        <Suspense fallback={<UnifiedSkeleton variant="card-list" count={3} />}>
+        <Suspense fallback={<UnifiedSkeleton variant="card-list" count={6} />}>
           <EventsClient />
         </Suspense>
       </PageErrorBoundary>

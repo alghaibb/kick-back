@@ -472,7 +472,10 @@ export function CalendarPageClientWithComments() {
                             </Suspense>
                             <Suspense
                               fallback={
-                                <UnifiedSkeleton variant="gallery-grid" count={8} />
+                                <UnifiedSkeleton
+                                  variant="gallery-grid"
+                                  count={8}
+                                />
                               }
                             >
                               <PhotoGallery eventId={event.id} />

@@ -33,7 +33,7 @@ export default function Page() {
       />
 
       <PageErrorBoundary title="Groups Page">
-        <Suspense fallback={<UnifiedSkeleton variant="card-list" count={2} />}>
+        <Suspense fallback={<UnifiedSkeleton variant="card-list" count={4} />}> 
           <GroupsClientNew />
         </Suspense>
       </PageErrorBoundary>
