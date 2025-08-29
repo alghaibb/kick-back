@@ -272,21 +272,15 @@ export function LocationInput({
           }
           disabled={disabled}
           className="pr-10"
+          aria-busy={!isCustom && isLoading}
         />
-
-        {/* Loading Indicator */}
-        {isLoading && !isCustom && (
-          <ActionLoader
-            action="sync"
-            size="sm"
-            className="text-muted-foreground"
-          />
-        )}
-
-        {/* Search Icon */}
-        {!isLoading && !isCustom && (
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <Search className="h-4 w-4 text-muted-foreground" />
+        {!isCustom && (
+          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+            {isLoading ? (
+              <ActionLoader action="sync" size="sm" className="text-muted-foreground" />
+            ) : (
+              <Search className="h-4 w-4 text-muted-foreground" />
+            )}
           </div>
         )}
       </div>
