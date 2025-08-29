@@ -115,7 +115,7 @@ export function CalendarPageClientWithComments() {
     window.addEventListener("open-edit-event", handler as EventListener);
     return () =>
       window.removeEventListener("open-edit-event", handler as EventListener);
-  }, [data?.events]);
+  }, [data?.events, modal]);
 
   useEffect(() => {
     if (targetEventId && data?.events) {
