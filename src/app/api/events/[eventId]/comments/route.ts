@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/sessions";
 import { NextResponse } from "next/server";
@@ -150,12 +152,15 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({
-      comments: commentsToReturn,
-      totalCount,
-      hasMore,
-      nextCursor,
-    });
+    return NextResponse.json(
+      {
+        comments: commentsToReturn,
+        totalCount,
+        hasMore,
+        nextCursor,
+      },
+      { headers: { "cache-control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (error) {
     console.error("Error fetching comments:", error);
     return NextResponse.json(

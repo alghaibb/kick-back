@@ -53,6 +53,8 @@ async function fetchEventComments(
     `/api/events/${eventId}/comments?sortBy=${sortBy}`,
     {
       credentials: "include",
+      cache: "no-store",
+      headers: { "cache-control": "no-store" },
     }
   );
 
@@ -73,7 +75,7 @@ export function useEventComments(
     queryKey: ["event-comments", eventId, sortBy],
     queryFn: () => fetchEventComments(eventId, sortBy),
     enabled: !!eventId,
-    staleTime: 5 * 1000, // 5 seconds - balance between freshness and performance
+    staleTime: 0, // make comments feel instant after optimistic updates
     gcTime: 10 * 60 * 1000,
     refetchInterval: pollingInterval,
     refetchOnWindowFocus: false, // Keep disabled to prevent scroll jumps
