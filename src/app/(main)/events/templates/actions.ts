@@ -10,7 +10,9 @@ import {
   type EditEventTemplateValues,
 } from "@/validations/events/eventTemplateSchema";
 
-export async function createEventTemplateAction(values: CreateEventTemplateValues) {
+export async function createEventTemplateAction(
+  values: CreateEventTemplateValues
+) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -36,6 +38,7 @@ export async function createEventTemplateAction(values: CreateEventTemplateValue
     const template = await prisma.eventTemplate.create({
       data: {
         ...validatedData,
+        color: validatedData.color || "#3b82f6",
         createdBy: session.user.id,
       },
       include: {
@@ -79,7 +82,9 @@ export async function editEventTemplateAction(
     });
 
     if (!existingTemplate) {
-      return { error: "Template not found or you don't have permission to edit it" };
+      return {
+        error: "Template not found or you don't have permission to edit it",
+      };
     }
 
     // Verify group access if groupId is provided
@@ -135,7 +140,9 @@ export async function deleteEventTemplateAction(templateId: string) {
     });
 
     if (!existingTemplate) {
-      return { error: "Template not found or you don't have permission to delete it" };
+      return {
+        error: "Template not found or you don't have permission to delete it",
+      };
     }
 
     await prisma.eventTemplate.delete({

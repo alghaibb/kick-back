@@ -11,10 +11,16 @@ export const createEventTemplateSchema = z.object({
     .string()
     .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)")
     .optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format")
+    .optional(),
   groupId: z.string().optional().nullable(),
 });
 
-export type CreateEventTemplateValues = z.infer<typeof createEventTemplateSchema>;
+export type CreateEventTemplateValues = z.infer<
+  typeof createEventTemplateSchema
+>;
 
 export const editEventTemplateSchema = createEventTemplateSchema;
 export type EditEventTemplateValues = z.infer<typeof editEventTemplateSchema>;

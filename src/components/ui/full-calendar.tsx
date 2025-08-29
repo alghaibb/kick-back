@@ -18,11 +18,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useModal } from "@/hooks/use-modal";
 import { useAuth } from "@/hooks/use-auth";
+import { useMoveEvent } from "@/hooks/mutations/useEventMutations";
 
 interface FullCalendarProps {
   selected?: Date;
   onSelect?: (date: Date) => void;
-  events?: Array<{ date: string; id: string; name: string }>;
+  events?: Array<{ date: string; id: string; name: string; color?: string }>;
   className?: string;
 }
 
@@ -35,19 +36,27 @@ export function FullCalendar({
   const { open } = useModal();
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
+  const moveEvent = useMoveEvent();
 
   // Check if custom background is active
   const hasCustomBackground = !!user?.dashboardBackground;
 
   // Group events by date for quick lookup
   const eventsByDate = React.useMemo(() => {
-    const grouped: Record<string, Array<{ id: string; name: string }>> = {};
+    const grouped: Record<
+      string,
+      Array<{ id: string; name: string; color?: string }>
+    > = {};
     events.forEach((event) => {
       const dateKey = format(new Date(event.date), "yyyy-MM-dd");
       if (!grouped[dateKey]) {
         grouped[dateKey] = [];
       }
-      grouped[dateKey].push({ id: event.id, name: event.name });
+      grouped[dateKey].push({
+        id: event.id,
+        name: event.name,
+        color: event.color,
+      });
     });
     return grouped;
   }, [events]);
@@ -162,6 +171,12 @@ export function FullCalendar({
                 !isCurrentMonth && "opacity-40"
               )}
               onClick={() => handleDayClick(day)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                const eventId = e.dataTransfer.getData("text/event-id");
+                if (!eventId) return;
+                moveEvent.mutate({ eventId, newDateISO: day.toISOString() });
+              }}
             >
               {/* Day Number */}
               <div className="flex items-center justify-between mb-1 sm:mb-2">
@@ -205,11 +220,26 @@ export function FullCalendar({
                       key={event.id}
                       className={cn(
                         "text-xs px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate",
-                        isSelected
-                          ? "bg-primary-foreground/20 text-primary-foreground"
-                          : "bg-primary/10 text-primary"
+                        isSelected ? "text-primary-foreground" : "text-primary"
                       )}
+                      style={{
+                        backgroundColor: isSelected
+                          ? event.color
+                            ? `${event.color}33`
+                            : "rgba(255,255,255,0.2)"
+                          : event.color
+                            ? `${event.color}1A`
+                            : "rgba(59,130,246,0.1)",
+                        color: isSelected
+                          ? undefined
+                          : event.color || undefined,
+                      }}
                       title={event.name}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/event-id", event.id);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
                     >
                       {event.name}
                     </div>
@@ -271,4 +301,3 @@ export function FullCalendar({
   // Return without Card wrapper when no custom background
   return calendarContent;
 }
- 

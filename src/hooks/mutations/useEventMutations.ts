@@ -8,10 +8,12 @@ import {
   deleteEventAction,
   leaveEventAction,
   inviteToEventBatchAction,
+  moveEventToDateAction,
 } from "@/app/(main)/events/actions";
 import { adminEditEventAction } from "@/app/(main)/admin/actions";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
 import { CreateEventValues } from "@/validations/events/createEventSchema";
+import type { CalendarResponse } from "@/hooks/queries/useCalendar";
 
 export function useCreateEvent() {
   const queryClient = useQueryClient();
@@ -248,6 +250,62 @@ export function useInviteToEventBatch() {
     onError: (error: Error) => {
       console.error("Batch invite to event error:", error);
       toast.error(error.message || "Failed to send invitations");
+    },
+  });
+}
+
+export function useMoveEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      eventId,
+      newDateISO,
+    }: {
+      eventId: string;
+      newDateISO: string;
+    }) => {
+      const result = await moveEventToDateAction(eventId, newDateISO);
+      if (result?.error) throw new Error(result.error);
+      return result;
+    },
+    onMutate: async ({ eventId, newDateISO }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["calendar"] });
+
+      // Snapshot the previous value
+      const previous = queryClient.getQueryData<CalendarResponse>(["calendar"]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<CalendarResponse>(["calendar"], (old) => {
+        if (!old) return old as unknown as CalendarResponse;
+
+        return {
+          ...old,
+          events: old.events.map((ev) =>
+            ev.id === eventId
+              ? {
+                  ...ev,
+                  date: newDateISO,
+                }
+              : ev
+          ),
+        };
+      });
+
+      // Return a context object with the snapshotted value
+      return { previous };
+    },
+    onError: (err, _variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previous) {
+        queryClient.setQueryData(["calendar"], context.previous);
+      }
+      console.error("Move event error:", err);
+      toast.error(err.message || "Failed to move event");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
     },
   });
 }

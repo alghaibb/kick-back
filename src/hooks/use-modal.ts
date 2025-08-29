@@ -41,6 +41,7 @@ interface ModalState {
     location?: string;
     date?: string;
     time?: string;
+    color?: string;
     groups?: { id: string; name: string }[];
     // Photo deletion fields
     photoId?: string;
@@ -98,6 +99,7 @@ interface ModalState {
       location?: string;
       date?: string;
       time?: string;
+      color?: string;
       groups?: { id: string; name: string }[];
       // Photo deletion fields
       photoId?: string;

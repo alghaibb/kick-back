@@ -45,6 +45,7 @@ export async function GET() {
       description: event.description ?? undefined,
       location: event.location ?? undefined,
       date: event.date.toISOString(),
+      color: (event as { color?: string }).color ?? undefined,
       group: event.group ? { name: event.group.name } : undefined,
       attendees: event.attendees.map((a) => ({
         user: {

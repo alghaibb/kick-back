@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SmartLoader } from "@/components/ui/loading-animations";
+import { ColorPicker } from "@/components/ui/color-picker";
 
 interface CreateEventFormProps {
   groups: { id: string; name: string }[];
@@ -81,6 +82,7 @@ export function CreateEventForm({
       location: hasTemplateData ? templateData.location || "" : "",
       time: hasTemplateData ? templateData.time || "" : "",
       date: defaultDate || "",
+      color: hasTemplateData ? templateData.color || "#3b82f6" : "#3b82f6",
       groupId: hasTemplateData ? templateData.groupId || undefined : undefined,
     },
   });
@@ -95,6 +97,7 @@ export function CreateEventForm({
             description: values.description,
             location: values.location,
             time: values.time,
+            color: values.color,
             groupId: values.groupId,
           });
         }
@@ -113,6 +116,10 @@ export function CreateEventForm({
     form.setValue("description", template.description || "");
     form.setValue("location", template.location || "");
     form.setValue("time", template.time || "");
+    form.setValue(
+      "color",
+      "color" in template ? (template.color as string) || "#3b82f6" : "#3b82f6"
+    );
     form.setValue("groupId", template.groupId || undefined);
   }
 
@@ -254,6 +261,20 @@ export function CreateEventForm({
                     form.trigger("time");
                   }}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Event Color</FormLabel>
+              <FormControl>
+                <ColorPicker value={field.value} onChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>

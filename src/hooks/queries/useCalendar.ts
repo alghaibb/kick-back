@@ -9,6 +9,7 @@ export interface CalendarEvent {
   description: string | null;
   date: string;
   location: string | null;
+  color?: string;
   group: {
     id: string;
     name: string;

@@ -76,7 +76,7 @@ export async function createEventAction(values: CreateEventValues) {
     }
 
     const validatedValues = createEventSchema.parse(values);
-    const { date, name, description, groupId, location, time } =
+    const { date, name, description, groupId, location, time, color } =
       validatedValues;
 
     const timezone = session.user.timezone || "UTC";
@@ -88,6 +88,7 @@ export async function createEventAction(values: CreateEventValues) {
         description: description || null,
         location: location || null,
         date: eventDateTime,
+        color: color || "#3b82f6",
         groupId: groupId || null,
         createdBy: session.user.id,
       },
@@ -523,7 +524,7 @@ export async function editEventAction(
     }
 
     const validatedValues = createEventSchema.parse(values);
-    const { date, name, description, groupId, location, time } =
+    const { date, name, description, groupId, location, time, color } =
       validatedValues;
 
     const timezone = session.user.timezone || "UTC";
@@ -536,6 +537,7 @@ export async function editEventAction(
         description: description || null,
         location: location || null,
         date: eventDateTime,
+        color: color || "#3b82f6",
         groupId: groupId || null,
       },
     });
@@ -574,6 +576,49 @@ export async function editEventAction(
   } catch (error) {
     console.error("Error editing event:", error);
     return { error: "An error occurred while editing the event." };
+  }
+}
+
+export async function moveEventToDateAction(eventId: string, newDateISO: string) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" };
+    }
+
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { createdBy: true, date: true },
+    });
+
+    if (!event || event.createdBy !== session.user.id) {
+      return { error: "You don't have permission to move this event." };
+    }
+
+    const existingDate = event.date;
+    const newDate = new Date(newDateISO);
+    if (isNaN(newDate.getTime())) {
+      return { error: "Invalid date" };
+    }
+
+    // Preserve the original time (hours/minutes) while changing day
+    const preserved = new Date(newDate);
+    preserved.setHours(existingDate.getHours());
+    preserved.setMinutes(existingDate.getMinutes());
+    preserved.setSeconds(0, 0);
+
+    await prisma.event.update({
+      where: { id: eventId },
+      data: { date: preserved },
+    });
+
+    revalidatePath("/calendar");
+    revalidatePath("/events");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Move event to date error:", error);
+    return { error: "Failed to move event" };
   }
 }
 

@@ -199,6 +199,7 @@ model Event {
   location    String?
   latitude    Float?
   longitude   Float?
+  color       String?         @default("#3b82f6") 
   createdBy   String
   groupId     String?
   createdAt   DateTime        @default(now())
@@ -456,6 +457,7 @@ model EventTemplate {
   description String?
   location    String?
   time        String?
+  color       String?  @default("#3b82f6")
   groupId     String?
   createdBy   String
   createdAt   DateTime @default(now())
