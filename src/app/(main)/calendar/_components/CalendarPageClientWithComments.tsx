@@ -8,7 +8,6 @@ import { format, isSameDay, startOfDay } from "date-fns";
 import { useCalendar } from "@/hooks/queries/useCalendar";
 import { formatDate } from "@/lib/date-utils";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
-import { ActionLoader } from "@/components/ui/loading-animations";
 
 // Lazy load heavy components
 const FullCalendar = lazy(() =>

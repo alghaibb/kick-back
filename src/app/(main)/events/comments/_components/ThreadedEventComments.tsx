@@ -96,7 +96,11 @@ function ThreadedRepliesSection({
     return (
       <div className="py-2">
         <div className="flex justify-center mb-2">
-          <ActionLoader action="sync" size="sm" className="text-muted-foreground" />
+          <ActionLoader
+            action="sync"
+            size="sm"
+            className="text-muted-foreground"
+          />
         </div>
         <UnifiedSkeleton variant="list-rows" count={2} />
       </div>
