@@ -259,7 +259,7 @@ export function FullCalendar({
                       if (!eventId) return;
                       moveEvent.mutate({
                         eventId,
-                        newDateISO: day.toISOString(),
+                        newDateStr: format(day, "yyyy-MM-dd"),
                       });
                     }}
                   >
@@ -361,7 +361,7 @@ export function FullCalendar({
                                   const today = new Date();
                                   moveEvent.mutate({
                                     eventId: event.id,
-                                    newDateISO: today.toISOString(),
+                                    newDateStr: format(today, "yyyy-MM-dd"),
                                   });
                                 }}
                               >
@@ -373,7 +373,7 @@ export function FullCalendar({
                                   tomorrow.setDate(tomorrow.getDate() + 1);
                                   moveEvent.mutate({
                                     eventId: event.id,
-                                    newDateISO: tomorrow.toISOString(),
+                                    newDateStr: format(tomorrow, "yyyy-MM-dd"),
                                   });
                                 }}
                               >
@@ -480,7 +480,7 @@ export function FullCalendar({
                           if (!eventId) return;
                           moveEvent.mutate({
                             eventId,
-                            newDateISO: day.toISOString(),
+                            newDateStr: format(day, "yyyy-MM-dd"),
                           });
                         }}
                       >

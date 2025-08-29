@@ -259,16 +259,20 @@ export function useMoveEvent() {
   return useMutation({
     mutationFn: async ({
       eventId,
-      newDateISO,
+      newDateStr,
     }: {
       eventId: string;
-      newDateISO: string;
+      newDateStr: string; // yyyy-MM-dd (date only to avoid TZ drift)
     }) => {
-      const result = await moveEventToDateAction(eventId, newDateISO);
+      // Preserve original time server-side; pass date-only to avoid timezone shifts
+      const result = await moveEventToDateAction(
+        eventId,
+        new Date(`${newDateStr}T00:00:00.000Z`).toISOString()
+      );
       if (result?.error) throw new Error(result.error);
       return result;
     },
-    onMutate: async ({ eventId, newDateISO }) => {
+    onMutate: async ({ eventId, newDateStr }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["calendar"] });
 
@@ -288,7 +292,10 @@ export function useMoveEvent() {
             ev.id === eventId
               ? {
                   ...ev,
-                  date: newDateISO,
+                  // Keep existing time component, change the date only at client-side for display
+                  date: `${newDateStr}T${new Date(ev.date)
+                    .toISOString()
+                    .split("T")[1]}`,
                 }
               : ev
           ),
@@ -326,8 +333,14 @@ export function useMoveEvent() {
       toast.error(err.message || "Failed to move event");
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["calendar"], refetchType: "active" });
-      await queryClient.invalidateQueries({ queryKey: ["events"], refetchType: "active" });
+      await queryClient.invalidateQueries({
+        queryKey: ["calendar"],
+        refetchType: "active",
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["events"],
+        refetchType: "active",
+      });
     },
   });
 }
