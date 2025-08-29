@@ -19,6 +19,8 @@ interface UnifiedSkeletonProps {
     | "form"
     | "profile"
     | "dashboard-stats"
+    | "calendar-month"
+    | "gallery-grid"
     | "custom";
   count?: number;
   className?: string;
@@ -77,6 +79,51 @@ function UnifiedSkeleton({
                   <Skeleton className="h-3 w-32" />
                 </CardContent>
               </Card>
+            ))}
+          </div>
+        );
+
+      case "calendar-month":
+        return (
+          <div className={cn("space-y-4", className)}>
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-40" />
+              <div className="flex gap-2">
+                <Skeleton className="h-9 w-9" />
+                <Skeleton className="h-9 w-24" />
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-2 sm:gap-3">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <Skeleton key={`dow-${i}`} className="h-5" />
+              ))}
+              {Array.from({ length: 42 }).map((_, i) => (
+                <div
+                  key={`day-${i}`}
+                  className="rounded-lg border border-border/50 p-2 sm:p-3 bg-card/40 min-h-[80px] sm:min-h-[110px]"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <Skeleton className="h-4 w-6" />
+                    <Skeleton className="h-4 w-8" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3 w-3/4" />
+                    <Skeleton className="h-3 w-2/3" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "gallery-grid":
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            {Array.from({ length: count }).map((_, i) => (
+              <div key={i} className="aspect-square rounded-lg overflow-hidden">
+                <Skeleton className="w-full h-full" />
+              </div>
             ))}
           </div>
         );

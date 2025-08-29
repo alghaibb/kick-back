@@ -162,10 +162,21 @@ export function CalendarPageClientWithComments() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <ActionLoader action="sync" size="lg" />
-          <p className="text-muted-foreground">Loading calendar...</p>
+      <div className="flex flex-col gap-8">
+        <UnifiedSkeleton variant="calendar-month" />
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-6 w-40 bg-muted rounded animate-pulse" />
+            <div className="h-9 w-24 bg-muted rounded animate-pulse" />
+          </div>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="border rounded-lg p-4 bg-card/50">
+                <div className="h-5 w-40 bg-muted rounded animate-pulse mb-2" />
+                <div className="h-4 w-64 bg-muted rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

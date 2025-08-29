@@ -29,7 +29,11 @@ export default function Page() {
       />
 
       <PageErrorBoundary title="Calendar Page">
-        <Suspense fallback={<UnifiedSkeleton variant="simple" />}>
+        <Suspense
+          fallback={
+            <UnifiedSkeleton variant="calendar-month" className="mt-6" />
+          }
+        >
           <CalendarPageClientWithComments />
         </Suspense>
       </PageErrorBoundary>
