@@ -12,7 +12,6 @@ import {
   subMonths,
   startOfWeek,
   endOfWeek,
-  addDays,
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -231,419 +230,442 @@ export function FullCalendar({
       {view === "month" && (
         <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
           {allDays.map((day, index) => {
-          const dateKey = format(day, "yyyy-MM-dd");
-          const dayEvents = eventsByDate[dateKey] || [];
-          const isSelected = selected && isSameDay(day, selected);
-          const isToday = isSameDay(day, new Date());
-          const isCurrentMonth = isSameMonth(day, currentMonth);
+            const dateKey = format(day, "yyyy-MM-dd");
+            const dayEvents = eventsByDate[dateKey] || [];
+            const isSelected = selected && isSameDay(day, selected);
+            const isToday = isSameDay(day, new Date());
+            const isCurrentMonth = isSameMonth(day, currentMonth);
 
-          return (
-            <ContextMenu key={`day-${dateKey}-${index}`}>
-              <ContextMenuTrigger asChild>
-                <div
-                  className={cn(
-                    "relative min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border rounded-md sm:rounded-lg transition-all duration-200 cursor-pointer",
-                    !isSelected &&
-                      "group hover:bg-accent/80 hover:border-accent-foreground/40 dark:hover:bg-accent/60 dark:hover:border-accent-foreground/50",
-                    isSelected &&
-                      "bg-primary text-primary-foreground border-primary",
-                    isToday &&
+            return (
+              <ContextMenu key={`day-${dateKey}-${index}`}>
+                <ContextMenuTrigger asChild>
+                  <div
+                    className={cn(
+                      "relative min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border rounded-md sm:rounded-lg transition-all duration-200 cursor-pointer",
                       !isSelected &&
-                      "bg-muted/50 border-muted-foreground/30",
-                    !isCurrentMonth && "opacity-40"
-                  )}
-                  onClick={() => handleDayClick(day)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    const eventId = e.dataTransfer.getData("text/event-id");
-                    if (!eventId) return;
-                    moveEvent.mutate({
-                      eventId,
-                      newDateISO: day.toISOString(),
-                    });
-                  }}
-                >
-                  <div className="flex items-center justify-between mb-1 sm:mb-2">
-                    <span
-                      className={cn(
-                        "text-xs sm:text-sm font-medium",
-                        isSelected && "text-primary-foreground",
-                        isToday && !isSelected && "font-bold"
-                      )}
-                    >
-                      {format(day, "d")}
-                    </span>
+                        "group hover:bg-accent/80 hover:border-accent-foreground/40 dark:hover:bg-accent/60 dark:hover:border-accent-foreground/50",
+                      isSelected &&
+                        "bg-primary text-primary-foreground border-primary",
+                      isToday &&
+                        !isSelected &&
+                        "bg-muted/50 border-muted-foreground/30",
+                      !isCurrentMonth && "opacity-40"
+                    )}
+                    onClick={() => handleDayClick(day)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      const eventId = e.dataTransfer.getData("text/event-id");
+                      if (!eventId) return;
+                      moveEvent.mutate({
+                        eventId,
+                        newDateISO: day.toISOString(),
+                      });
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-1 sm:mb-2">
+                      <span
+                        className={cn(
+                          "text-xs sm:text-sm font-medium",
+                          isSelected && "text-primary-foreground",
+                          isToday && !isSelected && "font-bold"
+                        )}
+                      >
+                        {format(day, "d")}
+                      </span>
 
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className={cn(
-                        "h-5 w-5 sm:h-6 sm:w-6 p-0 transition-opacity",
-                        !isSelected && "opacity-0 group-hover:opacity-100",
-                        isSelected && "opacity-100",
-                        "hover:bg-primary hover:text-primary-foreground",
-                        isSelected &&
-                          "text-primary-foreground hover:bg-primary-foreground/20"
-                      )}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCreateEvent(day);
-                      }}
-                      title="Create event on this day"
-                    >
-                      <Plus className="w-3 h-3 sm:w-3 sm:h-3" />
-                    </Button>
-                  </div>
-
-                  {dayEvents.length > 0 && (
-                    <div className="space-y-0.5 sm:space-y-1">
-                      {dayEvents.slice(0, 2).map((event) => (
-                        <ContextMenu key={event.id}>
-                          <ContextMenuTrigger asChild>
-                            <div
-                              className={cn(
-                                "text-xs px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate",
-                                isSelected
-                                  ? "text-primary-foreground"
-                                  : "text-primary"
-                              )}
-                              style={{
-                                backgroundColor: isSelected
-                                  ? event.color
-                                    ? `${event.color}33`
-                                    : "rgba(255,255,255,0.2)"
-                                  : event.color
-                                    ? `${event.color}1A`
-                                    : "rgba(59,130,246,0.1)",
-                                color: isSelected
-                                  ? undefined
-                                  : event.color || undefined,
-                              }}
-                              title={event.name}
-                              draggable
-                              onDragStart={(e) => {
-                                e.dataTransfer.setData(
-                                  "text/event-id",
-                                  event.id
-                                );
-                                e.dataTransfer.effectAllowed = "move";
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const openEvent = new CustomEvent(
-                                  "open-edit-event",
-                                  {
-                                    detail: { eventId: event.id },
-                                  }
-                                );
-                                window.dispatchEvent(openEvent);
-                              }}
-                            >
-                              {event.name}
-                            </div>
-                          </ContextMenuTrigger>
-                          <ContextMenuContent className="w-48">
-                            <ContextMenuItem
-                              onSelect={() => {
-                                const openEvent = new CustomEvent(
-                                  "open-edit-event",
-                                  {
-                                    detail: { eventId: event.id },
-                                  }
-                                );
-                                window.dispatchEvent(openEvent);
-                              }}
-                            >
-                              Edit
-                            </ContextMenuItem>
-                            <ContextMenuItem
-                              onSelect={() => {
-                                const today = new Date();
-                                moveEvent.mutate({
-                                  eventId: event.id,
-                                  newDateISO: today.toISOString(),
-                                });
-                              }}
-                            >
-                              Move to today
-                            </ContextMenuItem>
-                            <ContextMenuItem
-                              onSelect={() => {
-                                const tomorrow = new Date();
-                                tomorrow.setDate(tomorrow.getDate() + 1);
-                                moveEvent.mutate({
-                                  eventId: event.id,
-                                  newDateISO: tomorrow.toISOString(),
-                                });
-                              }}
-                            >
-                              Move to tomorrow
-                            </ContextMenuItem>
-                            <ContextMenuItem
-                              onSelect={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(
-                                    `${window.location.origin}/events?event=${event.id}`
-                                  );
-                                  toast.success("Event link copied");
-                                } catch {
-                                  toast.error("Failed to copy link");
-                                }
-                              }}
-                            >
-                              Copy link
-                            </ContextMenuItem>
-                          </ContextMenuContent>
-                        </ContextMenu>
-                      ))}
-                      {dayEvents.length > 2 && (
-                        <Badge
-                          variant="secondary"
-                          className={cn(
-                            "text-xs px-1 py-0 h-4 sm:h-5",
-                            isSelected
-                              ? "bg-primary-foreground/20 text-primary-foreground"
-                              : "bg-muted"
-                          )}
-                        >
-                          +{dayEvents.length - 2} more
-                        </Badge>
-                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={cn(
+                          "h-5 w-5 sm:h-6 sm:w-6 p-0 transition-opacity",
+                          !isSelected && "opacity-0 group-hover:opacity-100",
+                          isSelected && "opacity-100",
+                          "hover:bg-primary hover:text-primary-foreground",
+                          isSelected &&
+                            "text-primary-foreground hover:bg-primary-foreground/20"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCreateEvent(day);
+                        }}
+                        title="Create event on this day"
+                      >
+                        <Plus className="w-3 h-3 sm:w-3 sm:h-3" />
+                      </Button>
                     </div>
-                  )}
-                </div>
-              </ContextMenuTrigger>
-              <ContextMenuContent className="w-48">
-                <ContextMenuItem
-                  onSelect={() => {
-                    handleCreateEvent(day);
-                  }}
-                >
-                  Create event here
-                </ContextMenuItem>
-                <ContextMenuItem
-                  onSelect={() => {
-                    onSelect?.(day);
-                  }}
-                >
-                  Select this day
-                </ContextMenuItem>
-                <ContextMenuItem
-                  onSelect={() => {
-                    const today = new Date();
-                    onSelect?.(today);
-                  }}
-                >
-                  Go to today
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
-          );
-        })}
+
+                    {dayEvents.length > 0 && (
+                      <div className="space-y-0.5 sm:space-y-1">
+                        {dayEvents.slice(0, 2).map((event) => (
+                          <ContextMenu key={event.id}>
+                            <ContextMenuTrigger asChild>
+                              <div
+                                className={cn(
+                                  "text-xs px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate",
+                                  isSelected
+                                    ? "text-primary-foreground"
+                                    : "text-primary"
+                                )}
+                                style={{
+                                  backgroundColor: isSelected
+                                    ? event.color
+                                      ? `${event.color}33`
+                                      : "rgba(255,255,255,0.2)"
+                                    : event.color
+                                      ? `${event.color}1A`
+                                      : "rgba(59,130,246,0.1)",
+                                  color: isSelected
+                                    ? undefined
+                                    : event.color || undefined,
+                                }}
+                                title={event.name}
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData(
+                                    "text/event-id",
+                                    event.id
+                                  );
+                                  e.dataTransfer.effectAllowed = "move";
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const openEvent = new CustomEvent(
+                                    "open-edit-event",
+                                    {
+                                      detail: { eventId: event.id },
+                                    }
+                                  );
+                                  window.dispatchEvent(openEvent);
+                                }}
+                              >
+                                {event.name}
+                              </div>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent className="w-48">
+                              <ContextMenuItem
+                                onSelect={() => {
+                                  const openEvent = new CustomEvent(
+                                    "open-edit-event",
+                                    {
+                                      detail: { eventId: event.id },
+                                    }
+                                  );
+                                  window.dispatchEvent(openEvent);
+                                }}
+                              >
+                                Edit
+                              </ContextMenuItem>
+                              <ContextMenuItem
+                                onSelect={() => {
+                                  const today = new Date();
+                                  moveEvent.mutate({
+                                    eventId: event.id,
+                                    newDateISO: today.toISOString(),
+                                  });
+                                }}
+                              >
+                                Move to today
+                              </ContextMenuItem>
+                              <ContextMenuItem
+                                onSelect={() => {
+                                  const tomorrow = new Date();
+                                  tomorrow.setDate(tomorrow.getDate() + 1);
+                                  moveEvent.mutate({
+                                    eventId: event.id,
+                                    newDateISO: tomorrow.toISOString(),
+                                  });
+                                }}
+                              >
+                                Move to tomorrow
+                              </ContextMenuItem>
+                              <ContextMenuItem
+                                onSelect={async () => {
+                                  try {
+                                    await navigator.clipboard.writeText(
+                                      `${window.location.origin}/events?event=${event.id}`
+                                    );
+                                    toast.success("Event link copied");
+                                  } catch {
+                                    toast.error("Failed to copy link");
+                                  }
+                                }}
+                              >
+                                Copy link
+                              </ContextMenuItem>
+                            </ContextMenuContent>
+                          </ContextMenu>
+                        ))}
+                        {dayEvents.length > 2 && (
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "text-xs px-1 py-0 h-4 sm:h-5",
+                              isSelected
+                                ? "bg-primary-foreground/20 text-primary-foreground"
+                                : "bg-muted"
+                            )}
+                          >
+                            +{dayEvents.length - 2} more
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent className="w-48">
+                  <ContextMenuItem
+                    onSelect={() => {
+                      handleCreateEvent(day);
+                    }}
+                  >
+                    Create event here
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onSelect={() => {
+                      onSelect?.(day);
+                    }}
+                  >
+                    Select this day
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onSelect={() => {
+                      const today = new Date();
+                      onSelect?.(today);
+                    }}
+                  >
+                    Go to today
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
+            );
+          })}
         </div>
       )}
 
-      {view === "week" && (() => {
-        const base = selected || currentMonth;
-        const ws = startOfWeek(base, { weekStartsOn: 0 });
-        const we = endOfWeek(base, { weekStartsOn: 0 });
-        const weekDays = eachDayOfInterval({ start: ws, end: we });
-        return (
-          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
-            {weekDays.map((day, index) => {
-              const dateKey = format(day, "yyyy-MM-dd");
-              const dayEvents = eventsByDate[dateKey] || [];
-              const isSelected = selected && isSameDay(day, selected);
-              const isToday = isSameDay(day, new Date());
-              const isCurrentMonth = isSameMonth(day, currentMonth);
-              return (
-                <ContextMenu key={`week-${dateKey}-${index}`}>
-                  <ContextMenuTrigger asChild>
-                    <div
-                      className={cn(
-                        "relative min-h-[120px] p-2 border rounded-md sm:rounded-lg transition-all duration-200 cursor-pointer",
-                        !isSelected &&
-                          "group hover:bg-accent/80 hover:border-accent-foreground/40 dark:hover:bg-accent/60 dark:hover:border-accent-foreground/50",
-                        isSelected &&
-                          "bg-primary text-primary-foreground border-primary",
-                        isToday &&
-                          !isSelected &&
-                          "bg-muted/50 border-muted-foreground/30",
-                        !isCurrentMonth && "opacity-40"
-                      )}
-                      onClick={() => handleDayClick(day)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        const eventId = e.dataTransfer.getData("text/event-id");
-                        if (!eventId) return;
-                        moveEvent.mutate({
-                          eventId,
-                          newDateISO: day.toISOString(),
-                        });
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span
-                          className={cn(
-                            "text-sm font-medium",
-                            isSelected && "text-primary-foreground",
-                            isToday && !isSelected && "font-bold"
-                          )}
-                        >
-                          {format(day, "EEE d")}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className={cn(
-                            "h-6 w-6 p-0 transition-opacity",
-                            !isSelected && "opacity-0 group-hover:opacity-100",
-                            isSelected && "opacity-100",
-                            "hover:bg-primary hover:text-primary-foreground",
-                            isSelected &&
-                              "text-primary-foreground hover:bg-primary-foreground/20"
-                          )}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCreateEvent(day);
-                          }}
-                          title="Create event on this day"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </Button>
-                      </div>
-
-                      {dayEvents.length > 0 && (
-                        <div className="space-y-1">
-                          {dayEvents.slice(0, 5).map((event) => (
-                            <div
-                              key={event.id}
-                              className={cn(
-                                "text-xs px-2 py-1 rounded truncate",
-                                isSelected
-                                  ? "text-primary-foreground"
-                                  : "text-primary"
-                              )}
-                              style={{
-                                backgroundColor: isSelected
-                                  ? event.color
-                                    ? `${event.color}33`
-                                    : "rgba(255,255,255,0.2)"
-                                  : event.color
-                                    ? `${event.color}1A`
-                                    : "rgba(59,130,246,0.1)",
-                                color: isSelected ? undefined : event.color || undefined,
-                              }}
-                              title={event.name}
-                              draggable
-                              onDragStart={(e) => {
-                                e.dataTransfer.setData("text/event-id", event.id);
-                                e.dataTransfer.effectAllowed = "move";
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const openEvent = new CustomEvent("open-edit-event", {
-                                  detail: { eventId: event.id },
-                                });
-                                window.dispatchEvent(openEvent);
-                              }}
-                            >
-                              {event.name}
-                            </div>
-                          ))}
-                          {dayEvents.length > 5 && (
-                            <Badge variant="secondary" className="text-xs px-2 py-0 h-5">
-                              +{dayEvents.length - 5} more
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </ContextMenuTrigger>
-                  <ContextMenuContent className="w-48">
-                    <ContextMenuItem onSelect={() => handleCreateEvent(day)}>
-                      Create event here
-                    </ContextMenuItem>
-                    <ContextMenuItem onSelect={() => onSelect?.(day)}>
-                      Select this day
-                    </ContextMenuItem>
-                    <ContextMenuItem
-                      onSelect={() => {
-                        const today = new Date();
-                        onSelect?.(today);
-                      }}
-                    >
-                      Go to today
-                    </ContextMenuItem>
-                  </ContextMenuContent>
-                </ContextMenu>
-              );
-            })}
-          </div>
-        );
-      })()}
-
-      {view === "list" && (() => {
-        const monthEvents = events
-          .filter((ev) => isSameMonth(new Date(ev.date), currentMonth))
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        const grouped: Record<string, typeof monthEvents> = {} as any;
-        monthEvents.forEach((ev) => {
-          const key = format(new Date(ev.date), "yyyy-MM-dd");
-          if (!grouped[key]) grouped[key] = [] as any;
-          grouped[key].push(ev as any);
-        });
-        const keys = Object.keys(grouped).sort();
-        return keys.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">No events this month.</div>
-        ) : (
-          <div className="space-y-4">
-            {keys.map((key) => (
-              <div key={key} className="border rounded-lg p-3 sm:p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="font-semibold text-sm sm:text-base">
-                    {format(new Date(key), "EEE, MMM d")}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleCreateEvent(new Date(key))}
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    New
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {grouped[key].map((ev) => (
-                    <div
-                      key={ev.id}
-                      className="flex items-center justify-between gap-2 p-2 rounded hover:bg-accent/50 cursor-pointer"
-                      onClick={() => {
-                        const openEvent = new CustomEvent("open-edit-event", {
-                          detail: { eventId: ev.id },
-                        });
-                        window.dispatchEvent(openEvent);
-                      }}
-                    >
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium truncate">{ev.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {format(new Date(ev.date), "p")}
-                        </div>
-                      </div>
+      {view === "week" &&
+        (() => {
+          const base = selected || currentMonth;
+          const ws = startOfWeek(base, { weekStartsOn: 0 });
+          const we = endOfWeek(base, { weekStartsOn: 0 });
+          const weekDays = eachDayOfInterval({ start: ws, end: we });
+          return (
+            <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+              {weekDays.map((day, index) => {
+                const dateKey = format(day, "yyyy-MM-dd");
+                const dayEvents = eventsByDate[dateKey] || [];
+                const isSelected = selected && isSameDay(day, selected);
+                const isToday = isSameDay(day, new Date());
+                const isCurrentMonth = isSameMonth(day, currentMonth);
+                return (
+                  <ContextMenu key={`week-${dateKey}-${index}`}>
+                    <ContextMenuTrigger asChild>
                       <div
-                        className="h-2 w-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: ev.color || "var(--primary)" }}
-                        aria-label="event color"
-                      />
+                        className={cn(
+                          "relative min-h-[120px] p-2 border rounded-md sm:rounded-lg transition-all duration-200 cursor-pointer",
+                          !isSelected &&
+                            "group hover:bg-accent/80 hover:border-accent-foreground/40 dark:hover:bg-accent/60 dark:hover:border-accent-foreground/50",
+                          isSelected &&
+                            "bg-primary text-primary-foreground border-primary",
+                          isToday &&
+                            !isSelected &&
+                            "bg-muted/50 border-muted-foreground/30",
+                          !isCurrentMonth && "opacity-40"
+                        )}
+                        onClick={() => handleDayClick(day)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          const eventId =
+                            e.dataTransfer.getData("text/event-id");
+                          if (!eventId) return;
+                          moveEvent.mutate({
+                            eventId,
+                            newDateISO: day.toISOString(),
+                          });
+                        }}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span
+                            className={cn(
+                              "text-sm font-medium",
+                              isSelected && "text-primary-foreground",
+                              isToday && !isSelected && "font-bold"
+                            )}
+                          >
+                            {format(day, "EEE d")}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className={cn(
+                              "h-6 w-6 p-0 transition-opacity",
+                              !isSelected &&
+                                "opacity-0 group-hover:opacity-100",
+                              isSelected && "opacity-100",
+                              "hover:bg-primary hover:text-primary-foreground",
+                              isSelected &&
+                                "text-primary-foreground hover:bg-primary-foreground/20"
+                            )}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCreateEvent(day);
+                            }}
+                            title="Create event on this day"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+
+                        {dayEvents.length > 0 && (
+                          <div className="space-y-1">
+                            {dayEvents.slice(0, 5).map((event) => (
+                              <div
+                                key={event.id}
+                                className={cn(
+                                  "text-xs px-2 py-1 rounded truncate",
+                                  isSelected
+                                    ? "text-primary-foreground"
+                                    : "text-primary"
+                                )}
+                                style={{
+                                  backgroundColor: isSelected
+                                    ? event.color
+                                      ? `${event.color}33`
+                                      : "rgba(255,255,255,0.2)"
+                                    : event.color
+                                      ? `${event.color}1A`
+                                      : "rgba(59,130,246,0.1)",
+                                  color: isSelected
+                                    ? undefined
+                                    : event.color || undefined,
+                                }}
+                                title={event.name}
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData(
+                                    "text/event-id",
+                                    event.id
+                                  );
+                                  e.dataTransfer.effectAllowed = "move";
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const openEvent = new CustomEvent(
+                                    "open-edit-event",
+                                    {
+                                      detail: { eventId: event.id },
+                                    }
+                                  );
+                                  window.dispatchEvent(openEvent);
+                                }}
+                              >
+                                {event.name}
+                              </div>
+                            ))}
+                            {dayEvents.length > 5 && (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs px-2 py-0 h-5"
+                              >
+                                +{dayEvents.length - 5} more
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent className="w-48">
+                      <ContextMenuItem onSelect={() => handleCreateEvent(day)}>
+                        Create event here
+                      </ContextMenuItem>
+                      <ContextMenuItem onSelect={() => onSelect?.(day)}>
+                        Select this day
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onSelect={() => {
+                          const today = new Date();
+                          onSelect?.(today);
+                        }}
+                      >
+                        Go to today
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
+                );
+              })}
+            </div>
+          );
+        })()}
+
+      {view === "list" &&
+        (() => {
+          const monthEvents = events
+            .filter((ev) => isSameMonth(new Date(ev.date), currentMonth))
+            .sort(
+              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+            );
+          const grouped: Record<string, typeof monthEvents> = {} as any;
+          monthEvents.forEach((ev) => {
+            const key = format(new Date(ev.date), "yyyy-MM-dd");
+            if (!grouped[key]) grouped[key] = [] as any;
+            grouped[key].push(ev as any);
+          });
+          const keys = Object.keys(grouped).sort();
+          return keys.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">
+              No events this month.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {keys.map((key) => (
+                <div key={key} className="border rounded-lg p-3 sm:p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-semibold text-sm sm:text-base">
+                      {format(new Date(key), "EEE, MMM d")}
                     </div>
-                  ))}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCreateEvent(new Date(key))}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      New
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {grouped[key].map((ev) => (
+                      <div
+                        key={ev.id}
+                        className="flex items-center justify-between gap-2 p-2 rounded hover:bg-accent/50 cursor-pointer"
+                        onClick={() => {
+                          const openEvent = new CustomEvent("open-edit-event", {
+                            detail: { eventId: ev.id },
+                          });
+                          window.dispatchEvent(openEvent);
+                        }}
+                      >
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate">
+                            {ev.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {format(new Date(ev.date), "p")}
+                          </div>
+                        </div>
+                        <div
+                          className="h-2 w-2 rounded-full flex-shrink-0"
+                          style={{
+                            backgroundColor: ev.color || "var(--primary)",
+                          }}
+                          aria-label="event color"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        );
-      })()}
+              ))}
+            </div>
+          );
+        })()}
 
       <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-3">
         <Button
