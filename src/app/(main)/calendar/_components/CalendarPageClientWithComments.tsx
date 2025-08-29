@@ -465,14 +465,14 @@ export function CalendarPageClientWithComments() {
                           >
                             <Suspense
                               fallback={
-                                <UnifiedSkeleton className="h-[100px]" />
+                                <UnifiedSkeleton variant="form" count={3} />
                               }
                             >
                               <PhotoUploadForm eventId={event.id} />
                             </Suspense>
                             <Suspense
                               fallback={
-                                <UnifiedSkeleton className="h-[300px]" />
+                                <UnifiedSkeleton variant="gallery-grid" count={8} />
                               }
                             >
                               <PhotoGallery eventId={event.id} />
