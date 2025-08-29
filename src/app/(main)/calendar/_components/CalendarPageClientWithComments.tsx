@@ -63,6 +63,17 @@ export function CalendarPageClientWithComments() {
   // Keyboard shortcuts: N create, E edit selected day
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      // Ignore when typing in inputs/textareas/contenteditable or when a modal is open
+      const t = e.target as HTMLElement | null;
+      const tag = t?.tagName?.toLowerCase();
+      const isEditable =
+        !!t &&
+        (t.isContentEditable ||
+          tag === "input" ||
+          tag === "textarea" ||
+          t.getAttribute("role") === "textbox");
+      if (isEditable || modal.isOpen) return;
+
       const isK = (e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey);
       if (isK) {
         e.preventDefault();

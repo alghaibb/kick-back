@@ -293,9 +293,9 @@ export function useMoveEvent() {
               ? {
                   ...ev,
                   // Keep existing time component, change the date only at client-side for display
-                  date: `${newDateStr}T${new Date(ev.date)
-                    .toISOString()
-                    .split("T")[1]}`,
+                  date: `${newDateStr}T${
+                    new Date(ev.date).toISOString().split("T")[1]
+                  }`,
                 }
               : ev
           ),
