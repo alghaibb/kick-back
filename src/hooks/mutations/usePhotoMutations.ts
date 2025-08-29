@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { suppressPhotoLikeRefetch } from "@/hooks/queries/_likesRefetchControl";
 import { useImageUpload } from "@/hooks/mutations/useFileUpload";
 import {
   savePhotoMetadataAction,
@@ -224,9 +225,9 @@ export function useLikePhoto() {
         }
       );
 
-      // Lock to prevent overlapping invalidations during optimistic window
-      const lockId = Math.random().toString(36).slice(2);
-      return { previousPhotos, eventId, lockId };
+      // Suppress polling refresh for this photo briefly to avoid bounce
+      suppressPhotoLikeRefetch(photoId, 800);
+      return { previousPhotos, eventId };
     },
     onError: (error: Error, variables, context) => {
       // Only rollback and show error if something went really wrong

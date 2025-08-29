@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { getPhotoLikeSuppressRemaining } from "@/hooks/queries/_likesRefetchControl";
 import { useState, useEffect } from "react";
 
 export interface EventPhotoData {
@@ -70,7 +71,15 @@ export function useEventPhotos(eventId: string) {
     enabled: !!eventId,
     staleTime: 0, // keep fresh to align with optimistic likes
     gcTime: 10 * 60 * 1000,
-    refetchInterval: getPollingInterval(),
+    refetchInterval: () => {
+      // Delay polling if a like was just optimistically toggled
+      const suppress = (query.data?.photos || []).reduce((max, p) => {
+        const remain = getPhotoLikeSuppressRemaining(p.id);
+        return Math.max(max, remain);
+      }, 0);
+      if (suppress > 0) return suppress;
+      return getPollingInterval();
+    },
     refetchOnWindowFocus: true, // Re-enable for instant updates
     refetchOnReconnect: true,
     // Optimize network requests
