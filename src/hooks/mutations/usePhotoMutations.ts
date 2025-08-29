@@ -211,7 +211,7 @@ export function useLikePhoto() {
       const lockId = Math.random().toString(36).slice(2);
       return { previousPhotos, eventId, lockId };
     },
-    onError: (error: Error, , context) => {
+    onError: (error: Error, variables, context) => {
       // Only rollback and show error if something went really wrong
       console.error("Photo like error:", error);
       if (context?.previousPhotos && context?.eventId) {
