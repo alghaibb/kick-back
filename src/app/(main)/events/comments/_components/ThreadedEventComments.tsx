@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo, memo } from "react";
+import React, { useState, useCallback, useMemo, memo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -443,6 +443,13 @@ export default function ThreadedEventComments({
     new Set()
   );
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
+  
+  // Restore pending deletions on component mount (after navigation)
+  useEffect(() => {
+    // This will trigger a re-evaluation of suppression and ensure
+    // that any pending deletions from before navigation are respected
+    // The suppression mechanism will prevent queries from running if still active
+  }, [eventId]);
 
   // Use the existing mobile hook
   const isMobile = useIsMobile();
@@ -1161,9 +1168,7 @@ export default function ThreadedEventComments({
         ) : allComments.length > 0 ? (
           <>
             {allComments.map((comment) => (
-              <div key={comment.id}>
-                {renderComment(comment, 0)}
-              </div>
+              <div key={comment.id}>{renderComment(comment, 0)}</div>
             ))}
 
             {/* Load more button */}

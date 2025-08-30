@@ -548,11 +548,58 @@ function updateCommentWithReaction(
   };
 }
 
-// Global map to track pending deletions
+// Global map to track pending deletions with localStorage persistence
+const PENDING_DELETIONS_KEY = 'pending-comment-deletions';
+
+// In-memory map for active timeouts
 const pendingDeletions = new Map<
   string,
   { timeoutId: NodeJS.Timeout; commentData: EventCommentData }
 >();
+
+// Persistent storage for comment data across navigation
+function getPendingDeletionsData(): Record<string, { commentData: EventCommentData; until: number }> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const stored = localStorage.getItem(PENDING_DELETIONS_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
+
+function setPendingDeletionsData(data: Record<string, { commentData: EventCommentData; until: number }>) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(PENDING_DELETIONS_KEY, JSON.stringify(data));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+// Clean up expired pending deletions
+function cleanupExpiredDeletions() {
+  if (typeof window === 'undefined') return;
+  const data = getPendingDeletionsData();
+  const now = Date.now();
+  let hasChanges = false;
+  
+  Object.keys(data).forEach(commentId => {
+    if (data[commentId].until < now) {
+      delete data[commentId];
+      hasChanges = true;
+    }
+  });
+  
+  if (hasChanges) {
+    setPendingDeletionsData(data);
+  }
+}
+
+// Initialize cleanup on module load
+if (typeof window !== 'undefined') {
+  cleanupExpiredDeletions();
+}
 
 // Type for delete comment result
 interface DeleteCommentResult {
@@ -592,7 +639,13 @@ export function useDeleteComment() {
         const timeoutId = setTimeout(async () => {
           try {
             const result = await deleteCommentAction(data.commentId);
+            
+            // Clean up both in-memory and persistent storage
             pendingDeletions.delete(data.commentId);
+            const persistentData = getPendingDeletionsData();
+            delete persistentData[data.commentId];
+            setPendingDeletionsData(persistentData);
+            
             if (result.error) {
               reject(new Error(result.error));
               return;
@@ -600,7 +653,11 @@ export function useDeleteComment() {
             // This will trigger onSuccess with the actual server result
             resolve({ success: result.success || true, serverDeleted: true });
           } catch (error) {
+            // Clean up both in-memory and persistent storage
             pendingDeletions.delete(data.commentId);
+            const persistentData = getPendingDeletionsData();
+            delete persistentData[data.commentId];
+            setPendingDeletionsData(persistentData);
             reject(error);
           }
         }, 5000); // 5 second delay
@@ -610,6 +667,14 @@ export function useDeleteComment() {
           timeoutId,
           commentData: {} as EventCommentData, // Will be filled in onMutate
         });
+        
+        // Also store in persistent storage
+        const persistentData = getPendingDeletionsData();
+        persistentData[data.commentId] = {
+          commentData: {} as EventCommentData, // Will be filled in onMutate
+          until: Date.now() + 5000,
+        };
+        setPendingDeletionsData(persistentData);
 
         // Return immediately for optimistic UI
         resolve({ success: true, delayed: true });
@@ -757,11 +822,18 @@ export function useDeleteComment() {
         queryClient.setQueryData(key, { ...prev, pages });
       });
 
-      // Store the deleted comment for potential undo
+      // Store the deleted comment for potential undo (both in-memory and persistent)
       if (deletedComment) {
         const pending = pendingDeletions.get(commentId);
         if (pending) {
           pending.commentData = deletedComment;
+        }
+        
+        // Also update persistent storage
+        const persistentData = getPendingDeletionsData();
+        if (persistentData[commentId]) {
+          persistentData[commentId].commentData = deletedComment;
+          setPendingDeletionsData(persistentData);
         }
       }
 
@@ -820,21 +892,35 @@ export function useUndoCommentDeletion() {
   return useMutation({
     mutationFn: async (data: { commentId: string; eventId: string }) => {
       const pending = pendingDeletions.get(data.commentId);
-      if (!pending) {
+      const persistentData = getPendingDeletionsData();
+      const persistentPending = persistentData[data.commentId];
+      
+      if (!pending && !persistentPending) {
         throw new Error("No pending deletion to undo");
       }
 
-      // Cancel the pending deletion
-      clearTimeout(pending.timeoutId);
-      pendingDeletions.delete(data.commentId);
+      // Cancel the pending deletion if it exists in memory
+      if (pending) {
+        clearTimeout(pending.timeoutId);
+        pendingDeletions.delete(data.commentId);
+      }
+      
+      // Clean up persistent storage
+      if (persistentPending) {
+        delete persistentData[data.commentId];
+        setPendingDeletionsData(persistentData);
+      }
 
-      return { success: true, commentData: pending.commentData };
+      const commentData = pending?.commentData || persistentPending?.commentData;
+      return { success: true, commentData };
     },
     onMutate: async ({ commentId, eventId }) => {
       const pending = pendingDeletions.get(commentId);
-      if (!pending?.commentData) return;
-
-      const commentData = pending.commentData;
+      const persistentData = getPendingDeletionsData();
+      const persistentPending = persistentData[commentId];
+      
+      const commentData = pending?.commentData || persistentPending?.commentData;
+      if (!commentData) return;
 
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
@@ -888,9 +974,13 @@ export function useUndoCommentDeletion() {
 
         // Check replies recursively and update counts
         return list.map((comment) => {
-          const restoredReplies = restoreRecursive(comment.replies || [], comment.id);
-          const hadReplyRestored = restoredReplies.length > (comment.replies || []).length;
-          
+          const restoredReplies = restoreRecursive(
+            comment.replies || [],
+            comment.id
+          );
+          const hadReplyRestored =
+            restoredReplies.length > (comment.replies || []).length;
+
           return {
             ...comment,
             replies: restoredReplies,
