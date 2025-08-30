@@ -632,7 +632,11 @@ export function useDeleteComment() {
       await queryClient.cancelQueries({
         queryKey: ["infinite-event-comments", eventId],
       });
-      await queryClient.cancelQueries({ queryKey: ["infinite-replies"] });
+      // Cancel ALL infinite replies queries for this event to prevent bounce
+      await queryClient.cancelQueries({ 
+        queryKey: ["infinite-replies", eventId],
+        exact: false, // Cancel all variations
+      });
 
       const rollbacks: Array<() => void> = [];
       let deletedComment: EventCommentData | null = null;
@@ -735,8 +739,9 @@ export function useDeleteComment() {
         }
       }
 
-      // Suppress refetch for longer to prevent bounce during delayed deletion
-      suppressEventCommentsRefetch(eventId, 6000); // 6 seconds (longer than deletion delay)
+      // Suppress refetch for even longer to prevent bounce during delayed deletion
+      // Especially important for replies which have aggressive polling
+      suppressEventCommentsRefetch(eventId, 8000); // 8 seconds (much longer than deletion delay)
       return { rollbacks, eventId, deletedComment };
     },
     onSuccess: (result, variables) => {
@@ -748,7 +753,7 @@ export function useDeleteComment() {
 
       // Handle actual server deletion completion
       if (result?.serverDeleted) {
-        // Server deletion completed - do a gentle background sync
+        // Server deletion completed - do a gentle background sync with longer delay for replies
         setTimeout(() => {
           queryClient.invalidateQueries({
             queryKey: ["event-comments", variables.eventId],
@@ -758,10 +763,13 @@ export function useDeleteComment() {
             queryKey: ["infinite-event-comments", variables.eventId],
             refetchType: "inactive",
           });
-          queryClient.invalidateQueries({
-            queryKey: ["infinite-replies"],
-            refetchType: "inactive",
-          });
+          // Longer delay for infinite replies to prevent bounce
+          setTimeout(() => {
+            queryClient.invalidateQueries({
+              queryKey: ["infinite-replies"],
+              refetchType: "inactive",
+            });
+          }, 1000); // Additional 1 second delay for replies
         }, 500);
       }
     },
