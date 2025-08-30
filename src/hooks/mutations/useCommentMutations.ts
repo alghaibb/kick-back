@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { pausePolling } from "@/hooks/queries/usePausablePolling";
 import {
   CreateCommentValues,
   ReplyCommentValues,
@@ -572,8 +573,7 @@ function setPendingDeletionsData(
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(PENDING_DELETIONS_KEY, JSON.stringify(data));
-  } catch {
-  }
+  } catch {}
 }
 
 function cleanupExpiredDeletions() {
@@ -630,6 +630,9 @@ export function useDeleteComment() {
         }
         throw new Error("No pending deletion to undo");
       }
+
+      // Pause polling for this event's comments during deletion
+      pausePolling(`event-comments-${data.eventId}`, 6000);
 
       return new Promise((resolve, reject) => {
         const timeoutId = setTimeout(async () => {
@@ -691,10 +694,15 @@ export function useDeleteComment() {
         };
         setPendingDeletionsData(persistentData);
 
-        resolve({ success: true, delayed: true });
+        // Don't resolve immediately - let the timeout complete
       });
     },
     onMutate: async ({ commentId, eventId, undoAction }) => {
+      // Pause polling immediately when starting deletion (unless it's an undo)
+      if (!undoAction) {
+        pausePolling(`event-comments-${eventId}`, 7000);
+      }
+
       if (undoAction) {
         // This is an undo - restore the comment
         const pending = pendingDeletions.get(commentId);
@@ -861,36 +869,42 @@ export function useDeleteComment() {
         }
       }
 
-      // Suppress refetch to prevent bounce during delayed deletion
-      // Reduced time to allow faster cache updates after restoration
+      // Show the toast with undo immediately
+      if (deletedComment && !undoAction) {
+        const isReply = deletedComment.parentId;
+        toast.success(isReply ? "Reply deleted" : "Comment deleted", {
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              // Use the undo mutation to restore
+              const pending = pendingDeletions.get(commentId);
+              if (pending) {
+                clearTimeout(pending.timeoutId);
+                pendingDeletions.delete(commentId);
+
+                const persistentData = getPendingDeletionsData();
+                delete persistentData[commentId];
+                setPendingDeletionsData(persistentData);
+
+                // Restore using rollbacks
+                rollbacks.forEach((rollback) => rollback());
+                toast.success("Comment restored");
+              }
+            },
+          },
+        });
+      }
+
       return { rollbacks, eventId, deletedComment };
     },
     onSuccess: (result, variables) => {
-      // Show success message only for the initial optimistic removal
-      if (result?.delayed) {
-        toast.success("Comment deleted");
-        return;
-      }
+      // Don't show any toast here - already shown in onMutate
 
       if (result?.serverDeleted) {
-        // Server deletion completed - do a gentle background sync with longer delay for replies
-        setTimeout(() => {
-          queryClient.invalidateQueries({
-            queryKey: ["event-comments", variables.eventId],
-            refetchType: "inactive",
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["infinite-event-comments", variables.eventId],
-            refetchType: "inactive",
-          });
-          // Longer delay for infinite replies to prevent bounce
-          setTimeout(() => {
-            queryClient.invalidateQueries({
-              queryKey: ["infinite-replies"],
-              refetchType: "inactive",
-            });
-          }, 1000); // Additional 1 second delay for replies
-        }, 500);
+        queryClient.invalidateQueries({
+          queryKey: ["event-comments", variables.eventId],
+          refetchType: "inactive",
+        });
       }
     },
     onError: (_err, _vars, context) => {
@@ -931,6 +945,8 @@ export function useUndoCommentDeletion() {
       return { success: true, commentData };
     },
     onMutate: async ({ commentId, eventId }) => {
+      // Pause polling immediately when starting deletion
+      pausePolling(`event-comments-${eventId}`, 7000);
       const pending = pendingDeletions.get(commentId);
       const persistentData = getPendingDeletionsData();
       const persistentPending = persistentData[commentId];

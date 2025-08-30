@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSmartPolling } from "@/hooks/useSmartPolling";
+import { isPollingPaused } from "@/hooks/queries/usePausablePolling";
 
 export interface CommentReaction {
   id: string;
@@ -69,7 +70,7 @@ export function useEventComments(
   eventId: string,
   sortBy: "newest" | "oldest" = "newest"
 ) {
-  const { pollingInterval } = useSmartPolling({ strategy: "ultra-fast" });
+  const { pollingInterval } = useSmartPolling({ strategy: "standard" });
 
   const query = useQuery({
     queryKey: ["event-comments", eventId, sortBy],
@@ -77,7 +78,12 @@ export function useEventComments(
     enabled: !!eventId,
     staleTime: 5000, // 5 seconds - good balance between freshness and performance
     gcTime: 10 * 60 * 1000,
-    refetchInterval: pollingInterval,
+    refetchInterval: () => {
+      if (isPollingPaused(`event-comments-${eventId}`)) {
+        return false;
+      }
+      return pollingInterval;
+    },
     refetchOnWindowFocus: false, // Keep disabled to prevent scroll jumps
     refetchOnReconnect: true,
     placeholderData: (previousData) => previousData, // Keep previous data while fetching new data

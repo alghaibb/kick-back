@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useSmartPolling } from "@/hooks/useSmartPolling";
+import { isPollingPaused } from "@/hooks/queries/usePausablePolling";
 import type { EventCommentData } from "./useEventComments";
 
 interface InfiniteCommentsResponse {
@@ -84,7 +85,7 @@ export function useInfiniteEventComments(
   sortBy: "newest" | "oldest" = "newest",
   limit: number = 10
 ) {
-  const { pollingInterval } = useSmartPolling({ strategy: "ultra-fast" });
+  const { pollingInterval } = useSmartPolling({ strategy: "standard" });
 
   return useInfiniteQuery({
     queryKey: ["infinite-event-comments", eventId, sortBy, limit],
@@ -95,7 +96,12 @@ export function useInfiniteEventComments(
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     staleTime: 5000, // 5 seconds - good balance between freshness and performance
     gcTime: 10 * 60 * 1000,
-    refetchInterval: pollingInterval,
+    refetchInterval: () => {
+      if (isPollingPaused(`event-comments-${eventId}`)) {
+        return false;
+      }
+      return pollingInterval;
+    },
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     refetchIntervalInBackground: false,
@@ -108,7 +114,7 @@ export function useInfiniteReplies(
   enabled: boolean = true,
   limit: number = 10
 ) {
-  const { pollingInterval } = useSmartPolling({ strategy: "ultra-fast" });
+  const { pollingInterval } = useSmartPolling({ strategy: "standard" });
 
   return useInfiniteQuery({
     queryKey: ["infinite-replies", eventId, commentId, limit],
@@ -119,7 +125,12 @@ export function useInfiniteReplies(
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     staleTime: 5000, // 5 seconds - good balance between freshness and performance
     gcTime: 10 * 60 * 1000,
-    refetchInterval: pollingInterval,
+    refetchInterval: () => {
+      if (isPollingPaused(`event-comments-${eventId}`)) {
+        return false;
+      }
+      return pollingInterval;
+    },
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     refetchIntervalInBackground: false,
