@@ -44,6 +44,7 @@ import {
   useCreateComment,
   useToggleReaction,
   useDeleteComment,
+  useUndoCommentDeletion,
 } from "@/hooks/mutations/useCommentMutations";
 import {
   createCommentSchema,
@@ -259,6 +260,7 @@ export default function ThreadedEventComments({
   const createCommentMutation = useCreateComment();
   const toggleReactionMutation = useToggleReaction();
   const deleteCommentMutation = useDeleteComment();
+  const undoCommentDeletionMutation = useUndoCommentDeletion();
 
   const { open: openModal } = useModal();
 
@@ -317,12 +319,16 @@ export default function ThreadedEventComments({
               action: {
                 label: "Undo",
                 onClick: () => {
-                  // TODO: Implement undo functionality if needed
-                  toast.info("Undo not implemented yet");
+                  undoCommentDeletionMutation.mutate({ commentId, eventId });
                 },
               },
+              duration: 5000, // Give user 5 seconds to undo
             }
           );
+        },
+        onError: (error) => {
+          console.error("Delete comment error:", error);
+          toast.error("Failed to delete comment");
         },
       }
     );

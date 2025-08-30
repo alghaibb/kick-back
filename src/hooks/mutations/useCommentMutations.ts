@@ -547,18 +547,62 @@ function updateCommentWithReaction(
   };
 }
 
+// Global map to track pending deletions
+const pendingDeletions = new Map<string, { timeoutId: NodeJS.Timeout; commentData: EventCommentData }>();
+
 export function useDeleteComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { commentId: string; eventId: string }) => {
-      const result = await deleteCommentAction(data.commentId);
-      if (result.error) {
-        throw new Error(result.error);
+    mutationFn: async (data: { commentId: string; eventId: string; undoAction?: boolean }) => {
+      if (data.undoAction) {
+        // This is an undo - cancel the pending deletion
+        const pending = pendingDeletions.get(data.commentId);
+        if (pending) {
+          clearTimeout(pending.timeoutId);
+          pendingDeletions.delete(data.commentId);
+          return { success: true, undone: true };
+        }
+        throw new Error("No pending deletion to undo");
       }
-      return result;
+
+      // Regular deletion - delay server call
+      return new Promise((resolve) => {
+        const timeoutId = setTimeout(async () => {
+          try {
+            const result = await deleteCommentAction(data.commentId);
+            pendingDeletions.delete(data.commentId);
+            if (result.error) {
+              throw new Error(result.error);
+            }
+            resolve(result);
+          } catch (error) {
+            pendingDeletions.delete(data.commentId);
+            throw error;
+          }
+        }, 5000); // 5 second delay
+
+        // Store the timeout so it can be cancelled
+        pendingDeletions.set(data.commentId, {
+          timeoutId,
+          commentData: {} as EventCommentData, // Will be filled in onMutate
+        });
+
+        // Return immediately for optimistic UI
+        resolve({ success: true, delayed: true });
+      });
     },
-    onMutate: async ({ commentId, eventId }) => {
+    onMutate: async ({ commentId, eventId, undoAction }) => {
+      if (undoAction) {
+        // This is an undo - restore the comment
+        const pending = pendingDeletions.get(commentId);
+        if (pending?.commentData) {
+          // Restore comment to all caches
+          return { isUndo: true, commentData: pending.commentData };
+        }
+        return { isUndo: true };
+      }
+
       // Cancel outgoing refetches that could overwrite optimistic removal
       await queryClient.cancelQueries({
         queryKey: ["event-comments", eventId],
@@ -569,24 +613,30 @@ export function useDeleteComment() {
       await queryClient.cancelQueries({ queryKey: ["infinite-replies"] });
 
       const rollbacks: Array<() => void> = [];
+      let deletedComment: EventCommentData | null = null;
 
-      // Helper to remove a comment (or reply) recursively
+      // Helper to remove a comment (or reply) recursively and capture it
       const removeRecursive = (
         list: EventCommentData[]
-      ): { list: EventCommentData[]; removed: boolean } => {
+      ): { list: EventCommentData[]; removed: boolean; deletedComment?: EventCommentData } => {
         let removed = false;
+        let deletedComment: EventCommentData | undefined;
         const next = list
           .map((c) => {
             if (c.id === commentId) {
               removed = true;
+              deletedComment = c; // Capture the deleted comment
               return null;
             }
             const child = removeRecursive(c.replies || []);
-            if (child.removed) removed = true;
+            if (child.removed) {
+              removed = true;
+              if (child.deletedComment) deletedComment = child.deletedComment;
+            }
             return { ...c, replies: child.list } as EventCommentData;
           })
           .filter(Boolean) as EventCommentData[];
-        return { list: next, removed };
+        return { list: next, removed, deletedComment };
       };
 
       // Non-infinite comments
@@ -599,6 +649,9 @@ export function useDeleteComment() {
         );
         const res = removeRecursive(prevNonInfinite.comments);
         if (res.removed) {
+          if (res.deletedComment && !deletedComment) {
+            deletedComment = res.deletedComment;
+          }
           queryClient.setQueryData<CommentsResponse>(nonInfiniteKey, {
             comments: res.list,
             totalCount: Math.max(0, (prevNonInfinite.totalCount || 0) - 1),
@@ -648,8 +701,16 @@ export function useDeleteComment() {
         queryClient.setQueryData(key, { ...prev, pages });
       });
 
+      // Store the deleted comment for potential undo
+      if (deletedComment) {
+        const pending = pendingDeletions.get(commentId);
+        if (pending) {
+          pending.commentData = deletedComment;
+        }
+      }
+
       suppressEventCommentsRefetch(eventId, 2000);
-      return { rollbacks, eventId };
+      return { rollbacks, eventId, deletedComment };
     },
     onSuccess: (_, variables) => {
       // Soft sync in background after a brief delay
@@ -672,6 +733,133 @@ export function useDeleteComment() {
     onError: (_err, _vars, context) => {
       context?.rollbacks?.forEach((rb) => rb());
       toast.error("Failed to delete comment");
+    },
+  });
+}
+
+// Hook for undoing comment deletion
+export function useUndoCommentDeletion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { commentId: string; eventId: string }) => {
+      const pending = pendingDeletions.get(data.commentId);
+      if (!pending) {
+        throw new Error("No pending deletion to undo");
+      }
+
+      // Cancel the pending deletion
+      clearTimeout(pending.timeoutId);
+      pendingDeletions.delete(data.commentId);
+      
+      return { success: true, commentData: pending.commentData };
+    },
+    onMutate: async ({ commentId, eventId }) => {
+      const pending = pendingDeletions.get(commentId);
+      if (!pending?.commentData) return;
+
+      const commentData = pending.commentData;
+      
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: ["event-comments", eventId],
+      });
+      await queryClient.cancelQueries({
+        queryKey: ["infinite-event-comments", eventId],
+      });
+      await queryClient.cancelQueries({ queryKey: ["infinite-replies"] });
+
+      // Helper to restore comment recursively
+      const restoreRecursive = (
+        list: EventCommentData[],
+        parentId?: string
+      ): EventCommentData[] => {
+        if (commentData.parentId === parentId) {
+          // This is where the comment should be restored
+          const existingIndex = list.findIndex(c => c.id === commentId);
+          if (existingIndex === -1) {
+            // Add back the comment (maintain sort order by createdAt)
+            const newList = [...list, commentData];
+            return newList.sort((a, b) => 
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+          }
+        }
+        
+        // Check replies recursively
+        return list.map(comment => ({
+          ...comment,
+          replies: restoreRecursive(comment.replies || [], comment.id)
+        }));
+      };
+
+      // Restore to non-infinite comments
+      const nonInfiniteKey = ["event-comments", eventId];
+      const prevNonInfinite = queryClient.getQueryData<CommentsResponse>(nonInfiniteKey);
+      if (prevNonInfinite) {
+        const restoredComments = restoreRecursive(prevNonInfinite.comments);
+        queryClient.setQueryData<CommentsResponse>(nonInfiniteKey, {
+          comments: restoredComments,
+          totalCount: prevNonInfinite.totalCount + 1,
+        });
+      }
+
+      // Restore to infinite comments
+      const infQueries = queryClient
+        .getQueryCache()
+        .findAll({ queryKey: ["infinite-event-comments", eventId] });
+      infQueries.forEach((q) => {
+        const key = q.queryKey;
+        const prev = queryClient.getQueryData<{
+          pages: Array<{ comments: EventCommentData[] }>;
+          pageParams: unknown[];
+        }>(key);
+        if (!prev?.pages) return;
+        
+        const pages = prev.pages.map((page) => ({
+          ...page,
+          comments: restoreRecursive(page.comments)
+        }));
+        queryClient.setQueryData(key, { ...prev, pages });
+      });
+
+      // Restore to infinite replies if it's a reply
+      if (commentData.parentId) {
+        const infRepliesQueries = queryClient
+          .getQueryCache()
+          .findAll({ queryKey: ["infinite-replies", eventId, commentData.parentId] });
+        infRepliesQueries.forEach((q) => {
+          const key = q.queryKey;
+          const prev = queryClient.getQueryData<{
+            pages: Array<{ replies: EventCommentData[] }>;
+            pageParams: unknown[];
+          }>(key);
+          if (!prev?.pages) return;
+          
+          // Add back to first page
+          const firstPage = prev.pages[0];
+          if (firstPage) {
+            const existingIndex = firstPage.replies.findIndex(r => r.id === commentId);
+            if (existingIndex === -1) {
+              const newReplies = [commentData, ...firstPage.replies];
+              const pages = [
+                { ...firstPage, replies: newReplies },
+                ...prev.pages.slice(1)
+              ];
+              queryClient.setQueryData(key, { ...prev, pages });
+            }
+          }
+        });
+      }
+
+      suppressEventCommentsRefetch(eventId, 1000);
+      return { commentData };
+    },
+    onSuccess: () => {
+      toast.success("Comment restored");
+    },
+    onError: () => {
+      toast.error("Failed to undo deletion");
     },
   });
 }
