@@ -548,13 +548,20 @@ function updateCommentWithReaction(
 }
 
 // Global map to track pending deletions
-const pendingDeletions = new Map<string, { timeoutId: NodeJS.Timeout; commentData: EventCommentData }>();
+const pendingDeletions = new Map<
+  string,
+  { timeoutId: NodeJS.Timeout; commentData: EventCommentData }
+>();
 
 export function useDeleteComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { commentId: string; eventId: string; undoAction?: boolean }) => {
+    mutationFn: async (data: {
+      commentId: string;
+      eventId: string;
+      undoAction?: boolean;
+    }) => {
       if (data.undoAction) {
         // This is an undo - cancel the pending deletion
         const pending = pendingDeletions.get(data.commentId);
@@ -618,7 +625,11 @@ export function useDeleteComment() {
       // Helper to remove a comment (or reply) recursively and capture it
       const removeRecursive = (
         list: EventCommentData[]
-      ): { list: EventCommentData[]; removed: boolean; deletedComment?: EventCommentData } => {
+      ): {
+        list: EventCommentData[];
+        removed: boolean;
+        deletedComment?: EventCommentData;
+      } => {
         let removed = false;
         let deletedComment: EventCommentData | undefined;
         const next = list
@@ -751,7 +762,7 @@ export function useUndoCommentDeletion() {
       // Cancel the pending deletion
       clearTimeout(pending.timeoutId);
       pendingDeletions.delete(data.commentId);
-      
+
       return { success: true, commentData: pending.commentData };
     },
     onMutate: async ({ commentId, eventId }) => {
@@ -759,7 +770,7 @@ export function useUndoCommentDeletion() {
       if (!pending?.commentData) return;
 
       const commentData = pending.commentData;
-      
+
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
         queryKey: ["event-comments", eventId],
@@ -776,26 +787,47 @@ export function useUndoCommentDeletion() {
       ): EventCommentData[] => {
         if (commentData.parentId === parentId) {
           // This is where the comment should be restored
-          const existingIndex = list.findIndex(c => c.id === commentId);
+          const existingIndex = list.findIndex((c) => c.id === commentId);
           if (existingIndex === -1) {
+            // Ensure user data is properly structured before restoration
+            const restoredComment: EventCommentData = {
+              ...commentData,
+              user: {
+                id: commentData.user?.id || "",
+                firstName: commentData.user?.firstName || "Unknown",
+                lastName: commentData.user?.lastName || null,
+                nickname: commentData.user?.nickname || null,
+                image: commentData.user?.image || null,
+              },
+              replies: commentData.replies || [],
+              reactions: commentData.reactions || [],
+              _count: {
+                replies: commentData._count?.replies || 0,
+                reactions: commentData._count?.reactions || 0,
+              },
+            };
+
             // Add back the comment (maintain sort order by createdAt)
-            const newList = [...list, commentData];
-            return newList.sort((a, b) => 
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            const newList = [...list, restoredComment];
+            return newList.sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
             );
           }
         }
-        
+
         // Check replies recursively
-        return list.map(comment => ({
+        return list.map((comment) => ({
           ...comment,
-          replies: restoreRecursive(comment.replies || [], comment.id)
+          replies: restoreRecursive(comment.replies || [], comment.id),
         }));
       };
 
       // Restore to non-infinite comments
       const nonInfiniteKey = ["event-comments", eventId];
-      const prevNonInfinite = queryClient.getQueryData<CommentsResponse>(nonInfiniteKey);
+      const prevNonInfinite =
+        queryClient.getQueryData<CommentsResponse>(nonInfiniteKey);
       if (prevNonInfinite) {
         const restoredComments = restoreRecursive(prevNonInfinite.comments);
         queryClient.setQueryData<CommentsResponse>(nonInfiniteKey, {
@@ -815,19 +847,19 @@ export function useUndoCommentDeletion() {
           pageParams: unknown[];
         }>(key);
         if (!prev?.pages) return;
-        
+
         const pages = prev.pages.map((page) => ({
           ...page,
-          comments: restoreRecursive(page.comments)
+          comments: restoreRecursive(page.comments),
         }));
         queryClient.setQueryData(key, { ...prev, pages });
       });
 
       // Restore to infinite replies if it's a reply
       if (commentData.parentId) {
-        const infRepliesQueries = queryClient
-          .getQueryCache()
-          .findAll({ queryKey: ["infinite-replies", eventId, commentData.parentId] });
+        const infRepliesQueries = queryClient.getQueryCache().findAll({
+          queryKey: ["infinite-replies", eventId, commentData.parentId],
+        });
         infRepliesQueries.forEach((q) => {
           const key = q.queryKey;
           const prev = queryClient.getQueryData<{
@@ -835,16 +867,36 @@ export function useUndoCommentDeletion() {
             pageParams: unknown[];
           }>(key);
           if (!prev?.pages) return;
-          
+
           // Add back to first page
           const firstPage = prev.pages[0];
           if (firstPage) {
-            const existingIndex = firstPage.replies.findIndex(r => r.id === commentId);
+            const existingIndex = firstPage.replies.findIndex(
+              (r) => r.id === commentId
+            );
             if (existingIndex === -1) {
-              const newReplies = [commentData, ...firstPage.replies];
+              // Use the same properly structured comment data
+              const restoredComment: EventCommentData = {
+                ...commentData,
+                user: {
+                  id: commentData.user?.id || "",
+                  firstName: commentData.user?.firstName || "Unknown",
+                  lastName: commentData.user?.lastName || null,
+                  nickname: commentData.user?.nickname || null,
+                  image: commentData.user?.image || null,
+                },
+                replies: commentData.replies || [],
+                reactions: commentData.reactions || [],
+                _count: {
+                  replies: commentData._count?.replies || 0,
+                  reactions: commentData._count?.reactions || 0,
+                },
+              };
+
+              const newReplies = [restoredComment, ...firstPage.replies];
               const pages = [
                 { ...firstPage, replies: newReplies },
-                ...prev.pages.slice(1)
+                ...prev.pages.slice(1),
               ];
               queryClient.setQueryData(key, { ...prev, pages });
             }

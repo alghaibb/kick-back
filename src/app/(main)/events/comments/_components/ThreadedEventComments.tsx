@@ -517,12 +517,12 @@ export default function ThreadedEventComments({
               className="flex-shrink-0"
               style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}
             >
-              <AvatarImage src={comment.user.image || undefined} />
+              <AvatarImage src={comment.user?.image || undefined} />
               <AvatarFallback
                 className={cn(fontSize, "font-medium")}
                 style={{ fontSize: `${Math.max(10, 14 - depth)}px` }}
               >
-                {comment.user.firstName?.[0]?.toUpperCase() || "?"}
+                {comment.user?.firstName?.[0]?.toUpperCase() || "?"}
               </AvatarFallback>
             </Avatar>
 
@@ -938,7 +938,7 @@ export default function ThreadedEventComments({
           </div>
         ) : allComments.length > 0 ? (
           <>
-            {allComments.map((comment) => renderComment(comment))}
+            {allComments.map((comment) => renderComment(comment, 0))}
 
             {/* Load more button */}
             {hasNextComments && (
