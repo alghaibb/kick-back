@@ -121,7 +121,11 @@ export function useInfiniteReplies(
     queryFn: ({ pageParam }) =>
       fetchRepliesPage(eventId, commentId, pageParam, limit),
     // Completely disable the query during suppression to prevent bounce
-    enabled: enabled && !!eventId && !!commentId && getEventCommentsSuppressRemaining(eventId) === 0,
+    enabled:
+      enabled &&
+      !!eventId &&
+      !!commentId &&
+      getEventCommentsSuppressRemaining(eventId) === 0,
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     staleTime: 0, // instant UI with optimistic updates
@@ -129,12 +133,15 @@ export function useInfiniteReplies(
     refetchInterval: (q) => {
       const remain = getEventCommentsSuppressRemaining(eventId);
       if (remain > 0) return false; // Completely stop polling during event suppression
-      
+
       // Check if any replies in the current data are individually suppressed
-      const allReplies = q.state.data?.pages.flatMap(page => page.replies) || [];
-      const hasSupressedReply = allReplies.some(reply => isReplyRefetchSuppressed(reply.id));
+      const allReplies =
+        q.state.data?.pages.flatMap((page) => page.replies) || [];
+      const hasSupressedReply = allReplies.some((reply) =>
+        isReplyRefetchSuppressed(reply.id)
+      );
       if (hasSupressedReply) return false; // Stop polling if any reply is suppressed
-      
+
       return pollingInterval;
     },
     refetchOnWindowFocus: false,

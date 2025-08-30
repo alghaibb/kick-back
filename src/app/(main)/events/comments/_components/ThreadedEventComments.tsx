@@ -355,7 +355,8 @@ function ThreadedRepliesSection({
     const nestedReplies = reply.replies || [];
     const hasNestedReplies = nestedReplies.length > 0;
     const isExpanded = expandedReplies.has(reply.id);
-    const replyCount = reply._count?.replies || nestedReplies.length;
+    // Use the actual nested replies length for accurate count after deletions
+    const replyCount = nestedReplies.length;
 
     return (
       <div key={reply.id}>
@@ -1159,7 +1160,11 @@ export default function ThreadedEventComments({
           </div>
         ) : allComments.length > 0 ? (
           <>
-            {allComments.map((comment) => renderComment(comment, 0))}
+            {allComments.map((comment) => (
+              <div key={comment.id}>
+                {renderComment(comment, 0)}
+              </div>
+            ))}
 
             {/* Load more button */}
             {hasNextComments && (

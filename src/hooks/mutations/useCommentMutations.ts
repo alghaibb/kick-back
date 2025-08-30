@@ -656,13 +656,38 @@ export function useDeleteComment() {
           .map((c) => {
             if (c.id === commentId) {
               removed = true;
-              deletedComment = c; // Capture the deleted comment
+              // Deep clone the deleted comment to preserve all data
+              deletedComment = {
+                ...c,
+                user: {
+                  id: c.user?.id || "",
+                  firstName: c.user?.firstName || "Unknown",
+                  lastName: c.user?.lastName || null,
+                  nickname: c.user?.nickname || null,
+                  image: c.user?.image || null,
+                },
+                replies: c.replies || [],
+                reactions: c.reactions || [],
+                _count: {
+                  replies: c._count?.replies || 0,
+                  reactions: c._count?.reactions || 0,
+                },
+              };
               return null;
             }
             const child = removeRecursive(c.replies || []);
             if (child.removed) {
               removed = true;
               if (child.deletedComment) deletedComment = child.deletedComment;
+              // Update reply count when a reply is removed
+              return {
+                ...c,
+                replies: child.list,
+                _count: {
+                  ...c._count,
+                  replies: Math.max(0, (c._count?.replies || 0) - 1),
+                },
+              } as EventCommentData;
             }
             return { ...c, replies: child.list } as EventCommentData;
           })
@@ -743,12 +768,12 @@ export function useDeleteComment() {
       // Suppress refetch for even longer to prevent bounce during delayed deletion
       // Especially important for replies which have aggressive polling
       suppressEventCommentsRefetch(eventId, 8000); // 8 seconds (much longer than deletion delay)
-      
+
       // Also suppress the specific reply if this is a reply deletion
       if (deletedComment?.parentId) {
         suppressReplyRefetch(commentId, 10000); // 10 seconds for individual reply
       }
-      
+
       return { rollbacks, eventId, deletedComment };
     },
     onSuccess: (result, variables) => {
@@ -861,11 +886,23 @@ export function useUndoCommentDeletion() {
           }
         }
 
-        // Check replies recursively
-        return list.map((comment) => ({
-          ...comment,
-          replies: restoreRecursive(comment.replies || [], comment.id),
-        }));
+        // Check replies recursively and update counts
+        return list.map((comment) => {
+          const restoredReplies = restoreRecursive(comment.replies || [], comment.id);
+          const hadReplyRestored = restoredReplies.length > (comment.replies || []).length;
+          
+          return {
+            ...comment,
+            replies: restoredReplies,
+            // Increment reply count if a reply was restored to this comment
+            _count: hadReplyRestored
+              ? {
+                  ...comment._count,
+                  replies: (comment._count?.replies || 0) + 1,
+                }
+              : comment._count,
+          };
+        });
       };
 
       // Restore to non-infinite comments
