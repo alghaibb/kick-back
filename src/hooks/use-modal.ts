@@ -10,7 +10,6 @@ export type ModalType =
   | "create-template"
   | "edit-template"
   | "delete-photo"
-  | "delete-comment"
   | "delete-template"
   | "delete-account"
   | "delete-user"

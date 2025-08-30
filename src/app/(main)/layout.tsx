@@ -15,11 +15,7 @@ const DeleteEventModal = lazy(() =>
 const EditEventModal = lazy(
   () => import("./events/_components/EditEventModal")
 );
-const DeleteCommentModal = lazy(() =>
-  import("./events/comments/_components/DeleteCommentModal").then((m) => ({
-    default: m.DeleteCommentModal,
-  }))
-);
+
 const ReplyCommentModal = lazy(() =>
   import("./events/comments/_components/ReplyCommentModal").then((m) => ({
     default: m.ReplyCommentModal,
@@ -106,9 +102,7 @@ export default function MainLayout({
       <Suspense fallback={null}>
         <EditEventModal />
       </Suspense>
-      <Suspense fallback={null}>
-        <DeleteCommentModal />
-      </Suspense>
+
       <Suspense fallback={null}>
         <ReplyCommentModal />
       </Suspense>

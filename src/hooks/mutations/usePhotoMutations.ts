@@ -213,7 +213,7 @@ export function useLikePhoto() {
 
       // Suppress polling briefly to avoid bounce after optimistic update
       suppressPhotoLikeRefetch(photoId, 1500);
-      
+
       return { previousPhotos, eventId };
     },
     onError: (error: Error, variables, context) => {

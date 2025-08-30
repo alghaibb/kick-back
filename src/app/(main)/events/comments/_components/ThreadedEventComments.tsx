@@ -43,6 +43,7 @@ import {
 import {
   useCreateComment,
   useToggleReaction,
+  useDeleteComment,
 } from "@/hooks/mutations/useCommentMutations";
 import {
   createCommentSchema,
@@ -257,6 +258,7 @@ export default function ThreadedEventComments({
   // Mutations
   const createCommentMutation = useCreateComment();
   const toggleReactionMutation = useToggleReaction();
+  const deleteCommentMutation = useDeleteComment();
 
   const { open: openModal } = useModal();
 
@@ -296,13 +298,34 @@ export default function ThreadedEventComments({
     toggleReactionMutation.mutate({ commentId, emoji, eventId });
   };
 
-  const handleDeleteComment = (commentId: string) => {
-    openModal("delete-comment", {
-      commentId,
-      eventId,
-      isReply: false,
-      commentContent: "",
-    });
+  const handleDeleteComment = (commentId: string, content?: string) => {
+    const isReply = false; // This function is for top-level comments
+    const itemType = isReply ? "reply" : "comment";
+    const previewContent =
+      content && content.length > 30
+        ? `${content.substring(0, 30)}...`
+        : content || "this comment";
+
+    deleteCommentMutation.mutate(
+      { commentId, eventId },
+      {
+        onSuccess: () => {
+          toast.success(
+            `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} deleted`,
+            {
+              description: `"${previewContent}"`,
+              action: {
+                label: "Undo",
+                onClick: () => {
+                  // TODO: Implement undo functionality if needed
+                  toast.info("Undo not implemented yet");
+                },
+              },
+            }
+          );
+        },
+      }
+    );
   };
 
   const toggleRepliesExpansion = useCallback((commentId: string) => {
@@ -552,7 +575,9 @@ export default function ThreadedEventComments({
                       )}
                       {canDelete && (
                         <DropdownMenuItem
-                          onClick={() => handleDeleteComment(comment.id)}
+                          onClick={() =>
+                            handleDeleteComment(comment.id, comment.content)
+                          }
                           className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="h-3 w-3 mr-2" />
