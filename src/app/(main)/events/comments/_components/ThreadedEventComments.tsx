@@ -45,10 +45,13 @@ import {
   useToggleReaction,
   useDeleteComment,
   useUndoCommentDeletion,
+  useCreateReply,
 } from "@/hooks/mutations/useCommentMutations";
 import {
   createCommentSchema,
   CreateCommentValues,
+  replyCommentSchema,
+  ReplyCommentValues,
 } from "@/validations/events/createCommentSchema";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -67,6 +70,180 @@ interface ThreadedEventCommentsProps {
 }
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉", "👏"];
+
+// Inline Reply Form Component
+interface InlineReplyFormProps {
+  eventId: string;
+  parentId: string;
+  parentUser: {
+    id: string;
+    firstName: string;
+    nickname?: string | null;
+  };
+  onSubmit: () => void;
+  onCancel: () => void;
+  depth: number;
+}
+
+function InlineReplyForm({
+  eventId,
+  parentId,
+  parentUser,
+  onSubmit,
+  onCancel,
+  depth,
+}: InlineReplyFormProps) {
+  const { user } = useAuth();
+  const isMobile = useIsMobile();
+  const createReplyMutation = useCreateReply();
+
+  // Image upload for reply
+  const replyImageUpload = useImageUploadForm(undefined, undefined, {
+    ...IMAGE_UPLOAD_PRESETS.comment,
+    showToasts: false,
+    onSuccess: () => toast.success("Image uploaded successfully!"),
+    onError: (error) => toast.error(error),
+  });
+
+  // Reply form
+  const replyForm = useForm<ReplyCommentValues>({
+    resolver: zodResolver(replyCommentSchema),
+    defaultValues: {
+      content: "",
+      eventId,
+      parentId,
+      imageUrl: undefined,
+    },
+  });
+
+  const handleReplySubmit = async (values: ReplyCommentValues) => {
+    try {
+      await createReplyMutation.mutateAsync({
+        ...values,
+        imageUrl: replyImageUpload.displayUrl || undefined,
+      });
+      replyForm.reset();
+      replyImageUpload.removeImage();
+      onSubmit();
+    } catch (error) {
+      console.error("Reply submission error:", error);
+    }
+  };
+
+  const handleCancel = () => {
+    replyForm.reset();
+    replyImageUpload.removeImage();
+    onCancel();
+  };
+
+  const parentName = parentUser.nickname || parentUser.firstName;
+  const leftMargin = isMobile ? Math.min(depth * 16 + 32, 120) : Math.min(depth * 32 + 48, 200);
+
+  return (
+    <div 
+      className="mt-3 animate-in slide-in-from-top-2 duration-200"
+      style={{ marginLeft: `${leftMargin}px` }}
+    >
+      <div className="bg-muted/30 rounded-lg p-3 border border-border/50">
+        <div className="text-xs text-muted-foreground mb-2">
+          Replying to <span className="font-medium text-foreground">{parentName}</span>
+        </div>
+        
+        <form onSubmit={replyForm.handleSubmit(handleReplySubmit)} className="space-y-3">
+          <div className={cn("flex gap-2", isMobile && "gap-1.5")}>
+            <Avatar className={cn("flex-shrink-0", isMobile ? "h-6 w-6" : "h-7 w-7")}>
+              <AvatarImage src={user?.image || undefined} />
+              <AvatarFallback className={cn(isMobile && "text-xs")}>
+                {user?.firstName?.[0]?.toUpperCase() || "?"}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex-1 space-y-2">
+              <Input
+                {...replyForm.register("content")}
+                placeholder={`Reply to ${parentName}...`}
+                className={cn("bg-background border-border/50 focus:border-primary/50", isMobile && "h-8 text-sm")}
+                autoFocus
+              />
+              
+              {/* Image preview */}
+              {replyImageUpload.displayUrl && (
+                <div className="relative w-fit">
+                  <Image
+                    src={replyImageUpload.displayUrl}
+                    alt="Reply image"
+                    width={150}
+                    height={100}
+                    className="rounded border max-h-20 w-auto object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-0.5 right-0.5 h-5 w-5"
+                    onClick={replyImageUpload.removeImage}
+                  >
+                    ×
+                  </Button>
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={cn("p-1", isMobile && "h-6 w-6")} 
+                    onClick={() => replyImageUpload.imageRef.current?.click()}
+                    disabled={replyImageUpload.isUploading}
+                  >
+                    <ImageIcon className={cn("h-4 w-4 text-muted-foreground", isMobile && "h-3 w-3")} />
+                  </Button>
+                  <input
+                    ref={replyImageUpload.imageRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={replyImageUpload.handleImageChange}
+                    className="hidden"
+                  />
+                  {replyImageUpload.isUploading && (
+                    <ActionLoader action="upload" size="sm" />
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancel}
+                    className={cn("text-muted-foreground hover:text-foreground", isMobile && "h-7 px-2 text-xs")}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={createReplyMutation.isPending || !replyForm.watch("content").trim()}
+                    className={cn(isMobile && "h-7 px-3 text-xs")}
+                  >
+                    {createReplyMutation.isPending ? (
+                      <ActionLoader action="send" size="sm" className="mr-1" />
+                    ) : (
+                      <Send className={cn("h-3 w-3 mr-1", isMobile && "h-2.5 w-2.5")} />
+                    )}
+                    Reply
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 // Threaded replies section component - defined before main component
 interface ThreadedRepliesSectionProps {
@@ -237,6 +414,7 @@ export default function ThreadedEventComments({
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(
     new Set()
   );
+  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
 
   // Use the existing mobile hook
   const isMobile = useIsMobile();
@@ -263,6 +441,7 @@ export default function ThreadedEventComments({
   const toggleReactionMutation = useToggleReaction();
   const deleteCommentMutation = useDeleteComment();
   const undoCommentDeletionMutation = useUndoCommentDeletion();
+  const createReplyMutation = useCreateReply();
 
   const { open: openModal } = useModal();
 
@@ -350,17 +529,10 @@ export default function ThreadedEventComments({
 
   const handleStartReply = useCallback(
     (comment: EventCommentData) => {
-      // Open reply modal instead of inline form
-      openModal("reply-comment", {
-        eventId,
-        parentCommentId: comment.id,
-        replyingToUser: {
-          id: comment.user.id,
-          name: comment.user.nickname || comment.user.firstName,
-        },
-      });
+      // Toggle inline reply form
+      setActiveReplyId(activeReplyId === comment.id ? null : comment.id);
     },
-    [eventId, openModal]
+    [activeReplyId]
   );
 
   const handleEditComment = useCallback(
@@ -736,6 +908,18 @@ export default function ThreadedEventComments({
                   </Button>
                 )}
               </div>
+
+              {/* Inline reply form */}
+              {activeReplyId === comment.id && (
+                <InlineReplyForm
+                  eventId={eventId}
+                  parentId={comment.id}
+                  parentUser={comment.user}
+                  onSubmit={() => setActiveReplyId(null)}
+                  onCancel={() => setActiveReplyId(null)}
+                  depth={depth}
+                />
+              )}
 
               {/* Infinite threaded replies - only show for top-level */}
               {depth === 0 && isExpanded && (
