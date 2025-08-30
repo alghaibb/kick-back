@@ -137,35 +137,46 @@ function InlineReplyForm({
   };
 
   const parentName = parentUser.nickname || parentUser.firstName;
-  const leftMargin = isMobile ? Math.min(depth * 16 + 32, 120) : Math.min(depth * 32 + 48, 200);
+  const leftMargin = isMobile
+    ? Math.min(depth * 16 + 32, 120)
+    : Math.min(depth * 32 + 48, 200);
 
   return (
-    <div 
+    <div
       className="mt-3 animate-in slide-in-from-top-2 duration-200"
       style={{ marginLeft: `${leftMargin}px` }}
     >
       <div className="bg-muted/30 rounded-lg p-3 border border-border/50">
         <div className="text-xs text-muted-foreground mb-2">
-          Replying to <span className="font-medium text-foreground">{parentName}</span>
+          Replying to{" "}
+          <span className="font-medium text-foreground">{parentName}</span>
         </div>
-        
-        <form onSubmit={replyForm.handleSubmit(handleReplySubmit)} className="space-y-3">
+
+        <form
+          onSubmit={replyForm.handleSubmit(handleReplySubmit)}
+          className="space-y-3"
+        >
           <div className={cn("flex gap-2", isMobile && "gap-1.5")}>
-            <Avatar className={cn("flex-shrink-0", isMobile ? "h-6 w-6" : "h-7 w-7")}>
+            <Avatar
+              className={cn("flex-shrink-0", isMobile ? "h-6 w-6" : "h-7 w-7")}
+            >
               <AvatarImage src={user?.image || undefined} />
               <AvatarFallback className={cn(isMobile && "text-xs")}>
                 {user?.firstName?.[0]?.toUpperCase() || "?"}
               </AvatarFallback>
             </Avatar>
-            
+
             <div className="flex-1 space-y-2">
               <Input
                 {...replyForm.register("content")}
                 placeholder={`Reply to ${parentName}...`}
-                className={cn("bg-background border-border/50 focus:border-primary/50", isMobile && "h-8 text-sm")}
+                className={cn(
+                  "bg-background border-border/50 focus:border-primary/50",
+                  isMobile && "h-8 text-sm"
+                )}
                 autoFocus
               />
-              
+
               {/* Image preview */}
               {replyImageUpload.displayUrl && (
                 <div className="relative w-fit">
@@ -187,18 +198,23 @@ function InlineReplyForm({
                   </Button>
                 </div>
               )}
-              
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className={cn("p-1", isMobile && "h-6 w-6")} 
+                    className={cn("p-1", isMobile && "h-6 w-6")}
                     onClick={() => replyImageUpload.imageRef.current?.click()}
                     disabled={replyImageUpload.isUploading}
                   >
-                    <ImageIcon className={cn("h-4 w-4 text-muted-foreground", isMobile && "h-3 w-3")} />
+                    <ImageIcon
+                      className={cn(
+                        "h-4 w-4 text-muted-foreground",
+                        isMobile && "h-3 w-3"
+                      )}
+                    />
                   </Button>
                   <input
                     ref={replyImageUpload.imageRef}
@@ -211,27 +227,38 @@ function InlineReplyForm({
                     <ActionLoader action="upload" size="sm" />
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={handleCancel}
-                    className={cn("text-muted-foreground hover:text-foreground", isMobile && "h-7 px-2 text-xs")}
+                    className={cn(
+                      "text-muted-foreground hover:text-foreground",
+                      isMobile && "h-7 px-2 text-xs"
+                    )}
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     size="sm"
-                    disabled={createReplyMutation.isPending || !replyForm.watch("content").trim()}
+                    disabled={
+                      createReplyMutation.isPending ||
+                      !replyForm.watch("content").trim()
+                    }
                     className={cn(isMobile && "h-7 px-3 text-xs")}
                   >
                     {createReplyMutation.isPending ? (
                       <ActionLoader action="send" size="sm" className="mr-1" />
                     ) : (
-                      <Send className={cn("h-3 w-3 mr-1", isMobile && "h-2.5 w-2.5")} />
+                      <Send
+                        className={cn(
+                          "h-3 w-3 mr-1",
+                          isMobile && "h-2.5 w-2.5"
+                        )}
+                      />
                     )}
                     Reply
                   </Button>

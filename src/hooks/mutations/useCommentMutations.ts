@@ -553,10 +553,23 @@ const pendingDeletions = new Map<
   { timeoutId: NodeJS.Timeout; commentData: EventCommentData }
 >();
 
+// Type for delete comment result
+interface DeleteCommentResult {
+  success?: boolean;
+  error?: string;
+  delayed?: boolean;
+  serverDeleted?: boolean;
+  undone?: boolean;
+}
+
 export function useDeleteComment() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<
+    DeleteCommentResult,
+    Error,
+    { commentId: string; eventId: string; undoAction?: boolean }
+  >({
     mutationFn: async (data: {
       commentId: string;
       eventId: string;
@@ -574,18 +587,20 @@ export function useDeleteComment() {
       }
 
       // Regular deletion - delay server call
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const timeoutId = setTimeout(async () => {
           try {
             const result = await deleteCommentAction(data.commentId);
             pendingDeletions.delete(data.commentId);
             if (result.error) {
-              throw new Error(result.error);
+              reject(new Error(result.error));
+              return;
             }
-            resolve(result);
+            // This will trigger onSuccess with the actual server result
+            resolve({ success: result.success || true, serverDeleted: true });
           } catch (error) {
             pendingDeletions.delete(data.commentId);
-            throw error;
+            reject(error);
           }
         }, 5000); // 5 second delay
 
@@ -720,29 +735,39 @@ export function useDeleteComment() {
         }
       }
 
-      suppressEventCommentsRefetch(eventId, 2000);
+      // Suppress refetch for longer to prevent bounce during delayed deletion
+      suppressEventCommentsRefetch(eventId, 6000); // 6 seconds (longer than deletion delay)
       return { rollbacks, eventId, deletedComment };
     },
-    onSuccess: (_, variables) => {
-      // Soft sync in background after a brief delay
-      setTimeout(() => {
-        queryClient.invalidateQueries({
-          queryKey: ["event-comments", variables.eventId],
-          refetchType: "inactive",
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["infinite-event-comments", variables.eventId],
-          refetchType: "inactive",
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["infinite-replies"],
-          refetchType: "inactive",
-        });
-      }, 600);
-      toast.success("Comment deleted");
+    onSuccess: (result, variables) => {
+      // Show success message only for the initial optimistic removal
+      if (result?.delayed) {
+        toast.success("Comment deleted");
+        return;
+      }
+
+      // Handle actual server deletion completion
+      if (result?.serverDeleted) {
+        // Server deletion completed - do a gentle background sync
+        setTimeout(() => {
+          queryClient.invalidateQueries({
+            queryKey: ["event-comments", variables.eventId],
+            refetchType: "inactive",
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["infinite-event-comments", variables.eventId],
+            refetchType: "inactive",
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["infinite-replies"],
+            refetchType: "inactive",
+          });
+        }, 500);
+      }
     },
     onError: (_err, _vars, context) => {
-      context?.rollbacks?.forEach((rb) => rb());
+      const ctx = context as { rollbacks?: Array<() => void> } | undefined;
+      ctx?.rollbacks?.forEach((rb) => rb());
       toast.error("Failed to delete comment");
     },
   });
