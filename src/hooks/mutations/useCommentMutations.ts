@@ -297,6 +297,7 @@ export function useCreateReply() {
       });
 
       // Optimistically prepend reply to infinite replies first page
+      // Create the query if it doesn't exist (for fresh comments)
       const infRepliesKey = [
         "infinite-replies",
         values.eventId,
@@ -306,17 +307,32 @@ export function useCreateReply() {
         pages: Array<{ replies: EventCommentData[] }>;
         pageParams: unknown[];
       }>(infRepliesKey);
+
       if (prevReplies?.pages?.length) {
+        // Query exists - update it
         const first = prevReplies.pages[0];
         const pages = [
           { ...first, replies: [tempReply, ...(first.replies || [])] },
           ...prevReplies.pages.slice(1),
         ];
         queryClient.setQueryData(infRepliesKey, { ...prevReplies, pages });
+      } else {
+        // Query doesn't exist yet - create it with the new reply
+        queryClient.setQueryData(infRepliesKey, {
+          pages: [
+            {
+              replies: [tempReply],
+              totalCount: 1,
+              hasMore: false,
+              nextCursor: null,
+            },
+          ],
+          pageParams: [undefined],
+        });
       }
 
       // Suppress polling briefly to avoid bounce
-      suppressEventCommentsRefetch(values.eventId, 2000);
+      suppressEventCommentsRefetch(values.eventId, 1500);
 
       toast.success("Reply added!");
       return { previousComments, eventId: values.eventId };
@@ -676,7 +692,31 @@ export function useDeleteComment() {
         // Also store in persistent storage
         const persistentData = getPendingDeletionsData();
         persistentData[data.commentId] = {
-          commentData: {} as EventCommentData, // Will be filled in onMutate
+          commentData: {
+            // Initialize with basic structure to prevent serialization issues
+            id: data.commentId,
+            content: "",
+            imageUrl: null,
+            eventId: data.eventId,
+            userId: "",
+            parentId: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            editedAt: null,
+            user: {
+              id: "",
+              firstName: "Unknown",
+              lastName: null,
+              nickname: null,
+              image: null,
+            },
+            replies: [],
+            reactions: [],
+            _count: {
+              replies: 0,
+              reactions: 0,
+            },
+          } as EventCommentData, // Will be properly filled in onMutate
           until: Date.now() + 5000,
         };
         setPendingDeletionsData(persistentData);
@@ -834,21 +874,38 @@ export function useDeleteComment() {
           pending.commentData = deletedComment;
         }
 
-        // Also update persistent storage
+        // Also update persistent storage with complete user data
         const persistentData = getPendingDeletionsData();
         if (persistentData[commentId]) {
-          persistentData[commentId].commentData = deletedComment;
+          // Ensure user data is completely preserved before storing
+          const completeDeletedComment = {
+            ...deletedComment,
+            user: {
+              id: deletedComment.user?.id || "",
+              firstName: deletedComment.user?.firstName || "Unknown",
+              lastName: deletedComment.user?.lastName || null,
+              nickname: deletedComment.user?.nickname || null,
+              image: deletedComment.user?.image || null,
+            },
+            replies: deletedComment.replies || [],
+            reactions: deletedComment.reactions || [],
+            _count: {
+              replies: deletedComment._count?.replies || 0,
+              reactions: deletedComment._count?.reactions || 0,
+            },
+          };
+          persistentData[commentId].commentData = completeDeletedComment;
           setPendingDeletionsData(persistentData);
         }
       }
 
-      // Suppress refetch for even longer to prevent bounce during delayed deletion
-      // Especially important for replies which have aggressive polling
-      suppressEventCommentsRefetch(eventId, 8000); // 8 seconds (much longer than deletion delay)
+      // Suppress refetch to prevent bounce during delayed deletion
+      // Reduced time to allow faster cache updates after restoration
+      suppressEventCommentsRefetch(eventId, 6000); // 6 seconds (long enough for deletion delay)
 
       // Also suppress the specific reply if this is a reply deletion
       if (deletedComment?.parentId) {
-        suppressReplyRefetch(commentId, 10000); // 10 seconds for individual reply
+        suppressReplyRefetch(commentId, 7000); // 7 seconds for individual reply
       }
 
       return { rollbacks, eventId, deletedComment };
@@ -1037,8 +1094,10 @@ export function useUndoCommentDeletion() {
       } else {
         // For replies, we need to update the parent comment's reply count in main queries
         // but NOT add the reply to the main comments list
-        const updateParentReplyCount = (comments: EventCommentData[]): EventCommentData[] => {
-          return comments.map(comment => {
+        const updateParentReplyCount = (
+          comments: EventCommentData[]
+        ): EventCommentData[] => {
+          return comments.map((comment) => {
             if (comment.id === commentData.parentId) {
               return {
                 ...comment,
@@ -1055,7 +1114,7 @@ export function useUndoCommentDeletion() {
             };
           });
         };
-        
+
         // Update parent reply count in non-infinite comments
         const nonInfiniteKey = ["event-comments", eventId];
         const prevNonInfinite =
@@ -1066,7 +1125,7 @@ export function useUndoCommentDeletion() {
             comments: updateParentReplyCount(prevNonInfinite.comments),
           });
         }
-        
+
         // Update parent reply count in infinite comments
         const infQueries = queryClient
           .getQueryCache()
@@ -1140,7 +1199,7 @@ export function useUndoCommentDeletion() {
         });
       }
 
-      suppressEventCommentsRefetch(eventId, 1000);
+      suppressEventCommentsRefetch(eventId, 500); // Short suppression for restoration
       return { commentData };
     },
     onSuccess: () => {

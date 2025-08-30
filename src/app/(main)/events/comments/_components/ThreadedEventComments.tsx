@@ -476,7 +476,6 @@ export default function ThreadedEventComments({
   const toggleReactionMutation = useToggleReaction();
   const deleteCommentMutation = useDeleteComment();
   const undoCommentDeletionMutation = useUndoCommentDeletion();
-  const createReplyMutation = useCreateReply();
 
   const { open: openModal } = useModal();
 
