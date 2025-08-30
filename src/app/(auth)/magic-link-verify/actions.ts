@@ -8,7 +8,6 @@ export async function verifyMagicLink(token: string) {
   try {
     const user = await verifyMagicLinkToken(token);
 
-    // Ensure we received a valid user object
     if (!user || "error" in user || !user.email) {
       throw new Error("Invalid or expired magic link.");
     }

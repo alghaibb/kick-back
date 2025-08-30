@@ -16,7 +16,6 @@ export async function updateProfileAction(values: UpdateProfileValues) {
       return { error: "Unauthorized" };
     }
 
-    // Validate the input
     const validatedFields = updateProfileSchema.safeParse(values);
     if (!validatedFields.success) {
       return { error: "Invalid fields" };
@@ -25,13 +24,11 @@ export async function updateProfileAction(values: UpdateProfileValues) {
     const { firstName, lastName, nickname, email, image } =
       validatedFields.data;
 
-    // Get current user data to check for existing image
     const currentUser = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { image: true },
     });
 
-    // Check if email is already taken by another user
     if (email !== session.user.email) {
       const existingUser = await prisma.user.findUnique({
         where: { email },
@@ -41,7 +38,6 @@ export async function updateProfileAction(values: UpdateProfileValues) {
         return { error: "Email is already taken" };
       }
     }
-    // Handle image upload if provided
     if (image === null && currentUser?.image) {
       try {
         await del(currentUser.image);
@@ -50,7 +46,6 @@ export async function updateProfileAction(values: UpdateProfileValues) {
       }
     }
 
-    // Update user profile
     await prisma.user.update({
       where: { id: session.user.id },
       data: {

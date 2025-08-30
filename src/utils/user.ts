@@ -1,6 +1,5 @@
 import prisma from "@/lib/prisma";
 
-// Get user from database by email
 export async function getUserByEmail(email: string) {
   try {
     const user = await prisma.user.findUnique({

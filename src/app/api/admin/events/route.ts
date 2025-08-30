@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    // Get events with pagination and include user and group info
     const [events, total] = await Promise.all([
       prisma.event.findMany({
         include: {
@@ -50,7 +49,6 @@ export async function GET(request: NextRequest) {
       prisma.event.count(),
     ]);
 
-    // Get user info for each event
     const userIds = [...new Set(events.map(event => event.createdBy))];
     const users = await prisma.user.findMany({
       where: { id: { in: userIds } },

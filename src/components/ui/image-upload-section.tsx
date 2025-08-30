@@ -47,7 +47,6 @@ export function ImageUploadSection<TFieldValues extends FieldValues>({
     removeImage,
   } = imageUpload;
 
-  // Variant-specific styling
   const getImageClasses = () => {
     if (imageClassName) return imageClassName;
 

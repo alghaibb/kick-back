@@ -122,7 +122,6 @@ export interface ButtonProps
   loading?: boolean;
 }
 
-// LoadingButton component with mobile-friendly sizing
 const LoadingButton = React.forwardRef<
   HTMLButtonElement,
   ButtonProps & {

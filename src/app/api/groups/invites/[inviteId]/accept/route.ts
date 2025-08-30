@@ -51,7 +51,6 @@ export async function POST(
       );
     }
 
-    // Check if user is already a member
     const existingMember = await prisma.groupMember.findUnique({
       where: {
         groupId_userId: {
@@ -73,9 +72,7 @@ export async function POST(
       );
     }
 
-    // Add user to group and existing events
     await prisma.$transaction(async (tx) => {
-      // Add user to group with the role specified in the invitation
       await tx.groupMember.create({
         data: {
           groupId: invite.groupId,
@@ -84,7 +81,6 @@ export async function POST(
         },
       });
 
-      // Add user to all existing events in this group
       const groupEvents = await tx.event.findMany({
         where: {
           groupId: invite.groupId,

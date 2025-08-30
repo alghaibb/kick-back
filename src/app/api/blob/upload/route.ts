@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file type - check for HEIC and other unsupported formats
     const supportedTypes = [
       "image/jpeg",
       "image/jpg",
@@ -80,7 +79,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create organized folder structure
     const fileExtension = file.name.split(".").pop() || "jpg";
     const timestamp = Date.now();
     const uniqueFilename = `${folder}/${session.user.id}/${timestamp}.${fileExtension}`;

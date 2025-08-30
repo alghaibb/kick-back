@@ -9,7 +9,6 @@ import { InviteToEventForm } from "../forms/InviteToEventForm";
 export function InviteToEventModal() {
   const { type, close, data } = useModal();
 
-  // Only render if we have the required data
   if (type !== "invite-event" || !data?.eventId || !data?.eventName)
     return null;
 

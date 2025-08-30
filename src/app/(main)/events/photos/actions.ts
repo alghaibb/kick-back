@@ -82,7 +82,6 @@ export async function savePhotoMetadataAction(data: {
       },
     });
 
-    // Send notifications to other event attendees
     try {
       const eventAttendees = await prisma.eventAttendee.findMany({
         where: {
@@ -140,7 +139,6 @@ export async function likePhotoAction(data: { photoId: string }) {
       });
       return { success: true, liked: false };
     } else {
-      // Get photo and event info for notification
       const photoInfo = await prisma.eventPhoto.findUnique({
         where: { id: data.photoId },
         include: {
@@ -167,7 +165,6 @@ export async function likePhotoAction(data: { photoId: string }) {
         },
       });
 
-      // Send notification to photo owner (if not liking own photo)
       if (photoInfo && photoInfo.userId !== session.user.id) {
         try {
           const currentUser = await prisma.user.findUnique({
@@ -259,15 +256,12 @@ export async function deletePhotoAction(data: { photoId: string }) {
       };
     }
 
-    // Delete from blob storage
       try {
         await del(photo.imageUrl);
     } catch (blobError) {
       console.error("Failed to delete from blob storage:", blobError);
-        // Continue with database deletion even if blob deletion fails
     }
 
-    // Delete from database
     await prisma.eventPhoto.delete({
       where: { id: data.photoId },
     });

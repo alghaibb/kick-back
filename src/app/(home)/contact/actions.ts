@@ -10,7 +10,6 @@ export async function submitContactForm(values: ContactValues) {
     const session = await getSession();
     const userId = session?.user?.id;
 
-    // Create contact submission
     await prisma.contact.create({
       data: {
         firstName: values.firstName,

@@ -50,7 +50,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
     mode: "onChange",
   });
 
-  // Handle file upload separately from form validation
   const imageUpload = useImageUploadForm(undefined, undefined, {
     ...IMAGE_UPLOAD_PRESETS.profile,
     initialImageUrl: user.image,
@@ -68,7 +67,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
   async function onProfileSubmit(values: UpdateProfileValues) {
     let imageUrl: string | null = user.image;
 
-    // Handle image changes - convert File to URL
     if (imageUpload.isDeleted) {
       imageUrl = null; // Explicitly delete the image
     } else if (imageUpload.currentFile) {
@@ -80,7 +78,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
       imageUrl = imageUpload.displayUrl; // Keep existing or no change
     }
 
-    // Simple - just pass the URL string
     const submitValues: UpdateProfileValues = {
       firstName: values.firstName,
       lastName: values.lastName,

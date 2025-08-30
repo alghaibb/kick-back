@@ -25,7 +25,6 @@ export function LeaveEventModal() {
       close();
     } catch (error) {
       console.error("Error leaving event:", error);
-      // Error is handled by the mutation
     }
   };
 

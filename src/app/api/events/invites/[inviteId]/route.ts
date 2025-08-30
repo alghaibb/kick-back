@@ -8,7 +8,6 @@ export async function GET(
   try {
     const { inviteId } = await params;
 
-    // Find the invite
     const invite = await prisma.eventInvite.findFirst({
       where: {
         token: inviteId,

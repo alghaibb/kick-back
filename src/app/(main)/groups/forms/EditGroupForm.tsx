@@ -51,7 +51,6 @@ export default function EditGroupForm({
     },
   });
 
-  // Handle file upload separately from form validation
   const imageUpload = useImageUploadForm(undefined, undefined, {
     ...IMAGE_UPLOAD_PRESETS.group,
     initialImageUrl: initialValues.imageUrl,
@@ -95,7 +94,6 @@ export default function EditGroupForm({
       // Explicitly delete the image
       imageUrl = null;
     } else if (imageUpload.currentFile) {
-      // Upload new file
       imageUrl =
         (await imageUpload.uploadImage(imageUpload.currentFile)) || undefined;
       if (!imageUrl) {

@@ -16,7 +16,6 @@ import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  // Check if this is a Vercel cron job (has upstash headers)
   const isVercelCron = request.headers.get("upstash-signature");
   const authHeader = request.headers.get("authorization");
 
@@ -27,7 +26,6 @@ export async function GET(request: Request) {
     });
   }
 
-  // Get events for the next 2 days to account for timezone differences
   const today = new Date();
   const tomorrow = addDays(today, 1);
   const dayAfter = addDays(today, 2);
@@ -71,31 +69,24 @@ export async function GET(request: Request) {
   let smsSent = 0;
   let errors = 0;
 
-  // Helper function to check if current time is within reminder window
   // Expanded to 15-minute window since cron runs every 15 minutes
   const isWithinReminderWindow = (
     userTime: Date,
     reminderTime: string
   ): boolean => {
-    // Parse reminder time
     const [reminderHour, reminderMinute] = reminderTime.split(":").map(Number);
 
-    // Create reminder time for today
     const reminderDateTime = new Date(userTime);
     reminderDateTime.setHours(reminderHour, reminderMinute, 0, 0);
 
-    // Create a narrow 3-minute window around the reminder time (2min before, 1min after)
     const windowStart = subMinutes(reminderDateTime, 2);
     const windowEnd = addMinutes(reminderDateTime, 1);
 
     const isInWindow = userTime >= windowStart && userTime <= windowEnd;
 
-
-
     return isInWindow;
   };
 
-  // Helper function to check if event is tomorrow in user's timezone
   const isEventTomorrow = (eventDate: Date, userTimezone: string): boolean => {
     const userNow = toZonedTime(new Date(), userTimezone);
     const userEventDate = toZonedTime(eventDate, userTimezone);
@@ -108,7 +99,6 @@ export async function GET(request: Request) {
   };
 
   for (const event of events) {
-
 
     const creatorInfo = await prisma.user.findUnique({
       where: { id: event.createdBy },
@@ -150,15 +140,11 @@ export async function GET(request: Request) {
       const userTimezone = user.timezone || "UTC";
       const userNow = toZonedTime(new Date(), userTimezone);
 
-
-
-      // Check if event is tomorrow in user's timezone and if it's within reminder window
       if (!isEventTomorrow(event.date, userTimezone)) {
         continue;
       }
 
       if (!isWithinReminderWindow(userNow, user.reminderTime)) {
-
 
         // Calculate and show the next reminder window
         const [reminderHour, reminderMinute] = user.reminderTime.split(":").map(Number);
@@ -168,7 +154,6 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // Check if reminder was already sent today to prevent duplicates
       // Convert user's "today" to UTC for proper comparison with lastReminderSent (which is in UTC)
       const todayInUserTz = startOfDay(userNow);
       const todayStartUTC = fromZonedTime(todayInUserTz, userTimezone);
@@ -177,8 +162,6 @@ export async function GET(request: Request) {
 
         continue;
       }
-
-
 
       let reminderSent = false;
 
@@ -237,7 +220,6 @@ export async function GET(request: Request) {
             .filter(Boolean)
             .join("\n");
 
-
           await sendSMS(formattedPhone, smsBody, {
             timezone: userTimezone,
             fallbackCountry: "AU"
@@ -250,7 +232,6 @@ export async function GET(request: Request) {
         }
       }
 
-      // Update lastReminderSent timestamp once if any reminder was sent successfully
       if (reminderSent) {
         try {
           await prisma.eventAttendee.update({
@@ -268,18 +249,13 @@ export async function GET(request: Request) {
       const creatorTimezone = creatorInfo.timezone || "UTC";
       const creatorNow = toZonedTime(new Date(), creatorTimezone);
 
-
-
-      // Check if event is tomorrow in creator's timezone and if it's within reminder window
       if (!isEventTomorrow(event.date, creatorTimezone)) {
 
       } else if (isWithinReminderWindow(creatorNow, creatorInfo.reminderTime)) {
 
-        // Check if creator already received reminder today (DUPLICATE PROTECTION)
         const todayInCreatorTz = startOfDay(creatorNow);
         const todayStartUTC = fromZonedTime(todayInCreatorTz, creatorTimezone);
 
-        // Check if creator is also an attendee and their RSVP status
         const creatorAsAttendee = event.attendees.find(attendee => attendee.user.email === creatorInfo.email);
 
         // NEW: Only send creator reminders if they confirmed attendance
@@ -289,8 +265,6 @@ export async function GET(request: Request) {
 
         } else {
 
-
-          // Add a flag to track if reminder was sent for this creator
           let creatorReminderSent = false;
 
           if (
@@ -351,7 +325,6 @@ export async function GET(request: Request) {
                   .filter(Boolean)
                   .join("\n");
 
-
                 await sendSMS(formattedPhone, smsBody, {
                   timezone: creatorTimezone,
                   fallbackCountry: "AU"
@@ -390,8 +363,6 @@ export async function GET(request: Request) {
     }
   }
 
-
-
   return NextResponse.json({
     success: true,
     message: `Event reminders sent: ${emailsSent} emails, ${smsSent} SMS, ${errors} errors`,
@@ -402,7 +373,6 @@ export async function GET(request: Request) {
   });
 }
 
-// Add POST handler for Vercel cron jobs (Vercel sends POST requests to cron endpoints)
 export async function POST(request: Request) {
   return GET(request);
 }

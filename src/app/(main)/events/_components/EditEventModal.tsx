@@ -9,7 +9,6 @@ export default function EditEventModal() {
   const { type, close, data } = useModal();
   const { data: groupsData } = useGroups();
 
-  // Only require modal type and eventId; groups are fetched if not provided
   if (type !== "edit-event" || !data?.eventId) return null;
 
   const initialValues = {

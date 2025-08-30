@@ -28,7 +28,6 @@ export function ReplyCommentModal() {
   const { type, data, close } = useModal();
   const createReplyMutation = useCreateReply();
 
-  // Image upload
   const imageUpload = useImageUploadForm(undefined, undefined, {
     ...IMAGE_UPLOAD_PRESETS.comment,
     showToasts: false,
@@ -36,7 +35,6 @@ export function ReplyCommentModal() {
     onError: (error) => toast.error(error),
   });
 
-  // Form
   const form = useForm<ReplyCommentValues>({
     resolver: zodResolver(replyCommentSchema),
     defaultValues: {
@@ -47,7 +45,6 @@ export function ReplyCommentModal() {
     },
   });
 
-  // Update form values when modal data changes
   React.useEffect(() => {
     if (data?.eventId && data?.parentCommentId) {
       form.setValue("eventId", data.eventId);

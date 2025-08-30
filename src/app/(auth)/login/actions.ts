@@ -16,7 +16,6 @@ export async function login(values: LoginValues) {
 
     const lowercaseEmail = email.toLowerCase();
 
-    // Get IP address for rate limiting
     const headersList = await headers();
     const ipAddress = headersList.get('x-forwarded-for') ||
       headersList.get('x-real-ip') ||

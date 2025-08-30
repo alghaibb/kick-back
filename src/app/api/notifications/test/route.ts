@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { sendPushNotification } from "@/lib/notifications";
 
 export async function POST() {
-  // Only allow in development
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json(
       { error: "Not available in production" },
@@ -18,7 +17,6 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Send a test push notification
     await sendPushNotification(session.user.id, {
       title: "Test Event Comment",
       body: "Someone commented on your event! Tap to view.",

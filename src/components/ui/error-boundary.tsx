@@ -57,16 +57,13 @@ class ErrorBoundaryBase extends Component<
       errorInfo,
     });
 
-    // Log error details
     console.error("ErrorBoundary caught an error:", error);
     console.error("Error info:", errorInfo);
 
-    // Call custom error handler if provided
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
 
-    // Show toast notification
     toast.error("Something went wrong. Please try refreshing the page.");
   }
 

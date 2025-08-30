@@ -62,7 +62,6 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
   const deleteAccountMutation = useDeleteAccountMutation();
   const { open } = useModal();
 
-  // Settings form (reminderType, reminderTime, timezone)
   const settingsForm = useForm<SettingsValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
@@ -96,7 +95,6 @@ export function SettingsForm({ user, hasPassword }: SettingsFormProps) {
     if (!formatted) phoneError = "Invalid phone number for your country";
   }
 
-  // Password form
   const passwordForm = useForm<ChangePasswordValues>({
     resolver: zodResolver(changePasswordSchema),
     defaultValues: {

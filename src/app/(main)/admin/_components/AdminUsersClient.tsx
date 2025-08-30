@@ -73,7 +73,6 @@ interface User {
   };
 }
 
-// Static header component
 function AdminUsersHeader() {
   return (
     <div className="mb-8 md:mb-10">
@@ -113,7 +112,6 @@ function AdminUsersHeader() {
   );
 }
 
-// Data component
 function AdminUsersData({
   users,
   pagination,

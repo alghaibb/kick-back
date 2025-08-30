@@ -51,7 +51,6 @@ export async function GET(
     const cursor = url.searchParams.get("cursor"); // For pagination
     const limit = parseInt(url.searchParams.get("limit") || "10");
 
-    // Check if user has access to this event (is attendee or group member)
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -72,7 +71,6 @@ export async function GET(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    // Check if user has access (is attendee or group member)
     const isAttendee = event.attendees.length > 0;
     const isGroupMember = (event.group?.members?.length ?? 0) > 0;
 
@@ -80,7 +78,6 @@ export async function GET(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Verify the parent comment exists and belongs to this event
     const parentComment = await prisma.eventComment.findUnique({
       where: { id: commentId },
       select: { eventId: true },
@@ -108,7 +105,6 @@ export async function GET(
 
         if (currentIds.length === 0) break;
 
-        // Fetch direct children of current IDs
         const replies = await prisma.eventComment.findMany({
           where: {
             parentId: { in: currentIds },
@@ -147,7 +143,6 @@ export async function GET(
           },
         });
 
-        // Add new replies to our collection and queue their IDs for next iteration
         for (const reply of replies) {
           if (!processedIds.has(reply.id)) {
             allReplies.push(reply);
@@ -160,7 +155,6 @@ export async function GET(
       return allReplies;
     }
 
-    // Get all replies in the thread (excluding the root comment itself)
     const allReplies = await getAllRepliesInThread(commentId);
 
     // Apply cursor filtering for pagination
@@ -170,19 +164,16 @@ export async function GET(
         )
       : allReplies;
 
-    // Apply pagination
     const hasMore = filteredReplies.length > limit;
     const repliesToReturn = hasMore
       ? filteredReplies.slice(0, limit)
       : filteredReplies;
 
-    // Get the next cursor
     const nextCursor =
       hasMore && repliesToReturn.length > 0
         ? repliesToReturn[repliesToReturn.length - 1].createdAt.toISOString()
         : null;
 
-    // Get total count
     const totalCount = allReplies.length;
 
     return NextResponse.json({

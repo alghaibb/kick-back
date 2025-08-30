@@ -45,7 +45,6 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { dashboardBackground } = body;
 
-    // Validate the background URL
     if (dashboardBackground && typeof dashboardBackground !== "string") {
       return NextResponse.json(
         { error: "Invalid background URL" },
@@ -53,7 +52,6 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Update the user's dashboard background
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: {

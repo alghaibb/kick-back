@@ -14,7 +14,6 @@ export function NotificationNavigationHandler() {
       }
     };
 
-    // Listen for messages from service worker
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.addEventListener("message", handleMessage);
     }

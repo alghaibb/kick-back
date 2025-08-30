@@ -41,7 +41,6 @@ export async function notifyGroupInvite(data: {
   );
 }
 
-// Trigger notification when someone gets invited to an event
 export async function notifyEventInvite(data: {
   userId: string;
   eventId: string;
@@ -94,7 +93,6 @@ export async function notifyEventComment(data: {
     data.commenterName
   );
 
-  // Notify all attendees
   const promises = data.eventAttendeeIds.map((userId) =>
     notifyUser(
       {
@@ -122,7 +120,6 @@ export async function notifyEventComment(data: {
   await Promise.all(promises);
 }
 
-// Trigger notification when someone replies to a comment
 export async function notifyCommentReply(data: {
   parentCommentUserId: string;
   replierId: string;
@@ -166,7 +163,6 @@ export async function notifyCommentReply(data: {
   );
 }
 
-// Trigger notification when someone reacts to a comment
 export async function notifyCommentReaction(data: {
   commentUserId: string;
   reactorId: string;

@@ -71,7 +71,6 @@ export function rateLimit(options?: Options) {
             }
           });
 
-          // Check if we need to reset the counter (time window has passed)
           if (counter.resetAt < now) {
             await prisma.rateLimitCounter.update({
               where: { key },

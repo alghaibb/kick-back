@@ -42,9 +42,7 @@ export async function checkAdminAccess(skipRateLimit = false) {
 
     const isAdmin = user.role === "ADMIN";
 
-    // Update last active timestamp for admin users (if field exists in schema)
     if (isAdmin) {
-      // Fire and forget - don't wait for this
       prisma.user
         .update({
           where: { id: session.user.id },
@@ -80,7 +78,6 @@ export async function requireAdminWithAudit(
   const { isAdmin, error } = await checkAdminAccess(skipRateLimit);
 
   if (!isAdmin) {
-    // Log failed admin access attempts
     console.error(`Failed admin access attempt:`, {
       userId: session?.user?.id || "anonymous",
       action,
@@ -92,7 +89,6 @@ export async function requireAdminWithAudit(
     throw new Error(error || "Admin access required");
   }
 
-  // Log successful admin actions (optional - could be stored in DB)
   if (process.env.NODE_ENV === "development") {
     console.info(`Admin action:`, {
       userId: session?.user?.id,
@@ -105,7 +101,6 @@ export async function requireAdminWithAudit(
   return true;
 }
 
-// Check if current user can perform action on target user
 export async function canManageUser(
   targetUserId: string,
   allowSelfEdit = false
@@ -126,11 +121,9 @@ export async function canManageUser(
     };
   }
 
-  // Additional checks could be added here (e.g., super admin vs regular admin)
   return { canManage: true, error: null };
 }
 
-// Validate admin action permissions
 export function validateAdminAction(
   action: string,
   data: Record<string, unknown>
@@ -149,7 +142,6 @@ export function validateAdminAction(
     throw new Error(`Invalid admin action: ${action}`);
   }
 
-  // Validate data based on action
   switch (action) {
     case "update_user":
       if (!data.userId || !data.updates) {

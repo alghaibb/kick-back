@@ -19,7 +19,6 @@ export async function updateSettingsAction(values: SettingsValues) {
       return { error: "Unauthorized" };
     }
 
-    // Validate all settings fields
     const validatedFields = settingsSchema.safeParse(values);
     if (!validatedFields.success) {
       return { error: "Invalid fields" };
@@ -34,7 +33,6 @@ export async function updateSettingsAction(values: SettingsValues) {
       inAppNotifications,
     } = validatedFields.data;
 
-    // Validate and format phone number using utils
     let formattedPhone: string | null = null;
     if (reminderType === "sms" || reminderType === "both") {
       const country = detectCountryForSMS(phoneNumber || "", timezone);
@@ -44,7 +42,6 @@ export async function updateSettingsAction(values: SettingsValues) {
       }
     }
 
-    // Update all settings fields in the user record
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
@@ -73,7 +70,6 @@ export async function changePasswordAction(values: ChangePasswordValues) {
       return { error: "Unauthorized" };
     }
 
-    // Validate the input
     const validatedFields = changePasswordSchema.safeParse(values);
     if (!validatedFields.success) {
       return { error: "Invalid fields" };
@@ -81,7 +77,6 @@ export async function changePasswordAction(values: ChangePasswordValues) {
 
     const { currentPassword, newPassword } = validatedFields.data;
 
-    // Get user with password
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
@@ -93,7 +88,6 @@ export async function changePasswordAction(values: ChangePasswordValues) {
       };
     }
 
-    // Verify current password
     const isValidPassword = await bcrypt.compare(
       currentPassword,
       user.password
@@ -102,10 +96,8 @@ export async function changePasswordAction(values: ChangePasswordValues) {
       return { error: "Current password is incorrect" };
     }
 
-    // Hash new password
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
 
-    // Update password
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
@@ -129,7 +121,6 @@ export async function deleteAccountAction() {
 
     const userId = session.user.id;
 
-    // Get user info before deletion
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -143,7 +134,6 @@ export async function deleteAccountAction() {
       return { error: "User not found" };
     }
 
-    // Handle group ownership transfers
     const groupsToTransfer = user.groupMembers.filter(
       (member) => member.role === "owner"
     );
@@ -168,7 +158,6 @@ export async function deleteAccountAction() {
           data: { role: "owner" },
         });
 
-        // Update group createdBy field
         await prisma.group.update({
           where: { id: groupId },
           data: { createdBy: nextOwner.userId },
@@ -218,7 +207,6 @@ export async function recoverAccountAction() {
 
     const userId = session.user.id;
 
-    // Get the deleted user
     const deletedUser = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -232,7 +220,6 @@ export async function recoverAccountAction() {
       return { error: "User not found or not deleted" };
     }
 
-    // Check if grace period has expired
     if (
       deletedUser.permanentlyDeletedAt &&
       new Date() > deletedUser.permanentlyDeletedAt
@@ -258,7 +245,6 @@ export async function recoverAccountAction() {
       },
     });
 
-    // Handle group ownership recovery
     const groupsToRecover = deletedUser.groupMembers.filter(
       (member) => member.role === "owner"
     );
@@ -266,7 +252,6 @@ export async function recoverAccountAction() {
     for (const member of groupsToRecover) {
       const groupId = member.groupId;
 
-      // Check if the group currently has no owner (createdBy is empty)
       const group = await prisma.group.findUnique({
         where: { id: groupId },
       });

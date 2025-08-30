@@ -128,7 +128,6 @@ export function IconLoader({
   );
 }
 
-// Action-specific loaders
 export function ActionLoader({
   action,
   size = "md",
@@ -332,7 +331,6 @@ export function SuccessAnimation({
   );
 }
 
-// Error animation for failed actions
 export function ErrorAnimation({
   size = "md",
   className,
@@ -366,9 +364,7 @@ export function ErrorAnimation({
   );
 }
 
-// Loading states for different contexts
 export const LoadingStates = {
-  // Form submissions
   form: {
     submit: <ActionLoader action="save" size="sm" />,
     create: <ActionLoader action="create" size="sm" />,
@@ -376,27 +372,23 @@ export const LoadingStates = {
     delete: <ActionLoader action="delete" size="sm" />,
   },
 
-  // Data operations
   data: {
     sync: <ActionLoader action="sync" size="sm" />,
     process: <ActionLoader action="process" size="sm" />,
     load: <PulseLoader size="sm" />,
   },
 
-  // User actions
   user: {
     invite: <ActionLoader action="invite" size="sm" />,
     admin: <ActionLoader action="admin" size="sm" />,
     auth: <WaveLoader size="sm" />,
   },
 
-  // File operations
   file: {
     upload: <ActionLoader action="upload" size="sm" />,
     download: <BounceLoader size="sm" />,
   },
 
-  // Communication
   communication: {
     send: <ActionLoader action="send" size="sm" />,
     message: <WaveLoader size="sm" />,
@@ -425,6 +417,5 @@ export function SmartLoader({
     );
   }
 
-  // Default to pulse loader if no specific action
   return <PulseLoader size={size} className={className} />;
 }

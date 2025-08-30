@@ -16,7 +16,6 @@ export function WelcomeSection({
   const { user, isLoading, error, isUnauthenticated } = useAuth();
   const router = useRouter();
 
-  // Handle authentication issues
   useEffect(() => {
     if (isUnauthenticated || error?.message === "UNAUTHORIZED") {
       // User not authenticated, redirecting to login
@@ -24,7 +23,6 @@ export function WelcomeSection({
     }
   }, [isUnauthenticated, error, router]);
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="space-y-3 sm:space-y-4">

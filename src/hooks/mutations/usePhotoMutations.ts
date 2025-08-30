@@ -7,7 +7,6 @@ import {
   likePhotoAction,
   deletePhotoAction,
 } from "@/app/(main)/events/photos/actions";
-import { suppressPhotoLikeRefetch } from "@/hooks/queries/_likesRefetchControl";
 
 interface PhotoData {
   photos: Array<{
@@ -60,10 +59,8 @@ export function useUploadPhoto() {
       eventId: string;
       caption?: string;
     }) => {
-      // First upload the file using your existing system
       const imageUrl = await imageUpload.uploadAsync(data.file);
 
-      // Then save the metadata
       const result = await saveMetadata.mutateAsync({
         eventId: data.eventId,
         imageUrl,
@@ -75,12 +72,10 @@ export function useUploadPhoto() {
     onMutate: async (data) => {
       if (!user?.id) return;
 
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({
         queryKey: ["event-photos", data.eventId],
       });
 
-      // Snapshot the previous value
       const previousPhotos = queryClient.getQueryData([
         "event-photos",
         data.eventId,
@@ -138,7 +133,6 @@ export function useUploadPhoto() {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: Error, variables, context) => {
-      // Rollback on error
       if (context?.previousPhotos && context?.eventId) {
         queryClient.setQueryData(
           ["event-photos", context.eventId],
@@ -166,7 +160,6 @@ export function useLikePhoto() {
   return useMutation({
     mutationKey: ["photo-like"],
     mutationFn: async (data: { photoId: string; eventId: string }) => {
-      // Fire and forget - don't wait for server response for instant feel
       likePhotoAction({ photoId: data.photoId }).catch((error) => {
         console.error("Photo like error (background):", error);
       });
@@ -174,16 +167,13 @@ export function useLikePhoto() {
     },
     onMutate: async ({ photoId, eventId }) => {
       // Allow rapid toggles; keep UI instant and let server resolve final state
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["event-photos", eventId] });
 
-      // Snapshot the previous value
       const previousPhotos = queryClient.getQueryData([
         "event-photos",
         eventId,
       ]);
 
-      // Optimistically update the like status
       queryClient.setQueryData(
         ["event-photos", eventId],
         (old: PhotoData | undefined) => {
@@ -211,13 +201,9 @@ export function useLikePhoto() {
         }
       );
 
-      // Suppress polling briefly to avoid bounce after optimistic update
-      suppressPhotoLikeRefetch(photoId, 1500);
-
       return { previousPhotos, eventId };
     },
     onError: (error: Error, variables, context) => {
-      // Only rollback and show error if something went really wrong
       console.error("Photo like error:", error);
       if (context?.previousPhotos && context?.eventId) {
         queryClient.setQueryData(
@@ -243,10 +229,8 @@ export function useDeletePhoto() {
       return result;
     },
     onMutate: async ({ photoId, eventId }) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["event-photos", eventId] });
 
-      // Snapshot the previous value
       const previousPhotos = queryClient.getQueryData([
         "event-photos",
         eventId,
@@ -270,7 +254,6 @@ export function useDeletePhoto() {
       toast.success("Photo deleted successfully!");
     },
     onError: (error: Error, variables, context) => {
-      // Rollback on error
       if (context?.previousPhotos && context?.eventId) {
         queryClient.setQueryData(
           ["event-photos", context.eventId],

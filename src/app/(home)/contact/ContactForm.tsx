@@ -36,7 +36,6 @@ export default function ContactForm() {
     },
   });
 
-  // Update form values when user loads
   useEffect(() => {
     if (user) {
       form.setValue("firstName", user.firstName || "");

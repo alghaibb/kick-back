@@ -75,16 +75,12 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  // Removed unused overlayIntensity state
-
-  // Upload mutation
   const uploadMutation = useImageUpload({
     maxSize: 5 * 1024 * 1024, // 5MB
     folder: "dashboard-backgrounds",
     showToasts: false,
   });
 
-  // Update user background mutation
   const updateBackgroundMutation = useMutation({
     mutationFn: async (backgroundUrl: string) => {
       const response = await fetch("/api/profile", {
@@ -117,7 +113,6 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
     },
   });
 
-  // Handle file selection
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -139,7 +134,6 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
       return;
     }
 
-    // Validate file type - be more specific about supported formats
     const supportedTypes = [
       "image/jpeg",
       "image/jpg",
@@ -152,7 +146,6 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
       return;
     }
 
-    // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File size must be less than 5MB");
       return;
@@ -160,7 +153,6 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
 
     setSelectedFile(file);
 
-    // Create preview with error handling
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreviewUrl(e.target?.result as string);
@@ -172,7 +164,6 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
     reader.readAsDataURL(file);
   };
 
-  // Handle custom background upload
   const handleCustomUpload = async () => {
     if (!selectedFile) return;
 
@@ -184,14 +175,12 @@ export function BackgroundCustomizer({ className }: BackgroundCustomizerProps) {
     }
   };
 
-  // Handle preset background selection
   const handlePresetSelect = async (
     background: (typeof PRESET_BACKGROUNDS)[0]
   ) => {
     await updateBackgroundMutation.mutateAsync(background.url);
   };
 
-  // Remove background
   const handleRemoveBackground = async () => {
     await updateBackgroundMutation.mutateAsync("");
   };

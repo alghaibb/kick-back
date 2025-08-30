@@ -193,10 +193,8 @@ export default function NotificationBell() {
   const deleteNotificationMutation = useMutation({
     mutationFn: deleteNotificationAction,
     onMutate: async (notificationId) => {
-      // Cancel any outgoing notifications queries
       await queryClient.cancelQueries({ queryKey: ["notifications"] });
 
-      // Snapshot the previous value
       const previousNotifications = queryClient.getQueryData(["notifications"]);
 
       // Optimistically remove the notification
@@ -213,11 +211,9 @@ export default function NotificationBell() {
         }
       );
 
-      // Return context with the previous value
       return { previousNotifications };
     },
     onError: (error: Error, notificationId, context) => {
-      // Rollback on error
       if (context?.previousNotifications) {
         queryClient.setQueryData(
           ["notifications"],
@@ -249,7 +245,6 @@ export default function NotificationBell() {
   }
 
   const handleNotificationClick = (notification: Notification) => {
-    // Mark as read
     if (!notification.read) {
       markReadMutation.mutate(notification.id);
     }
@@ -568,7 +563,6 @@ export default function NotificationBell() {
               );
             }
 
-            // Regular notification rendering for other types
             return (
               <DropdownMenuItem
                 key={notification.id}

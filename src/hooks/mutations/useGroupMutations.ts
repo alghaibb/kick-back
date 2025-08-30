@@ -28,7 +28,6 @@ export function useDeleteGroup() {
       toast.success("Group disbanded successfully");
       // Invalidate dashboard stats to update group count
       invalidateDashboard();
-      // Invalidate groups data
       queryClient.invalidateQueries({ queryKey: ["groups"] });
     },
     onError: (error: Error) => {
@@ -54,7 +53,6 @@ export function useLeaveGroup() {
       toast.success("You left the group");
       // Invalidate dashboard stats to update group count
       invalidateDashboard();
-      // Invalidate groups data
       queryClient.invalidateQueries({ queryKey: ["groups"] });
     },
     onError: (error: Error) => {
@@ -86,7 +84,6 @@ export function useInviteToGroup() {
     },
     onSuccess: (_, variables) => {
       toast.success(`Invitation sent to ${variables.email}!`);
-      // Invalidate group invites
       queryClient.invalidateQueries({
         queryKey: ["group-invites", variables.groupId],
       });

@@ -8,7 +8,6 @@ export function MagicBackButtonWrapper() {
   const router = useRouter();
 
   const handleGoBack = () => {
-    // Check if there's history to go back to
     if (window.history.length > 1) {
       router.back();
     } else {

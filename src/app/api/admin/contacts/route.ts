@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    // Get contacts with pagination
     const [contacts, total] = await Promise.all([
       prisma.contact.findMany({
         include: {

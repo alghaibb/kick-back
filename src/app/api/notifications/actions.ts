@@ -11,7 +11,6 @@ export async function deleteNotificationAction(notificationId: string) {
       throw new Error("Not authenticated");
     }
 
-    // Verify the notification belongs to the user before deleting
     const notification = await prisma.notification.findUnique({
       where: { id: notificationId },
       select: { userId: true },
@@ -25,7 +24,6 @@ export async function deleteNotificationAction(notificationId: string) {
       throw new Error("Not authorized to delete this notification");
     }
 
-    // Delete the notification
     await prisma.notification.delete({
       where: { id: notificationId },
     });

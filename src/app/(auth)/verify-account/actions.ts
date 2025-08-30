@@ -14,7 +14,6 @@ export async function verifyAccount(values: OTPValues) {
     const validatedValues = otpSchema.parse(values);
     const { otp } = validatedValues;
 
-    // Get IP address for rate limiting
     const headersList = await headers();
     const ipAddress = headersList.get('x-forwarded-for') ||
       headersList.get('x-real-ip') ||

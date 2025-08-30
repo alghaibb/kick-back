@@ -20,7 +20,6 @@ interface GroupInvitesResponse {
   invites: GroupInvite[];
 }
 
-// Fetch group invites
 async function fetchGroupInvites(groupId: string): Promise<GroupInvite[]> {
   const response = await fetch(`/api/groups/${groupId}/invites`, {
     credentials: "include",
@@ -89,17 +88,13 @@ export function useGroupInvites(groupId: string) {
     enabled: !!groupId,
   });
 
-  // Cancel invite mutation
   const cancelInviteMutation = useMutation({
     mutationFn: cancelInviteApi,
     onMutate: async (inviteId: string) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["group-invites", groupId] });
 
-      // Snapshot the previous value
       const previousInvites = queryClient.getQueryData<GroupInvite[]>(["group-invites", groupId]);
 
-      // Optimistically update the cache
       queryClient.setQueryData<GroupInvite[]>(["group-invites", groupId], (old = []) =>
         old.map(invite =>
           invite.id === inviteId
@@ -117,7 +112,6 @@ export function useGroupInvites(groupId: string) {
       console.error("Failed to cancel invitation:", error);
       toast.error(error.message || "Failed to cancel invitation");
 
-      // Rollback on error
       if (context?.previousInvites) {
         queryClient.setQueryData(["group-invites", groupId], context.previousInvites);
       }
@@ -128,7 +122,6 @@ export function useGroupInvites(groupId: string) {
     },
   });
 
-  // Resend invite mutation
   const resendInviteMutation = useMutation({
     mutationFn: resendInviteApi,
     onSuccess: () => {
@@ -142,25 +135,20 @@ export function useGroupInvites(groupId: string) {
     },
   });
 
-  // Computed values
   const pendingInvites = invites.filter(invite => invite.status === "pending");
   const otherInvites = invites.filter(invite => invite.status !== "pending");
 
   return {
-    // Data
     invites,
     pendingInvites,
     otherInvites,
 
-    // Loading states
     isLoading,
     isCanceling: cancelInviteMutation.isPending,
     isResending: resendInviteMutation.isPending,
 
-    // Error states
     error,
 
-    // Actions
     cancelInvite: cancelInviteMutation.mutate,
     resendInvite: resendInviteMutation.mutate,
     refetchInvites: refetch,

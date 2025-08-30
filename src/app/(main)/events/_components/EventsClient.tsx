@@ -38,7 +38,6 @@ export function EventsClient() {
     // Apply search and filters first
     const filtered = filterAndSortEvents(data.events, filters);
 
-    // Then categorize by time for display sections
     const now = new Date();
     const todayStart = startOfDay(now);
     const todayEnd = endOfDay(now);

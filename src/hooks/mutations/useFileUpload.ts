@@ -36,7 +36,6 @@ async function uploadFile(
     onProgress,
   } = options;
 
-  // Validate file type
   const isValidType = allowedTypes.some((type) =>
     type.endsWith("/") ? file.type.startsWith(type) : file.type === type
   );
@@ -47,7 +46,6 @@ async function uploadFile(
     );
   }
 
-  // Validate file size
   if (file.size > maxSize) {
     const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(1);
     throw new Error(`File size must be less than ${maxSizeMB}MB`);
@@ -62,7 +60,6 @@ async function uploadFile(
     fileToUpload = new File([file], uniqueName, { type: file.type });
   }
 
-  // Create FormData
   const formData = new FormData();
   formData.append("file", fileToUpload);
   formData.append("folder", folder);
@@ -71,7 +68,6 @@ async function uploadFile(
   return new Promise<string>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
 
-    // Track upload progress
     if (onProgress) {
       xhr.upload.addEventListener("progress", (event) => {
         if (event.lengthComputable) {
@@ -145,22 +141,18 @@ export function useFileUpload(options: FileUploadOptions = {}) {
   });
 
   return {
-    // Upload function
     upload: uploadMutation.mutate,
     uploadAsync: uploadMutation.mutateAsync,
 
-    // States
     isUploading: uploadMutation.isPending,
     error: uploadMutation.error?.message || null,
     data: uploadMutation.data || null,
     progress,
 
-    // Status
     isError: uploadMutation.isError,
     isSuccess: uploadMutation.isSuccess,
     isIdle: uploadMutation.isIdle,
 
-    // Reset function
     reset: uploadMutation.reset,
   };
 }

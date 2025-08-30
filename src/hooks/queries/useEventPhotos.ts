@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { getPhotoLikeSuppressRemaining } from "@/hooks/queries/_likesRefetchControl";
 
 export interface EventPhotoData {
   id: string;
@@ -69,30 +68,15 @@ export function useEventPhotos(eventId: string) {
     queryKey: ["event-photos", eventId],
     queryFn: () => fetchEventPhotos(eventId),
     enabled: !!eventId,
-    staleTime: 0, // keep fresh to align with optimistic likes
+    staleTime: 5000, // 5 seconds - good balance between freshness and performance
     gcTime: 10 * 60 * 1000,
-    refetchInterval: (q) => {
-      // Check if any photo likes are suppressed
-      const photos = q.state.data?.photos || [];
-      const hasSuppressedPhoto = photos.some(photo => 
-        getPhotoLikeSuppressRemaining(photo.id) > 0
-      );
-      
-      // If any photo is suppressed, don't poll
-      if (hasSuppressedPhoto) {
-        return false;
-      }
-      
-      return getPollingInterval();
-    },
-    refetchOnWindowFocus: true, // Re-enable for instant updates
+    refetchInterval: getPollingInterval(),
+    refetchOnWindowFocus: false, // Disable to prevent bouncing
     refetchOnReconnect: true,
-    // Optimize network requests
     retry: 1,
     retryDelay: 1000,
   });
 
-  // Update activity timestamp when new photos arrive or likes change
   useEffect(() => {
     if (query.data?.photos && query.data.photos.length > 0) {
       const now = Date.now();

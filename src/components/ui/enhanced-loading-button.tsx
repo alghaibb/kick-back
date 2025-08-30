@@ -125,7 +125,6 @@ const EnhancedLoadingButton = React.forwardRef<
     const isError = error && showErrorAnimation;
     const isDisabled = loading || isSuccess || isError || props.disabled;
 
-    // Get appropriate text based on state
     const getButtonText = () => {
       if (isSuccess && successText) return successText;
       if (isError && errorText) return errorText;
@@ -133,7 +132,6 @@ const EnhancedLoadingButton = React.forwardRef<
       return children;
     };
 
-    // Get appropriate icon based on state
     const getButtonIcon = () => {
       if (isSuccess) return <SuccessAnimation size="sm" />;
       if (isError) return <ErrorAnimation size="sm" />;

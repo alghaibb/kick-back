@@ -27,7 +27,6 @@ export async function createCommentAction(values: CreateCommentValues) {
       return { error: "Unauthorized" };
     }
 
-    // Validate comment fields
     const validatedFields = createCommentSchema.safeParse(values);
     if (!validatedFields.success) {
       return { error: "Invalid fields" };
@@ -35,7 +34,6 @@ export async function createCommentAction(values: CreateCommentValues) {
 
     const { content, eventId, parentId, imageUrl } = validatedFields.data;
 
-    // Check if user is event attendee or event is in their group
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -135,7 +133,6 @@ export async function createCommentAction(values: CreateCommentValues) {
       },
     });
 
-    // Send notifications to other event attendees (only for main comments, not replies)
     if (!parentId) {
       try {
         const eventAttendees = await prisma.eventAttendee.findMany({
@@ -173,7 +170,6 @@ export async function createReplyAction(values: ReplyCommentValues) {
       return { error: "Unauthorized" };
     }
 
-    // Validate reply fields
     const validatedFields = replyCommentSchema.safeParse(values);
     if (!validatedFields.success) {
       return { error: "Invalid fields" };
@@ -181,7 +177,6 @@ export async function createReplyAction(values: ReplyCommentValues) {
 
     const { content, eventId, parentId, imageUrl } = validatedFields.data;
 
-    // Check if parent comment exists and user has access
     const parentComment = await prisma.eventComment.findUnique({
       where: { id: parentId },
       include: {
@@ -254,7 +249,6 @@ export async function createReplyAction(values: ReplyCommentValues) {
       },
     });
 
-    // Send notification to parent comment author
     try {
       await notifyCommentReply({
         parentCommentUserId: parentComment.userId,
@@ -265,7 +259,6 @@ export async function createReplyAction(values: ReplyCommentValues) {
         commentId: reply.id,
       });
 
-      // Check if this is a reply to a reply (contains @mention)
       const mentionMatch = content.match(/^@(\w+)\s/);
       if (mentionMatch) {
         const mentionedName = mentionMatch[1];
@@ -294,7 +287,6 @@ export async function createReplyAction(values: ReplyCommentValues) {
           },
         });
 
-        // Send additional notification to the mentioned user if found
         if (mentionedReply && mentionedReply.userId !== parentComment.userId) {
           await notifyCommentReply({
             parentCommentUserId: mentionedReply.userId,
@@ -326,7 +318,6 @@ export async function toggleReactionAction(values: CommentReactionValues) {
       return { error: "Unauthorized" };
     }
 
-    // Validate reaction fields
     const validatedFields = commentReactionSchema.safeParse(values);
     if (!validatedFields.success) {
       console.error("Validation error:", validatedFields.error);
@@ -335,7 +326,6 @@ export async function toggleReactionAction(values: CommentReactionValues) {
 
     const { commentId, emoji } = validatedFields.data;
 
-    // Check if user has access to this comment
     const comment = await prisma.eventComment.findUnique({
       where: { id: commentId },
       include: {
@@ -369,7 +359,6 @@ export async function toggleReactionAction(values: CommentReactionValues) {
       };
     }
 
-    // Check if reaction already exists
     const existingReaction = await prisma.commentReaction.findUnique({
       where: {
         commentId_userId_emoji: {
@@ -381,13 +370,11 @@ export async function toggleReactionAction(values: CommentReactionValues) {
     });
 
     if (existingReaction) {
-      // Remove reaction
       await prisma.commentReaction.delete({
         where: { id: existingReaction.id },
       });
       return { success: true, action: "removed" };
     } else {
-      // Add reaction
       const reaction = await prisma.commentReaction.create({
         data: {
           commentId,
@@ -406,7 +393,6 @@ export async function toggleReactionAction(values: CommentReactionValues) {
         },
       });
 
-      // Send notification to comment author (background task)
       try {
         await notifyCommentReaction({
           commentUserId: comment.userId,
@@ -482,7 +468,6 @@ export async function editCommentAction(values: EditCommentValues) {
       return { error: "Unauthorized" };
     }
 
-    // Validate comment fields
     const validatedFields = editCommentSchema.safeParse(values);
     if (!validatedFields.success) {
       return { error: "Invalid fields" };
@@ -490,7 +475,6 @@ export async function editCommentAction(values: EditCommentValues) {
 
     const { commentId, content, imageUrl } = validatedFields.data;
 
-    // Check if comment exists and user owns it
     const existingComment = await prisma.eventComment.findUnique({
       where: { id: commentId },
       include: {
@@ -519,7 +503,6 @@ export async function editCommentAction(values: EditCommentValues) {
       return { error: "You can only edit your own comments" };
     }
 
-    // Check if user still has access to the event
     const isAttendee = existingComment.event.attendees.length > 0;
     const isGroupMember = (existingComment.event.group?.members?.length ?? 0) > 0;
 
@@ -527,7 +510,6 @@ export async function editCommentAction(values: EditCommentValues) {
       return { error: "You no longer have access to this event" };
     }
 
-    // Update the comment
     const updatedComment = await prisma.eventComment.update({
       where: { id: commentId },
       data: {

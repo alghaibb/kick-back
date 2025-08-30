@@ -59,7 +59,6 @@ export function PhotoUploadForm({ eventId }: PhotoUploadFormProps) {
       imageUpload.reset();
     } catch (error) {
       console.error("Upload error:", error);
-      // Error handling is done in the mutation
     }
   };
 

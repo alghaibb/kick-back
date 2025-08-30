@@ -14,12 +14,9 @@ const generateOtp = () => {
 export const generateVerificationCode = async (email: string, reason: string) => {
   const verificationCode = generateOtp();
 
-  // Get user by email
   const user = await getUserByEmail(email);
 
-  // Check if user exists before accessing the id property
   if (user) {
-    // Store verification code in the database
     await prisma.verificationOTP.create({
       data: {
         otp: verificationCode,
@@ -65,7 +62,6 @@ export const deleteVerificationOTP = async (otp: string) => {
     return; // Do nothing
   }
 
-  // Delete record by id
   await prisma.verificationOTP.delete({
     where: { id: otpRecord.id },
   })
@@ -73,7 +69,6 @@ export const deleteVerificationOTP = async (otp: string) => {
 
 export const deleteVerificationOTPByUserId = async (userId: string) => {
   try {
-    // Delete all OTPs associated with the userId
     await prisma.verificationOTP.deleteMany({
       where: { userId },
     });
@@ -100,7 +95,6 @@ export const verifyVerificationOTP = async (otp: string) => {
   return { user: userWithOTP.user, error: null }
 }
 
-// Verify the magic link token
 export const verifyMagicLinkToken = async (token: string) => {
   const magicToken = await prisma.magicLinkToken.findUnique({
     where: { token },
@@ -125,7 +119,6 @@ export const generateResetPasswordToken = async (email: string) => {
   try {
     const resetPasswordToken = crypto.randomBytes(32).toString("hex");
 
-    // Get user by email
     const user = await getUserByEmail(email);
 
     if (!user) {
@@ -133,7 +126,6 @@ export const generateResetPasswordToken = async (email: string) => {
       return null;
     }
 
-    // Store reset password token in the database
     await prisma.resetPasswordToken.create({
       data: {
         token: resetPasswordToken,
@@ -149,7 +141,6 @@ export const generateResetPasswordToken = async (email: string) => {
   }
 };
 
-
 export const deleteResetPasswordToken = async (token: string) => {
   try {
     const existingToken = await prisma.resetPasswordToken.findFirst({
@@ -160,7 +151,6 @@ export const deleteResetPasswordToken = async (token: string) => {
       return;
     }
 
-    // Delete record by id
     await prisma.resetPasswordToken.delete({
       where: { id: existingToken.id },
     });

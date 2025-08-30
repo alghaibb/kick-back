@@ -72,7 +72,6 @@ export function detectCountryForSMS(
 
   if (phoneNumber && phoneNumber.trim() !== "") {
     try {
-      // First, try to parse as international number (with + prefix)
       if (phoneNumber.startsWith("+")) {
         const parsed = parsePhoneNumberWithError(phoneNumber);
         if (parsed.country) {

@@ -21,7 +21,6 @@ export async function onboarding(values: unknown) {
     } = validated;
     let { phoneNumber } = validated;
 
-    // Normalize phone number - empty strings should be undefined
     phoneNumber =
       phoneNumber && phoneNumber.trim() !== "" ? phoneNumber.trim() : undefined;
 
@@ -31,7 +30,6 @@ export async function onboarding(values: unknown) {
       return { error: "You must be logged in to complete onboarding" };
     }
 
-    // Check if user exists and hasn't already onboarded
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
       select: { hasOnboarded: true, image: true },
@@ -45,7 +43,6 @@ export async function onboarding(values: unknown) {
       return { error: "You have already completed onboarding" };
     }
 
-    // Delete previous image if it exists and is different
     if (
       previousImage &&
       previousImage.includes("vercel-storage") &&
@@ -73,7 +70,6 @@ export async function onboarding(values: unknown) {
       }
     }
 
-    // Update user profile with reminder preferences
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -89,7 +85,6 @@ export async function onboarding(values: unknown) {
       },
     });
 
-    // Revalidate user-related pages
     revalidatePath("/dashboard");
     revalidatePath("/profile");
 
@@ -97,7 +92,6 @@ export async function onboarding(values: unknown) {
   } catch (error) {
     console.error("Onboarding error:", error);
 
-    // Handle Prisma unique constraint errors
     if (error instanceof Error) {
       if (
         error.message.includes(

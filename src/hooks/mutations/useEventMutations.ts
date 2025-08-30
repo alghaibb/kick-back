@@ -124,13 +124,10 @@ export function useAdminEditEvent() {
       return result;
     },
     onMutate: async ({ eventId, values }) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["admin-events"] });
 
-      // Snapshot the previous value
       const previousEvents = queryClient.getQueryData(["admin-events"]);
 
-      // Optimistically update to the new value
       queryClient.setQueryData(
         ["admin-events"],
         (old: { pages: Array<{ events: Array<{ id: string }> }> }) => {
@@ -159,11 +156,9 @@ export function useAdminEditEvent() {
         }
       );
 
-      // Return a context object with the snapshotted value
       return { previousEvents };
     },
     onError: (err, variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousEvents) {
         queryClient.setQueryData(["admin-events"], context.previousEvents);
       }
@@ -181,7 +176,6 @@ export function useAdminEditEvent() {
       invalidateDashboard();
     },
     onSettled: () => {
-      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["admin-events"] });
     },
   });
@@ -282,16 +276,13 @@ export function useMoveEvent() {
       return result;
     },
     onMutate: async ({ eventId, newDateStr }) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["calendar"] });
 
-      // Snapshot the previous value
       const previous = queryClient.getQueryData<CalendarResponse>(["calendar"]);
       const prevDateISO = previous?.events.find(
         (ev) => ev.id === eventId
       )?.date;
 
-      // Optimistically update to the new value
       queryClient.setQueryData<CalendarResponse>(["calendar"], (old) => {
         if (!old) return old as unknown as CalendarResponse;
 
@@ -339,7 +330,6 @@ export function useMoveEvent() {
       return { previous, undoneToastId: id, getUndone: () => undone };
     },
     onError: (err, _variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previous) {
         queryClient.setQueryData(["calendar"], context.previous);
       }

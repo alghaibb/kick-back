@@ -106,14 +106,12 @@ export function CalendarPageClientWithComments() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [modal, data?.events, selectedDate]);
-  // Listen for edit-open events from calendar cells
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { eventId?: string };
       if (!detail?.eventId || !data?.events) return;
       const ev = data.events.find((x) => x.id === detail.eventId);
       if (!ev) return;
-      // Open the edit modal with minimal required data; groups will be fetched in modal
       modal.open("edit-event", {
         eventId: ev.id,
         name: ev.name,

@@ -113,10 +113,8 @@ export function useDeleteContact() {
     mutationFn: ({ contactId }: { contactId: string }) =>
       deleteContact(contactId),
     onMutate: async ({ contactId }) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["admin", "contacts"] });
 
-      // Snapshot the previous value
       const previousContacts = queryClient.getQueryData(["admin", "contacts"]);
 
       // Optimistically remove the contact
@@ -138,7 +136,6 @@ export function useDeleteContact() {
       return { previousContacts };
     },
     onError: (err, variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousContacts) {
         queryClient.setQueryData(
           ["admin", "contacts"],
@@ -147,7 +144,6 @@ export function useDeleteContact() {
       }
     },
     onSettled: () => {
-      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["admin", "contacts"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
 
@@ -169,13 +165,10 @@ export function useContactReply() {
       replyMessage: string;
     }) => replyToContact({ contactId, replyMessage }),
     onMutate: async ({ contactId }) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["admin", "contacts"] });
 
-      // Snapshot the previous value
       const previousContacts = queryClient.getQueryData(["admin", "contacts"]);
 
-      // Optimistically update the contact with repliedAt
       queryClient.setQueryData(["admin", "contacts"], (old: unknown) => {
         if (!old || typeof old !== "object" || !("pages" in old)) return old;
 
@@ -196,7 +189,6 @@ export function useContactReply() {
       return { previousContacts };
     },
     onError: (err, variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousContacts) {
         queryClient.setQueryData(
           ["admin", "contacts"],
@@ -205,7 +197,6 @@ export function useContactReply() {
       }
     },
     onSettled: () => {
-      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["admin", "contacts"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
 

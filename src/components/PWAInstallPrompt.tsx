@@ -26,18 +26,15 @@ export default function PWAInstallPrompt() {
   const [dontRemindAgain, setDontRemindAgain] = useState(false);
 
   useEffect(() => {
-    // Check if device is iOS
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(iOS);
 
-    // Check if app is already installed (running in standalone mode)
     const standalone = window.matchMedia("(display-mode: standalone)").matches;
     setIsStandalone(standalone);
 
     // Don't show prompt if already installed
     if (standalone) return;
 
-    // Check if user has dismissed the prompt
     const dismissedData = localStorage.getItem(PWA_DISMISSED_KEY);
     if (dismissedData) {
       const { timestamp, permanent } = JSON.parse(dismissedData);
@@ -49,7 +46,6 @@ export default function PWAInstallPrompt() {
       }
     }
 
-    // Handle beforeinstallprompt for Android Chrome
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -96,7 +92,6 @@ export default function PWAInstallPrompt() {
     setShowInstallPrompt(false);
     setDeferredPrompt(null);
 
-    // Store dismissal in localStorage
     const dismissData = {
       timestamp: Date.now(),
       permanent: permanent || dontRemindAgain,
@@ -140,7 +135,6 @@ export default function PWAInstallPrompt() {
         </div>
 
         {isIOS ? (
-          // iOS-specific instructions
           <div className="mt-3 space-y-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>1. Tap</span>
@@ -161,7 +155,6 @@ export default function PWAInstallPrompt() {
             </Button>
           </div>
         ) : (
-          // Android/other browsers
           <div className="mt-3 space-y-3">
             <div className="flex items-center space-x-2">
               <Checkbox

@@ -7,7 +7,6 @@ export async function getGroupInvites(groupId: string) {
     throw new Error("Not authenticated");
   }
 
-  // Check if user has permission to view invites (must be admin or owner)
   const group = await prisma.group.findFirst({
     where: {
       id: groupId,

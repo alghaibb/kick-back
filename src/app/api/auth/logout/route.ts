@@ -17,10 +17,8 @@ export async function POST() {
     ];
 
     for (const cookieName of cookieNames) {
-      // Delete cookie
       response.cookies.delete(cookieName);
 
-      // Also set to expire immediately with proper attributes
       response.cookies.set(cookieName, "", {
         expires: new Date(0),
         path: "/",

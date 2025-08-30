@@ -41,7 +41,6 @@ export function LocationInput({
   const [isCustom, setIsCustom] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Use debounced search
   const {
     value: inputValue,
     debouncedValue: debouncedSearch,
@@ -53,7 +52,6 @@ export function LocationInput({
     setInputValue(value);
   }, [value, setInputValue]);
 
-  // Debounced search function
   const searchLocations = useCallback(
     async (query: string): Promise<NominatimResult[]> => {
       if (query.length < 3) return [];
@@ -82,7 +80,6 @@ export function LocationInput({
           );
         });
 
-        // Clean up and remove duplicates
         const cleanedParts = [
           ...new Set(
             essentialParts
@@ -172,7 +169,6 @@ export function LocationInput({
     []
   );
 
-  // Handle input change
   const handleInputChange = (input: string) => {
     setInputValue(input);
     onChange(input);
@@ -197,7 +193,6 @@ export function LocationInput({
     }
   }, [debouncedSearch, isCustom, searchLocations]);
 
-  // Handle suggestion selection
   const handleSuggestionClick = (suggestion: NominatimResult) => {
     setInputValue(suggestion.display_name);
     onChange(suggestion.display_name);
@@ -214,7 +209,6 @@ export function LocationInput({
     setIsCustom(false);
   };
 
-  // Handle mode toggle
   const handleModeToggle = (custom: boolean) => {
     setIsCustom(custom);
     setShowSuggestions(false);
@@ -222,7 +216,6 @@ export function LocationInput({
     setIsLoading(false);
   };
 
-  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (

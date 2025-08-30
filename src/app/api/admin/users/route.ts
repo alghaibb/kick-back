@@ -4,7 +4,6 @@ import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if user is admin (skip rate limiting for read operations)
     await requireAdmin(true);
 
     const { searchParams } = new URL(request.url);
@@ -38,7 +37,6 @@ export async function GET(request: NextRequest) {
       where.role = role;
     }
 
-    // Validate sortBy to prevent SQL injection
     const allowedSortFields = [
       "createdAt",
       "updatedAt",
@@ -51,7 +49,6 @@ export async function GET(request: NextRequest) {
       ? sortBy
       : "createdAt";
 
-    // Execute count and data queries in parallel for better performance
     const [users, totalCount] = await Promise.all([
       prisma.user.findMany({
         where,
@@ -164,7 +161,6 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    // Check if user is admin
     await requireAdmin();
 
     const body = await request.json();
@@ -202,7 +198,6 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Check if user exists
     const currentUser = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, role: true },
@@ -212,7 +207,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Update user with optimistic concurrency control
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {

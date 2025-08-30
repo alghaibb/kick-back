@@ -54,7 +54,6 @@ export function useRSVPMutation() {
     onMutate: async ({ eventId, status }) => {
       if (!user?.id) return;
 
-      // Cancel any outgoing refetches (don't cancel events - it doesn't have attendee data)
       await queryClient.cancelQueries({ queryKey: ["calendar"] });
       await queryClient.cancelQueries({ queryKey: ["rsvp", eventId] });
 
@@ -62,7 +61,6 @@ export function useRSVPMutation() {
       const previousCalendar = queryClient.getQueryData(["calendar"]);
       const previousRSVP = queryClient.getQueryData(["rsvp", eventId]);
 
-      // Optimistically update calendar data
       queryClient.setQueryData(["calendar"], (old: EventData | undefined) => {
         if (!old?.events) return old;
 
@@ -96,8 +94,6 @@ export function useRSVPMutation() {
         };
       });
 
-
-      // Optimistically update RSVP status query (this is what the buttons use!)
       queryClient.setQueryData(["rsvp", eventId], { rsvpStatus: status });
 
       return { previousCalendar, previousRSVP, eventId };
@@ -122,7 +118,6 @@ export function useRSVPMutation() {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: Error, variables, context) => {
-      // Rollback optimistic updates
       if (context) {
         if (context.previousCalendar) {
           queryClient.setQueryData(["calendar"], context.previousCalendar);

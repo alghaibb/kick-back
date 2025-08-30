@@ -23,10 +23,8 @@ export interface PushNotificationData {
   }>;
 }
 
-// Create in-app notification
 export async function createNotification(data: CreateNotificationData) {
   try {
-    // Check if user has in-app notifications enabled
     const user = await prisma.user.findUnique({
       where: { id: data.userId },
       select: { inAppNotifications: true },
@@ -53,13 +51,11 @@ export async function createNotification(data: CreateNotificationData) {
   }
 }
 
-// Send push notification to user's devices
 export async function sendPushNotification(
   userId: string,
   notification: PushNotificationData
 ) {
   try {
-    // Get user's enabled push subscriptions only
     const subscriptions = await prisma.pushSubscription.findMany({
       where: {
         userId,
@@ -73,7 +69,6 @@ export async function sendPushNotification(
 
     const webpush = await import("web-push");
 
-    // Configure web-push using env.ts
     webpush.setVapidDetails(
       `mailto:${env.VAPID_EMAIL}`,
       env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
@@ -93,7 +88,6 @@ export async function sendPushNotification(
       actions: notification.actions || [],
     });
 
-    // Send to all user's devices
     const promises = subscriptions.map(async (subscription) => {
       try {
         await webpush.sendNotification(
@@ -138,12 +132,9 @@ export async function notifyUser(
   pushData?: PushNotificationData
 ) {
   try {
-    // Create in-app notification
     const notification = await createNotification(data);
 
-    // Send push notification if provided and user has enabled them
     if (pushData) {
-      // Check if user has enabled push notifications
       const user = await prisma.user.findUnique({
         where: { id: data.userId },
         select: { pushNotifications: true },
@@ -162,7 +153,6 @@ export async function notifyUser(
   }
 }
 
-// Get user's unread notification count
 export async function getUnreadNotificationCount(userId: string) {
   try {
     const count = await prisma.notification.count({
@@ -178,7 +168,6 @@ export async function getUnreadNotificationCount(userId: string) {
   }
 }
 
-// Get user's notifications with pagination
 export async function getUserNotifications(
   userId: string,
   page = 1,
@@ -232,7 +221,6 @@ export async function markAllNotificationsAsRead(userId: string) {
   }
 }
 
-// Notification message templates
 export const NotificationTemplates = {
   GROUP_INVITE: (groupName: string, inviterName: string) => ({
     title: "Group Invitation",

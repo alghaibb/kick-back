@@ -69,7 +69,6 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
   }, [validateToken]);
 
   function onSubmit(values: AcceptInviteValues) {
-    // Prevent double submission
     if (isPending || status === "accepted") return;
 
     startTransition(async () => {

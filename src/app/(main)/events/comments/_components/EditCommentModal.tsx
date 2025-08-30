@@ -31,7 +31,6 @@ export function EditCommentModal() {
     null
   );
 
-  // Image upload
   const imageUpload = useImageUploadForm(undefined, undefined, {
     ...IMAGE_UPLOAD_PRESETS.comment,
     showToasts: false,
@@ -39,7 +38,6 @@ export function EditCommentModal() {
     onError: (error) => toast.error(error),
   });
 
-  // Form
   const form = useForm<EditCommentValues>({
     resolver: zodResolver(editCommentSchema),
     defaultValues: {
@@ -49,7 +47,6 @@ export function EditCommentModal() {
     },
   });
 
-  // Update form values when modal data changes
   React.useEffect(() => {
     if (data?.editCommentId && data?.editCommentContent) {
       form.setValue("commentId", data.editCommentId);

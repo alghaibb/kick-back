@@ -179,13 +179,10 @@ export function useUpdateUser() {
       return response.json();
     },
     onMutate: async ({ userId, updates }) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
 
-      // Snapshot previous value
       const previousUsers = queryClient.getQueryData(["admin", "users"]);
 
-      // Optimistically update
       queryClient.setQueryData(
         ["admin", "users"],
         (old: UsersResponse | undefined) => {
@@ -205,20 +202,17 @@ export function useUpdateUser() {
       return { previousUsers };
     },
     onError: (_err, _variables, context) => {
-      // Rollback on error
       if (context?.previousUsers) {
         queryClient.setQueryData(["admin", "users"], context.previousUsers);
       }
     },
     onSettled: () => {
-      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
     },
   });
 }
 
-// Optimized delete mutation
 export function useDeleteUser() {
   const queryClient = useQueryClient();
 
@@ -231,7 +225,6 @@ export function useDeleteUser() {
 
       const previousUsers = queryClient.getQueryData(["admin", "users"]);
 
-      // Optimistically remove user
       queryClient.setQueryData(
         ["admin", "users"],
         (old: UsersResponse | undefined) => {
@@ -266,7 +259,6 @@ export function useDeleteUser() {
   });
 }
 
-// Recover user mutation
 export function useRecoverUser() {
   const queryClient = useQueryClient();
 
@@ -284,7 +276,6 @@ export function useRecoverUser() {
       ]);
       const previousUsers = queryClient.getQueryData(["admin", "users"]);
 
-      // Remove from deleted users list
       queryClient.setQueryData(
         ["admin", "deleted-users"],
         (old: UsersResponse | undefined) => {
@@ -345,12 +336,10 @@ export function useEditUserProfile() {
       // Cancel ALL admin users queries to prevent race conditions
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
 
-      // Get all existing query data before updating
       const allQueryData = queryClient.getQueriesData({
         queryKey: ["admin", "users"],
       });
 
-      // Helper function to update user data
       const updateUser = (user: User) =>
         user.id === userId
           ? {
@@ -365,10 +354,8 @@ export function useEditUserProfile() {
             }
           : user;
 
-      // Update ALL queries that match the pattern
       allQueryData.forEach(([queryKey, queryData]) => {
         if (queryData) {
-          // Handle infinite queries
           if (
             queryKey.includes("infinite") &&
             queryData &&
@@ -384,7 +371,6 @@ export function useEditUserProfile() {
               })),
             });
           }
-          // Handle regular queries
           else if (
             queryData &&
             typeof queryData === "object" &&
@@ -402,18 +388,15 @@ export function useEditUserProfile() {
       return { allQueryData };
     },
     onSuccess: (result, { userId }) => {
-      // Update cache with actual server response
       const updateUserWithServerData = (user: User) =>
         user.id === userId ? { ...user, ...result.user } : user;
 
-      // Update ALL queries with server data
       const allQueryData = queryClient.getQueriesData({
         queryKey: ["admin", "users"],
       });
 
       allQueryData.forEach(([queryKey, queryData]) => {
         if (queryData) {
-          // Handle infinite queries
           if (
             queryKey.includes("infinite") &&
             queryData &&
@@ -429,7 +412,6 @@ export function useEditUserProfile() {
               })),
             });
           }
-          // Handle regular queries
           else if (
             queryData &&
             typeof queryData === "object" &&
@@ -456,7 +438,6 @@ export function useEditUserProfile() {
     },
     onSettled: () => {
       // Don't invalidate anything - we're managing cache manually in onSuccess
-      // Only invalidate stats after a delay to avoid race conditions
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
       }, 100);
@@ -495,7 +476,6 @@ export function useRevokeUserSessions() {
         queryKey: ["admin", "users"],
       });
 
-      // Helper to update activeSessionId to null
       const updateUserSession = (user: User) =>
         user.id === userId ? { ...user, activeSessionId: null } : user;
 
@@ -520,7 +500,6 @@ export function useRevokeUserSessions() {
           return;
         }
 
-        // Regular query shape: UsersResponse
         if (
           typeof queryData === "object" &&
           queryData !== null &&

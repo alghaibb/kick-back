@@ -29,7 +29,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user is deleted
     if (!user.deletedAt) {
       return NextResponse.json(
         {
@@ -40,7 +39,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if grace period has expired
     if (user.permanentlyDeletedAt && new Date() > user.permanentlyDeletedAt) {
       return NextResponse.json(
         {

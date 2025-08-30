@@ -21,7 +21,6 @@ export async function createEventTemplateAction(
 
     const validatedData = createEventTemplateSchema.parse(values);
 
-    // Verify group access if groupId is provided
     if (validatedData.groupId) {
       const groupMember = await prisma.groupMember.findFirst({
         where: {
@@ -73,7 +72,6 @@ export async function editEventTemplateAction(
 
     const validatedData = editEventTemplateSchema.parse(values);
 
-    // Verify template ownership
     const existingTemplate = await prisma.eventTemplate.findFirst({
       where: {
         id: templateId,
@@ -87,7 +85,6 @@ export async function editEventTemplateAction(
       };
     }
 
-    // Verify group access if groupId is provided
     if (validatedData.groupId) {
       const groupMember = await prisma.groupMember.findFirst({
         where: {
@@ -131,7 +128,6 @@ export async function deleteEventTemplateAction(templateId: string) {
       return { error: "You must be logged in to delete templates" };
     }
 
-    // Verify template ownership
     const existingTemplate = await prisma.eventTemplate.findFirst({
       where: {
         id: templateId,

@@ -18,7 +18,6 @@ export async function GET(
 
     // Single optimized query for permissions and photos
     const [event, photos] = await Promise.all([
-      // Check permissions
       prisma.event.findUnique({
         where: { id: eventId },
         select: {
@@ -39,7 +38,6 @@ export async function GET(
         },
       }),
 
-      // Fetch photos (optimistically - cancel if no permission)
       prisma.eventPhoto.findMany({
         where: { eventId },
         select: {

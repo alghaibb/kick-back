@@ -62,7 +62,6 @@ export async function POST(
       );
     }
 
-    // Update expiry date to extend the invitation
     const newExpiryDate = new Date();
     newExpiryDate.setDate(newExpiryDate.getDate() + 7); // Extend by 7 days
 
@@ -71,7 +70,6 @@ export async function POST(
       data: { expiresAt: newExpiryDate },
     });
 
-    // Resend the email
     await sendGroupInviteEmail(
       invite.email,
       invite.inviter.firstName,
@@ -79,7 +77,6 @@ export async function POST(
       invite.token
     );
 
-    // Send in-app notification to invited user
     try {
       const invitedUser = await prisma.user.findUnique({
         where: { email: invite.email }

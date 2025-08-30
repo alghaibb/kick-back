@@ -47,7 +47,6 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
     },
   });
 
-  // Handle file upload separately from form validation
   const imageUpload = useImageUploadForm(undefined, undefined, {
     ...IMAGE_UPLOAD_PRESETS.group,
     showToasts: false,
@@ -88,7 +87,6 @@ export function CreateGroupForm({ onSuccess }: CreateGroupFormProps) {
   async function onSubmit(values: CreateGroupValues) {
     let imageUrl: string | null = null;
 
-    // Handle image upload if file is selected
     if (imageUpload.currentFile) {
       imageUrl = await imageUpload.uploadImage(imageUpload.currentFile);
       if (!imageUrl) {

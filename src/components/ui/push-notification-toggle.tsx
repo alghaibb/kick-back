@@ -37,7 +37,6 @@ export default function PushNotificationToggle() {
 
   // Determine the current state - prioritize database preference, then check device permission
   const currentState = (() => {
-    // First check database preference
     const dbPreference = user?.pushNotifications ?? false;
 
     if (isIOS && isPWA) {
@@ -104,7 +103,6 @@ export default function PushNotificationToggle() {
     return null;
   }
 
-  // Check if it's Safari on iOS
   const isSafariIOS = () => {
     if (typeof window === "undefined") return false;
     const userAgent = window.navigator.userAgent;
@@ -115,14 +113,11 @@ export default function PushNotificationToggle() {
     );
   };
 
-  // Debug logging removed for production
-
   const handleToggle = async () => {
     if (isLoading || isEnabling) return;
 
     const newValue = !currentState;
 
-    // Optimistically update the UI
     queryClient.setQueryData(["user"], (oldData: User | undefined) => {
       if (!oldData) return oldData;
       return {
@@ -183,10 +178,8 @@ export default function PushNotificationToggle() {
       const subscription = await registration?.pushManager.getSubscription();
       const actualStatus = !!subscription;
 
-      // Update database to match actual status
       await updateDbPreference(actualStatus);
 
-      // Update user cache
       queryClient.setQueryData(["user"], (oldData: User | undefined) => {
         if (!oldData) return oldData;
         return {

@@ -70,7 +70,6 @@ export function CreateEventForm({
     [templates, selectedTemplateId]
   );
 
-  // Check if we have template data from modal
   const templateData = modal.data;
   const hasTemplateData = templateData?.name && templateData !== undefined;
 
@@ -90,7 +89,6 @@ export function CreateEventForm({
   function onSubmit(values: CreateEventValues) {
     createEventMutation.mutate(values, {
       onSuccess: () => {
-        // Save as template if requested
         if (showSaveAsTemplate) {
           createTemplateMutation.mutate({
             name: `${values.name} Template`,

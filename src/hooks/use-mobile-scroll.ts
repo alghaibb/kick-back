@@ -33,12 +33,10 @@ export function useMobileScrollFix() {
         }
       });
 
-      // Also reset window scroll
       if (window.scrollY > 0) {
         window.scrollTo(0, 0);
       }
 
-      // Reset document scroll
       if (document.documentElement.scrollTop > 0) {
         document.documentElement.scrollTop = 0;
       }
@@ -47,7 +45,6 @@ export function useMobileScrollFix() {
       }
     };
 
-    // Handle orientation change with delay to account for browser UI changes
     const handleOrientationChange = () => {
       // Wait for browser UI to settle
       setTimeout(() => {
@@ -55,24 +52,19 @@ export function useMobileScrollFix() {
         ensureScrollToTop();
       }, 100);
 
-      // Additional check after longer delay
       setTimeout(() => {
         setViewportHeight();
       }, 500);
     };
 
-    // Handle window resize more aggressively on mobile
     const handleResize = () => {
       setViewportHeight();
-      // Debounce additional calls
       setTimeout(setViewportHeight, 100);
     };
 
-    // Initial setup
     setViewportHeight();
     ensureScrollToTop();
 
-    // Add event listeners
     document.addEventListener("touchend", preventDoubleTouch, {
       passive: false,
     });
@@ -80,7 +72,6 @@ export function useMobileScrollFix() {
     window.addEventListener("resize", handleResize);
     window.addEventListener("orientationchange", handleOrientationChange);
 
-    // Listen for visibility changes (app coming back to foreground)
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
         setTimeout(() => {
@@ -90,12 +81,10 @@ export function useMobileScrollFix() {
       }
     });
 
-    // Listen for scroll events on window to prevent getting stuck
     let scrollTimeout: NodeJS.Timeout;
     const handleScroll = () => {
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
-        // Check if we're having scroll issues and fix them
         const scrollTop = window.scrollY || document.documentElement.scrollTop;
         if (scrollTop > 0 && scrollTop < 10) {
           // We're stuck in a weird scroll position, force to top

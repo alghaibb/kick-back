@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    // Get groups with pagination and include user and member info
     const [groups, total] = await Promise.all([
       prisma.group.findMany({
         include: {
@@ -45,7 +44,6 @@ export async function GET(request: NextRequest) {
       prisma.group.count(),
     ]);
 
-    // Get user info for each group (for the 'createdBy' user)
     const userIds = [...new Set(groups.map(group => group.createdBy))];
     const users = await prisma.user.findMany({
       where: { id: { in: userIds } },

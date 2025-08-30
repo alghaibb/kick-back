@@ -47,7 +47,6 @@ export function useSmartPolling(options: SmartPollingOptions = {}) {
   const lastActivityRef = useRef(Date.now());
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Reset activity timer
   const resetActivity = useCallback(() => {
     lastActivityRef.current = Date.now();
     if (!isActive) {
@@ -55,7 +54,6 @@ export function useSmartPolling(options: SmartPollingOptions = {}) {
     }
   }, [isActive]);
 
-  // Check if user has been idle
   const checkIdleStatus = useCallback(() => {
     const now = Date.now();
     const timeSinceActivity = now - lastActivityRef.current;
@@ -80,7 +78,6 @@ export function useSmartPolling(options: SmartPollingOptions = {}) {
       document.addEventListener(event, resetActivity, true)
     );
 
-    // Track tab visibility
     const handleVisibilityChange = () => {
       setIsVisible(!document.hidden);
       if (!document.hidden) {

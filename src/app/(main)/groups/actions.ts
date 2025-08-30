@@ -23,7 +23,6 @@ export async function createGroupAction(values: CreateGroupValues) {
     return { error: "Not authenticated" };
   }
 
-  // Validate the input
   const parsed = createGroupSchema.safeParse(values);
   if (!parsed.success) {
     return {
@@ -67,7 +66,6 @@ export async function inviteToGroupAction(
     return { error: "Not authenticated" };
   }
 
-  // Rate limiting
   if (!skipRateLimit) {
     const limiter = rateLimit({ interval: 3600000 }); // 1 hour
     try {
@@ -89,7 +87,6 @@ export async function inviteToGroupAction(
   const { groupId, email, role } = parsed.data;
 
   try {
-    // Check if group exists and user has permission
     const group = await prisma.group.findFirst({
       where: {
         id: groupId,
@@ -117,7 +114,6 @@ export async function inviteToGroupAction(
       };
     }
 
-    // Check if user is already a member
     const existingMember = group.members.find(
       (member) => member.user.email === email
     );
@@ -125,13 +121,11 @@ export async function inviteToGroupAction(
       return { error: "User is already a member of this group" };
     }
 
-    // Check if user with this email exists
     const invitedUser = await prisma.user.findUnique({ where: { email } });
     if (!invitedUser) {
       return { error: "No user with this email exists." };
     }
 
-    // Check if there's already a pending invite
     const existingInvite = await prisma.groupInvite.findFirst({
       where: {
         groupId,
@@ -144,11 +138,9 @@ export async function inviteToGroupAction(
       return { error: "An invitation has already been sent to this email" };
     }
 
-    // Generate invite token
     const token = generateToken();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    // Create or update invite (handles cancelled invites)
     const invite = await prisma.groupInvite.upsert({
       where: {
         groupId_email: {
@@ -175,7 +167,6 @@ export async function inviteToGroupAction(
       },
     });
 
-    // Send email
     try {
       await sendGroupInviteEmail(
         email,
@@ -190,7 +181,6 @@ export async function inviteToGroupAction(
       return { error: "Failed to send invitation email. Please try again." };
     }
 
-    // Send in-app notification to invited user
     try {
       if (invitedUser) {
         await notifyGroupInvite({
@@ -318,7 +308,6 @@ export async function acceptGroupInviteAction(formData: FormData) {
       return { error: "This invitation was sent to a different email address" };
     }
 
-    // Check if user is already a member
     const existingMember = await prisma.groupMember.findUnique({
       where: {
         groupId_userId: {
@@ -337,9 +326,7 @@ export async function acceptGroupInviteAction(formData: FormData) {
       return { error: "You are already a member of this group" };
     }
 
-    // Add user to group and existing events
     await prisma.$transaction(async (tx) => {
-      // Add user to group
       await tx.groupMember.create({
         data: {
           groupId: invite.groupId,
@@ -348,7 +335,6 @@ export async function acceptGroupInviteAction(formData: FormData) {
         },
       });
 
-      // Add user to all existing events in this group
       const groupEvents = await tx.event.findMany({
         where: {
           groupId: invite.groupId,
@@ -374,7 +360,6 @@ export async function acceptGroupInviteAction(formData: FormData) {
         data: { status: "accepted" },
       });
 
-      // Delete the notification for this invitation
       await tx.notification.deleteMany({
         where: {
           userId: session.user.id,
@@ -408,14 +393,12 @@ export async function updateGroupMemberRoleAction({
   const session = await getSession();
   if (!session?.user?.id) return { error: "Not authenticated" };
 
-  // Only owner can update roles
   const group = await prisma.group.findUnique({
     where: { id: groupId },
     include: { members: true },
   });
   if (!group) return { error: "Group not found" };
 
-  // Only group owner can change member roles
   if (group.createdBy !== session.user.id) {
     return { error: "Only the group owner can update member roles" };
   }
@@ -443,7 +426,6 @@ export async function removeGroupMemberAction({
   const group = await prisma.group.findUnique({ where: { id: groupId } });
   if (!group) return { error: "Group not found" };
 
-  // Only group owner can remove members
   if (group.createdBy !== session.user.id) {
     return { error: "Only the group owner can remove members" };
   }
@@ -472,13 +454,11 @@ export async function deleteGroupAction(groupId: string) {
     return { error: "Only the group owner can delete the group" };
   }
 
-  // Delete group image from Vercel blob storage if it exists
   if (group.image) {
     try {
       await del(group.image);
     } catch (error) {
       console.error("Error deleting group image from blob storage:", error);
-      // Continue with group deletion even if image deletion fails
     }
   }
 
@@ -513,7 +493,6 @@ export async function editGroupAction(
     throw new Error("Unauthorized");
   }
 
-  // Validate input
   const parsed = createGroupSchema.safeParse(values);
   if (!parsed.success) {
     return {
@@ -522,7 +501,6 @@ export async function editGroupAction(
   }
 
   try {
-    // Check if user is group owner or admin
     const group = await prisma.group.findUnique({
       where: { id: groupId },
       include: { members: true },
@@ -540,7 +518,6 @@ export async function editGroupAction(
       return { error: "You do not have permission to edit this group" };
     }
 
-    // Handle image deletion from Vercel blob storage
     if (values.image === null && group.image) {
       try {
         await del(group.image);

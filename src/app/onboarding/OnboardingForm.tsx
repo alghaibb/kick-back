@@ -90,7 +90,6 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
     },
   });
 
-  // Handle file upload separately from form validation
   const imageUpload = useImageUploadForm(undefined, undefined, {
     ...IMAGE_UPLOAD_PRESETS.profile,
     initialImageUrl: user.image,
@@ -115,7 +114,6 @@ export default function OnboardingForm({ user }: { user: OnboardingUser }) {
         // Explicitly delete the image
         imageUrl = null;
       } else if (imageUpload.currentFile) {
-        // Upload new file
         imageUrl = await imageUpload.uploadImage(imageUpload.currentFile);
         if (!imageUrl) {
           toast.error("Image upload failed");

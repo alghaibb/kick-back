@@ -52,7 +52,6 @@ const authConfig: NextAuthConfig = {
             throw new Error("Email is required.");
           }
 
-          // Fetch the user
           const user = await prisma.user.findUnique({
             where: { email },
           });
@@ -97,7 +96,6 @@ const authConfig: NextAuthConfig = {
         return true;
       }
 
-      // Check if the user already exists
       const existingUser = await prisma.user.findUnique({
         where: { email: user.email as string },
       });
@@ -132,7 +130,6 @@ const authConfig: NextAuthConfig = {
         return `${baseUrl}/auth-redirect`;
       }
 
-      // Default behavior for other redirects
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       if (new URL(url).origin === baseUrl) return url;
 

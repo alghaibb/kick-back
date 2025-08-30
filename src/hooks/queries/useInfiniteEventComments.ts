@@ -1,8 +1,6 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { getEventCommentsSuppressRemaining } from "@/hooks/queries/_commentRefetchControl";
-import { isReplyRefetchSuppressed } from "@/hooks/queries/_replyRefetchControl";
 import { useSmartPolling } from "@/hooks/useSmartPolling";
 import type { EventCommentData } from "./useEventComments";
 
@@ -95,13 +93,9 @@ export function useInfiniteEventComments(
     enabled: !!eventId,
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
-    staleTime: 0, // instant UI with optimistic updates
+    staleTime: 5000, // 5 seconds - good balance between freshness and performance
     gcTime: 10 * 60 * 1000,
-    refetchInterval: () => {
-      const remain = getEventCommentsSuppressRemaining(eventId);
-      if (remain > 0) return false; // Completely stop polling during suppression
-      return pollingInterval;
-    },
+    refetchInterval: pollingInterval,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     refetchIntervalInBackground: false,
@@ -120,30 +114,12 @@ export function useInfiniteReplies(
     queryKey: ["infinite-replies", eventId, commentId, limit],
     queryFn: ({ pageParam }) =>
       fetchRepliesPage(eventId, commentId, pageParam, limit),
-    // Completely disable the query during suppression to prevent bounce
-    enabled:
-      enabled &&
-      !!eventId &&
-      !!commentId &&
-      getEventCommentsSuppressRemaining(eventId) === 0,
+    enabled: enabled && !!eventId && !!commentId,
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
-    staleTime: 0, // instant UI with optimistic updates
+    staleTime: 5000, // 5 seconds - good balance between freshness and performance
     gcTime: 10 * 60 * 1000,
-    refetchInterval: (q) => {
-      const remain = getEventCommentsSuppressRemaining(eventId);
-      if (remain > 0) return false; // Completely stop polling during event suppression
-
-      // Check if any replies in the current data are individually suppressed
-      const allReplies =
-        q.state.data?.pages.flatMap((page) => page.replies) || [];
-      const hasSupressedReply = allReplies.some((reply) =>
-        isReplyRefetchSuppressed(reply.id)
-      );
-      if (hasSupressedReply) return false; // Stop polling if any reply is suppressed
-
-      return pollingInterval;
-    },
+    refetchInterval: pollingInterval,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     refetchIntervalInBackground: false,

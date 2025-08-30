@@ -17,7 +17,6 @@ export async function POST(
 
     const { inviteId } = await params;
 
-    // Find the invite
     const invite = await prisma.eventInvite.findFirst({
       where: {
         token: inviteId,
@@ -39,7 +38,6 @@ export async function POST(
       );
     }
 
-    // Check if user is already an attendee
     const existingAttendee = await prisma.eventAttendee.findFirst({
       where: {
         eventId: invite.eventId,
@@ -59,9 +57,7 @@ export async function POST(
       );
     }
 
-    // Add user to event and mark invite as accepted
     await prisma.$transaction(async (tx) => {
-      // Add user to event
       await tx.eventAttendee.create({
         data: {
           eventId: invite.eventId,

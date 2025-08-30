@@ -20,7 +20,6 @@ export async function getDashboardStats(userId: string, userTimezone?: string) {
     groups = await prisma.groupMember.count({ where: { userId } });
     eventsCreated = await prisma.event.count({ where: { createdBy: userId } });
 
-    // Today's events
     const todaysEvents = await prisma.event.findMany({
       where: {
         date: { gte: todayStart, lte: todayEnd },
@@ -35,7 +34,6 @@ export async function getDashboardStats(userId: string, userTimezone?: string) {
     todaysEventsCount = todaysEvents.length;
     nextTodayEvent = todaysEvents[0] ?? null;
 
-    // Upcoming events
     upcomingEvents = await prisma.event.count({
       where: {
         date: { gte: now },

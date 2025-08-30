@@ -21,7 +21,6 @@ export const formatDate = (
 
   const formatOptions: Intl.DateTimeFormatOptions = {};
 
-  // Set format based on preference
   if (format === "short") {
     formatOptions.year = "2-digit";
     formatOptions.month = "numeric";
@@ -31,7 +30,6 @@ export const formatDate = (
     formatOptions.month = "long";
     formatOptions.day = "numeric";
   } else {
-    // default format
     formatOptions.year = "numeric";
     formatOptions.month = "short";
     formatOptions.day = "numeric";

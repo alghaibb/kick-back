@@ -32,14 +32,11 @@ function createEventDateTime(
   timeStr: string,
   timezone: string
 ): Date {
-  // Parse components
   const [year, month, day] = dateStr.split("-").map(Number);
   const [hour, minute] = timeStr.split(":").map(Number);
 
-  // Create a reference date to understand the timezone offset for this specific date/time
   const referenceDate = new Date(year, month - 1, day, 12, 0, 0); // Use noon as reference
 
-  // Get the timezone offset for this date in the user's timezone (in minutes)
   const tempFormatter = new Intl.DateTimeFormat("en", {
     timeZone: timezone,
     timeZoneName: "longOffset",
@@ -61,7 +58,6 @@ function createEventDateTime(
     offsetMinutes = sign * parseInt(offsetMatch[3]);
   }
 
-  // Create the UTC date by subtracting the timezone offset
   // If user is in GMT+5, we subtract 5 hours from their local time to get UTC
   const utcDate = new Date(
     Date.UTC(year, month - 1, day, hour - offsetHours, minute - offsetMinutes)
@@ -96,7 +92,6 @@ export async function createEventAction(values: CreateEventValues) {
       },
     });
 
-    // Create creator as confirmed attendee
     await prisma.eventAttendee.create({
       data: {
         userId: session.user.id,
@@ -106,7 +101,6 @@ export async function createEventAction(values: CreateEventValues) {
       },
     });
 
-    // Add group members as pending attendees
     if (groupId) {
       const groupMembers = await prisma.groupMember.findMany({
         where: { groupId },
@@ -128,7 +122,6 @@ export async function createEventAction(values: CreateEventValues) {
         });
       }
 
-      // Send notifications to group members about new event
       try {
         const group = await prisma.group.findUnique({
           where: { id: groupId },
@@ -174,7 +167,6 @@ export async function createEventAction(values: CreateEventValues) {
   }
 }
 
-// Location poll helpers
 function buildDedupeKey(
   addressFormatted: string,
   latitude?: number,
@@ -205,7 +197,6 @@ export async function suggestLocationOptionAction(
     const { eventId, label, addressFormatted, latitude, longitude } =
       suggestLocationOptionSchema.parse(values);
 
-    // Verify access: host or attendee
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -220,7 +211,6 @@ export async function suggestLocationOptionAction(
       return { error: "Event not found" } as const;
     }
 
-    // Only allow suggestions if no official location set
     if (event.location) {
       return { error: "Location already set for this event" } as const;
     }
@@ -234,7 +224,6 @@ export async function suggestLocationOptionAction(
     const dedupeKey = buildDedupeKey(addressFormatted, latitude, longitude);
 
     const result = await prisma.$transaction(async (tx) => {
-      // Ensure one open poll
       let poll = await tx.eventPoll.findFirst({
         where: { eventId, status: "open" },
         select: { id: true },
@@ -314,7 +303,6 @@ export async function voteLocationOptionAction(
 
     const { eventId, optionId } = voteLocationOptionSchema.parse(values);
 
-    // Verify access and find poll by event
     const poll = await prisma.eventPoll.findFirst({
       where: { eventId, status: "open" },
       select: { id: true },
@@ -323,7 +311,6 @@ export async function voteLocationOptionAction(
       return { error: "No open poll" } as const;
     }
 
-    // Verify user is host or attendee
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -375,7 +362,6 @@ export async function closeLocationPollAction(values: CloseLocationPollValues) {
 
     const { eventId, winningOptionId } = closeLocationPollSchema.parse(values);
 
-    // Host only
     const event = await prisma.event.findUnique({ where: { id: eventId } });
     if (!event) return { error: "Event not found" } as const;
     if (event.createdBy !== session.user.id) {
@@ -453,7 +439,6 @@ export async function voteNoLocationOptionAction(
     });
     if (!poll) return { error: "No open poll" } as const;
 
-    // Verify user is host or attendee
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -648,7 +633,6 @@ export async function inviteToEventAction(
     return { error: "Not authenticated" };
   }
 
-  // Rate limiting
   if (!skipRateLimit) {
     const limiter = rateLimit({ interval: 3600000 });
     try {
@@ -663,7 +647,6 @@ export async function inviteToEventAction(
     return { error: "Invalid input" };
   }
 
-  // Validate email using Zod schema
   try {
     inviteToEventSchema.parse({ email });
   } catch (error) {
@@ -672,7 +655,6 @@ export async function inviteToEventAction(
   }
 
   try {
-    // Check if event exists and user has permission
     const event = await prisma.event.findFirst({
       where: {
         id: eventId,
@@ -686,13 +668,11 @@ export async function inviteToEventAction(
       };
     }
 
-    // Check if user with this email exists
     const invitedUser = await prisma.user.findUnique({ where: { email } });
     if (!invitedUser) {
       return { error: "No user with this email exists." };
     }
 
-    // Check if user is already an attendee
     const existingAttendee = await prisma.eventAttendee.findFirst({
       where: {
         eventId,
@@ -704,7 +684,6 @@ export async function inviteToEventAction(
       return { error: "User is already invited to this event" };
     }
 
-    // Check if there's already a pending invite
     const existingInvite = await prisma.eventInvite.findFirst({
       where: {
         eventId,
@@ -717,7 +696,6 @@ export async function inviteToEventAction(
       return { error: "An invitation has already been sent to this email" };
     }
 
-    // Clean up any expired or old invitations for this event/email combination
     await prisma.eventInvite.deleteMany({
       where: {
         eventId,
@@ -726,11 +704,9 @@ export async function inviteToEventAction(
       },
     });
 
-    // Generate invite token
     const token = generateToken();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    // Create invite
     const invite = await prisma.eventInvite.create({
       data: {
         eventId,
@@ -742,7 +718,6 @@ export async function inviteToEventAction(
       },
     });
 
-    // Send email
     try {
       await sendEventInviteEmail(
         email,
@@ -759,7 +734,6 @@ export async function inviteToEventAction(
       return { error: "Failed to send invitation email. Please try again." };
     }
 
-    // Send in-app notification to invited user
     try {
       await notifyEventInvite({
         userId: invitedUser.id,
@@ -781,7 +755,6 @@ export async function inviteToEventAction(
   } catch (error) {
     console.error("Event invite error:", error);
 
-    // Handle Prisma unique constraint violation
     if (
       error &&
       typeof error === "object" &&
@@ -848,7 +821,6 @@ export async function leaveEventAction(eventId: string) {
   }
 
   try {
-    // Check if user is an attendee of this event
     const attendee = await prisma.eventAttendee.findFirst({
       where: {
         eventId,
@@ -877,14 +849,12 @@ export async function leaveEventAction(eventId: string) {
       };
     }
 
-    // Remove user from event
     await prisma.eventAttendee.delete({
       where: {
         id: attendee.id,
       },
     });
 
-    // Also mark any pending invites as declined
     await prisma.eventInvite.updateMany({
       where: {
         eventId,
@@ -916,7 +886,6 @@ export async function acceptEventInviteAction(token: string) {
   }
 
   try {
-    // Find the invite
     const invite = await prisma.eventInvite.findFirst({
       where: {
         token,
@@ -935,7 +904,6 @@ export async function acceptEventInviteAction(token: string) {
       return { error: "Invalid or expired invitation" };
     }
 
-    // Check if user is already an attendee
     const existingAttendee = await prisma.eventAttendee.findFirst({
       where: {
         eventId: invite.eventId,
@@ -952,9 +920,7 @@ export async function acceptEventInviteAction(token: string) {
       return { error: "You are already invited to this event" };
     }
 
-    // Add user to event and mark invite as accepted
     await prisma.$transaction(async (tx) => {
-      // Add user to event
       await tx.eventAttendee.create({
         data: {
           eventId: invite.eventId,
@@ -969,7 +935,6 @@ export async function acceptEventInviteAction(token: string) {
         data: { status: "accepted" },
       });
 
-      // Delete the notification for this invitation
       await tx.notification.deleteMany({
         where: {
           userId: session.user.id,

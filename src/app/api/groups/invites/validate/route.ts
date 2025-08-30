@@ -53,7 +53,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Return invite data for display
     return NextResponse.json({
       success: true,
       invite: {

@@ -61,7 +61,6 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { pushNotifications } = body;
 
-    // Update push notification preference
     if (typeof pushNotifications === "boolean") {
       await prisma.user.update({
         where: { id: session.user.id },

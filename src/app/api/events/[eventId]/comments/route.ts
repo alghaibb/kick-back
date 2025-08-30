@@ -21,7 +21,6 @@ export async function GET(
     const cursor = url.searchParams.get("cursor"); // For pagination
     const limit = parseInt(url.searchParams.get("limit") || "10");
 
-    // Check if user has access to this event (is attendee or group member)
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -42,7 +41,6 @@ export async function GET(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    // Check if user has access (is attendee or group member)
     const isAttendee = event.attendees.length > 0;
     const isGroupMember = (event.group?.members?.length ?? 0) > 0;
 
@@ -57,7 +55,6 @@ export async function GET(
         : { createdAt: { lt: new Date(cursor) } }
       : {};
 
-    // Fetch top-level comments with pagination
     const comments = await prisma.eventComment.findMany({
       where: {
         eventId,
@@ -134,17 +131,14 @@ export async function GET(
       },
     });
 
-    // Check if there are more comments
     const hasMore = comments.length > limit;
     const commentsToReturn = hasMore ? comments.slice(0, -1) : comments;
 
-    // Get the next cursor
     const nextCursor =
       hasMore && commentsToReturn.length > 0
         ? commentsToReturn[commentsToReturn.length - 1].createdAt.toISOString()
         : null;
 
-    // Get total count
     const totalCount = await prisma.eventComment.count({
       where: {
         eventId,

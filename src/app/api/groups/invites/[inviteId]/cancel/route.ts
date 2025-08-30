@@ -18,7 +18,6 @@ export async function POST(
 
     const { inviteId } = await params;
 
-    // Check if user has permission to cancel this invite
     const invite = await prisma.groupInvite.findFirst({
       where: {
         id: inviteId,

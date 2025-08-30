@@ -106,11 +106,9 @@ export function useRecoverUser() {
   return useMutation({
     mutationFn: ({ userId }: { userId: string }) => recoverUser(userId),
     onMutate: async ({ userId }) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["admin", "deleted-users"] });
       await queryClient.cancelQueries({ queryKey: ["admin", "users"] });
 
-      // Snapshot the previous values
       const previousDeletedUsers = queryClient.getQueryData([
         "admin",
         "deleted-users",
@@ -140,7 +138,6 @@ export function useRecoverUser() {
       return { previousDeletedUsers, previousUsers };
     },
     onError: (_err, _variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousDeletedUsers) {
         queryClient.setQueryData(
           ["admin", "deleted-users"],
@@ -149,7 +146,6 @@ export function useRecoverUser() {
       }
     },
     onSettled: () => {
-      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["admin", "deleted-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });

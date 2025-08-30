@@ -16,23 +16,19 @@ export interface ImageUploadConfig {
 }
 
 export interface ImageUploadFormReturn {
-  // File state
   currentFile: File | undefined;
   previewUrl: string | null;
   imageRef: React.RefObject<HTMLInputElement | null>;
 
-  // Upload state
   isUploading: boolean;
   uploadError: string | null;
   uploadProgress?: number;
 
-  // Actions
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   removeImage: () => void;
   uploadImage: (file: File) => Promise<string | null>;
   reset: () => void;
 
-  // Form integration
   hasImage: boolean;
   displayUrl: string | null;
   isDeleted: boolean; // Track explicit deletion
@@ -53,7 +49,6 @@ export function useImageUploadForm<TFormData extends FieldValues>(
     generateUniqueName = true,
   } = config;
 
-  // Normalize empty string to null
   const normalizedInitialUrl =
     initialImageUrl && initialImageUrl.trim() !== "" ? initialImageUrl : null;
 
@@ -79,7 +74,6 @@ export function useImageUploadForm<TFormData extends FieldValues>(
     onError,
   });
 
-  // Handle image preview cleanup
   useEffect(() => {
     if (!currentFile) return;
     const objectUrl = URL.createObjectURL(currentFile);
@@ -90,7 +84,6 @@ export function useImageUploadForm<TFormData extends FieldValues>(
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size immediately on selection
       if (file.size > maxSize) {
         const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(1);
         const errorMessage = `File size must be less than ${maxSizeMB}MB`;
@@ -102,14 +95,12 @@ export function useImageUploadForm<TFormData extends FieldValues>(
           onError(errorMessage);
         }
 
-        // Clear the input
         if (imageRef.current) {
           imageRef.current.value = "";
         }
         return;
       }
 
-      // Validate file type
       const allowedTypes = ["image/"];
       const isValidType = allowedTypes.some((type) =>
         type.endsWith("/") ? file.type.startsWith(type) : file.type === type
@@ -125,7 +116,6 @@ export function useImageUploadForm<TFormData extends FieldValues>(
           onError(errorMessage);
         }
 
-        // Clear the input
         if (imageRef.current) {
           imageRef.current.value = "";
         }
@@ -134,7 +124,6 @@ export function useImageUploadForm<TFormData extends FieldValues>(
 
       setCurrentFile(file);
       setIsDeleted(false); // Clear deletion flag when new file is selected
-      // Update form value if form integration is provided
       if (setValue && fieldName) {
         setValue(fieldName, file as never);
       }
@@ -148,7 +137,6 @@ export function useImageUploadForm<TFormData extends FieldValues>(
     if (imageRef.current) {
       imageRef.current.value = "";
     }
-    // Update form value if form integration is provided
     if (setValue && fieldName) {
       setValue(fieldName, undefined as never);
     }
@@ -174,23 +162,19 @@ export function useImageUploadForm<TFormData extends FieldValues>(
   };
 
   return {
-    // File state
     currentFile,
     previewUrl,
     imageRef,
 
-    // Upload state
     isUploading,
     uploadError,
     uploadProgress: progress,
 
-    // Actions
     handleImageChange,
     removeImage,
     uploadImage,
     reset,
 
-    // Computed values
     hasImage: Boolean(
       currentFile || (previewUrl && previewUrl.trim() !== "" && !isDeleted)
     ),

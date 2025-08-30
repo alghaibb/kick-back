@@ -14,7 +14,6 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    // Fetch events with optimized single query - no N+1 problem
     const eventsRaw = await prisma.event.findMany({
       where: {
         OR: [

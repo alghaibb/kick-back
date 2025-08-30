@@ -22,7 +22,6 @@ export async function POST(
     const body = await request.json();
     const { status } = rsvpSchema.parse(body);
 
-    // Check if event exists and user is invited
     const eventAttendee = await prisma.eventAttendee.findFirst({
       where: {
         eventId,
@@ -37,7 +36,6 @@ export async function POST(
       );
     }
 
-    // Update RSVP status
     const updatedAttendee = await prisma.eventAttendee.update({
       where: {
         id: eventAttendee.id,
@@ -60,7 +58,6 @@ export async function POST(
       },
     });
 
-    // Send notification to event creator
     try {
       const event = await prisma.event.findUnique({
         where: { id: eventId },
@@ -110,7 +107,6 @@ export async function GET(
 
     const { eventId } = await params;
 
-    // Get user's RSVP status for this event
     const attendee = await prisma.eventAttendee.findFirst({
       where: {
         eventId,

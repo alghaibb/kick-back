@@ -4,7 +4,6 @@ import { del } from "@vercel/blob";
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify the request is from Vercel Cron
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -45,21 +44,18 @@ export async function POST(request: NextRequest) {
           imagesToDelete.push(user.image);
         }
 
-        // Collect event photos
         user.eventPhotos.forEach((photo) => {
           if (photo.imageUrl) {
             imagesToDelete.push(photo.imageUrl);
           }
         });
 
-        // Collect group images
         user.groupMembers.forEach((member) => {
           if (member.group.image) {
             imagesToDelete.push(member.group.image);
           }
         });
 
-        // Delete the user (this will cascade delete most related data)
         await prisma.user.delete({
           where: { id: user.id },
         });
@@ -70,7 +66,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Delete all collected images from Vercel Blob
     const deletePromises = imagesToDelete.map(async (imageUrl) => {
       try {
         await del(imageUrl);

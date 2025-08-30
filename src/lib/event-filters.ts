@@ -35,14 +35,12 @@ export function filterAndSortEvents(
     );
   }
 
-  // Group filter
   if (filters.groupId && filters.groupId !== "all") {
     filteredEvents = filteredEvents.filter(
       (event) => event.groupId === filters.groupId
     );
   }
 
-  // Date range filter
   if (filters.dateRange !== "all") {
     const now = new Date();
     let startDate: Date;
@@ -81,7 +79,6 @@ export function filterAndSortEvents(
     });
   }
 
-  // Sort events
   filteredEvents.sort((a, b) => {
     let comparison = 0;
 

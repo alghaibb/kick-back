@@ -14,7 +14,6 @@ export async function GET(
 
     const { eventId } = await params;
 
-    // Verify access: host or attendee
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -123,5 +122,4 @@ export async function GET(
     );
   }
 }
-
 

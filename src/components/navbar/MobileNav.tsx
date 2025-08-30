@@ -30,7 +30,6 @@ function MobileNav() {
   const isMobile = useIsMobile();
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
-  // Only render on mobile devices
   if (!isMobile) return null;
 
   return (

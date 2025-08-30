@@ -61,7 +61,6 @@ export function RecoverAccountClient() {
     }));
 
     try {
-      // Check if the account exists and is deleted
       const response = await fetch("/api/auth/check-deleted-account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

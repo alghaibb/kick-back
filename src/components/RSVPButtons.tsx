@@ -112,7 +112,6 @@ export function RSVPButtons({
   );
 }
 
-// Simple status display component
 export function RSVPStatus({
   eventId,
   className,

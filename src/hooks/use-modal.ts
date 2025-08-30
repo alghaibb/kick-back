@@ -35,20 +35,16 @@ interface ModalState {
     userRole?: string;
     description?: string;
     image?: string | null;
-    // Event editing fields
     name?: string;
     location?: string;
     date?: string;
     time?: string;
     color?: string;
     groups?: { id: string; name: string }[];
-    // Photo deletion fields
     photoId?: string;
-    // Comment deletion fields
     commentId?: string;
     commentContent?: string;
     isReply?: boolean;
-    // Reply modal fields
     parentCommentId?: string;
     replyingToUser?: {
       id: string;
@@ -58,7 +54,6 @@ interface ModalState {
     editCommentId?: string;
     editCommentContent?: string;
     editCommentImageUrl?: string;
-    // Delete user modal fields
     userId?: string;
     userName?: string;
     // Edit user modal fields
@@ -72,10 +67,8 @@ interface ModalState {
       hasOnboarded: boolean;
       accounts?: Array<{ provider: string }>;
     };
-    // Revoke sessions
     revokeUserId?: string;
     revokeUserEmail?: string;
-    // Template fields
     templateId?: string;
     templateName?: string;
     templateDescription?: string | null;
@@ -93,20 +86,16 @@ interface ModalState {
       userRole?: string;
       description?: string;
       image?: string | null;
-      // Event editing fields
       name?: string;
       location?: string;
       date?: string;
       time?: string;
       color?: string;
       groups?: { id: string; name: string }[];
-      // Photo deletion fields
       photoId?: string;
-      // Comment deletion fields
       commentId?: string;
       commentContent?: string;
       isReply?: boolean;
-      // Reply modal fields
       parentCommentId?: string;
       replyingToUser?: {
         id: string;
@@ -116,7 +105,6 @@ interface ModalState {
       editCommentId?: string;
       editCommentContent?: string;
       editCommentImageUrl?: string;
-      // Delete user modal fields
       userId?: string;
       userName?: string;
       // Edit user modal fields
@@ -137,10 +125,8 @@ interface ModalState {
       contactMessage?: string;
       // Admin edit event field
       isAdmin?: boolean;
-      // Revoke sessions
       revokeUserId?: string;
       revokeUserEmail?: string;
-      // Template fields
       templateId?: string;
       templateName?: string;
       templateDescription?: string | null;

@@ -15,7 +15,6 @@ export async function GET() {
 
     // Single optimized query with all relations
     const [events, groups] = await Promise.all([
-      // Fetch events with group info in one query
       prisma.event.findMany({
         where: {
           OR: [

@@ -105,7 +105,6 @@ function InlineReplyForm({
     onError: (error) => toast.error(error),
   });
 
-  // Reply form
   const replyForm = useForm<ReplyCommentValues>({
     resolver: zodResolver(replyCommentSchema),
     defaultValues: {
@@ -462,7 +461,6 @@ export default function ThreadedEventComments({
     onError: (error) => toast.error(error),
   });
 
-  // Infinite queries
   const {
     data: commentsData,
     isLoading: isLoadingComments,
@@ -471,7 +469,6 @@ export default function ThreadedEventComments({
     isFetchingNextPage: isFetchingNextComments,
   } = useInfiniteEventComments(eventId, sortBy);
 
-  // Mutations
   const createCommentMutation = useCreateComment();
   const toggleReactionMutation = useToggleReaction();
   const deleteCommentMutation = useDeleteComment();
@@ -479,7 +476,6 @@ export default function ThreadedEventComments({
 
   const { open: openModal } = useModal();
 
-  // Forms
   const commentForm = useForm<CreateCommentValues>({
     resolver: zodResolver(createCommentSchema),
     defaultValues: {
@@ -490,7 +486,6 @@ export default function ThreadedEventComments({
     },
   });
 
-  // Handlers
   const handleCommentSubmit = async (values: CreateCommentValues) => {
     try {
       if (commentImageUpload.currentFile) {
@@ -571,7 +566,6 @@ export default function ThreadedEventComments({
 
   const handleEditComment = useCallback(
     (comment: EventCommentData) => {
-      // Open edit modal
       openModal("edit-comment", {
         editCommentId: comment.id,
         editCommentContent: comment.content,
@@ -636,12 +630,10 @@ export default function ThreadedEventComments({
             return Math.min(indentation, maxDesktopIndent);
           })();
 
-      // Responsive avatar size
       const avatarSize = isMobile
         ? Math.max(14, 20 - depth * 1.5) // Mobile: much smaller avatars
         : Math.max(20, 32 - depth * 2); // Desktop: original logic
 
-      // Responsive font sizes
       const { fontSize, timeSize } = isMobile
         ? (() => {
             // Mobile: more aggressive font scaling
@@ -650,7 +642,6 @@ export default function ThreadedEventComments({
             return { fontSize: "text-sm", timeSize: "text-xs" };
           })()
         : (() => {
-            // Desktop: original logic
             const fontSize =
               depth > 2 ? "text-xs" : depth > 0 ? "text-sm" : "text-sm";
             const timeSize = depth > 3 ? "text-xs" : "text-xs";
@@ -984,7 +975,6 @@ export default function ThreadedEventComments({
     [CommentItem]
   );
 
-  // Get all comments from all pages
   const allComments = React.useMemo(() => {
     return commentsData?.pages.flatMap((page) => page.comments) || [];
   }, [commentsData?.pages]);

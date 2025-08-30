@@ -12,7 +12,6 @@ import { cookies } from "next/headers";
  * database resets during development.
  */
 
-// Helper function to clear invalid session cookies
 async function clearSessionCookies() {
   const cookieStore = await cookies();
 
@@ -58,7 +57,6 @@ export async function getSession() {
       process.env.NODE_ENV === "production"
         ? "__Secure-authjs.session-token"
         : "authjs.session-token",
-      // Fallback tokens
       "authjs.session-token",
       "next-auth.session-token",
       "__Secure-authjs.session-token",
@@ -98,10 +96,8 @@ export async function getSession() {
       return null;
     }
 
-    // Check if session is expired
     if (new Date(session.expires) < new Date()) {
 
-      // Clean up expired session from database
       try {
         await prisma.session.delete({
           where: { sessionToken },
@@ -123,10 +119,8 @@ export async function getSession() {
       return null;
     }
 
-    // Check if user is soft deleted
     if (session.user.deletedAt) {
 
-      // Return the session but mark the user as deleted
       // This allows the frontend to handle the soft-deleted state
       return {
         ...session,

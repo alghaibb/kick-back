@@ -48,7 +48,6 @@ export async function POST(
         data: { status: "declined" },
       });
 
-      // Delete the notification for this invitation
       await tx.notification.deleteMany({
         where: {
           userId: session.user.id,

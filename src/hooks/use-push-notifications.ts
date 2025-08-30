@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "./use-auth";
 import { env } from "@/lib/env";
 
-// iOS Safari detection
 const isIOS =
   typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 const isSafari =
@@ -26,14 +25,11 @@ export function usePushNotifications() {
   const hasInitialized = useRef(false);
   const initialPermission = useRef<string | null>(null);
 
-  // Initialize only once on mount
   useEffect(() => {
     if (typeof window === "undefined" || hasInitialized.current) return;
 
-    // Check if we're in PWA mode
     setIsPWA(isStandalone);
 
-    // Check if push notifications are supported
     const supported =
       "serviceWorker" in navigator &&
       "PushManager" in window &&
@@ -51,11 +47,9 @@ export function usePushNotifications() {
     checkSubscriptionStatus();
   }, []);
 
-  // Only re-check when user changes (not on every route)
   useEffect(() => {
     if (!hasInitialized.current || !user) return;
 
-    // Only re-check if user ID changes (new login/logout)
     // This prevents unnecessary checks on route navigation
   }, [user?.id, user]);
 
@@ -85,14 +79,12 @@ export function usePushNotifications() {
       const subscribed = !!subscription;
       setIsSubscribed(subscribed);
 
-      // Check if we need fallback for iOS Safari PWA
       if (isIOS && isSafari && isStandalone && !subscription) {
         setHasFallback(true);
       }
     } catch (error) {
       console.error("Failed to check subscription status:", error);
 
-      // Set fallback for iOS Safari PWA
       if (isIOS && isSafari && isStandalone) {
         setHasFallback(true);
       }
@@ -109,7 +101,6 @@ export function usePushNotifications() {
       throw new Error("Push notifications are not supported");
     }
 
-    // Check if Notification API is available
     if (!("Notification" in window)) {
       throw new Error("Notification API not available");
     }
@@ -146,11 +137,9 @@ export function usePushNotifications() {
 
         await navigator.serviceWorker.ready;
 
-        // Check if already subscribed
         let subscription = await registration.pushManager.getSubscription();
 
         if (!subscription) {
-          // Create new subscription
           subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(
@@ -159,7 +148,6 @@ export function usePushNotifications() {
           });
         }
 
-        // Save subscription to server
         const response = await fetch("/api/notifications/subscribe", {
           method: "POST",
           headers: {
@@ -181,7 +169,6 @@ export function usePushNotifications() {
         return subscription;
       }
 
-      // Standard handling for other browsers
       const registration = await navigator.serviceWorker.register(
         "/push-sw.js?v=" + Date.now(),
         {
@@ -192,11 +179,9 @@ export function usePushNotifications() {
 
       await navigator.serviceWorker.ready;
 
-      // Check if already subscribed
       let subscription = await registration.pushManager.getSubscription();
 
       if (!subscription) {
-        // Create new subscription
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(
@@ -205,7 +190,6 @@ export function usePushNotifications() {
         });
       }
 
-      // Save subscription to server
       const response = await fetch("/api/notifications/subscribe", {
         method: "POST",
         headers: {
@@ -228,7 +212,6 @@ export function usePushNotifications() {
     } catch (error) {
       console.error("Failed to subscribe to push notifications:", error);
 
-      // Set fallback for iOS Safari PWA
       if (isIOS && isSafari && isStandalone) {
         // Use cached permission as fallback
         try {
@@ -259,7 +242,6 @@ export function usePushNotifications() {
       const subscription = await registration?.pushManager.getSubscription();
 
       if (subscription) {
-        // Remove from server
         await fetch("/api/notifications/subscribe", {
           method: "DELETE",
           headers: {
@@ -270,7 +252,6 @@ export function usePushNotifications() {
           }),
         });
 
-        // Unsubscribe locally
         await subscription.unsubscribe();
       }
 
@@ -317,7 +298,6 @@ export function usePushNotifications() {
   };
 }
 
-// Helper function to convert VAPID key
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
@@ -334,7 +314,6 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
-// Helper function to convert ArrayBuffer to base64
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   let binary = "";

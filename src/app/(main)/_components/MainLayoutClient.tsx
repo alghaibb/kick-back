@@ -89,7 +89,6 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
       className={cn(
         "min-h-screen transition-all duration-500 ease-in-out theme-transition",
         getThemeBackground(),
-        // Add a class when custom background is active for text styling
         user?.dashboardBackground && "custom-background-active"
       )}
       style={getCustomBackgroundStyle()}

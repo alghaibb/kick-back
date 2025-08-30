@@ -29,7 +29,6 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Get deleted users with pagination
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,

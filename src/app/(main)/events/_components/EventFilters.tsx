@@ -39,14 +39,12 @@ export default function EventFilters({
 }: EventFiltersProps) {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
-  // Debounce search input
   const {
     value: searchValue,
     debouncedValue: debouncedSearch,
     setValue: setSearchValue,
   } = useDebounce(filters.search, 300);
 
-  // Update filters when debounced search changes
   React.useEffect(() => {
     if (debouncedSearch !== filters.search) {
       onFiltersChange({
@@ -57,7 +55,6 @@ export default function EventFilters({
   }, [debouncedSearch, filters, onFiltersChange]);
 
   const updateFilter = (key: keyof EventFilters, value: string) => {
-    // Ensure groupId is never an empty string
     if (key === "groupId" && (!value || value.trim() === "")) {
       value = "all";
     }
@@ -93,7 +90,6 @@ export default function EventFilters({
     filters.sortBy !== "date" || filters.sortOrder !== "desc",
   ].filter(Boolean).length;
 
-  // Desktop filters content
   const FiltersContent = () => (
     <div className="space-y-4">
       {/* Group Filter */}

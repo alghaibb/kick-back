@@ -40,7 +40,6 @@ export function AcceptEventInvitePage({ token }: AcceptEventInvitePageProps) {
       return;
     }
 
-    // Fetch invite data
     fetchInviteData(token);
   }, [token]);
 

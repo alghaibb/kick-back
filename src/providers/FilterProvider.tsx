@@ -68,7 +68,6 @@ export function FilterProvider({
       }
     }
 
-    // Only update on initial mount or when searchParams actually change
     if (isInitialMount.current) {
       isInitialMount.current = false;
       setFilters(

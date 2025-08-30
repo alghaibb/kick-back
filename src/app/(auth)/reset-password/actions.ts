@@ -17,7 +17,6 @@ export async function resetPassword(token: string, values: ResetPasswordValues) 
     const validatedValues = resetPasswordSchema.parse(values);
     const { newPassword, newConfirmPassword } = validatedValues;
 
-    // Get IP address for rate limiting
     const headersList = await headers();
     const ipAddress = headersList.get('x-forwarded-for') ||
       headersList.get('x-real-ip') ||

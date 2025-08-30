@@ -3,8 +3,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { suppressEventCommentsRefetch } from "@/hooks/queries/_commentRefetchControl";
-import { suppressReplyRefetch } from "@/hooks/queries/_replyRefetchControl";
 import {
   CreateCommentValues,
   ReplyCommentValues,
@@ -37,12 +35,10 @@ export function useCreateComment() {
     onMutate: async (values) => {
       if (!user?.id) return;
 
-      // Cancel any outgoing refetches for all sorting variations
       await queryClient.cancelQueries({
         queryKey: ["event-comments", values.eventId],
       });
 
-      // Get all comment queries for this event to update them all
       const queryCache = queryClient.getQueryCache();
       const eventCommentQueries = queryCache.findAll({
         queryKey: ["event-comments", values.eventId],
@@ -76,7 +72,6 @@ export function useCreateComment() {
         },
       };
 
-      // Update each paginated comments (infinite) query optimistically
       const infiniteQueries = queryCache.findAll({
         queryKey: ["infinite-event-comments", values.eventId],
       });
@@ -118,17 +113,14 @@ export function useCreateComment() {
         });
       });
 
-      // Update each non-infinite comments query optimistically
       eventCommentQueries.forEach((query) => {
         const oldData = query.state.data as CommentsResponse | undefined;
         if (!oldData) return;
 
-        // Store rollback function
         rollbackFunctions.push(() => {
           queryClient.setQueryData(query.queryKey, oldData);
         });
 
-        // Update based on whether it's a reply or main comment
         if (values.parentId) {
           // It's a reply - add to parent's replies
           const newData = {
@@ -168,11 +160,10 @@ export function useCreateComment() {
       toast.success(values.parentId ? "Reply posted!" : "Comment posted!");
 
       // Suppress background refetch briefly to avoid bounce overwriting optimistic item
-      suppressEventCommentsRefetch(values.eventId, 2000);
+
       return { rollbackFunctions, eventId: values.eventId };
     },
     onSuccess: (_data, variables) => {
-      // Delay background sync slightly so DB is up-to-date to avoid bounce
       setTimeout(() => {
         queryClient.invalidateQueries({
           queryKey: ["event-comments", variables.eventId],
@@ -182,10 +173,9 @@ export function useCreateComment() {
           queryKey: ["infinite-event-comments", variables.eventId],
           refetchType: "inactive",
         });
-      }, 600);
+      }, 2500);
     },
     onError: (error, variables, context) => {
-      // Only revert on actual errors and show user-friendly message
       console.error("Comment error:", error);
       context?.rollbackFunctions?.forEach((rollback) => rollback());
       toast.error("Comment failed to post. Please try again.");
@@ -297,7 +287,6 @@ export function useCreateReply() {
       });
 
       // Optimistically prepend reply to infinite replies first page
-      // Create the query if it doesn't exist (for fresh comments)
       const infRepliesKey = [
         "infinite-replies",
         values.eventId,
@@ -332,7 +321,6 @@ export function useCreateReply() {
       }
 
       // Suppress polling briefly to avoid bounce
-      suppressEventCommentsRefetch(values.eventId, 1500);
 
       toast.success("Reply added!");
       return { previousComments, eventId: values.eventId };
@@ -351,7 +339,7 @@ export function useCreateReply() {
           queryKey: ["infinite-replies", variables.eventId, variables.parentId],
           refetchType: "inactive",
         });
-      }, 600);
+      }, 2500);
     },
     onError: (error, variables, context) => {
       if (context?.previousComments) {
@@ -374,7 +362,6 @@ export function useToggleReaction() {
       values: CommentReactionValues & { eventId?: string }
     ) => {
       try {
-        // Fire and forget - don't wait for server response for instant feel
         const result = await toggleReactionAction(values);
 
         // If there's an error from the server, log it but don't throw
@@ -405,7 +392,6 @@ export function useToggleReaction() {
       const rollbackFunctions: Array<() => void> = [];
       const queryCache = queryClient.getQueryCache();
 
-      // Update regular comment queries
       const commentQueries = queryCache.findAll({
         queryKey: ["event-comments"],
       });
@@ -427,7 +413,6 @@ export function useToggleReaction() {
         });
       });
 
-      // Update infinite comment queries
       const infiniteCommentQueries = queryCache.findAll({
         queryKey: ["infinite-event-comments"],
       });
@@ -455,7 +440,6 @@ export function useToggleReaction() {
         });
       });
 
-      // Update infinite replies queries (only for same event if provided)
       const infiniteRepliesQueries = queryCache.findAll({
         queryKey: ["infinite-replies"],
       });
@@ -499,7 +483,6 @@ export function useToggleReaction() {
   });
 }
 
-// Helper function to update a comment with a reaction optimistically
 function updateCommentWithReaction(
   comment: EventCommentData,
   targetCommentId: string,
@@ -511,14 +494,12 @@ function updateCommentWithReaction(
     nickname?: string | null;
   }
 ): EventCommentData {
-  // Check if this is the target comment
   if (comment.id === targetCommentId) {
     const existingReactionIndex = (comment.reactions || []).findIndex(
       (r) => r.userId === user.id && r.emoji === emoji
     );
 
     if (existingReactionIndex >= 0) {
-      // Remove existing reaction
       return {
         ...comment,
         reactions: (comment.reactions || []).filter(
@@ -530,7 +511,6 @@ function updateCommentWithReaction(
         },
       };
     } else {
-      // Add new reaction
       return {
         ...comment,
         reactions: [
@@ -555,7 +535,6 @@ function updateCommentWithReaction(
     }
   }
 
-  // Also check replies recursively
   return {
     ...comment,
     replies: (comment.replies || []).map((reply) =>
@@ -594,11 +573,9 @@ function setPendingDeletionsData(
   try {
     localStorage.setItem(PENDING_DELETIONS_KEY, JSON.stringify(data));
   } catch {
-    // Ignore storage errors
   }
 }
 
-// Clean up expired pending deletions
 function cleanupExpiredDeletions() {
   if (typeof window === "undefined") return;
   const data = getPendingDeletionsData();
@@ -617,7 +594,6 @@ function cleanupExpiredDeletions() {
   }
 }
 
-// Initialize cleanup on module load
 if (typeof window !== "undefined") {
   cleanupExpiredDeletions();
 }
@@ -655,13 +631,11 @@ export function useDeleteComment() {
         throw new Error("No pending deletion to undo");
       }
 
-      // Regular deletion - delay server call
       return new Promise((resolve, reject) => {
         const timeoutId = setTimeout(async () => {
           try {
             const result = await deleteCommentAction(data.commentId);
 
-            // Clean up both in-memory and persistent storage
             pendingDeletions.delete(data.commentId);
             const persistentData = getPendingDeletionsData();
             delete persistentData[data.commentId];
@@ -674,7 +648,6 @@ export function useDeleteComment() {
             // This will trigger onSuccess with the actual server result
             resolve({ success: result.success || true, serverDeleted: true });
           } catch (error) {
-            // Clean up both in-memory and persistent storage
             pendingDeletions.delete(data.commentId);
             const persistentData = getPendingDeletionsData();
             delete persistentData[data.commentId];
@@ -683,17 +656,14 @@ export function useDeleteComment() {
           }
         }, 5000); // 5 second delay
 
-        // Store the timeout so it can be cancelled
         pendingDeletions.set(data.commentId, {
           timeoutId,
           commentData: {} as EventCommentData, // Will be filled in onMutate
         });
 
-        // Also store in persistent storage
         const persistentData = getPendingDeletionsData();
         persistentData[data.commentId] = {
           commentData: {
-            // Initialize with basic structure to prevent serialization issues
             id: data.commentId,
             content: "",
             imageUrl: null,
@@ -721,7 +691,6 @@ export function useDeleteComment() {
         };
         setPendingDeletionsData(persistentData);
 
-        // Return immediately for optimistic UI
         resolve({ success: true, delayed: true });
       });
     },
@@ -752,7 +721,6 @@ export function useDeleteComment() {
       const rollbacks: Array<() => void> = [];
       let deletedComment: EventCommentData | null = null;
 
-      // Helper to remove a comment (or reply) recursively and capture it
       const removeRecursive = (
         list: EventCommentData[]
       ): {
@@ -789,7 +757,6 @@ export function useDeleteComment() {
             if (child.removed) {
               removed = true;
               if (child.deletedComment) deletedComment = child.deletedComment;
-              // Update reply count when a reply is removed
               return {
                 ...c,
                 replies: child.list,
@@ -805,7 +772,6 @@ export function useDeleteComment() {
         return { list: next, removed, deletedComment };
       };
 
-      // Non-infinite comments
       const nonInfiniteKey = ["event-comments", eventId];
       const prevNonInfinite =
         queryClient.getQueryData<CommentsResponse>(nonInfiniteKey);
@@ -825,7 +791,6 @@ export function useDeleteComment() {
         }
       }
 
-      // Infinite comments (pages)
       const infQueries = queryClient
         .getQueryCache()
         .findAll({ queryKey: ["infinite-event-comments", eventId] });
@@ -867,17 +832,14 @@ export function useDeleteComment() {
         queryClient.setQueryData(key, { ...prev, pages });
       });
 
-      // Store the deleted comment for potential undo (both in-memory and persistent)
       if (deletedComment) {
         const pending = pendingDeletions.get(commentId);
         if (pending) {
           pending.commentData = deletedComment;
         }
 
-        // Also update persistent storage with complete user data
         const persistentData = getPendingDeletionsData();
         if (persistentData[commentId]) {
-          // Ensure user data is completely preserved before storing
           const completeDeletedComment = {
             ...deletedComment,
             user: {
@@ -901,13 +863,6 @@ export function useDeleteComment() {
 
       // Suppress refetch to prevent bounce during delayed deletion
       // Reduced time to allow faster cache updates after restoration
-      suppressEventCommentsRefetch(eventId, 6000); // 6 seconds (long enough for deletion delay)
-
-      // Also suppress the specific reply if this is a reply deletion
-      if (deletedComment?.parentId) {
-        suppressReplyRefetch(commentId, 7000); // 7 seconds for individual reply
-      }
-
       return { rollbacks, eventId, deletedComment };
     },
     onSuccess: (result, variables) => {
@@ -917,7 +872,6 @@ export function useDeleteComment() {
         return;
       }
 
-      // Handle actual server deletion completion
       if (result?.serverDeleted) {
         // Server deletion completed - do a gentle background sync with longer delay for replies
         setTimeout(() => {
@@ -967,7 +921,6 @@ export function useUndoCommentDeletion() {
         pendingDeletions.delete(data.commentId);
       }
 
-      // Clean up persistent storage
       if (persistentPending) {
         delete persistentData[data.commentId];
         setPendingDeletionsData(persistentData);
@@ -986,7 +939,6 @@ export function useUndoCommentDeletion() {
         pending?.commentData || persistentPending?.commentData;
       if (!commentData) return;
 
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({
         queryKey: ["event-comments", eventId],
       });
@@ -995,7 +947,6 @@ export function useUndoCommentDeletion() {
       });
       await queryClient.cancelQueries({ queryKey: ["infinite-replies"] });
 
-      // Helper to restore comment recursively
       const restoreRecursive = (
         list: EventCommentData[],
         parentId?: string
@@ -1004,10 +955,8 @@ export function useUndoCommentDeletion() {
           // This is where the comment should be restored
           const existingIndex = list.findIndex((c) => c.id === commentId);
           if (existingIndex === -1) {
-            // Ensure user data is properly structured before restoration
             const restoredComment: EventCommentData = {
               ...commentData,
-              // Ensure dates are valid ISO strings
               createdAt: commentData.createdAt || new Date().toISOString(),
               updatedAt: commentData.updatedAt || new Date().toISOString(),
               editedAt: commentData.editedAt || null,
@@ -1026,7 +975,6 @@ export function useUndoCommentDeletion() {
               },
             };
 
-            // Add back the comment (maintain sort order by createdAt)
             const newList = [...list, restoredComment];
             return newList.sort(
               (a, b) =>
@@ -1059,7 +1007,6 @@ export function useUndoCommentDeletion() {
         });
       };
 
-      // Only restore to main comments if this is a top-level comment (no parentId)
       if (!commentData.parentId) {
         // Restore to non-infinite comments
         const nonInfiniteKey = ["event-comments", eventId];
@@ -1107,7 +1054,6 @@ export function useUndoCommentDeletion() {
                 },
               };
             }
-            // Also check nested replies recursively
             return {
               ...comment,
               replies: updateParentReplyCount(comment.replies || []),
@@ -1115,7 +1061,6 @@ export function useUndoCommentDeletion() {
           });
         };
 
-        // Update parent reply count in non-infinite comments
         const nonInfiniteKey = ["event-comments", eventId];
         const prevNonInfinite =
           queryClient.getQueryData<CommentsResponse>(nonInfiniteKey);
@@ -1126,7 +1071,6 @@ export function useUndoCommentDeletion() {
           });
         }
 
-        // Update parent reply count in infinite comments
         const infQueries = queryClient
           .getQueryCache()
           .findAll({ queryKey: ["infinite-event-comments", eventId] });
@@ -1159,7 +1103,6 @@ export function useUndoCommentDeletion() {
           }>(key);
           if (!prev?.pages) return;
 
-          // Add back to first page
           const firstPage = prev.pages[0];
           if (firstPage) {
             const existingIndex = firstPage.replies.findIndex(
@@ -1169,7 +1112,6 @@ export function useUndoCommentDeletion() {
               // Use the same properly structured comment data
               const restoredComment: EventCommentData = {
                 ...commentData,
-                // Ensure dates are valid ISO strings
                 createdAt: commentData.createdAt || new Date().toISOString(),
                 updatedAt: commentData.updatedAt || new Date().toISOString(),
                 editedAt: commentData.editedAt || null,
@@ -1199,7 +1141,6 @@ export function useUndoCommentDeletion() {
         });
       }
 
-      suppressEventCommentsRefetch(eventId, 500); // Short suppression for restoration
       return { commentData };
     },
     onSuccess: () => {

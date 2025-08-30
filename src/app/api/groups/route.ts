@@ -58,7 +58,6 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    // Fetch groups the user owns
     const groupsOwned = await prisma.group.findMany({
       where: { createdBy: userId },
       include: {
@@ -69,7 +68,6 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    // Fetch groups the user is a member of (but not owner)
     const groupsIn = await prisma.group.findMany({
       where: {
         members: { some: { userId } },

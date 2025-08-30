@@ -47,7 +47,6 @@ export function ActiveThemeProvider({
     );
     document.documentElement.classList.add(`theme-${theme}`);
 
-    // Save to cookie & localStorage
     localStorage.setItem("shadcn-theme", theme);
     setThemeCookie(theme);
     setActiveThemeState(theme);

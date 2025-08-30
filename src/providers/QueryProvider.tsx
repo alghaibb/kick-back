@@ -22,16 +22,13 @@ export default function QueryProvider({
               if (error?.message === "UNAUTHORIZED") {
                 return false;
               }
-              // Only retry once for other errors
               return failureCount < 1;
             },
             refetchOnWindowFocus: true, // Re-enabled for fresh data on navigation
             refetchOnReconnect: true,
             // Enable background refetching for real-time feel
             refetchIntervalInBackground: false, // Disable to save resources when tab is inactive
-            // Network mode optimizations
             networkMode: "online",
-            // Reduce memory usage
             structuralSharing: true, // Share identical data structures
           },
           mutations: {
@@ -39,7 +36,6 @@ export default function QueryProvider({
             retry: 1,
             // Longer garbage collection for mutations (better UX on slow networks)
             gcTime: 5 * 60 * 1000, // 5 minutes instead of 1 second
-            // Network optimizations
             networkMode: "online",
           },
         },

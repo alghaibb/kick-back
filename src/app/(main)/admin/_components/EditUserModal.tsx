@@ -33,7 +33,6 @@ import { useEffect, useMemo } from "react";
 import { useImageUploadForm } from "@/hooks/useImageUploadForm";
 import Image from "next/image";
 
-// Define the form schema directly in the component to avoid type conflicts
 const editUserFormSchema = z
   .object({
     firstName: firstNameField,
@@ -79,7 +78,6 @@ export default function EditUserModal() {
 
   const user = data?.user as User;
 
-  // Image upload hook
   const imageUpload = useImageUploadForm(
     undefined, // No form setValue needed, we'll handle manually
     undefined, // No field name needed
@@ -111,7 +109,6 @@ export default function EditUserModal() {
   // Watch form values for changes (must be called before conditional return)
   const formValues = form.watch();
 
-  // Update form when user data becomes available
   useEffect(() => {
     if (user) {
       form.reset({
@@ -127,7 +124,6 @@ export default function EditUserModal() {
     }
   }, [user, form]);
 
-  // Check if user signed up with OAuth (Google, etc.) - they might not have a password
   const hasOAuthAccount = user?.accounts?.some(
     (account) =>
       account.provider === "google" || account.provider === "facebook"
@@ -137,7 +133,6 @@ export default function EditUserModal() {
   // If hasPassword is explicitly false or user only has OAuth accounts, don't show password fields
   const canChangePassword = user?.hasPassword !== false && !hasOAuthAccount;
 
-  // Check if form has changes compared to original user data (must be called before conditional return)
   const hasChanges = useMemo(() => {
     if (!user) return false;
 
@@ -159,7 +154,6 @@ export default function EditUserModal() {
       image: formValues.image || "",
     };
 
-    // Check if any field has changed
     const fieldsChanged = Object.keys(originalValues).some((key) => {
       return (
         originalValues[key as keyof typeof originalValues] !==
@@ -167,13 +161,11 @@ export default function EditUserModal() {
       );
     });
 
-    // Check if password fields have content (only if user can change password)
     const passwordChanged =
       canChangePassword &&
       ((formValues.newPassword && formValues.newPassword.length > 0) ||
         (formValues.confirmPassword && formValues.confirmPassword.length > 0));
 
-    // Check if image has changed
     const imageChanged = imageUpload.currentFile || imageUpload.isDeleted;
 
     return fieldsChanged || passwordChanged || imageChanged;
@@ -192,7 +184,6 @@ export default function EditUserModal() {
     try {
       let imageUrl = user.image; // Keep existing image by default
 
-      // Handle image upload if there's a new file
       if (imageUpload.currentFile) {
         toast.info("Uploading image...");
         const uploadedUrl = await imageUpload.uploadImage(

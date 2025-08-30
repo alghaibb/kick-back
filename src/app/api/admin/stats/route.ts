@@ -23,7 +23,6 @@ export async function GET() {
     // Skip rate limiting for stats read operations
     await requireAdmin(true);
 
-    // Check cache first
     const now = Date.now();
     if (statsCache && (now - statsCache.timestamp) < CACHE_DURATION) {
       const response = NextResponse.json({
@@ -36,7 +35,6 @@ export async function GET() {
       return response;
     }
 
-    // Get counts in parallel for better performance with optimized queries
     const [totalUsers, activeEvents, contactMessages, pendingContactMessages, totalGroups, recentActivity] =
       await Promise.all([
         prisma.user.count({
@@ -56,7 +54,6 @@ export async function GET() {
           },
         }),
         prisma.group.count(),
-        // Get recent activity metrics
         prisma.user.count({
           where: {
             deletedAt: null,
@@ -67,7 +64,6 @@ export async function GET() {
         }),
       ]);
 
-    // Calculate growth metrics
     const [usersLastWeek, eventsLastWeek] = await Promise.all([
       prisma.user.count({
         where: {
@@ -104,7 +100,6 @@ export async function GET() {
       lastUpdated: new Date().toISOString(),
     };
 
-    // Update cache
     statsCache = {
       data,
       timestamp: now,
@@ -115,14 +110,12 @@ export async function GET() {
       cached: false,
     });
 
-    // Add cache headers for better performance
     response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
 
     return response;
   } catch (error) {
     console.error("Error fetching admin stats:", error);
 
-    // Return cached data if available, even if stale
     if (statsCache) {
       return NextResponse.json({
         ...statsCache.data,
@@ -139,7 +132,6 @@ export async function GET() {
   }
 }
 
-// Add endpoint to clear cache if needed
 export async function DELETE() {
   try {
     await requireAdmin(true);

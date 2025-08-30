@@ -32,7 +32,6 @@ class AdminActionError extends Error {
   }
 }
 
-// Helper function to check if URL is a Vercel Blob URL that we can delete
 function isVercelBlobUrl(url: string): boolean {
   try {
     const urlObj = new URL(url);
@@ -51,13 +50,11 @@ export async function updateUser(
   updates: Record<string, unknown>
 ) {
   try {
-    // Validate action and data
     validateAdminAction("update_user", { userId, updates });
 
     // Check admin permissions with audit logging
     await requireAdminWithAudit("update_user", `user:${userId}`, true);
 
-    // Check if admin can manage this user
     const { canManage, error } = await canManageUser(userId);
     if (!canManage) {
       throw new AdminActionError(
@@ -67,7 +64,6 @@ export async function updateUser(
       );
     }
 
-    // Verify user exists and is not deleted
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, deletedAt: true, role: true },
@@ -89,7 +85,6 @@ export async function updateUser(
     if (updates.role && updates.role !== existingUser.role) {
     }
 
-    // Update user with transaction for data consistency
     const updatedUser = await prisma.$transaction(async (tx) => {
       return tx.user.update({
         where: { id: userId },
@@ -159,7 +154,6 @@ export async function deleteContact(contactId: string) {
       );
     }
 
-    // Verify contact exists
     const existingContact = await prisma.contact.findUnique({
       where: { id: contactId },
       select: { id: true },
@@ -169,12 +163,10 @@ export async function deleteContact(contactId: string) {
       throw new AdminActionError("Contact not found", "NOT_FOUND", 404);
     }
 
-    // Delete the contact
     await prisma.contact.delete({
       where: { id: contactId },
     });
 
-    // Revalidate paths
     revalidatePath("/admin/contacts");
     revalidatePath("/admin");
 
@@ -219,7 +211,6 @@ export async function deleteUser(userId: string) {
 
     // Use transaction for data consistency
     const result = await prisma.$transaction(async (tx) => {
-      // Get user info before deletion
       const user = await tx.user.findUnique({
         where: { id: userId },
         include: {
@@ -243,7 +234,6 @@ export async function deleteUser(userId: string) {
         );
       }
 
-      // Handle group ownership transfers
       const groupsToTransfer = user.groupMembers.filter(
         (member) => member.role === "owner"
       );
@@ -268,7 +258,6 @@ export async function deleteUser(userId: string) {
             data: { role: "owner" },
           });
 
-          // Update group createdBy field
           await tx.group.update({
             where: { id: groupId },
             data: { createdBy: nextOwner.userId },
@@ -304,7 +293,6 @@ export async function deleteUser(userId: string) {
       };
     });
 
-    // Batch revalidate paths
     await Promise.all([
       revalidatePath("/admin/deleted-users"),
       revalidatePath("/admin/users"),
@@ -364,7 +352,6 @@ export async function recoverUser(userId: string) {
 
     // Use transaction for data consistency
     const result = await prisma.$transaction(async (tx) => {
-      // Get the deleted user
       const deletedUser = await tx.user.findUnique({
         where: { id: userId },
         include: {
@@ -385,7 +372,6 @@ export async function recoverUser(userId: string) {
       // Restore the user's original email and name
       const originalEmail = deletedUser.email.replace(/^deleted_\d+_/, "");
 
-      // Check if email is already in use
       const emailInUse = await tx.user.findFirst({
         where: {
           email: originalEmail,
@@ -426,7 +412,6 @@ export async function recoverUser(userId: string) {
         }
       }
 
-      // Recover the user
       const recoveredUser = await tx.user.update({
         where: { id: userId },
         data: {
@@ -441,7 +426,6 @@ export async function recoverUser(userId: string) {
         },
       });
 
-      // Handle group ownership recovery
       const groupsToRecover = deletedUser.groupMembers.filter(
         (member) => member.role === "owner"
       );
@@ -450,7 +434,6 @@ export async function recoverUser(userId: string) {
       for (const member of groupsToRecover) {
         const groupId = member.groupId;
 
-        // Check if the group currently has no owner (createdBy is empty)
         const group = await tx.group.findUnique({
           where: { id: groupId },
         });
@@ -468,7 +451,6 @@ export async function recoverUser(userId: string) {
       return { recoveredUser, recoveredGroups };
     });
 
-    // Batch revalidate paths
     await Promise.all([
       revalidatePath("/admin/deleted-users"),
       revalidatePath("/admin/users"),
@@ -537,13 +519,11 @@ export async function getAdminActionSummary() {
 // Edit User Profile with Password Change Support
 export async function editUserProfile(userId: string, data: EditUserInput) {
   try {
-    // Validate input data
     const validatedData = editUserSchema.parse(data);
 
     // Check admin permissions (skip rate limit for legitimate admin operations)
     await requireAdminWithAudit("edit_user_profile", `user:${userId}`, true);
 
-    // Check if admin can manage this user (allow self-editing for profile updates)
     const { canManage, error } = await canManageUser(userId, true);
 
     if (!canManage) {
@@ -554,7 +534,6 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       );
     }
 
-    // Verify user exists and is not deleted
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -582,7 +561,6 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       );
     }
 
-    // Prepare update data
     const updateData: Record<string, unknown> = {
       firstName: validatedData.firstName,
       lastName: validatedData.lastName,
@@ -592,7 +570,6 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       updatedAt: new Date(),
     };
 
-    // Handle image update if provided
     if (validatedData.image !== undefined) {
       const newImageUrl = validatedData.image || null;
       const oldImageUrl = existingUser.image;
@@ -607,24 +584,19 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
           await del(oldImageUrl);
         } catch (error) {
           console.error(`Failed to delete old image ${oldImageUrl}:`, error);
-          // Continue with the update even if blob deletion fails
         }
       }
 
       updateData.image = newImageUrl;
     }
 
-    // Handle password change if provided
     if (validatedData.newPassword && validatedData.newPassword.length > 0) {
       const hashedPassword = await bcrypt.hash(validatedData.newPassword, 12);
       updateData.password = hashedPassword;
     }
 
-    // Log role changes
     if (validatedData.role !== existingUser.role) {
     }
-
-    // Update user
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -649,7 +621,6 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
       },
     });
 
-    // Revalidate relevant paths
     revalidatePath("/admin/users");
     revalidatePath("/admin");
 
@@ -700,7 +671,6 @@ export async function editUserProfile(userId: string, data: EditUserInput) {
 // Contact Reply Action with enhanced validation and error handling
 export async function replyToContact(data: ContactReplyValues) {
   try {
-    // Validate input data
     const validatedData = contactReplySchema.parse(data);
     const { contactId, replyMessage } = validatedData;
 
@@ -711,7 +681,6 @@ export async function replyToContact(data: ContactReplyValues) {
       true
     );
 
-    // Get contact details and admin info
     const [contact, adminUser] = await Promise.all([
       prisma.contact.findUnique({
         where: { id: contactId },
@@ -741,7 +710,6 @@ export async function replyToContact(data: ContactReplyValues) {
     const adminName =
       `${adminUser.firstName} ${adminUser.lastName || ""}`.trim();
 
-    // Send the reply email
     try {
       await sendContactReplyEmail(
         contact.email,
@@ -768,10 +736,8 @@ export async function replyToContact(data: ContactReplyValues) {
       });
     } catch (error) {
       console.error("Failed to update contact repliedAt:", error);
-      // Continue with email sending even if update fails
     }
 
-    // Revalidate paths
     revalidatePath("/admin/contacts");
     revalidatePath("/admin");
 
@@ -811,13 +777,11 @@ export async function adminEditEventAction(
   }
 ) {
   try {
-    // Validate action and data
     validateAdminAction("edit_event", { eventId, values });
 
     // Check admin permissions with audit logging
     await requireAdminWithAudit("edit_event", `event:${eventId}`, true);
 
-    // Validate input
     const { date, name, description, groupId, location, time } = values;
 
     if (!name.trim()) {
@@ -846,7 +810,6 @@ export async function adminEditEventAction(
       );
     }
 
-    // Check if event exists
     const existingEvent = await prisma.event.findUnique({
       where: { id: eventId },
       select: {
@@ -860,7 +823,6 @@ export async function adminEditEventAction(
       throw new AdminActionError("Event not found", "NOT_FOUND", 404);
     }
 
-    // Update event with admin override
     const updatedEvent = await prisma.event.update({
       where: { id: eventId },
       data: {
@@ -872,9 +834,7 @@ export async function adminEditEventAction(
       },
     });
 
-    // Handle group changes if needed
     if (existingEvent.groupId !== groupId) {
-      // Remove existing attendees (except creator)
       await prisma.eventAttendee.deleteMany({
         where: {
           eventId,
@@ -884,7 +844,6 @@ export async function adminEditEventAction(
         },
       });
 
-      // Add new group members if group is specified
       if (groupId) {
         const newGroupMembers = await prisma.groupMember.findMany({
           where: { groupId },
@@ -939,7 +898,6 @@ export async function revokeUserSessions(
       );
     }
 
-    // Ensure user exists and is not soft-deleted
     const user = await prisma.user.findFirst({
       where: { id: userId, deletedAt: null },
       select: { id: true },
@@ -948,7 +906,6 @@ export async function revokeUserSessions(
       throw new AdminActionError("User not found", "NOT_FOUND", 404);
     }
 
-    // Delete all sessions for this user
     await prisma.session.deleteMany({ where: { userId } });
 
     // Disable push subscriptions instead of deleting them

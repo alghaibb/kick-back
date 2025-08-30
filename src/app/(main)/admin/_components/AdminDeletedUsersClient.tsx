@@ -59,7 +59,6 @@ interface DeletedUser {
   };
 }
 
-// Static header component
 function AdminDeletedUsersHeader() {
   return (
     <div className="mb-8 md:mb-10">
@@ -98,7 +97,6 @@ function AdminDeletedUsersHeader() {
   );
 }
 
-// Data component
 function AdminDeletedUsersData({
   users,
   pagination,

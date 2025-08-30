@@ -9,7 +9,6 @@ export function DebugPanel() {
   const [isSafari, setIsSafari] = useState(false);
 
   useEffect(() => {
-    // Detect iOS Safari
     const userAgent = navigator.userAgent;
     const isIOSDevice = /iPad|iPhone|iPod/.test(userAgent);
     const isSafariBrowser =
@@ -45,7 +44,6 @@ export function DebugPanel() {
         addLog(args.join(" "), "warn");
       };
 
-      // Add initial log
       addLog("Debug panel initialized");
       addLog(`User Agent: ${userAgent}`);
       addLog(
@@ -57,7 +55,6 @@ export function DebugPanel() {
 
       // Test for common errors
       try {
-        // Test service worker
         if ("serviceWorker" in navigator) {
           navigator.serviceWorker
             .getRegistration()
@@ -71,14 +68,12 @@ export function DebugPanel() {
             });
         }
 
-        // Test push notifications
         if ("PushManager" in window) {
           addLog("Push Manager available");
         } else {
           addLog("Push Manager not available", "warn");
         }
 
-        // Test notifications
         if ("Notification" in window) {
           try {
             addLog(`Notification Permission: ${Notification.permission}`);
@@ -94,7 +89,6 @@ export function DebugPanel() {
     }
   }, []);
 
-  // Only show on iOS Safari
   if (!isIOS || !isSafari) {
     return null;
   }
