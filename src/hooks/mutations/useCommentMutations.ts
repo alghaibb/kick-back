@@ -792,6 +792,10 @@ export function useUndoCommentDeletion() {
             // Ensure user data is properly structured before restoration
             const restoredComment: EventCommentData = {
               ...commentData,
+              // Ensure dates are valid ISO strings
+              createdAt: commentData.createdAt || new Date().toISOString(),
+              updatedAt: commentData.updatedAt || new Date().toISOString(),
+              editedAt: commentData.editedAt || null,
               user: {
                 id: commentData.user?.id || "",
                 firstName: commentData.user?.firstName || "Unknown",
@@ -878,6 +882,10 @@ export function useUndoCommentDeletion() {
               // Use the same properly structured comment data
               const restoredComment: EventCommentData = {
                 ...commentData,
+                // Ensure dates are valid ISO strings
+                createdAt: commentData.createdAt || new Date().toISOString(),
+                updatedAt: commentData.updatedAt || new Date().toISOString(),
+                editedAt: commentData.editedAt || null,
                 user: {
                   id: commentData.user?.id || "",
                   firstName: commentData.user?.firstName || "Unknown",

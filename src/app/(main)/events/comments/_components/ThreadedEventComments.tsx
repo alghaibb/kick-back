@@ -190,9 +190,11 @@ function ThreadedRepliesSection({
         {/* Recursively render nested replies when expanded */}
         {hasNestedReplies && isExpanded && (
           <div className="mt-2">
-            {nestedReplies.map((nestedReply) =>
-              renderThreadedReply(nestedReply, depth + 1)
-            )}
+            {nestedReplies.map((nestedReply) => (
+              <React.Fragment key={nestedReply.id}>
+                {renderThreadedReply(nestedReply, depth + 1)}
+              </React.Fragment>
+            ))}
           </div>
         )}
       </div>
@@ -534,9 +536,17 @@ export default function ThreadedEventComments({
                   {comment.user.nickname || comment.user.firstName}
                 </span>
                 <span className={cn("text-muted-foreground", timeSize)}>
-                  {formatDistanceToNow(new Date(comment.createdAt), {
-                    addSuffix: true,
-                  })}
+                  {(() => {
+                    try {
+                      const date = new Date(comment.createdAt);
+                      if (isNaN(date.getTime())) {
+                        return "just now";
+                      }
+                      return formatDistanceToNow(date, { addSuffix: true });
+                    } catch {
+                      return "just now";
+                    }
+                  })()}
                   {comment.editedAt && (
                     <span className="ml-1 text-xs text-muted-foreground/70">
                       (edited)
