@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { suppressEventCommentsRefetch } from "@/hooks/queries/_commentRefetchControl";
+import { suppressReplyRefetch } from "@/hooks/queries/_replyRefetchControl";
 import {
   CreateCommentValues,
   ReplyCommentValues,
@@ -633,7 +634,7 @@ export function useDeleteComment() {
         queryKey: ["infinite-event-comments", eventId],
       });
       // Cancel ALL infinite replies queries for this event to prevent bounce
-      await queryClient.cancelQueries({ 
+      await queryClient.cancelQueries({
         queryKey: ["infinite-replies", eventId],
         exact: false, // Cancel all variations
       });
@@ -742,6 +743,12 @@ export function useDeleteComment() {
       // Suppress refetch for even longer to prevent bounce during delayed deletion
       // Especially important for replies which have aggressive polling
       suppressEventCommentsRefetch(eventId, 8000); // 8 seconds (much longer than deletion delay)
+      
+      // Also suppress the specific reply if this is a reply deletion
+      if (deletedComment?.parentId) {
+        suppressReplyRefetch(commentId, 10000); // 10 seconds for individual reply
+      }
+      
       return { rollbacks, eventId, deletedComment };
     },
     onSuccess: (result, variables) => {

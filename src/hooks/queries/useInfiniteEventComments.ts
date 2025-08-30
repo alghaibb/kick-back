@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getEventCommentsSuppressRemaining } from "@/hooks/queries/_commentRefetchControl";
+import { isReplyRefetchSuppressed } from "@/hooks/queries/_replyRefetchControl";
 import { useSmartPolling } from "@/hooks/useSmartPolling";
 import type { EventCommentData } from "./useEventComments";
 
@@ -98,7 +99,7 @@ export function useInfiniteEventComments(
     gcTime: 10 * 60 * 1000,
     refetchInterval: () => {
       const remain = getEventCommentsSuppressRemaining(eventId);
-      if (remain > 0) return remain;
+      if (remain > 0) return false; // Completely stop polling during suppression
       return pollingInterval;
     },
     refetchOnWindowFocus: false,
@@ -119,14 +120,21 @@ export function useInfiniteReplies(
     queryKey: ["infinite-replies", eventId, commentId, limit],
     queryFn: ({ pageParam }) =>
       fetchRepliesPage(eventId, commentId, pageParam, limit),
-    enabled: enabled && !!eventId && !!commentId,
+    // Completely disable the query during suppression to prevent bounce
+    enabled: enabled && !!eventId && !!commentId && getEventCommentsSuppressRemaining(eventId) === 0,
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     staleTime: 0, // instant UI with optimistic updates
     gcTime: 10 * 60 * 1000,
-    refetchInterval: () => {
+    refetchInterval: (q) => {
       const remain = getEventCommentsSuppressRemaining(eventId);
-      if (remain > 0) return remain;
+      if (remain > 0) return false; // Completely stop polling during event suppression
+      
+      // Check if any replies in the current data are individually suppressed
+      const allReplies = q.state.data?.pages.flatMap(page => page.replies) || [];
+      const hasSupressedReply = allReplies.some(reply => isReplyRefetchSuppressed(reply.id));
+      if (hasSupressedReply) return false; // Stop polling if any reply is suppressed
+      
       return pollingInterval;
     },
     refetchOnWindowFocus: false,

@@ -80,7 +80,7 @@ export function useEventComments(
     gcTime: 10 * 60 * 1000,
     refetchInterval: () => {
       const remain = getEventCommentsSuppressRemaining(eventId);
-      if (remain > 0) return remain;
+      if (remain > 0) return false; // Completely stop polling during suppression
       return pollingInterval;
     },
     refetchOnWindowFocus: false, // Keep disabled to prevent scroll jumps
