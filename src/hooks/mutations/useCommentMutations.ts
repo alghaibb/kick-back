@@ -549,7 +549,7 @@ function updateCommentWithReaction(
 }
 
 // Global map to track pending deletions with localStorage persistence
-const PENDING_DELETIONS_KEY = 'pending-comment-deletions';
+const PENDING_DELETIONS_KEY = "pending-comment-deletions";
 
 // In-memory map for active timeouts
 const pendingDeletions = new Map<
@@ -558,8 +558,11 @@ const pendingDeletions = new Map<
 >();
 
 // Persistent storage for comment data across navigation
-function getPendingDeletionsData(): Record<string, { commentData: EventCommentData; until: number }> {
-  if (typeof window === 'undefined') return {};
+function getPendingDeletionsData(): Record<
+  string,
+  { commentData: EventCommentData; until: number }
+> {
+  if (typeof window === "undefined") return {};
   try {
     const stored = localStorage.getItem(PENDING_DELETIONS_KEY);
     return stored ? JSON.parse(stored) : {};
@@ -568,8 +571,10 @@ function getPendingDeletionsData(): Record<string, { commentData: EventCommentDa
   }
 }
 
-function setPendingDeletionsData(data: Record<string, { commentData: EventCommentData; until: number }>) {
-  if (typeof window === 'undefined') return;
+function setPendingDeletionsData(
+  data: Record<string, { commentData: EventCommentData; until: number }>
+) {
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(PENDING_DELETIONS_KEY, JSON.stringify(data));
   } catch {
@@ -579,25 +584,25 @@ function setPendingDeletionsData(data: Record<string, { commentData: EventCommen
 
 // Clean up expired pending deletions
 function cleanupExpiredDeletions() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   const data = getPendingDeletionsData();
   const now = Date.now();
   let hasChanges = false;
-  
-  Object.keys(data).forEach(commentId => {
+
+  Object.keys(data).forEach((commentId) => {
     if (data[commentId].until < now) {
       delete data[commentId];
       hasChanges = true;
     }
   });
-  
+
   if (hasChanges) {
     setPendingDeletionsData(data);
   }
 }
 
 // Initialize cleanup on module load
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   cleanupExpiredDeletions();
 }
 
@@ -639,13 +644,13 @@ export function useDeleteComment() {
         const timeoutId = setTimeout(async () => {
           try {
             const result = await deleteCommentAction(data.commentId);
-            
+
             // Clean up both in-memory and persistent storage
             pendingDeletions.delete(data.commentId);
             const persistentData = getPendingDeletionsData();
             delete persistentData[data.commentId];
             setPendingDeletionsData(persistentData);
-            
+
             if (result.error) {
               reject(new Error(result.error));
               return;
@@ -667,7 +672,7 @@ export function useDeleteComment() {
           timeoutId,
           commentData: {} as EventCommentData, // Will be filled in onMutate
         });
-        
+
         // Also store in persistent storage
         const persistentData = getPendingDeletionsData();
         persistentData[data.commentId] = {
@@ -828,7 +833,7 @@ export function useDeleteComment() {
         if (pending) {
           pending.commentData = deletedComment;
         }
-        
+
         // Also update persistent storage
         const persistentData = getPendingDeletionsData();
         if (persistentData[commentId]) {
@@ -894,7 +899,7 @@ export function useUndoCommentDeletion() {
       const pending = pendingDeletions.get(data.commentId);
       const persistentData = getPendingDeletionsData();
       const persistentPending = persistentData[data.commentId];
-      
+
       if (!pending && !persistentPending) {
         throw new Error("No pending deletion to undo");
       }
@@ -904,22 +909,24 @@ export function useUndoCommentDeletion() {
         clearTimeout(pending.timeoutId);
         pendingDeletions.delete(data.commentId);
       }
-      
+
       // Clean up persistent storage
       if (persistentPending) {
         delete persistentData[data.commentId];
         setPendingDeletionsData(persistentData);
       }
 
-      const commentData = pending?.commentData || persistentPending?.commentData;
+      const commentData =
+        pending?.commentData || persistentPending?.commentData;
       return { success: true, commentData };
     },
     onMutate: async ({ commentId, eventId }) => {
       const pending = pendingDeletions.get(commentId);
       const persistentData = getPendingDeletionsData();
       const persistentPending = persistentData[commentId];
-      
-      const commentData = pending?.commentData || persistentPending?.commentData;
+
+      const commentData =
+        pending?.commentData || persistentPending?.commentData;
       if (!commentData) return;
 
       // Cancel any outgoing refetches
@@ -995,36 +1002,90 @@ export function useUndoCommentDeletion() {
         });
       };
 
-      // Restore to non-infinite comments
-      const nonInfiniteKey = ["event-comments", eventId];
-      const prevNonInfinite =
-        queryClient.getQueryData<CommentsResponse>(nonInfiniteKey);
-      if (prevNonInfinite) {
-        const restoredComments = restoreRecursive(prevNonInfinite.comments);
-        queryClient.setQueryData<CommentsResponse>(nonInfiniteKey, {
-          comments: restoredComments,
-          totalCount: prevNonInfinite.totalCount + 1,
+      // Only restore to main comments if this is a top-level comment (no parentId)
+      if (!commentData.parentId) {
+        // Restore to non-infinite comments
+        const nonInfiniteKey = ["event-comments", eventId];
+        const prevNonInfinite =
+          queryClient.getQueryData<CommentsResponse>(nonInfiniteKey);
+        if (prevNonInfinite) {
+          const restoredComments = restoreRecursive(prevNonInfinite.comments);
+          queryClient.setQueryData<CommentsResponse>(nonInfiniteKey, {
+            comments: restoredComments,
+            totalCount: prevNonInfinite.totalCount + 1,
+          });
+        }
+
+        // Restore to infinite comments
+        const infQueries = queryClient
+          .getQueryCache()
+          .findAll({ queryKey: ["infinite-event-comments", eventId] });
+        infQueries.forEach((q) => {
+          const key = q.queryKey;
+          const prev = queryClient.getQueryData<{
+            pages: Array<{ comments: EventCommentData[] }>;
+            pageParams: unknown[];
+          }>(key);
+          if (!prev?.pages) return;
+
+          const pages = prev.pages.map((page) => ({
+            ...page,
+            comments: restoreRecursive(page.comments),
+          }));
+          queryClient.setQueryData(key, { ...prev, pages });
+        });
+      } else {
+        // For replies, we need to update the parent comment's reply count in main queries
+        // but NOT add the reply to the main comments list
+        const updateParentReplyCount = (comments: EventCommentData[]): EventCommentData[] => {
+          return comments.map(comment => {
+            if (comment.id === commentData.parentId) {
+              return {
+                ...comment,
+                _count: {
+                  ...comment._count,
+                  replies: (comment._count?.replies || 0) + 1,
+                },
+              };
+            }
+            // Also check nested replies recursively
+            return {
+              ...comment,
+              replies: updateParentReplyCount(comment.replies || []),
+            };
+          });
+        };
+        
+        // Update parent reply count in non-infinite comments
+        const nonInfiniteKey = ["event-comments", eventId];
+        const prevNonInfinite =
+          queryClient.getQueryData<CommentsResponse>(nonInfiniteKey);
+        if (prevNonInfinite) {
+          queryClient.setQueryData<CommentsResponse>(nonInfiniteKey, {
+            ...prevNonInfinite,
+            comments: updateParentReplyCount(prevNonInfinite.comments),
+          });
+        }
+        
+        // Update parent reply count in infinite comments
+        const infQueries = queryClient
+          .getQueryCache()
+          .findAll({ queryKey: ["infinite-event-comments", eventId] });
+        infQueries.forEach((q) => {
+          const key = q.queryKey;
+          const prev = queryClient.getQueryData<{
+            pages: Array<{ comments: EventCommentData[] }>;
+            pageParams: unknown[];
+          }>(key);
+          if (!prev?.pages) return;
+
+          const pages = prev.pages.map((page) => ({
+            ...page,
+            comments: updateParentReplyCount(page.comments),
+          }));
+          queryClient.setQueryData(key, { ...prev, pages });
         });
       }
-
-      // Restore to infinite comments
-      const infQueries = queryClient
-        .getQueryCache()
-        .findAll({ queryKey: ["infinite-event-comments", eventId] });
-      infQueries.forEach((q) => {
-        const key = q.queryKey;
-        const prev = queryClient.getQueryData<{
-          pages: Array<{ comments: EventCommentData[] }>;
-          pageParams: unknown[];
-        }>(key);
-        if (!prev?.pages) return;
-
-        const pages = prev.pages.map((page) => ({
-          ...page,
-          comments: restoreRecursive(page.comments),
-        }));
-        queryClient.setQueryData(key, { ...prev, pages });
-      });
 
       // Restore to infinite replies if it's a reply
       if (commentData.parentId) {

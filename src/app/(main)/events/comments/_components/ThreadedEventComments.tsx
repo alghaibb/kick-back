@@ -443,7 +443,7 @@ export default function ThreadedEventComments({
     new Set()
   );
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
-  
+
   // Restore pending deletions on component mount (after navigation)
   useEffect(() => {
     // This will trigger a re-evaluation of suppression and ensure
