@@ -117,8 +117,12 @@ function InlineReplyForm({
 
   const handleReplySubmit = async (values: ReplyCommentValues) => {
     try {
+      console.log("Submitting reply with values:", values);
+      console.log("Parent ID:", parentId);
       await createReplyMutation.mutateAsync({
         ...values,
+        eventId,
+        parentId,
         imageUrl: replyImageUpload.displayUrl || undefined,
       });
       replyForm.reset();
@@ -245,21 +249,39 @@ function InlineReplyForm({
                     size="sm"
                     disabled={
                       createReplyMutation.isPending ||
-                      !replyForm.watch("content").trim()
+                      !replyForm.watch("content").trim() ||
+                      parentId.startsWith("temp-")
                     }
                     className={cn(isMobile && "h-7 px-3 text-xs")}
+                    title={
+                      parentId.startsWith("temp-")
+                        ? "Please wait for the comment to be posted"
+                        : undefined
+                    }
                   >
                     {createReplyMutation.isPending ? (
                       <ActionLoader action="send" size="sm" className="mr-1" />
+                    ) : parentId.startsWith("temp-") ? (
+                      <>
+                        <Send
+                          className={cn(
+                            "h-3 w-3 mr-1 opacity-50",
+                            isMobile && "h-2.5 w-2.5"
+                          )}
+                        />
+                        Wait...
+                      </>
                     ) : (
-                      <Send
-                        className={cn(
-                          "h-3 w-3 mr-1",
-                          isMobile && "h-2.5 w-2.5"
-                        )}
-                      />
+                      <>
+                        <Send
+                          className={cn(
+                            "h-3 w-3 mr-1",
+                            isMobile && "h-2.5 w-2.5"
+                          )}
+                        />
+                        Reply
+                      </>
                     )}
-                    Reply
                   </Button>
                 </div>
               </div>

@@ -28,10 +28,11 @@ export function useCreateComment() {
 
   return useMutation({
     mutationFn: async (values: CreateCommentValues) => {
-      createCommentAction(values).catch((error) => {
-        console.error("Comment error (background):", error);
-      });
-      return { success: true };
+      const result = await createCommentAction(values);
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      return result;
     },
     onMutate: async (values) => {
       if (!user?.id) return;
@@ -162,9 +163,63 @@ export function useCreateComment() {
 
       // Suppress background refetch briefly to avoid bounce overwriting optimistic item
 
-      return { rollbackFunctions, eventId: values.eventId };
+      return {
+        rollbackFunctions,
+        eventId: values.eventId,
+        tempId: tempComment.id,
+      };
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables, context) => {
+      // Replace temporary ID with real ID from server
+      if (data?.comment?.id && context?.tempId) {
+        const tempId = context.tempId;
+        const realId = data.comment.id;
+
+        // Update event-comments query
+        queryClient.setQueryData(
+          ["event-comments", variables.eventId],
+          (old: CommentsResponse | undefined) => {
+            if (!old) return old;
+            return {
+              ...old,
+              comments: old.comments.map((comment) =>
+                comment.id === tempId ? { ...comment, id: realId } : comment
+              ),
+            };
+          }
+        );
+
+        // Update infinite-event-comments queries
+        const infiniteQueries = queryClient.getQueryCache().findAll({
+          queryKey: ["infinite-event-comments", variables.eventId],
+        });
+
+        infiniteQueries.forEach((query) => {
+          queryClient.setQueryData(
+            query.queryKey,
+            (
+              old:
+                | {
+                    pages: Array<{ comments: EventCommentData[] }>;
+                    pageParams: unknown[];
+                  }
+                | undefined
+            ) => {
+              if (!old?.pages) return old;
+              return {
+                ...old,
+                pages: old.pages.map((page) => ({
+                  ...page,
+                  comments: page.comments.map((c: EventCommentData) =>
+                    c.id === tempId ? { ...c, id: realId } : c
+                  ),
+                })),
+              };
+            }
+          );
+        });
+      }
+
       setTimeout(() => {
         queryClient.invalidateQueries({
           queryKey: ["event-comments", variables.eventId],
@@ -190,6 +245,13 @@ export function useCreateReply() {
 
   return useMutation({
     mutationFn: async (values: ReplyCommentValues) => {
+      // Check if parentId is a temporary ID
+      if (values.parentId.startsWith("temp-")) {
+        throw new Error(
+          "Please wait for the comment to be posted before replying"
+        );
+      }
+
       const result = await createReplyAction(values);
       if (result?.error) {
         throw new Error(result.error);
@@ -198,6 +260,13 @@ export function useCreateReply() {
     },
     onMutate: async (values) => {
       if (!user?.id) return;
+
+      // Check if parentId is a temporary ID and silently prevent the action
+      if (values.parentId.startsWith("temp-")) {
+        // Don't proceed with optimistic update
+        toast.info("Please wait for the comment to be posted before replying");
+        return { skipUpdate: true };
+      }
 
       await queryClient.cancelQueries({
         queryKey: ["event-comments", values.eventId],
@@ -326,7 +395,10 @@ export function useCreateReply() {
       toast.success("Reply added!");
       return { previousComments, eventId: values.eventId };
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data, variables, context) => {
+      // Skip if this was prevented due to temp parent ID
+      if (context?.skipUpdate) return;
+
       setTimeout(() => {
         queryClient.invalidateQueries({
           queryKey: ["event-comments", variables.eventId],
@@ -343,6 +415,9 @@ export function useCreateReply() {
       }, 2500);
     },
     onError: (error, variables, context) => {
+      // Skip if this was prevented due to temp parent ID
+      if (context?.skipUpdate) return;
+
       if (context?.previousComments) {
         queryClient.setQueryData(
           ["event-comments", variables.eventId],
@@ -694,7 +769,7 @@ export function useDeleteComment() {
         };
         setPendingDeletionsData(persistentData);
 
-        // Don't resolve immediately - let the timeout complete
+        // Don't resolve immediately - toast is already shown in onMutate
       });
     },
     onMutate: async ({ commentId, eventId, undoAction }) => {
@@ -870,13 +945,13 @@ export function useDeleteComment() {
       }
 
       // Show the toast with undo immediately
-      if (deletedComment && !undoAction) {
-        const isReply = deletedComment.parentId;
+      if (!undoAction) {
+        const isReply = deletedComment?.parentId;
         toast.success(isReply ? "Reply deleted" : "Comment deleted", {
           action: {
             label: "Undo",
             onClick: async () => {
-              // Use the undo mutation to restore
+              // Cancel the pending deletion
               const pending = pendingDeletions.get(commentId);
               if (pending) {
                 clearTimeout(pending.timeoutId);
@@ -887,8 +962,23 @@ export function useDeleteComment() {
                 setPendingDeletionsData(persistentData);
 
                 // Restore using rollbacks
-                rollbacks.forEach((rollback) => rollback());
+                if (rollbacks && rollbacks.length > 0) {
+                  rollbacks.forEach((rollback) => rollback());
+                }
+
+                // Always invalidate to ensure fresh data with proper user info
+                setTimeout(() => {
+                  queryClient.invalidateQueries({
+                    queryKey: ["event-comments", eventId],
+                    refetchType: "all",
+                  });
+                }, 100);
+
                 toast.success("Comment restored");
+              } else {
+                toast.error(
+                  "Unable to undo - deletion may have already completed"
+                );
               }
             },
           },

@@ -172,6 +172,7 @@ export async function createReplyAction(values: ReplyCommentValues) {
 
     const validatedFields = replyCommentSchema.safeParse(values);
     if (!validatedFields.success) {
+      console.error("Reply validation error:", validatedFields.error.format());
       return { error: "Invalid fields" };
     }
 
@@ -504,7 +505,8 @@ export async function editCommentAction(values: EditCommentValues) {
     }
 
     const isAttendee = existingComment.event.attendees.length > 0;
-    const isGroupMember = (existingComment.event.group?.members?.length ?? 0) > 0;
+    const isGroupMember =
+      (existingComment.event.group?.members?.length ?? 0) > 0;
 
     if (!isAttendee && !isGroupMember) {
       return { error: "You no longer have access to this event" };
