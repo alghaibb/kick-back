@@ -471,16 +471,8 @@ export function useToggleReaction() {
       return { rollbackFunctions };
     },
     onSuccess: () => {
-      // Invalidate to get fresh data from server (background sync)
-      queryClient.invalidateQueries({
-        queryKey: ["event-comments"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["infinite-event-comments"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["infinite-replies"],
-      });
+      // Let optimistic updates stay - no immediate invalidation to prevent bounce
+      // Background polling will eventually sync fresh data
     },
     onError: (error, _, context) => {
       // This should rarely be called now since we don't throw errors

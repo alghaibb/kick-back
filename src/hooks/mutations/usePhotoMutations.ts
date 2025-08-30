@@ -7,6 +7,7 @@ import {
   likePhotoAction,
   deletePhotoAction,
 } from "@/app/(main)/events/photos/actions";
+import { suppressPhotoLikeRefetch } from "@/hooks/queries/_likesRefetchControl";
 
 interface PhotoData {
   photos: Array<{
@@ -210,7 +211,9 @@ export function useLikePhoto() {
         }
       );
 
-      // Keep polling as-is for real-time feel
+      // Suppress polling briefly to avoid bounce after optimistic update
+      suppressPhotoLikeRefetch(photoId, 1500);
+      
       return { previousPhotos, eventId };
     },
     onError: (error: Error, variables, context) => {
