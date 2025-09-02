@@ -22,17 +22,16 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
-    formats: ["image/avif", "image/webp"], // AVIF first for better compression
-    minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days instead of 60 seconds
-    dangerouslyAllowSVG: false, // Security best practice
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 60 * 60 * 24 * 7,
+    dangerouslyAllowSVG: false,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    // Better quality/size balance
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   devIndicators: false,
-  // Performance optimizations
   experimental: {
+    ppr: true,
     optimizePackageImports: [
       "lucide-react",
       "framer-motion",
@@ -51,7 +50,6 @@ const nextConfig: NextConfig = {
       "sonner",
     ],
   },
-  // Compress responses more aggressively
   compress: true,
   // Turbopack configuration for Prisma
   turbopack: {
