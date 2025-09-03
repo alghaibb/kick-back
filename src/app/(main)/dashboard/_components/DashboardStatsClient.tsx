@@ -16,7 +16,7 @@ export function DashboardStatsClient() {
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-5 auto-rows-fr">
+      <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 auto-rows-fr">
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
@@ -102,7 +102,7 @@ export function DashboardStatsClient() {
   ];
 
   return (
-    <AnimatedList className="grid gap-4 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-5 auto-rows-fr">
+    <AnimatedList className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 auto-rows-fr">
       {dashboardStats.map((stat) => (
         <AnimatedListItem key={stat.title}>
           <StatsCard {...stat} />

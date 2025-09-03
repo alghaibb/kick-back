@@ -23,7 +23,7 @@ export function StatsCard({ title, value, change, icon }: StatsCardProps) {
   const IconComponent = iconMap[icon as keyof typeof iconMap];
 
   return (
-    <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group h-full min-w-[240px]">
+    <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group h-full">
       {/* Gradient Background using theme colors */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-50 group-hover:opacity-70 transition-opacity duration-300" />
 
@@ -31,18 +31,18 @@ export function StatsCard({ title, value, change, icon }: StatsCardProps) {
       <div className="absolute inset-0 bg-gradient-to-br from-border/20 via-transparent to-border/20 rounded-lg" />
 
       <div className="relative bg-card/80 backdrop-blur-sm h-full flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 sm:pb-4">
-          <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground tracking-wide uppercase">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 sm:pb-3">
+          <CardTitle className="text-xs sm:text-xs lg:text-sm font-medium text-muted-foreground tracking-wide uppercase">
             {title}
           </CardTitle>
           {IconComponent && (
-            <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-background/50 border border-border/50 mt-1">
-              <IconComponent className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <div className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full bg-background/50 border border-border/50">
+              <IconComponent className="h-4 w-4 sm:h-4.5 sm:w-4.5 lg:h-5 lg:w-5 text-primary" />
             </div>
           )}
         </CardHeader>
-        <CardContent className="space-y-3 pb-4 flex-1">
-          <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">
+        <CardContent className="space-y-2 pb-3 sm:pb-4 flex-1">
+          <div className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-tight">
             {typeof value === "number" ? `+${value}` : value}
           </div>
           {change && (
