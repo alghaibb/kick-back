@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Users, TrendingUp, Sparkles } from "lucide-react";
+import { Calendar, Users, TrendingUp, Sparkles, Star } from "lucide-react";
 import { ReactNode } from "react";
 
 interface StatsCardProps {
@@ -16,6 +16,7 @@ const iconMap = {
   Users,
   TrendingUp,
   Sparkles,
+  Star,
 } as const;
 
 export function StatsCard({ title, value, change, icon }: StatsCardProps) {

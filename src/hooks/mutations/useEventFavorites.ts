@@ -126,11 +126,34 @@ export function useToggleEventFavorite() {
           };
         });
       } else {
-        // Adding to favorites - we'll let it refetch to get the full data
-        queryClient.invalidateQueries({
-          queryKey: ["favorite-events"],
-          refetchType: "inactive",
-        });
+        // Adding to favorites - add the event optimistically if we have it
+        const eventFromEvents = previousEvents?.events.find(
+          (e) => e.id === eventId
+        );
+        const eventFromCalendar = previousCalendar?.events.find(
+          (e) => e.id === eventId
+        );
+        const eventData = eventFromEvents || eventFromCalendar;
+
+        if (eventData) {
+          queryClient.setQueryData<EventsResponse>(
+            ["favorite-events"],
+            (old) => {
+              if (!old)
+                return { events: [{ ...eventData, isFavorited: true }] };
+              return {
+                ...old,
+                events: [...old.events, { ...eventData, isFavorited: true }],
+              };
+            }
+          );
+        } else {
+          // If we don't have the event data, invalidate to fetch it
+          queryClient.invalidateQueries({
+            queryKey: ["favorite-events"],
+            refetchType: "inactive",
+          });
+        }
       }
 
       // Optimistically update dashboard stats
@@ -179,7 +202,7 @@ export function useToggleEventFavorite() {
       toast.success(isFavorited ? "Removed from saved events" : "Event saved");
     },
     onSettled: () => {
-      // Refetch in the background after 2 seconds to sync with server
+      // Refetch in the background after 500ms to sync with server
       setTimeout(() => {
         queryClient.invalidateQueries({
           queryKey: ["events"],
@@ -197,7 +220,7 @@ export function useToggleEventFavorite() {
           queryKey: ["dashboard-stats"],
           refetchType: "inactive",
         });
-      }, 2000);
+      }, 500);
     },
   });
 }

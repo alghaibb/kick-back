@@ -4,7 +4,7 @@ import { useDashboardStats } from "@/hooks/queries/useDashboardStats";
 import { dashboardStatsTemplate } from "./dashboard-data";
 import { StatsCard } from "./StatsCard";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Star } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import {
   AnimatedList,
   AnimatedListItem,
@@ -92,8 +92,8 @@ export function DashboardStatsClient() {
       value: stats.savedEventsCount || 0,
       change: (
         <span className="block mt-2">
-          {stats.savedEventsCount 
-            ? `${stats.savedEventsCount} event${stats.savedEventsCount > 1 ? 's' : ''} saved`
+          {stats.savedEventsCount
+            ? `${stats.savedEventsCount} event${stats.savedEventsCount > 1 ? "s" : ""} saved`
             : "Save events for quick access"}
         </span>
       ),

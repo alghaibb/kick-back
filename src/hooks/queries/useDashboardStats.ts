@@ -12,6 +12,7 @@ export interface DashboardStats {
   activeGroups: number;
   nextEventDate: Date | null;
   upcomingCreatedEvents: number;
+  savedEventsCount: number;
   nextEventDateFormatted: string;
   upcomingCreatedEventsText: string;
   nextTodayEventText: string;
@@ -37,7 +38,7 @@ export function useDashboardStats() {
   const { pollingInterval } = useSmartPolling({ strategy: "relaxed" });
 
   return useQuery({
-    queryKey: ["dashboard", "stats"],
+    queryKey: ["dashboard-stats"],
     queryFn: fetchDashboardStats,
     staleTime: 10 * 60 * 1000,
     gcTime: 20 * 60 * 1000,
