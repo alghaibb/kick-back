@@ -10,6 +10,7 @@ Kick Back helps you:
 - **Organize groups** and invite people to join
 - **Handle RSVPs** so you know who's coming
 - **Share photos** from your events
+- **Save favorite events** for quick access with starred bookmarks
 - **Get notifications** about comments, RSVPs, and reminders
 - **Works as a PWA** - add it to your home screen for a native app experience
 
@@ -42,6 +43,11 @@ Kick Back helps you:
   - Pre-fill event forms from saved templates
   - Save events as templates while creating
   - User-scoped templates with group permission validation
+- **Save/Favorite Events** - Bookmark events for quick access
+  - Star any event to save it for later
+  - Dedicated "Saved" tab on events page
+  - Saved events count on dashboard
+  - Instant optimistic updates for seamless experience
 
 ### 🔎 Quick Command Palette
 
