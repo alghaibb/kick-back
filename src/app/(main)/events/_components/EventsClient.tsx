@@ -11,15 +11,25 @@ import {
 import { formatDate } from "@/lib/date-utils";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Calendar, Clock, History, AlertCircle, Bookmark } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  History,
+  AlertCircle,
+  Bookmark,
+  Star,
+} from "lucide-react";
 import EventFilters from "./EventFilters";
 import { filterAndSortEvents, defaultFilters } from "@/lib/event-filters";
 import type { EventFilters as EventFiltersType } from "@/lib/event-filters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventTemplatesList } from "../templates/_components/EventTemplatesList";
+import { useFavoriteEvents } from "@/hooks/queries/useFavoriteEvents";
 
 export function EventsClient() {
   const { data, isLoading, error } = useEvents();
+  const { data: favoriteData, isLoading: favoritesLoading } =
+    useFavoriteEvents();
   const { user } = useAuth();
   const [filters, setFilters] = useState<EventFiltersType>(defaultFilters);
 
@@ -141,6 +151,7 @@ export function EventsClient() {
                 timezone={userTimezone}
                 createdByCurrentUser={event.createdBy === user?.id}
                 disabled={title === "Past Events"}
+                isFavorited={event.isFavorited}
               />
             </AnimatedListItem>
           ))}
@@ -151,14 +162,20 @@ export function EventsClient() {
 
   return (
     <Tabs defaultValue="events" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-2">
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="events" className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
-          Events
+          <span className="hidden sm:inline">Events</span>
+          <span className="sm:hidden">All</span>
+        </TabsTrigger>
+        <TabsTrigger value="saved" className="flex items-center gap-2">
+          <Star className="h-4 w-4" />
+          Saved
         </TabsTrigger>
         <TabsTrigger value="templates" className="flex items-center gap-2">
           <Bookmark className="h-4 w-4" />
-          Templates
+          <span className="hidden sm:inline">Templates</span>
+          <span className="sm:hidden">Tmpl</span>
         </TabsTrigger>
       </TabsList>
 
@@ -199,6 +216,46 @@ export function EventsClient() {
             iconColor="from-muted/20 to-muted/30 text-muted-foreground"
           />
         </div>
+      </TabsContent>
+
+      <TabsContent value="saved" className="space-y-8">
+        {favoritesLoading ? (
+          <UnifiedSkeleton variant="card-list" count={3} />
+        ) : !favoriteData?.events?.length ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="rounded-full bg-muted p-3 mb-4">
+              <Star className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No saved events yet</h3>
+            <p className="text-muted-foreground max-w-sm">
+              Events you save will appear here for quick access
+            </p>
+          </div>
+        ) : (
+          <AnimatedList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {favoriteData.events.map((event) => (
+              <AnimatedListItem key={event.id}>
+                <EventCard
+                  key={event.id}
+                  id={event.id}
+                  name={event.name}
+                  description={event.description || undefined}
+                  date={event.date}
+                  time={formatDate(new Date(event.date), { includeTime: true })
+                    .split(" ")
+                    .pop()}
+                  location={event.location || undefined}
+                  groupId={event.groupId || undefined}
+                  groups={data?.groups || []}
+                  timezone={data?.userTimezone}
+                  createdByCurrentUser={event.createdBy === user?.id}
+                  disabled={new Date(event.date) < new Date()}
+                  isFavorited={true}
+                />
+              </AnimatedListItem>
+            ))}
+          </AnimatedList>
+        )}
       </TabsContent>
 
       <TabsContent value="templates" className="space-y-6">

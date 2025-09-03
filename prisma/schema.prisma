@@ -38,6 +38,7 @@ model User {
   CommentReaction      CommentReaction[]
   EventAttendee        EventAttendee[]
   eventComments        EventComment[]
+  eventFavorites       EventFavorite[]
   photoLikes           EventPhotoLike[]
   eventPhotos          EventPhoto[]
   groupInvites         GroupInvite[]        @relation("GroupInvites")
@@ -207,6 +208,7 @@ model Event {
   inviteLink  String?
   attendees   EventAttendee[]
   comments    EventComment[]
+  favorites   EventFavorite[]
   photos      EventPhoto[]
   group       Group?          @relation(fields: [groupId], references: [id])
   EventInvite EventInvite[]
@@ -330,6 +332,21 @@ model EventPhotoLike {
   @@index([photoId])
   @@index([userId])
   @@map("event_photo_likes")
+}
+
+model EventFavorite {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@map("event_favorites")
 }
 
 model Notification {

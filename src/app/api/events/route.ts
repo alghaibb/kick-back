@@ -7,10 +7,7 @@ export async function GET() {
     const session = await getSession();
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Single optimized query with all relations
@@ -25,15 +22,22 @@ export async function GET() {
         },
         include: {
           group: {
-            select: { id: true, name: true, image: true }
+            select: { id: true, name: true, image: true },
           },
           attendees: {
             where: { userId: session.user.id },
-            select: { rsvpStatus: true }
+            select: { rsvpStatus: true },
+          },
+          favorites: {
+            where: { userId: session.user.id },
+            select: { id: true },
           },
           _count: {
-            select: { attendees: true }
-          }
+            select: {
+              attendees: true,
+              favorites: true,
+            },
+          },
         },
         orderBy: { date: "asc" },
       }),
@@ -47,11 +51,11 @@ export async function GET() {
         },
         select: { id: true, name: true, image: true },
         orderBy: { name: "asc" },
-      })
+      }),
     ]);
 
     return NextResponse.json({
-      events: events.map(event => ({
+      events: events.map((event) => ({
         id: event.id,
         name: event.name,
         description: event.description,
@@ -63,6 +67,8 @@ export async function GET() {
         userRsvpStatus: event.attendees[0]?.rsvpStatus || "pending",
         attendeeCount: event._count.attendees,
         createdByCurrentUser: event.createdBy === session.user.id,
+        isFavorited: event.favorites.length > 0,
+        favoriteCount: event._count.favorites,
       })),
       groups,
       userTimezone: session.user.timezone,
@@ -74,4 +80,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-} 
+}

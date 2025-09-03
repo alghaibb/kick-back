@@ -11,6 +11,8 @@ export interface EventData {
   date: string;
   groupId: string | null;
   createdBy: string;
+  isFavorited?: boolean;
+  favoriteCount?: number;
 }
 
 export interface GroupData {
@@ -40,7 +42,7 @@ async function fetchEvents(): Promise<EventsResponse> {
 }
 
 export function useEvents() {
-  const { pollingInterval } = useSmartPolling({ strategy: 'relaxed' });
+  const { pollingInterval } = useSmartPolling({ strategy: "relaxed" });
 
   return useQuery({
     queryKey: ["events"],
@@ -57,4 +59,4 @@ export function useEvents() {
     refetchOnReconnect: true,
     refetchInterval: pollingInterval,
   });
-} 
+}

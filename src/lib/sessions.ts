@@ -1,18 +1,8 @@
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
+import {cache} from "react";
 
-/**
- * Session management with automatic invalid cookie cleanup
- *
- * This module automatically clears invalid session cookies when:
- * 1. Session doesn't exist in database (e.g., after database reset)
- * 2. Session is expired
- *
- * This prevents users from having to manually clear cookies after
- * database resets during development.
- */
-
-async function clearSessionCookies() {
+export const clearSessionCookies = cache(async () => {
   const cookieStore = await cookies();
 
   const possibleTokenNames = [
@@ -46,9 +36,9 @@ async function clearSessionCookies() {
       );
     }
   }
-}
+});
 
-export async function getSession() {
+export const getSession = cache(async () => {
   try {
     const cookieStore = await cookies();
 
@@ -190,4 +180,4 @@ export async function getSession() {
     );
     return null;
   }
-}
+});

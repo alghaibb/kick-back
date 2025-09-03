@@ -35,6 +35,13 @@ export async function GET() {
             },
           },
         },
+        favorites: {
+          where: { userId },
+          select: { id: true },
+        },
+        _count: {
+          select: { favorites: true },
+        },
       },
       orderBy: { date: "asc" },
     });
@@ -60,6 +67,8 @@ export async function GET() {
         },
         rsvpStatus: a.rsvpStatus,
       })),
+      isFavorited: event.favorites.length > 0,
+      favoriteCount: event._count.favorites,
     }));
 
     return NextResponse.json(

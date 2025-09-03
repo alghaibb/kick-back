@@ -4,7 +4,7 @@ import { useDashboardStats } from "@/hooks/queries/useDashboardStats";
 import { dashboardStatsTemplate } from "./dashboard-data";
 import { StatsCard } from "./StatsCard";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Star } from "lucide-react";
 import {
   AnimatedList,
   AnimatedListItem,
@@ -16,8 +16,8 @@ export function DashboardStatsClient() {
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr">
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="grid gap-4 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-5 auto-rows-fr">
+        {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
             className="p-6 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl flex flex-col items-center justify-center space-y-4"
@@ -87,10 +87,22 @@ export function DashboardStatsClient() {
         <span className="block mt-2">{stats.upcomingCreatedEventsText}</span>
       ),
     },
+    {
+      title: "Saved Events",
+      value: stats.savedEventsCount || 0,
+      change: (
+        <span className="block mt-2">
+          {stats.savedEventsCount 
+            ? `${stats.savedEventsCount} event${stats.savedEventsCount > 1 ? 's' : ''} saved`
+            : "Save events for quick access"}
+        </span>
+      ),
+      icon: "Star",
+    },
   ];
 
   return (
-    <AnimatedList className="grid gap-4 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr">
+    <AnimatedList className="grid gap-4 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-5 auto-rows-fr">
       {dashboardStats.map((stat) => (
         <AnimatedListItem key={stat.title}>
           <StatsCard {...stat} />

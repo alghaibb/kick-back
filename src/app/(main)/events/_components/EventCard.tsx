@@ -10,10 +10,11 @@ import {
 import { useModal } from "@/hooks/use-modal";
 import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
-import { Pencil, Trash2, Mail, LogOut } from "lucide-react";
+import { Pencil, Trash2, Mail, LogOut, Star } from "lucide-react";
 import { RSVPButtons } from "@/components/RSVPButtons";
 import { motion } from "framer-motion";
 import { cardHoverVariants } from "@/lib/animationVariants";
+import { useToggleEventFavorite } from "@/hooks/mutations/useEventFavorites";
 
 interface EventCardProps {
   id: string;
@@ -27,6 +28,7 @@ interface EventCardProps {
   timezone?: string;
   createdByCurrentUser: boolean;
   disabled?: boolean;
+  isFavorited?: boolean;
 }
 
 export function EventCard({
@@ -41,8 +43,10 @@ export function EventCard({
   timezone,
   createdByCurrentUser,
   disabled,
+  isFavorited = false,
 }: EventCardProps) {
   const { open } = useModal();
+  const toggleFavorite = useToggleEventFavorite();
 
   const eventDate = new Date(date);
   const formattedDate = formatDate(eventDate, {
@@ -72,6 +76,32 @@ export function EventCard({
             {createdByCurrentUser ? "Created by you" : "Invited"}
           </Badge>
         </div>
+        {!disabled && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-responsive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite.mutate({ eventId: id, isFavorited });
+                }}
+                className={cn(
+                  "text-muted-foreground hover:text-yellow-500",
+                  isFavorited && "text-yellow-500"
+                )}
+                aria-label={isFavorited ? "Remove from saved" : "Save event"}
+              >
+                <Star
+                  className={cn("w-4 h-4", isFavorited && "fill-current")}
+                />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isFavorited ? "Remove from saved" : "Save event"}</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </header>
 
       {description && (

@@ -11,6 +11,7 @@ export async function getDashboardStats(userId: string, userTimezone?: string) {
   let upcomingCreatedEvents = 0;
   let todaysEventsCount = 0;
   let nextTodayEvent: { name: string; date: Date } | null = null;
+  let savedEventsCount = 0;
 
   if (userId) {
     const now = new Date();
@@ -19,6 +20,7 @@ export async function getDashboardStats(userId: string, userTimezone?: string) {
 
     groups = await prisma.groupMember.count({ where: { userId } });
     eventsCreated = await prisma.event.count({ where: { createdBy: userId } });
+    savedEventsCount = await prisma.eventFavorite.count({ where: { userId } });
 
     const todaysEvents = await prisma.event.findMany({
       where: {
@@ -77,6 +79,7 @@ export async function getDashboardStats(userId: string, userTimezone?: string) {
     activeGroups,
     nextEventDate,
     upcomingCreatedEvents,
+    savedEventsCount,
     nextEventDateFormatted:
       upcomingEvents > 0 && nextEventDate
         ? `Next event: ${formatDate(nextEventDate, { includeWeekday: true, includeTime: true, ...(userTimezone && { timeZone: userTimezone }) })}`
@@ -85,12 +88,11 @@ export async function getDashboardStats(userId: string, userTimezone?: string) {
       upcomingCreatedEvents > 0
         ? `You have ${upcomingCreatedEvents} upcoming event${upcomingCreatedEvents > 1 ? "s" : ""} created`
         : "No upcoming events you've created",
-    nextTodayEventText:
-      nextTodayEvent
-        ? `Next event today: ${nextTodayEvent.name} at ${formatDate(nextTodayEvent.date, { includeTime: true, includeWeekday: true, ...(userTimezone && { timeZone: userTimezone }) })}`
-        : todaysEventsCount > 0
-          ? "All of today's events have passed"
-          : "No events scheduled for today",
+    nextTodayEventText: nextTodayEvent
+      ? `Next event today: ${nextTodayEvent.name} at ${formatDate(nextTodayEvent.date, { includeTime: true, includeWeekday: true, ...(userTimezone && { timeZone: userTimezone }) })}`
+      : todaysEventsCount > 0
+        ? "All of today's events have passed"
+        : "No events scheduled for today",
     todaysEventsLabel:
       todaysEventsCount === 1 ? "Today's event" : "Today's events",
   };
