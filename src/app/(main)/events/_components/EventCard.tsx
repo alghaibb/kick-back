@@ -17,6 +17,7 @@ import { cardHoverVariants } from "@/lib/animationVariants";
 import { useToggleEventFavorite } from "@/hooks/mutations/useEventFavorites";
 import { toast } from "sonner";
 import { deleteSingleOccurrenceAction, cancelEventAction } from "../actions";
+import { useCancelEvent } from "@/hooks/mutations/useEventMutations";
 
 interface EventCardProps {
   id: string;
@@ -55,6 +56,7 @@ export function EventCard({
 }: EventCardProps) {
   const { open } = useModal();
   const toggleFavorite = useToggleEventFavorite();
+  const cancelMutation = useCancelEvent();
 
   const eventDate = new Date(date);
   const formattedDate = formatDate(eventDate, {
@@ -226,62 +228,13 @@ export function EventCard({
                   variant="ghost"
                   size="icon-responsive"
                   onClick={() => {
-                    if (isRecurring) {
-                      // For recurring events, show cancel modal
-                      open("cancel-recurring-event", {
-                        eventId: id,
-                        eventName: name,
-                        eventDate: formatDate(eventDate, {
-                          includeWeekday: false,
-                        }),
-                        isRecurring,
-                        recurrenceId: recurrenceId ?? undefined,
-                        onCancelOccurrence: async () => {
-                          // Cancel single occurrence (mark as cancelled)
-                          try {
-                            const result =
-                              await deleteSingleOccurrenceAction(id);
-                            if (result.success) {
-                              toast.success("Event cancelled successfully");
-                            } else {
-                              toast.error(
-                                result.error || "Failed to cancel event"
-                              );
-                            }
-                          } catch (error) {
-                            toast.error("Failed to cancel event");
-                          }
-                        },
-                      });
-                    } else {
-                      // For non-recurring events, show cancel modal
-                      open("cancel-recurring-event", {
-                        eventId: id,
-                        eventName: name,
-                        eventDate: formatDate(eventDate, {
-                          includeWeekday: false,
-                        }),
-                        isRecurring: false,
-                        onCancelOccurrence: async () => {
-                          // Cancel entire event (mark as cancelled)
-                          try {
-                            const result = await cancelEventAction(id);
-                            if (result.success) {
-                              toast.success("Event cancelled successfully");
-                            } else {
-                              toast.error(
-                                result.error || "Failed to cancel event"
-                              );
-                            }
-                          } catch (error) {
-                            toast.error("Failed to cancel event");
-                          }
-                        },
-                      });
-                    }
+                    cancelMutation.mutate({ eventId: id, isRecurring });
                   }}
-                  className="text-muted-foreground hover:text-orange-600"
-                  aria-label={isRecurring ? "Cancel Event Occurrence" : "Cancel Event"}
+                  disabled={cancelMutation.isPending}
+                  className="text-muted-foreground hover:text-orange-600 disabled:opacity-50"
+                  aria-label={
+                    isRecurring ? "Cancel Event Occurrence" : "Cancel Event"
+                  }
                 >
                   <X className="w-4 h-4" />
                 </Button>

@@ -1670,10 +1670,6 @@ export async function reenableEventAction(eventId: string) {
   }
 }
 
-"use server";
-
-import { getSession } from "@/lib/sessions";
-
 export async function cancelEventAction(eventId: string) {
   try {
     const session = await getSession();

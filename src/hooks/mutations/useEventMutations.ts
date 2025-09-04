@@ -11,6 +11,8 @@ import {
   inviteToEventBatchAction,
   moveEventToDateAction,
   reenableEventAction,
+  deleteSingleOccurrenceAction,
+  cancelEventAction,
 } from "@/app/(main)/events/actions";
 import { adminEditEventAction } from "@/app/(main)/admin/actions";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
@@ -486,6 +488,87 @@ export function useReenableEvent() {
     onError: (error: Error) => {
       console.error("Re-enable event error:", error);
       toast.error(error.message || "Failed to re-enable event");
+    },
+  });
+}
+
+export function useCancelEvent() {
+  const queryClient = useQueryClient();
+  const { invalidateDashboard } = useDashboardInvalidation();
+
+  return useMutation({
+    mutationFn: async ({
+      eventId,
+      isRecurring,
+    }: {
+      eventId: string;
+      isRecurring: boolean;
+    }) => {
+      if (isRecurring) {
+        const result = await deleteSingleOccurrenceAction(eventId);
+        if (result?.error) {
+          throw new Error(result.error);
+        }
+        return result;
+      } else {
+        const result = await cancelEventAction(eventId);
+        if (result?.error) {
+          throw new Error(result.error);
+        }
+        return result;
+      }
+    },
+    onMutate: async ({ eventId, isRecurring }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["events"] });
+      await queryClient.cancelQueries({ queryKey: ["cancelled-events"] });
+
+      // Snapshot the previous values
+      const previousEvents = queryClient.getQueryData(["events"]);
+      const previousCancelledEvents = queryClient.getQueryData([
+        "cancelled-events",
+      ]);
+
+      // Optimistically update events list - remove the cancelled event
+      queryClient.setQueryData<EventsResponse>(["events"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          events: old.events.filter((event) => event.id !== eventId),
+        };
+      });
+
+      return { previousEvents, previousCancelledEvents, eventId, isRecurring };
+    },
+    onSuccess: (data, { isRecurring }) => {
+      toast.success(
+        isRecurring
+          ? "Event occurrence cancelled successfully"
+          : "Event cancelled successfully"
+      );
+      // Invalidate cancelled events to show the newly cancelled event
+      queryClient.invalidateQueries({ queryKey: ["cancelled-events"] });
+      // Invalidate dashboard stats to update event counts
+      invalidateDashboard();
+    },
+    onError: (error: Error, variables, context) => {
+      // Rollback on error
+      if (context?.previousEvents) {
+        queryClient.setQueryData(["events"], context.previousEvents);
+      }
+      if (context?.previousCancelledEvents) {
+        queryClient.setQueryData(
+          ["cancelled-events"],
+          context.previousCancelledEvents
+        );
+      }
+      console.error("Cancel event error:", error);
+      toast.error(error.message || "Failed to cancel event");
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["cancelled-events"] });
     },
   });
 }

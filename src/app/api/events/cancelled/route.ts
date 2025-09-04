@@ -10,27 +10,30 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch events that have been cancelled
     const cancelledEvents = await prisma.event.findMany({
       where: {
-        OR: [
-          { createdBy: session.user.id },
-          { attendees: { some: { userId: session.user.id } } },
-          { group: { members: { some: { userId: session.user.id } } } },
-        ],
-        // Include events that have been marked as cancelled (either via exceptions or isCancelled flag)
-        OR: [
-          // Cancelled recurring events (via exceptions)
+        AND: [
           {
-            exceptions: {
-              some: {
+            OR: [
+              { createdBy: session.user.id },
+              { attendees: { some: { userId: session.user.id } } },
+              { group: { members: { some: { userId: session.user.id } } } },
+            ],
+          },
+          {
+            OR: [
+              {
+                exceptions: {
+                  some: {
+                    isCancelled: true,
+                  },
+                },
+              },
+              // Cancelled non-recurring events (via isCancelled flag)
+              {
                 isCancelled: true,
               },
-            },
-          },
-          // Cancelled non-recurring events (via isCancelled flag)
-          {
-            isCancelled: true,
+            ],
           },
         ],
       },
@@ -67,13 +70,12 @@ export async function GET() {
           orderBy: {
             createdAt: "desc",
           },
-          take: 1, // Get the most recent cancellation
+          take: 1,
         },
       },
       orderBy: { date: "desc" },
     });
 
-    // Get all groups for the group selector
     const groups = await prisma.group.findMany({
       where: {
         OR: [
@@ -94,9 +96,8 @@ export async function GET() {
         date: event.date.toISOString(),
         groupId: event.groupId,
         createdBy: event.createdBy,
-        group: event.group,
+        groups: event.group ? [event.group] : [],
         userRsvpStatus: event.attendees[0]?.rsvpStatus || "pending",
-        attendeeCount: event._count.attendees,
         createdByCurrentUser: event.createdBy === session.user.id,
         isRecurring: event.isRecurring,
         recurrenceId: event.recurrenceId,
@@ -106,7 +107,7 @@ export async function GET() {
           : event.exceptions[0]?.createdAt?.toISOString(),
       })),
       groups,
-      userTimezone: session.user.timezone,
+      timezone: session.user.timezone,
     });
   } catch (error) {
     console.error("Cancelled events API error:", error);

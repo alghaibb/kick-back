@@ -18,8 +18,8 @@ export interface CancelledEventData {
 
 interface CancelledEventsResponse {
   events: CancelledEventData[];
-  groups: { id: string; name: string }[];
-  userTimezone: string;
+  groups: { id: string; name: string; image?: string }[];
+  timezone: string;
 }
 
 export function useCancelledEvents() {
