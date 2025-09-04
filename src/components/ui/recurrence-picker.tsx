@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -23,11 +22,11 @@ export type RecurrenceEndType = "never" | "after" | "on";
 export interface RecurrenceConfig {
   enabled: boolean;
   frequency: RecurrenceFrequency;
-  interval: number; // Every X days/weeks/months
+  interval: number;
   endType: RecurrenceEndType;
-  endAfter?: number; // Number of occurrences
-  endDate?: Date; // End date
-  weekDays?: number[]; // For weekly: 0=Sunday, 1=Monday, etc.
+  endAfter?: number;
+  endDate?: Date;
+  weekDays?: number[];
 }
 
 interface RecurrencePickerProps {
@@ -51,13 +50,11 @@ export function RecurrencePicker({
   onChange,
   eventDate = new Date(),
 }: RecurrencePickerProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
   const handleToggle = (enabled: boolean) => {
     onChange({
       ...value,
       enabled,
-      // Set defaults when enabling
+
       frequency: enabled && !value.frequency ? "weekly" : value.frequency,
       interval: enabled && !value.interval ? 1 : value.interval,
       endType: enabled && !value.endType ? "never" : value.endType,
@@ -70,7 +67,7 @@ export function RecurrencePicker({
     onChange({
       ...value,
       frequency,
-      // Reset weekdays if changing from weekly
+
       weekDays: frequency === "weekly" ? [eventDate.getDay()] : undefined,
     });
   };
@@ -81,7 +78,6 @@ export function RecurrencePicker({
       ? currentDays.filter((d) => d !== day)
       : [...currentDays, day].sort();
 
-    // Ensure at least one day is selected
     if (newDays.length === 0) return;
 
     onChange({ ...value, weekDays: newDays });
@@ -116,7 +112,6 @@ export function RecurrencePicker({
         desc = "Custom recurrence";
     }
 
-    // Add end condition
     if (value.endType === "after" && value.endAfter) {
       desc += ` (${value.endAfter} times)`;
     } else if (value.endType === "on" && value.endDate) {
@@ -142,7 +137,6 @@ export function RecurrencePicker({
 
   return (
     <div className="space-y-4">
-      {/* Toggle */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Repeat className="h-4 w-4 text-muted-foreground" />
@@ -157,14 +151,12 @@ export function RecurrencePicker({
 
       {value.enabled && (
         <>
-          {/* Recurrence Description */}
           {getRecurrenceDescription() && (
             <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
               {getRecurrenceDescription()}
             </div>
           )}
 
-          {/* Frequency Selector */}
           <div className="space-y-3">
             <Label>Repeat frequency</Label>
             <Select
@@ -184,7 +176,6 @@ export function RecurrencePicker({
             </Select>
           </div>
 
-          {/* Weekly Day Selector */}
           {value.frequency === "weekly" && (
             <div className="space-y-3">
               <Label>Repeat on</Label>
@@ -208,7 +199,6 @@ export function RecurrencePicker({
             </div>
           )}
 
-          {/* End Condition */}
           <div className="space-y-3">
             <Label>Ends</Label>
             <RadioGroup
