@@ -29,6 +29,8 @@ import {
   useEditEvent,
   useAdminEditEvent,
 } from "@/hooks/mutations/useEventMutations";
+import { editSingleOccurrenceAction } from "../actions";
+import { ColorPicker } from "@/components/ui/color-picker";
 
 interface EditEventFormProps {
   eventId: string;
@@ -37,6 +39,7 @@ interface EditEventFormProps {
   onSuccess?: () => void;
   isAdmin?: boolean;
   editAllInSeries?: boolean;
+  editSingleOccurrence?: boolean;
 }
 
 export default function EditEventForm({
@@ -46,6 +49,7 @@ export default function EditEventForm({
   onSuccess,
   isAdmin = false,
   editAllInSeries = false,
+  editSingleOccurrence = false,
 }: EditEventFormProps) {
   const editEventMutation = useEditEvent();
   const adminEditEventMutation = useAdminEditEvent();
@@ -55,7 +59,23 @@ export default function EditEventForm({
     defaultValues: initialValues,
   });
 
-  function onSubmit(values: CreateEventValues) {
+  async function onSubmit(values: CreateEventValues) {
+    if (editSingleOccurrence) {
+      // Handle single occurrence editing
+      try {
+        const result = await editSingleOccurrenceAction(eventId, values);
+        if (result.success) {
+          onSuccess?.();
+        } else {
+          // Handle error - you might want to show a toast here
+          console.error("Failed to edit single occurrence:", result.error);
+        }
+      } catch (error) {
+        console.error("Error editing single occurrence:", error);
+      }
+      return;
+    }
+
     const mutation = isAdmin ? adminEditEventMutation : editEventMutation;
 
     mutation.mutate(
@@ -68,9 +88,11 @@ export default function EditEventForm({
     );
   }
 
-  const isLoading = isAdmin
-    ? adminEditEventMutation.isPending
-    : editEventMutation.isPending;
+  const isLoading = editSingleOccurrence
+    ? false // For single occurrence, we don't have a loading state
+    : isAdmin
+      ? adminEditEventMutation.isPending
+      : editEventMutation.isPending;
 
   return (
     <Form {...form}>
@@ -104,6 +126,7 @@ export default function EditEventForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="location"
@@ -121,6 +144,7 @@ export default function EditEventForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="date"
@@ -145,6 +169,7 @@ export default function EditEventForm({
             </FormItem>
           )}
         />
+        
         <FormField
           control={form.control}
           name="groupId"
@@ -175,6 +200,24 @@ export default function EditEventForm({
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Color</FormLabel>
+              <FormControl>
+                <ColorPicker
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <EnhancedLoadingButton
           type="submit"
           className="w-full"

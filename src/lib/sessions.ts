@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
-import {cache} from "react";
+import { cache } from "react";
 
 export const clearSessionCookies = cache(async () => {
   const cookieStore = await cookies();
@@ -30,10 +30,7 @@ export const clearSessionCookies = cache(async () => {
       });
     } catch (error) {
       // Ignore errors when trying to clear cookies that don't exist
-      console.error(
-        "[clearSessionCookies] Could not clear cookie:",
-        error
-      );
+      console.error("[clearSessionCookies] Could not clear cookie:", error);
     }
   }
 });
@@ -72,7 +69,6 @@ export const getSession = cache(async () => {
     });
 
     if (!session) {
-
       // Clear invalid session cookies so user doesn't need to manually clear them
       try {
         await clearSessionCookies();
@@ -87,7 +83,6 @@ export const getSession = cache(async () => {
     }
 
     if (new Date(session.expires) < new Date()) {
-
       try {
         await prisma.session.delete({
           where: { sessionToken },
@@ -110,7 +105,6 @@ export const getSession = cache(async () => {
     }
 
     if (session.user.deletedAt) {
-
       // This allows the frontend to handle the soft-deleted state
       return {
         ...session,

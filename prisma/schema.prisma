@@ -200,17 +200,19 @@ model Event {
   location    String?
   latitude    Float?
   longitude   Float?
-  color       String?         @default("#3b82f6") 
+  color       String?         @default("#3b82f6")
   createdBy   String
   groupId     String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   inviteLink  String?
-  recurrenceRule    String?         
-  recurrenceId      String?         
-  recurrenceEndDate DateTime?       
+  recurrenceRule    String?
+  recurrenceId      String?
+  recurrenceEndDate DateTime?
   isRecurring       Boolean         @default(false)
-  parentEventId     String?         
+  parentEventId     String?
+  isCancelled       Boolean         @default(false)
+  cancelledAt       DateTime?         
   attendees   EventAttendee[]
   comments    EventComment[]
   favorites   EventFavorite[]

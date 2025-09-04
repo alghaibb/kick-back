@@ -767,6 +767,9 @@ export async function editEventAction(
         isRecurring: true,
         recurrenceId: true,
         date: true,
+        recurrenceEndDate: true,
+        parentEventId: true,
+        id: true,
       },
     });
 
@@ -786,54 +789,218 @@ export async function editEventAction(
       existingEvent.isRecurring &&
       existingEvent.recurrenceId
     ) {
-      // Get all future events in the series (including this one)
+      // Get ALL events in the series (not just future ones)
       const eventsToUpdate = await prisma.event.findMany({
         where: {
           recurrenceId: existingEvent.recurrenceId,
           createdBy: session.user.id,
-          date: { gte: existingEvent.date }, // Only update this event and future ones
         },
         orderBy: { date: "asc" },
       });
 
-      // Calculate the date shift if the date has changed
+      console.log("=== EVENTS TO UPDATE ===");
+      eventsToUpdate.forEach((event, index) => {
+        console.log(
+          `${index + 1}. ${new Date(event.date).toISOString()} - ${event.name}`
+        );
+      });
+
+      // Parse the form date and time
+      const formDate = new Date(date + "T" + time);
       const originalEventDate = new Date(existingEvent.date);
-      const newEventDate = new Date(date + "T" + time);
-      const daysDifference = Math.round(
-        (newEventDate.getTime() - originalEventDate.getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
+
+      // Determine if user changed the date or just the time
+      const formDateOnly = new Date(formDate);
+      formDateOnly.setHours(0, 0, 0, 0);
+      const originalDateOnly = new Date(originalEventDate);
+      originalDateOnly.setHours(0, 0, 0, 0);
+
+      const dateChanged = formDateOnly.getTime() !== originalDateOnly.getTime();
 
       // Update all events in the series
       const updatedEvents = await prisma.$transaction(async (tx) => {
         const results = [];
-        for (const event of eventsToUpdate) {
-          // For each event, shift the date by the same amount of days
-          const eventDate = new Date(event.date);
-          const shiftedDate = new Date(eventDate);
-          shiftedDate.setDate(shiftedDate.getDate() + daysDifference);
 
-          const year = shiftedDate.getFullYear();
-          const month = shiftedDate.getMonth() + 1;
-          const day = shiftedDate.getDate();
-          const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        if (dateChanged) {
+          // User changed the date - we need to regenerate the entire series
+          // to ensure we don't miss any valid dates
 
-          // Use the new time from the form for all events
-          const eventDateTime = createEventDateTime(dateStr, time, timezone);
+          // Find the earliest event in the series to use as our new start point
+          const earliestEvent = eventsToUpdate[0];
+          const earliestDate = new Date(earliestEvent.date);
 
-          const updated = await tx.event.update({
-            where: { id: event.id },
-            data: {
-              name,
-              description: description || null,
-              location: location || null,
-              date: eventDateTime,
-              color: color || "#3b82f6",
-              groupId: groupId || null,
-            },
-          });
-          results.push(updated);
+          // Calculate the new start date by applying the day shift to the earliest event
+          const originalDayOfWeek = originalEventDate.getDay();
+          const formDayOfWeek = formDate.getDay();
+          const dayDifference = formDayOfWeek - originalDayOfWeek;
+
+          const newStartDate = new Date(earliestDate);
+          newStartDate.setDate(earliestDate.getDate() + dayDifference);
+
+          // Regenerate the series based on the original RRULE pattern but with new day
+          // For now, let's update existing events and check if we need to create additional ones
+
+          // First, update all existing events with the day shift
+          for (const event of eventsToUpdate) {
+            const eventDate = new Date(event.date);
+            const shiftedDate = new Date(eventDate);
+            shiftedDate.setDate(eventDate.getDate() + dayDifference);
+
+            const year = shiftedDate.getFullYear();
+            const month = shiftedDate.getMonth() + 1;
+            const day = shiftedDate.getDate();
+            const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const eventDateTime = createEventDateTime(dateStr, time, timezone);
+
+            const updated = await tx.event.update({
+              where: { id: event.id },
+              data: {
+                name,
+                description: description || null,
+                location: location || null,
+                date: eventDateTime,
+                color: color || "#3b82f6",
+                groupId: groupId || null,
+              },
+            });
+            results.push(updated);
+          }
+
+          // Check if we need to create additional events
+          // Find the last updated event and see if there are more valid dates
+          const lastEvent = eventsToUpdate[eventsToUpdate.length - 1];
+          const lastDate = new Date(lastEvent.date);
+          const shiftedLastDate = new Date(lastDate);
+          shiftedLastDate.setDate(lastDate.getDate() + dayDifference);
+
+          // Only create additional events for dates that would have existed in the original pattern
+          // For recurring events with no end date, we want to maintain the same frequency pattern
+
+          let maxAdditionalEvents = 0;
+
+          if (existingEvent.recurrenceEndDate) {
+            // If there's an explicit end date, check if we need to extend within that range
+            const originalEndDate = new Date(existingEvent.recurrenceEndDate);
+            const shiftedEndDate = new Date(originalEndDate);
+            shiftedEndDate.setDate(originalEndDate.getDate() + dayDifference);
+
+            // Check if the shifted last date is before the shifted end date
+            if (shiftedLastDate < shiftedEndDate) {
+              // Calculate how many more events we might need (up to 4 more to be safe)
+              maxAdditionalEvents = 4;
+            }
+          } else {
+            // For "never" recurring, only add a few more events to maintain the pattern
+            maxAdditionalEvents = 4;
+          }
+
+          // Create additional events only for the next few occurrences in the pattern
+          if (maxAdditionalEvents > 0) {
+            // Find the last Thursday in the original pattern BEFORE any updates
+            // We need to use the original event that triggered this action
+            const lastOriginalDate = new Date(existingEvent.date);
+
+            // Calculate the next Thursday after the current event
+            let nextThursday = new Date(lastOriginalDate);
+            nextThursday.setDate(nextThursday.getDate() + 7); // Next Thursday
+
+            let eventsCreated = 0;
+
+            while (eventsCreated < maxAdditionalEvents) {
+              // Calculate the corresponding Wednesday for this Thursday
+              const correspondingWednesday = new Date(nextThursday);
+              correspondingWednesday.setDate(
+                nextThursday.getDate() + dayDifference
+              );
+
+              // Check if we already have an event on this Wednesday
+              const existingEventOnDate = eventsToUpdate.find((event) => {
+                const eventDate = new Date(event.date);
+                return (
+                  eventDate.toDateString() ===
+                  correspondingWednesday.toDateString()
+                );
+              });
+
+              // If no event exists on this Wednesday, create one
+              if (!existingEventOnDate) {
+                // Check if we're still within the valid range
+                let withinRange = true;
+                if (existingEvent.recurrenceEndDate) {
+                  const originalEndDate = new Date(
+                    existingEvent.recurrenceEndDate
+                  );
+                  withinRange = nextThursday <= originalEndDate;
+                }
+
+                if (withinRange) {
+                  const year = correspondingWednesday.getFullYear();
+                  const month = correspondingWednesday.getMonth() + 1;
+                  const day = correspondingWednesday.getDate();
+                  const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                  const eventDateTime = createEventDateTime(
+                    dateStr,
+                    time,
+                    timezone
+                  );
+
+                  const newEvent = await tx.event.create({
+                    data: {
+                      name,
+                      description: description || null,
+                      location: location || null,
+                      date: eventDateTime,
+                      color: color || "#3b82f6",
+                      groupId: groupId || null,
+                      createdBy: session.user.id,
+                      isRecurring: true,
+                      recurrenceId: existingEvent.recurrenceId!,
+                      recurrenceRule: null, // Not the first event
+                      recurrenceEndDate: existingEvent.recurrenceEndDate,
+                      parentEventId:
+                        existingEvent.parentEventId || existingEvent.id,
+                    },
+                  });
+                  results.push(newEvent);
+                  eventsCreated++;
+                } else {
+                  break; // Stop if we're past the end date
+                }
+              }
+
+              nextThursday.setDate(nextThursday.getDate() + 7); // Next Thursday
+
+              // Safety check: don't go more than 6 months ahead
+              const sixMonthsFromNow = new Date(lastOriginalDate);
+              sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+              if (nextThursday > sixMonthsFromNow) break;
+            }
+          }
+        } else {
+          // User only changed the time - keep the original dates
+          for (const event of eventsToUpdate) {
+            const eventDate = new Date(event.date);
+            const year = eventDate.getFullYear();
+            const month = eventDate.getMonth() + 1;
+            const day = eventDate.getDate();
+            const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const eventDateTime = createEventDateTime(dateStr, time, timezone);
+
+            const updated = await tx.event.update({
+              where: { id: event.id },
+              data: {
+                name,
+                description: description || null,
+                location: location || null,
+                date: eventDateTime,
+                color: color || "#3b82f6",
+                groupId: groupId || null,
+              },
+            });
+            results.push(updated);
+          }
         }
+
         return results;
       });
 
@@ -1269,5 +1436,294 @@ export async function acceptEventInviteAction(token: string) {
   } catch (error) {
     console.error("Accept event invite error:", error);
     return { error: "Failed to accept invitation" };
+  }
+}
+
+export async function deleteSingleOccurrenceAction(eventId: string) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" };
+    }
+
+    const existingEvent = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: {
+        createdBy: true,
+        isRecurring: true,
+        recurrenceId: true,
+        date: true,
+        name: true,
+        recurrenceEndDate: true,
+        parentEventId: true,
+        id: true,
+      },
+    });
+
+    if (!existingEvent || existingEvent.createdBy !== session.user.id) {
+      return { error: "You don't have permission to delete this event." };
+    }
+
+    if (!existingEvent.isRecurring || !existingEvent.recurrenceId) {
+      return { error: "This is not a recurring event." };
+    }
+
+    // Create an exception to mark this occurrence as cancelled
+    await prisma.recurrenceException.create({
+      data: {
+        eventId,
+        recurrenceId: existingEvent.recurrenceId!,
+        originalDate: existingEvent.date,
+        isCancelled: true,
+        modifiedEventId: null,
+      },
+    });
+
+    revalidatePath("/events");
+    revalidatePath("/calendar");
+    return { success: true, message: "Single occurrence deleted successfully" };
+  } catch (error) {
+    console.error("Error deleting single occurrence:", error);
+    return { error: "Failed to delete single occurrence" };
+  }
+}
+
+export async function editSingleOccurrenceAction(
+  eventId: string,
+  values: CreateEventValues
+) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" };
+    }
+
+    const existingEvent = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: {
+        createdBy: true,
+        isRecurring: true,
+        recurrenceId: true,
+        date: true,
+        name: true,
+        description: true,
+        location: true,
+        color: true,
+        groupId: true,
+        recurrenceEndDate: true,
+        parentEventId: true,
+        id: true,
+      },
+    });
+
+    if (!existingEvent || existingEvent.createdBy !== session.user.id) {
+      return { error: "You don't have permission to edit this event." };
+    }
+
+    if (!existingEvent.isRecurring || !existingEvent.recurrenceId) {
+      return { error: "This is not a recurring event." };
+    }
+
+    const validatedValues = createEventSchema.parse(values);
+    const timezone = session.user.timezone || "UTC";
+    const eventDateTime = createEventDateTime(
+      validatedValues.date,
+      validatedValues.time,
+      timezone
+    );
+
+    // Create an exception for this occurrence
+    await prisma.$transaction(async (tx) => {
+      // Create exception record
+      await tx.recurrenceException.create({
+        data: {
+          eventId,
+          recurrenceId: existingEvent.recurrenceId!, // Already checked above
+          originalDate: existingEvent.date,
+          isCancelled: false,
+          modifiedEventId: null,
+        },
+      });
+
+      // Update the existing event with new values (this detaches it from the series)
+      const updatedEvent = await tx.event.update({
+        where: { id: eventId },
+        data: {
+          name: validatedValues.name,
+          description: validatedValues.description || null,
+          location: validatedValues.location || null,
+          date: eventDateTime,
+          color: validatedValues.color || "#3b82f6",
+          groupId: validatedValues.groupId || null,
+          // Keep the recurrence fields but mark as modified
+        },
+      });
+
+      // Ensure the creator is an attendee (in case they weren't before)
+      await tx.eventAttendee.upsert({
+        where: {
+          eventId_userId: {
+            eventId,
+            userId: session.user.id,
+          },
+        },
+        update: {
+          rsvpStatus: "yes", // Creator automatically says yes
+          rsvpAt: new Date(),
+        },
+        create: {
+          eventId,
+          userId: session.user.id,
+          rsvpStatus: "yes", // Creator automatically says yes
+          rsvpAt: new Date(),
+        },
+      });
+
+      // Update the exception with the modified event ID (for tracking)
+      await tx.recurrenceException.updateMany({
+        where: {
+          eventId,
+          recurrenceId: existingEvent.recurrenceId!, // Already checked above
+          originalDate: existingEvent.date,
+        },
+        data: {
+          modifiedEventId: eventId,
+        },
+      });
+
+      return updatedEvent;
+    });
+
+    revalidatePath("/events");
+    revalidatePath("/calendar");
+    return { success: true, message: "Single occurrence updated successfully" };
+  } catch (error) {
+    console.error("Error editing single occurrence:", error);
+    return { error: "Failed to edit single occurrence" };
+  }
+}
+
+export async function reenableEventAction(eventId: string) {
+  try {
+    const session = await getSession();
+
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" };
+    }
+
+    // Check if the user can re-enable this event (creator or attendee)
+    const existingEvent = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: {
+        id: true,
+        createdBy: true,
+        recurrenceId: true,
+        isRecurring: true,
+        attendees: {
+          where: { userId: session.user.id },
+          select: { userId: true },
+        },
+      },
+    });
+
+    if (!existingEvent) {
+      return { error: "Event not found" };
+    }
+
+    if (
+      existingEvent.createdBy !== session.user.id &&
+      !existingEvent.attendees.some(
+        (attendee) => attendee.userId === session.user.id
+      )
+    ) {
+      return { error: "You don't have permission to re-enable this event" };
+    }
+
+    if (!existingEvent.isRecurring) {
+      return { error: "Only recurring events can be cancelled and re-enabled" };
+    }
+
+    // Find and remove the RecurrenceException that marks this event as cancelled
+    const cancelledException = await prisma.recurrenceException.findFirst({
+      where: {
+        eventId: eventId,
+        isCancelled: true,
+      },
+    });
+
+    if (!cancelledException) {
+      return { error: "Event is not cancelled" };
+    }
+
+    // Remove the cancellation by deleting the RecurrenceException
+    await prisma.recurrenceException.delete({
+      where: { id: cancelledException.id },
+    });
+
+    revalidatePath("/events");
+    revalidatePath("/dashboard");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error re-enabling event:", error);
+    return { error: "Failed to re-enable event" };
+  }
+}
+
+"use server";
+
+import { getSession } from "@/lib/sessions";
+
+export async function cancelEventAction(eventId: string) {
+  try {
+    const session = await getSession();
+
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" };
+    }
+
+    // Check if the user can cancel this event (creator only)
+    const existingEvent = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: {
+        id: true,
+        createdBy: true,
+        isRecurring: true,
+        isCancelled: true,
+      },
+    });
+
+    if (!existingEvent) {
+      return { error: "Event not found" };
+    }
+
+    if (existingEvent.createdBy !== session.user.id) {
+      return { error: "You don't have permission to cancel this event" };
+    }
+
+    if (existingEvent.isRecurring) {
+      return { error: "Use cancel single occurrence for recurring events" };
+    }
+
+    if (existingEvent.isCancelled) {
+      return { error: "Event is already cancelled" };
+    }
+
+    // Mark the event as cancelled
+    await prisma.event.update({
+      where: { id: eventId },
+      data: {
+        isCancelled: true,
+        cancelledAt: new Date(),
+      },
+    });
+
+    revalidatePath("/events");
+    revalidatePath("/dashboard");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error cancelling event:", error);
+    return { error: "Failed to cancel event" };
   }
 }

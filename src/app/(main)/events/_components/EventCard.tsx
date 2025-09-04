@@ -10,11 +10,13 @@ import {
 import { useModal } from "@/hooks/use-modal";
 import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
-import { Pencil, Trash2, Mail, LogOut, Star } from "lucide-react";
+import { Pencil, Trash2, Mail, LogOut, Star, X } from "lucide-react";
 import { RSVPButtons } from "@/components/RSVPButtons";
 import { motion } from "framer-motion";
 import { cardHoverVariants } from "@/lib/animationVariants";
 import { useToggleEventFavorite } from "@/hooks/mutations/useEventFavorites";
+import { toast } from "sonner";
+import { deleteSingleOccurrenceAction, cancelEventAction } from "../actions";
 
 interface EventCardProps {
   id: string;
@@ -173,7 +175,6 @@ export function EventCard({
                     recurrenceId: recurrenceId ?? undefined,
                     recurrenceRule: recurrenceRule ?? undefined,
                     onSingleEdit: () => {
-                      // For single edit, just edit this specific event
                       open("edit-event", {
                         eventId: id,
                         name,
@@ -183,10 +184,10 @@ export function EventCard({
                         location,
                         groupId,
                         groups,
+                        editSingleOccurrence: true,
                       });
                     },
                     onSeriesEdit: () => {
-                      // For series edit, pass a flag to indicate we're editing all in series
                       open("edit-event", {
                         eventId: id,
                         name,
@@ -219,6 +220,80 @@ export function EventCard({
             >
               <Pencil className="w-4 h-4" />
             </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-responsive"
+                  onClick={() => {
+                    if (isRecurring) {
+                      // For recurring events, show cancel modal
+                      open("cancel-recurring-event", {
+                        eventId: id,
+                        eventName: name,
+                        eventDate: formatDate(eventDate, {
+                          includeWeekday: false,
+                        }),
+                        isRecurring,
+                        recurrenceId: recurrenceId ?? undefined,
+                        onCancelOccurrence: async () => {
+                          // Cancel single occurrence (mark as cancelled)
+                          try {
+                            const result =
+                              await deleteSingleOccurrenceAction(id);
+                            if (result.success) {
+                              toast.success("Event cancelled successfully");
+                            } else {
+                              toast.error(
+                                result.error || "Failed to cancel event"
+                              );
+                            }
+                          } catch (error) {
+                            toast.error("Failed to cancel event");
+                          }
+                        },
+                      });
+                    } else {
+                      // For non-recurring events, show cancel modal
+                      open("cancel-recurring-event", {
+                        eventId: id,
+                        eventName: name,
+                        eventDate: formatDate(eventDate, {
+                          includeWeekday: false,
+                        }),
+                        isRecurring: false,
+                        onCancelOccurrence: async () => {
+                          // Cancel entire event (mark as cancelled)
+                          try {
+                            const result = await cancelEventAction(id);
+                            if (result.success) {
+                              toast.success("Event cancelled successfully");
+                            } else {
+                              toast.error(
+                                result.error || "Failed to cancel event"
+                              );
+                            }
+                          } catch (error) {
+                            toast.error("Failed to cancel event");
+                          }
+                        },
+                      });
+                    }
+                  }}
+                  className="text-muted-foreground hover:text-orange-600"
+                  aria-label={isRecurring ? "Cancel Event Occurrence" : "Cancel Event"}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {isRecurring
+                    ? "Cancel this event occurrence"
+                    : "Cancel this event"}
+                </p>
+              </TooltipContent>
+            </Tooltip>
           </>
         )}
         {!createdByCurrentUser && !disabled && (
@@ -253,16 +328,22 @@ export function EventCard({
                   eventDate: formatDate(eventDate, { includeWeekday: false }),
                   isRecurring,
                   recurrenceId: recurrenceId ?? undefined,
-                  onSingleDelete: () => {
-                    // Delete only this event
-                    open("delete-event", {
-                      eventId: id,
-                      eventName: name,
-                      isRecurring: false,
-                    });
+                  onSingleDelete: async () => {
+                    // Delete single occurrence (mark as cancelled)
+                    try {
+                      const result = await deleteSingleOccurrenceAction(id);
+                      if (result.success) {
+                        toast.success("Single occurrence deleted successfully");
+                      } else {
+                        toast.error(
+                          result.error || "Failed to delete single occurrence"
+                        );
+                      }
+                    } catch (error) {
+                      toast.error("Failed to delete single occurrence");
+                    }
                   },
                   onSeriesDelete: () => {
-                    // Delete all events in the series
                     open("delete-event", {
                       eventId: id,
                       eventName: name,

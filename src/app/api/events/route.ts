@@ -14,10 +14,28 @@ export async function GET() {
     const [events, groups] = await Promise.all([
       prisma.event.findMany({
         where: {
-          OR: [
-            { createdBy: session.user.id },
-            { attendees: { some: { userId: session.user.id } } },
-            { group: { members: { some: { userId: session.user.id } } } },
+          AND: [
+            {
+              OR: [
+                { createdBy: session.user.id },
+                { attendees: { some: { userId: session.user.id } } },
+                { group: { members: { some: { userId: session.user.id } } } },
+              ],
+            },
+            // Exclude cancelled recurring event exceptions
+            {
+              NOT: {
+                exceptions: {
+                  some: {
+                    isCancelled: true,
+                  },
+                },
+              },
+            },
+            // Exclude cancelled non-recurring events
+            {
+              isCancelled: false,
+            },
           ],
         },
         include: {
@@ -31,6 +49,19 @@ export async function GET() {
           favorites: {
             where: { userId: session.user.id },
             select: { id: true },
+          },
+          exceptions: {
+            where: {
+              OR: [
+                { isCancelled: false }, // Include modified exceptions
+                { isCancelled: true }, // This will be filtered out by the NOT above
+              ],
+            },
+            select: {
+              id: true,
+              isCancelled: true,
+              modifiedEventId: true,
+            },
           },
           _count: {
             select: {

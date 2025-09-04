@@ -10,6 +10,7 @@ import {
   leaveEventAction,
   inviteToEventBatchAction,
   moveEventToDateAction,
+  reenableEventAction,
 } from "@/app/(main)/events/actions";
 import { adminEditEventAction } from "@/app/(main)/admin/actions";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
@@ -455,6 +456,36 @@ export function useMoveEvent() {
         queryKey: ["events"],
         refetchType: "active",
       });
+    },
+  });
+}
+
+export function useReenableEvent() {
+  const queryClient = useQueryClient();
+  const { invalidateDashboard } = useDashboardInvalidation();
+
+  return useMutation({
+    mutationFn: async ({ eventId }: { eventId: string }) => {
+      const result = await reenableEventAction(eventId);
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onSuccess: () => {
+      toast.success("Event re-enabled successfully!");
+      // Invalidate events data to show re-enabled event
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate cancelled events data to remove from cancelled tab
+      queryClient.invalidateQueries({ queryKey: ["cancelled-events"] });
+      // Invalidate calendar data to show re-enabled event
+      queryClient.invalidateQueries({ queryKey: ["calendar"] });
+      // Invalidate dashboard stats to update event counts
+      invalidateDashboard();
+    },
+    onError: (error: Error) => {
+      console.error("Re-enable event error:", error);
+      toast.error(error.message || "Failed to re-enable event");
     },
   });
 }

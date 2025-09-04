@@ -81,6 +81,11 @@ const DeleteRecurringEventModal = lazy(() =>
     default: m.DeleteRecurringEventModal,
   }))
 );
+const CancelRecurringEventModal = lazy(() =>
+  import("./events/_components/DeleteRecurringEventModal").then((m) => ({
+    default: m.CancelRecurringEventModal,
+  }))
+);
 
 export default function MainLayout({
   children,
@@ -139,6 +144,9 @@ export default function MainLayout({
       </Suspense>
       <Suspense fallback={null}>
         <DeleteRecurringEventModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <CancelRecurringEventModal />
       </Suspense>
     </>
   );

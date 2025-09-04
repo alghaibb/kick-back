@@ -2,6 +2,7 @@
 
 import { useEvents, EventData } from "@/hooks/queries/useEvents";
 import { EventCard } from "./EventCard";
+import { CancelledEventCard } from "./CancelledEventCard";
 import { UnifiedSkeleton } from "@/components/ui/skeleton";
 import { endOfDay, startOfDay } from "date-fns";
 import {
@@ -18,6 +19,7 @@ import {
   AlertCircle,
   Bookmark,
   Star,
+  XCircle,
 } from "lucide-react";
 import EventFilters from "./EventFilters";
 import { filterAndSortEvents, defaultFilters } from "@/lib/event-filters";
@@ -25,11 +27,14 @@ import type { EventFilters as EventFiltersType } from "@/lib/event-filters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventTemplatesList } from "../templates/_components/EventTemplatesList";
 import { useFavoriteEvents } from "@/hooks/queries/useFavoriteEvents";
+import { useCancelledEvents } from "@/hooks/queries/useCancelledEvents";
 
 export function EventsClient() {
   const { data, isLoading, error } = useEvents();
   const { data: favoriteData, isLoading: favoritesLoading } =
     useFavoriteEvents();
+  const { data: cancelledData, isLoading: cancelledLoading } =
+    useCancelledEvents();
   const { user } = useAuth();
   const [filters, setFilters] = useState<EventFiltersType>(defaultFilters);
 
@@ -165,7 +170,7 @@ export function EventsClient() {
 
   return (
     <Tabs defaultValue="events" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="events" className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           <span className="hidden sm:inline">Events</span>
@@ -174,6 +179,11 @@ export function EventsClient() {
         <TabsTrigger value="saved" className="flex items-center gap-2">
           <Star className="h-4 w-4" />
           Saved
+        </TabsTrigger>
+        <TabsTrigger value="cancelled" className="flex items-center gap-2">
+          <XCircle className="h-4 w-4" />
+          <span className="hidden sm:inline">Cancelled</span>
+          <span className="sm:hidden">❌</span>
         </TabsTrigger>
         <TabsTrigger value="templates" className="flex items-center gap-2">
           <Bookmark className="h-4 w-4" />
@@ -261,6 +271,66 @@ export function EventsClient() {
               </AnimatedListItem>
             ))}
           </AnimatedList>
+        )}
+      </TabsContent>
+
+      <TabsContent value="cancelled" className="space-y-8">
+        {cancelledLoading ? (
+          <UnifiedSkeleton variant="card-list" count={3} />
+        ) : !cancelledData?.events?.length ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="rounded-full bg-orange-100 dark:bg-orange-950/20 p-3 mb-4">
+              <XCircle className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No cancelled events</h3>
+            <p className="text-muted-foreground max-w-sm">
+              Cancelled events will appear here. You can re-enable them or
+              delete them permanently.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <XCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                <h3 className="font-semibold text-orange-800 dark:text-orange-200">
+                  Cancelled Events
+                </h3>
+              </div>
+              <p className="text-sm text-orange-700 dark:text-orange-300">
+                These events are hidden from your main calendar. You can
+                re-enable them or delete them permanently.
+              </p>
+            </div>
+
+            <AnimatedList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {cancelledData.events.map((event) => (
+                <AnimatedListItem key={event.id}>
+                  <CancelledEventCard
+                    key={event.id}
+                    id={event.id}
+                    name={event.name}
+                    description={event.description || undefined}
+                    date={event.date}
+                    time={formatDate(new Date(event.date), {
+                      includeTime: true,
+                    })
+                      .split(" ")
+                      .pop()}
+                    location={event.location || undefined}
+                    groupId={event.groupId || undefined}
+                    groups={data?.groups || []}
+                    timezone={data?.userTimezone || "UTC"}
+                    createdByCurrentUser={event.createdBy === user?.id}
+                    isRecurring={event.isRecurring}
+                    recurrenceId={event.recurrenceId}
+                    recurrenceRule={event.recurrenceRule}
+                    cancelledDate={event.cancelledDate}
+                  />
+                </AnimatedListItem>
+              ))}
+            </AnimatedList>
+          </div>
         )}
       </TabsContent>
 

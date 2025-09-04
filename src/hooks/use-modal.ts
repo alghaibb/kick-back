@@ -9,6 +9,7 @@ export type ModalType =
   | "delete-event"
   | "edit-recurring-event"
   | "delete-recurring-event"
+  | "cancel-recurring-event"
   | "create-template"
   | "edit-template"
   | "delete-photo"
@@ -83,10 +84,12 @@ interface ModalState {
     recurrenceRule?: string;
     eventDate?: string;
     editAllInSeries?: boolean;
+    editSingleOccurrence?: boolean;
     onSingleEdit?: () => void;
     onSeriesEdit?: () => void;
     onSingleDelete?: () => void;
     onSeriesDelete?: () => void;
+    onCancelOccurrence?: () => void;
   };
   open: (
     type: ModalType,
@@ -150,10 +153,13 @@ interface ModalState {
       recurrenceId?: string;
       recurrenceRule?: string;
       eventDate?: string;
+      editAllInSeries?: boolean;
+      editSingleOccurrence?: boolean;
       onSingleEdit?: () => void;
       onSeriesEdit?: () => void;
       onSingleDelete?: () => void;
       onSeriesDelete?: () => void;
+      onCancelOccurrence?: () => void;
     }
   ) => void;
   close: () => void;

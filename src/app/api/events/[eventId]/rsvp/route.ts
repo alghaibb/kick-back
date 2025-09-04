@@ -22,23 +22,46 @@ export async function POST(
     const body = await request.json();
     const { status } = rsvpSchema.parse(body);
 
-    const eventAttendee = await prisma.eventAttendee.findFirst({
-      where: {
-        eventId,
-        userId: session.user.id,
-      },
-    });
+    // Check if user is an attendee OR the event creator
+    const [eventAttendee, event] = await Promise.all([
+      prisma.eventAttendee.findFirst({
+        where: {
+          eventId,
+          userId: session.user.id,
+        },
+      }),
+      prisma.event.findUnique({
+        where: { id: eventId },
+        select: { createdBy: true },
+      }),
+    ]);
 
-    if (!eventAttendee) {
+    // Allow RSVP if user is either an attendee OR the event creator
+    const isAttendee = !!eventAttendee;
+    const isCreator = event?.createdBy === session.user.id;
+
+    if (!isAttendee && !isCreator) {
       return NextResponse.json(
         { error: "You are not invited to this event" },
         { status: 403 }
       );
     }
 
+    // If user is creator but not an attendee, add them as an attendee first
+    let attendeeRecord = eventAttendee;
+    if (!isAttendee && isCreator) {
+      attendeeRecord = await prisma.eventAttendee.create({
+        data: {
+          eventId,
+          userId: session.user.id,
+          rsvpStatus: "pending", // Will be updated below
+        },
+      });
+    }
+
     const updatedAttendee = await prisma.eventAttendee.update({
       where: {
-        id: eventAttendee.id,
+        id: attendeeRecord!.id,
       },
       data: {
         rsvpStatus: status,
@@ -107,27 +130,46 @@ export async function GET(
 
     const { eventId } = await params;
 
-    const attendee = await prisma.eventAttendee.findFirst({
-      where: {
-        eventId,
-        userId: session.user.id,
-      },
-      select: {
-        rsvpStatus: true,
-        rsvpAt: true,
-      },
-    });
+    // Check if user is an attendee OR the event creator
+    const [attendee, event] = await Promise.all([
+      prisma.eventAttendee.findFirst({
+        where: {
+          eventId,
+          userId: session.user.id,
+        },
+        select: {
+          rsvpStatus: true,
+          rsvpAt: true,
+        },
+      }),
+      prisma.event.findUnique({
+        where: { id: eventId },
+        select: { createdBy: true },
+      }),
+    ]);
 
-    if (!attendee) {
+    // Allow access if user is either an attendee OR the event creator
+    const isAttendee = !!attendee;
+    const isCreator = event?.createdBy === session.user.id;
+
+    if (!isAttendee && !isCreator) {
       return NextResponse.json(
         { error: "You are not invited to this event" },
         { status: 403 }
       );
     }
 
+    // If user is creator but not an attendee, return default status
+    if (!isAttendee && isCreator) {
+      return NextResponse.json({
+        rsvpStatus: "yes", // Creators automatically say yes
+        rsvpAt: null,
+      });
+    }
+
     return NextResponse.json({
-      rsvpStatus: attendee.rsvpStatus,
-      rsvpAt: attendee.rsvpAt,
+      rsvpStatus: attendee?.rsvpStatus,
+      rsvpAt: attendee?.rsvpAt,
     });
   } catch (error) {
     console.error("Get RSVP error:", error);
