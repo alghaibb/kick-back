@@ -12,6 +12,9 @@ interface EventWithFavorite {
   createdBy: string;
   groupId?: string;
   isFavorited: boolean;
+  isRecurring?: boolean;
+  recurrenceId?: string | null;
+  recurrenceRule?: string | null;
   group?: {
     id: string;
     name: string;

@@ -69,6 +69,9 @@ export async function GET() {
       })),
       isFavorited: event.favorites.length > 0,
       favoriteCount: event._count.favorites,
+      isRecurring: event.isRecurring,
+      recurrenceId: event.recurrenceId,
+      recurrenceRule: event.recurrenceRule,
     }));
 
     return NextResponse.json(

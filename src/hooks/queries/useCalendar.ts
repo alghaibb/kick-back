@@ -27,6 +27,9 @@ export interface CalendarEvent {
     };
     rsvpStatus: string;
   }[];
+  isRecurring?: boolean;
+  recurrenceId?: string | null;
+  recurrenceRule?: string | null;
 }
 
 export interface CalendarResponse {

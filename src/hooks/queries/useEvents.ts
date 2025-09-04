@@ -13,6 +13,9 @@ export interface EventData {
   createdBy: string;
   isFavorited?: boolean;
   favoriteCount?: number;
+  isRecurring?: boolean;
+  recurrenceId?: string | null;
+  recurrenceRule?: string | null;
 }
 
 export interface GroupData {

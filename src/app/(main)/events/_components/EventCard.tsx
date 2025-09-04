@@ -29,6 +29,9 @@ interface EventCardProps {
   createdByCurrentUser: boolean;
   disabled?: boolean;
   isFavorited?: boolean;
+  isRecurring?: boolean;
+  recurrenceId?: string | null;
+  recurrenceRule?: string | null;
 }
 
 export function EventCard({
@@ -44,6 +47,9 @@ export function EventCard({
   createdByCurrentUser,
   disabled,
   isFavorited = false,
+  isRecurring = false,
+  recurrenceId,
+  recurrenceRule,
 }: EventCardProps) {
   const { open } = useModal();
   const toggleFavorite = useToggleEventFavorite();
@@ -157,18 +163,57 @@ export function EventCard({
             <Button
               variant="ghost"
               size="icon-responsive"
-              onClick={() =>
-                open("edit-event", {
-                  eventId: id,
-                  name,
-                  description,
-                  date,
-                  time,
-                  location,
-                  groupId,
-                  groups,
-                })
-              }
+              onClick={() => {
+                if (isRecurring) {
+                  open("edit-recurring-event", {
+                    eventId: id,
+                    eventName: name,
+                    eventDate: formatDate(eventDate, { includeWeekday: false }),
+                    isRecurring,
+                    recurrenceId: recurrenceId ?? undefined,
+                    recurrenceRule: recurrenceRule ?? undefined,
+                    onSingleEdit: () => {
+                      // For single edit, just edit this specific event
+                      open("edit-event", {
+                        eventId: id,
+                        name,
+                        description,
+                        date,
+                        time,
+                        location,
+                        groupId,
+                        groups,
+                      });
+                    },
+                    onSeriesEdit: () => {
+                      // For series edit, pass a flag to indicate we're editing all in series
+                      open("edit-event", {
+                        eventId: id,
+                        name,
+                        description,
+                        date,
+                        time,
+                        location,
+                        groupId,
+                        groups,
+                        editAllInSeries: true,
+                        recurrenceId: recurrenceId ?? undefined,
+                      });
+                    },
+                  });
+                } else {
+                  open("edit-event", {
+                    eventId: id,
+                    name,
+                    description,
+                    date,
+                    time,
+                    location,
+                    groupId,
+                    groups,
+                  });
+                }
+              }}
               className="text-muted-foreground hover:text-primary"
               aria-label="Edit Event"
             >
@@ -200,9 +245,36 @@ export function EventCard({
           <Button
             variant="ghost"
             size="icon-responsive"
-            onClick={() =>
-              open("delete-event", { eventId: id, eventName: name })
-            }
+            onClick={() => {
+              if (isRecurring) {
+                open("delete-recurring-event", {
+                  eventId: id,
+                  eventName: name,
+                  eventDate: formatDate(eventDate, { includeWeekday: false }),
+                  isRecurring,
+                  recurrenceId: recurrenceId ?? undefined,
+                  onSingleDelete: () => {
+                    // Delete only this event
+                    open("delete-event", {
+                      eventId: id,
+                      eventName: name,
+                      isRecurring: false,
+                    });
+                  },
+                  onSeriesDelete: () => {
+                    // Delete all events in the series
+                    open("delete-event", {
+                      eventId: id,
+                      eventName: name,
+                      isRecurring: true,
+                      recurrenceId: recurrenceId ?? undefined,
+                    });
+                  },
+                });
+              } else {
+                open("delete-event", { eventId: id, eventName: name });
+              }
+            }}
             className="text-muted-foreground hover:text-destructive"
             aria-label="Delete Event"
           >

@@ -204,16 +204,19 @@ export async function createRecurringEventAction(
 
     const eventData = eventValidation.data;
     const timezone = session.user.timezone || "UTC";
-    const eventDateTime = createEventDateTime(
-      eventData.date,
-      eventData.time,
-      timezone
-    );
 
     // If recurrence is not enabled, create a single event
     if (!validatedRecurrence?.enabled) {
       return createEventAction(eventData);
     }
+
+    // Parse the date and time to create a local datetime
+    const [year, month, day] = eventData.date.split("-").map(Number);
+    const [hour, minute] = eventData.time.split(":").map(Number);
+
+    // Create a date in the user's local time (not UTC)
+    // This ensures RRule generates occurrences at the same local time
+    const localStartDate = new Date(year, month - 1, day, hour, minute, 0);
 
     // Generate recurrence rule
     const frequencyMap: Record<string, Frequency> = {
@@ -225,7 +228,7 @@ export async function createRecurringEventAction(
     const rruleOptions: Partial<RRuleOptions> = {
       freq: frequencyMap[validatedRecurrence.frequency],
       interval: validatedRecurrence.interval || 1,
-      dtstart: eventDateTime,
+      dtstart: localStartDate,
     };
 
     // Add end condition
@@ -248,9 +251,6 @@ export async function createRecurringEventAction(
     ) {
       rruleOptions.byweekday = validatedRecurrence.weekDays.map(
         (day: number) => {
-          // RRule uses different day numbering: MO=0, TU=1, ..., SU=6
-          // JavaScript uses: SU=0, MO=1, ..., SA=6
-          // Convert JavaScript to RRule format
           return day === 0 ? 6 : day - 1;
         }
       );
@@ -263,13 +263,13 @@ export async function createRecurringEventAction(
     const maxDate = new Date(
       threeMonthsFromNow.getFullYear(),
       threeMonthsFromNow.getMonth() + 1,
-      0, 
+      0,
       23,
       59,
       59,
-      999,
+      999
     );
-    const occurrences = rrule.between(eventDateTime, maxDate, true);
+    const occurrences = rrule.between(localStartDate, maxDate, true);
 
     // Limit to max 52 occurrences for safety
     const limitedOccurrences = occurrences.slice(0, 52);
@@ -284,11 +284,26 @@ export async function createRecurringEventAction(
 
       for (let i = 0; i < limitedOccurrences.length; i++) {
         const occurrence = limitedOccurrences[i];
+
+        // Extract the date from the occurrence
+        const occurrenceDate = new Date(occurrence);
+        const year = occurrenceDate.getFullYear();
+        const month = occurrenceDate.getMonth() + 1;
+        const day = occurrenceDate.getDate();
+        const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+        // Always use the same time from the template, adjusted for the specific date's timezone
+        const eventDateTimeUTC = createEventDateTime(
+          dateStr,
+          eventData.time,
+          timezone
+        );
+
         const createdEvent = await tx.event.create({
           data: {
             name: eventData.name,
             description: eventData.description,
-            date: occurrence,
+            date: eventDateTimeUTC,
             location: eventData.location,
             color: eventData.color,
             groupId: eventData.groupId,
@@ -673,7 +688,10 @@ export async function voteNoLocationOptionAction(
   }
 }
 
-export async function deleteEventAction(eventId: string) {
+export async function deleteEventAction(
+  eventId: string,
+  deleteAllInSeries = false
+) {
   const session = await getSession();
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
@@ -681,13 +699,44 @@ export async function deleteEventAction(eventId: string) {
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
-    select: { createdBy: true },
+    select: {
+      createdBy: true,
+      isRecurring: true,
+      recurrenceId: true,
+    },
   });
 
   if (!event || event.createdBy !== session.user.id) {
     return { error: "You don't have permission to delete this event." };
   }
 
+  // If deleting all in series and this is a recurring event
+  if (deleteAllInSeries && event.isRecurring && event.recurrenceId) {
+    // Delete all events in the series
+    const eventsToDelete = await prisma.event.findMany({
+      where: {
+        recurrenceId: event.recurrenceId,
+        createdBy: session.user.id,
+      },
+      select: { id: true },
+    });
+
+    const eventIds = eventsToDelete.map((e) => e.id);
+
+    // Delete all attendees for all events in the series
+    await prisma.eventAttendee.deleteMany({
+      where: { eventId: { in: eventIds } },
+    });
+
+    // Delete all events in the series
+    await prisma.event.deleteMany({
+      where: { id: { in: eventIds } },
+    });
+
+    return { success: true, deletedCount: eventIds.length };
+  }
+
+  // Delete single event (or non-recurring event)
   await prisma.eventAttendee.deleteMany({
     where: { eventId },
   });
@@ -696,12 +745,13 @@ export async function deleteEventAction(eventId: string) {
     where: { id: eventId },
   });
 
-  return { success: true };
+  return { success: true, deletedCount: 1 };
 }
 
 export async function editEventAction(
   eventId: string,
-  values: CreateEventValues
+  values: CreateEventValues,
+  editAllInSeries = false
 ) {
   try {
     const session = await getSession();
@@ -714,6 +764,9 @@ export async function editEventAction(
       select: {
         createdBy: true,
         groupId: true,
+        isRecurring: true,
+        recurrenceId: true,
+        date: true,
       },
     });
 
@@ -726,6 +779,68 @@ export async function editEventAction(
       validatedValues;
 
     const timezone = session.user.timezone || "UTC";
+
+    // If editing all in series and this is a recurring event
+    if (
+      editAllInSeries &&
+      existingEvent.isRecurring &&
+      existingEvent.recurrenceId
+    ) {
+      // Get all future events in the series (including this one)
+      const eventsToUpdate = await prisma.event.findMany({
+        where: {
+          recurrenceId: existingEvent.recurrenceId,
+          createdBy: session.user.id,
+          date: { gte: existingEvent.date }, // Only update this event and future ones
+        },
+        orderBy: { date: "asc" },
+      });
+
+      // Calculate the date shift if the date has changed
+      const originalEventDate = new Date(existingEvent.date);
+      const newEventDate = new Date(date + "T" + time);
+      const daysDifference = Math.round(
+        (newEventDate.getTime() - originalEventDate.getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+
+      // Update all events in the series
+      const updatedEvents = await prisma.$transaction(async (tx) => {
+        const results = [];
+        for (const event of eventsToUpdate) {
+          // For each event, shift the date by the same amount of days
+          const eventDate = new Date(event.date);
+          const shiftedDate = new Date(eventDate);
+          shiftedDate.setDate(shiftedDate.getDate() + daysDifference);
+
+          const year = shiftedDate.getFullYear();
+          const month = shiftedDate.getMonth() + 1;
+          const day = shiftedDate.getDate();
+          const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+          // Use the new time from the form for all events
+          const eventDateTime = createEventDateTime(dateStr, time, timezone);
+
+          const updated = await tx.event.update({
+            where: { id: event.id },
+            data: {
+              name,
+              description: description || null,
+              location: location || null,
+              date: eventDateTime,
+              color: color || "#3b82f6",
+              groupId: groupId || null,
+            },
+          });
+          results.push(updated);
+        }
+        return results;
+      });
+
+      return { success: true, updatedCount: updatedEvents.length };
+    }
+
+    // Single event edit (original code)
     const eventDateTime = createEventDateTime(date, time, timezone);
 
     const updatedEvent = await prisma.event.update({
@@ -812,9 +927,6 @@ export async function moveEventToDateAction(
       where: { id: eventId },
       data: { date: preserved },
     });
-
-    revalidatePath("/calendar");
-    revalidatePath("/events");
 
     return { success: true };
   } catch (error) {

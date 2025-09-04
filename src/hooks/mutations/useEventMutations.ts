@@ -15,6 +15,7 @@ import { adminEditEventAction } from "@/app/(main)/admin/actions";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
 import { CreateEventValues } from "@/validations/events/createEventSchema";
 import type { CalendarResponse } from "@/hooks/queries/useCalendar";
+import type { EventsResponse } from "@/hooks/queries/useEvents";
 import { z } from "zod";
 import { createReccuringEventSchema } from "@/validations/events/createReccuringEventSchema";
 
@@ -90,18 +91,25 @@ export function useEditEvent() {
     mutationFn: async ({
       eventId,
       values,
+      editAllInSeries = false,
     }: {
       eventId: string;
       values: CreateEventValues;
+      editAllInSeries?: boolean;
     }) => {
-      const result = await editEventAction(eventId, values);
+      const result = await editEventAction(eventId, values, editAllInSeries);
       if (result?.error) {
         throw new Error(result.error);
       }
       return result;
     },
-    onSuccess: () => {
-      toast.success("Event updated successfully!");
+    onSuccess: (data) => {
+      const count = (data as { updatedCount?: number })?.updatedCount;
+      if (count && count > 1) {
+        toast.success(`Updated ${count} events in the series!`);
+      } else {
+        toast.success("Event updated successfully!");
+      }
       // Invalidate events data to show updated event
       queryClient.invalidateQueries({ queryKey: ["events"] });
       // Invalidate calendar data to show updated event
@@ -120,26 +128,87 @@ export function useDeleteEvent() {
   const queryClient = useQueryClient();
   const { invalidateDashboard } = useDashboardInvalidation();
 
-  return useMutation({
-    mutationFn: async (eventId: string) => {
-      const result = await deleteEventAction(eventId);
+  return useMutation<
+    { success?: boolean; deletedCount?: number; error?: string } | undefined,
+    Error,
+    { eventId: string; deleteAllInSeries?: boolean; recurrenceId?: string },
+    { previousEvents?: unknown; previousCalendar?: unknown }
+  >({
+    mutationFn: async ({ eventId, deleteAllInSeries = false }) => {
+      const result = await deleteEventAction(eventId, deleteAllInSeries);
       if (result?.error) {
         throw new Error(result.error);
       }
       return result;
     },
-    onSuccess: () => {
-      toast.success("Event deleted");
-      // Invalidate events data to remove deleted event
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      // Invalidate calendar data to remove deleted event
-      queryClient.invalidateQueries({ queryKey: ["calendar"] });
+    onMutate: async ({ eventId, deleteAllInSeries, recurrenceId }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["events"] });
+      await queryClient.cancelQueries({ queryKey: ["calendar"] });
+
+      // Snapshot the previous values
+      const previousEvents = queryClient.getQueryData(["events"]);
+      const previousCalendar = queryClient.getQueryData(["calendar"]);
+
+      // Optimistically update events list
+      queryClient.setQueryData<EventsResponse>(["events"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          events: old.events.filter((event) => {
+            if (deleteAllInSeries && recurrenceId) {
+              // Remove all events with the same recurrenceId
+              return event.recurrenceId !== recurrenceId;
+            }
+            // Remove single event
+            return event.id !== eventId;
+          }),
+        };
+      });
+
+      // Optimistically update calendar
+      queryClient.setQueryData<CalendarResponse>(["calendar"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          events: old.events.filter((event) => {
+            if (deleteAllInSeries && recurrenceId) {
+              // Remove all events with the same recurrenceId
+              return event.recurrenceId !== recurrenceId;
+            }
+            // Remove single event
+            return event.id !== eventId;
+          }),
+        };
+      });
+
+      return { previousEvents, previousCalendar };
+    },
+    onSuccess: (data) => {
+      const count = data?.deletedCount || 1;
+      if (count > 1) {
+        toast.success(`${count} events deleted from the series`);
+      } else {
+        toast.success("Event deleted");
+      }
       // Invalidate dashboard stats to update event counts
       invalidateDashboard();
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousEvents) {
+        queryClient.setQueryData(["events"], context.previousEvents);
+      }
+      if (context?.previousCalendar) {
+        queryClient.setQueryData(["calendar"], context.previousCalendar);
+      }
       console.error("Delete event error:", error);
       toast.error(error.message || "Failed to delete event");
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["calendar"] });
     },
   });
 }

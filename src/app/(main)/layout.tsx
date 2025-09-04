@@ -71,6 +71,16 @@ const DeleteTemplateModal = lazy(() =>
     default: m.DeleteTemplateModal,
   }))
 );
+const EditRecurringEventModal = lazy(() =>
+  import("./events/_components/EditRecurringEventModal").then((m) => ({
+    default: m.EditRecurringEventModal,
+  }))
+);
+const DeleteRecurringEventModal = lazy(() =>
+  import("./events/_components/DeleteRecurringEventModal").then((m) => ({
+    default: m.DeleteRecurringEventModal,
+  }))
+);
 
 export default function MainLayout({
   children,
@@ -123,6 +133,12 @@ export default function MainLayout({
       </Suspense>
       <Suspense fallback={null}>
         <DeleteTemplateModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <EditRecurringEventModal />
+      </Suspense>
+      <Suspense fallback={null}>
+        <DeleteRecurringEventModal />
       </Suspense>
     </>
   );

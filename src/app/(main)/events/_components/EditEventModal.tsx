@@ -32,6 +32,7 @@ export default function EditEventModal() {
         }
         onSuccess={close}
         isAdmin={data?.isAdmin}
+        editAllInSeries={data?.editAllInSeries}
       />
     </GenericModal>
   );

@@ -152,6 +152,9 @@ export function EventsClient() {
                 createdByCurrentUser={event.createdBy === user?.id}
                 disabled={title === "Past Events"}
                 isFavorited={event.isFavorited}
+                isRecurring={event.isRecurring}
+                recurrenceId={event.recurrenceId}
+                recurrenceRule={event.recurrenceRule}
               />
             </AnimatedListItem>
           ))}
@@ -251,6 +254,9 @@ export function EventsClient() {
                   createdByCurrentUser={event.createdBy === user?.id}
                   disabled={new Date(event.date) < new Date()}
                   isFavorited={true}
+                  isRecurring={event.isRecurring}
+                  recurrenceId={event.recurrenceId}
+                  recurrenceRule={event.recurrenceRule}
                 />
               </AnimatedListItem>
             ))}

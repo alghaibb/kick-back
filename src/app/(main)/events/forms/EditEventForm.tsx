@@ -36,6 +36,7 @@ interface EditEventFormProps {
   groups: { id: string; name: string }[];
   onSuccess?: () => void;
   isAdmin?: boolean;
+  editAllInSeries?: boolean;
 }
 
 export default function EditEventForm({
@@ -44,6 +45,7 @@ export default function EditEventForm({
   groups,
   onSuccess,
   isAdmin = false,
+  editAllInSeries = false,
 }: EditEventFormProps) {
   const editEventMutation = useEditEvent();
   const adminEditEventMutation = useAdminEditEvent();
@@ -57,7 +59,7 @@ export default function EditEventForm({
     const mutation = isAdmin ? adminEditEventMutation : editEventMutation;
 
     mutation.mutate(
-      { eventId, values },
+      { eventId, values, editAllInSeries },
       {
         onSuccess: () => {
           onSuccess?.();
