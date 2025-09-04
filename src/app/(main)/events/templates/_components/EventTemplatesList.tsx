@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { useEventTemplates } from "@/hooks/queries/useEventTemplates";
 import { useDeleteEventTemplate } from "@/hooks/mutations/useEventTemplateMutations";
 import { format } from "date-fns";
+import { formatTime } from "@/lib/date-utils";
 import {
   Bookmark,
   MoreHorizontal,
@@ -211,7 +212,7 @@ export function EventTemplatesList() {
                 {template.time && (
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    {template.time}
+                    {formatTime(template.time)}
                   </div>
                 )}
                 {template.location && (

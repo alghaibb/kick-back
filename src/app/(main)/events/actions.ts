@@ -18,6 +18,9 @@ import { generateToken } from "@/utils/tokens";
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limiter";
 import { notifyEventInvite } from "@/lib/notification-triggers";
+import { RRule, Frequency, Options as RRuleOptions } from "rrule";
+import { addMonths } from "date-fns";
+import { createReccuringEventSchema } from "@/validations/events/createReccuringEventSchema";
 import {
   suggestLocationOptionSchema,
   voteLocationOptionSchema,
@@ -164,6 +167,203 @@ export async function createEventAction(values: CreateEventValues) {
       return { error: err.message || "Database error" };
     }
     return { error: err?.message || "An error occurred. Please try again." };
+  }
+}
+
+// Type for recurring event values combining base event and recurrence
+type CreateRecurringEventValues = CreateEventValues & {
+  recurrence?: z.infer<typeof createReccuringEventSchema>;
+};
+
+export async function createRecurringEventAction(
+  values: CreateRecurringEventValues
+) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" };
+    }
+
+    // Validate base event fields
+    const { recurrence, ...baseEventValues } = values;
+    const eventValidation = createEventSchema.safeParse(baseEventValues);
+    if (!eventValidation.success) {
+      return { error: "Invalid event fields" };
+    }
+
+    // Validate recurrence fields if provided
+    let validatedRecurrence = recurrence;
+    if (recurrence) {
+      const recurrenceValidation =
+        createReccuringEventSchema.safeParse(recurrence);
+      if (!recurrenceValidation.success) {
+        return { error: "Invalid recurrence fields" };
+      }
+      validatedRecurrence = recurrenceValidation.data;
+    }
+
+    const eventData = eventValidation.data;
+    const timezone = session.user.timezone || "UTC";
+    const eventDateTime = createEventDateTime(
+      eventData.date,
+      eventData.time,
+      timezone
+    );
+
+    // If recurrence is not enabled, create a single event
+    if (!validatedRecurrence?.enabled) {
+      return createEventAction(eventData);
+    }
+
+    // Generate recurrence rule
+    const frequencyMap: Record<string, Frequency> = {
+      daily: RRule.DAILY,
+      weekly: RRule.WEEKLY,
+      monthly: RRule.MONTHLY,
+    };
+
+    const rruleOptions: Partial<RRuleOptions> = {
+      freq: frequencyMap[validatedRecurrence.frequency],
+      interval: validatedRecurrence.interval || 1,
+      dtstart: eventDateTime,
+    };
+
+    // Add end condition
+    if (
+      validatedRecurrence.endType === "after" &&
+      validatedRecurrence.endAfter
+    ) {
+      rruleOptions.count = validatedRecurrence.endAfter;
+    } else if (
+      validatedRecurrence.endType === "on" &&
+      validatedRecurrence.endDate
+    ) {
+      rruleOptions.until = new Date(validatedRecurrence.endDate);
+    }
+
+    // Add weekdays for weekly recurrence
+    if (
+      validatedRecurrence.frequency === "weekly" &&
+      validatedRecurrence.weekDays
+    ) {
+      rruleOptions.byweekday = validatedRecurrence.weekDays.map(
+        (day: number) => {
+          // RRule uses different day numbering: MO=0, TU=1, ..., SU=6
+          // JavaScript uses: SU=0, MO=1, ..., SA=6
+          // Convert JavaScript to RRule format
+          return day === 0 ? 6 : day - 1;
+        }
+      );
+    }
+
+    const rrule = new RRule(rruleOptions);
+    const rruleString = rrule.toString();
+
+    const threeMonthsFromNow = addMonths(new Date(), 3);
+    const maxDate = new Date(
+      threeMonthsFromNow.getFullYear(),
+      threeMonthsFromNow.getMonth() + 1,
+      0, 
+      23,
+      59,
+      59,
+      999,
+    );
+    const occurrences = rrule.between(eventDateTime, maxDate, true);
+
+    // Limit to max 52 occurrences for safety
+    const limitedOccurrences = occurrences.slice(0, 52);
+
+    // Generate a unique recurrence ID for this series
+    const recurrenceId = `rec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Create all events in a transaction
+    const events = await prisma.$transaction(async (tx) => {
+      type CreatedEvent = Awaited<ReturnType<typeof tx.event.create>>;
+      const createdEvents: CreatedEvent[] = [];
+
+      for (let i = 0; i < limitedOccurrences.length; i++) {
+        const occurrence = limitedOccurrences[i];
+        const createdEvent = await tx.event.create({
+          data: {
+            name: eventData.name,
+            description: eventData.description,
+            date: occurrence,
+            location: eventData.location,
+            color: eventData.color,
+            groupId: eventData.groupId,
+            createdBy: session.user.id,
+            isRecurring: true,
+            recurrenceId,
+            recurrenceRule: i === 0 ? rruleString : null,
+            recurrenceEndDate:
+              validatedRecurrence.endType === "on" &&
+              validatedRecurrence.endDate
+                ? new Date(validatedRecurrence.endDate)
+                : null,
+            parentEventId: i === 0 ? null : createdEvents[0]?.id, // First event is parent
+            attendees: {
+              create: {
+                userId: session.user.id,
+                rsvpStatus: "yes",
+                rsvpAt: new Date(),
+              },
+            },
+          },
+          include: {
+            group: true,
+            attendees: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        });
+
+        createdEvents.push(createdEvent);
+      }
+
+      return createdEvents;
+    });
+
+    // Notify about the first event only
+    if (events[0] && eventData.groupId) {
+      const groupMembers = await prisma.groupMember.findMany({
+        where: { groupId: eventData.groupId },
+        select: { userId: true },
+      });
+
+      const group = await prisma.group.findUnique({
+        where: { id: eventData.groupId },
+        select: { name: true },
+      });
+
+      if (group) {
+        await notifyEventCreated({
+          eventId: events[0].id,
+          eventName: events[0].name,
+          creatorName: session.user.firstName || session.user.email,
+          groupId: eventData.groupId,
+          groupName: group.name,
+          groupMemberIds: groupMembers
+            .filter((m) => m.userId !== session.user.id)
+            .map((m) => m.userId),
+        });
+      }
+    }
+
+    revalidatePath("/events");
+    revalidatePath("/calendar");
+
+    return {
+      success: true,
+      eventId: events[0]?.id,
+      count: events.length,
+      message: `Created ${events.length} recurring events`,
+    };
+  } catch (error) {
+    console.error("Create recurring event error:", error);
+    return { error: "Failed to create recurring events" };
   }
 }
 

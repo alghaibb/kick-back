@@ -206,6 +206,11 @@ model Event {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   inviteLink  String?
+  recurrenceRule    String?         
+  recurrenceId      String?         
+  recurrenceEndDate DateTime?       
+  isRecurring       Boolean         @default(false)
+  parentEventId     String?         
   attendees   EventAttendee[]
   comments    EventComment[]
   favorites   EventFavorite[]
@@ -213,12 +218,17 @@ model Event {
   group       Group?          @relation(fields: [groupId], references: [id])
   EventInvite EventInvite[]
   EventPoll   EventPoll[]
+  parentEvent       Event?          @relation("EventRecurrence", fields: [parentEventId], references: [id])
+  childEvents       Event[]         @relation("EventRecurrence")
+  exceptions        RecurrenceException[]
 
   @@index([createdBy])
   @@index([date])
   @@index([groupId])
   @@index([date, createdBy])
   @@index([groupId, date])
+  @@index([recurrenceId])
+  @@index([parentEventId])
   @@map("events")
 }
 
@@ -347,6 +357,23 @@ model EventFavorite {
   @@index([userId])
   @@index([userId, createdAt])
   @@map("event_favorites")
+}
+
+model RecurrenceException {
+  id              String    @id @default(cuid())
+  eventId         String    
+  recurrenceId    String    
+  originalDate    DateTime  
+  isCancelled     Boolean   @default(false)
+  modifiedEventId String?   
+  createdAt       DateTime  @default(now())
+  
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  @@index([recurrenceId])
+  @@index([eventId])
+  @@index([originalDate])
+  @@map("recurrence_exceptions")
 }
 
 model Notification {

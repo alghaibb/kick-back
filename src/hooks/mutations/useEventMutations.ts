@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   createEventAction,
+  createRecurringEventAction,
   editEventAction,
   deleteEventAction,
   leaveEventAction,
@@ -14,6 +15,8 @@ import { adminEditEventAction } from "@/app/(main)/admin/actions";
 import { useDashboardInvalidation } from "@/hooks/queries/useDashboardInvalidation";
 import { CreateEventValues } from "@/validations/events/createEventSchema";
 import type { CalendarResponse } from "@/hooks/queries/useCalendar";
+import { z } from "zod";
+import { createReccuringEventSchema } from "@/validations/events/createReccuringEventSchema";
 
 export function useCreateEvent() {
   const queryClient = useQueryClient();
@@ -39,6 +42,42 @@ export function useCreateEvent() {
     onError: (error: Error) => {
       console.error("Create event error:", error);
       toast.error(error.message || "Failed to create event");
+    },
+  });
+}
+
+type RecurringEventValues = CreateEventValues & {
+  recurrence?: z.infer<typeof createReccuringEventSchema>;
+};
+
+export function useCreateRecurringEvent() {
+  const queryClient = useQueryClient();
+  const { invalidateDashboard } = useDashboardInvalidation();
+
+  return useMutation({
+    mutationFn: async (values: RecurringEventValues) => {
+      const result = await createRecurringEventAction(values);
+      if ("error" in result && result.error) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onSuccess: (data) => {
+      if ("count" in data && data.count && data.count > 1) {
+        toast.success(`Created ${data.count} recurring events successfully!`);
+      } else {
+        toast.success("Event created successfully!");
+      }
+      // Invalidate events data to show new events
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate calendar data to show new events
+      queryClient.invalidateQueries({ queryKey: ["calendar"] });
+      // Invalidate dashboard stats to update event counts
+      invalidateDashboard();
+    },
+    onError: (error: Error) => {
+      console.error("Create recurring event error:", error);
+      toast.error(error.message || "Failed to create recurring events");
     },
   });
 }

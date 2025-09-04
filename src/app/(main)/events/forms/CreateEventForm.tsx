@@ -28,10 +28,13 @@ import {
 import { useMemo, useState } from "react";
 import { EnhancedLoadingButton } from "@/components/ui/enhanced-loading-button";
 import { useModal } from "@/hooks/use-modal";
-import { useCreateEvent } from "@/hooks/mutations/useEventMutations";
+import {
+  useCreateEvent,
+  useCreateRecurringEvent,
+} from "@/hooks/mutations/useEventMutations";
 import { useEventTemplates } from "@/hooks/queries/useEventTemplates";
 import { useCreateEventTemplate } from "@/hooks/mutations/useEventTemplateMutations";
-import { Bookmark, Clock, MapPin } from "lucide-react";
+import { Bookmark, Clock, MapPin, Repeat } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -43,6 +46,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SmartLoader } from "@/components/ui/loading-animations";
 import { ColorPicker } from "@/components/ui/color-picker";
+import {
+  RecurrencePicker,
+  RecurrenceConfig,
+} from "@/components/ui/recurrence-picker";
+import { formatTime } from "@/lib/date-utils";
 
 interface CreateEventFormProps {
   groups: { id: string; name: string }[];
@@ -57,8 +65,15 @@ export function CreateEventForm({
 }: CreateEventFormProps) {
   const [groups] = useState(initialGroups);
   const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false);
+  const [recurrenceConfig, setRecurrenceConfig] = useState<RecurrenceConfig>({
+    enabled: false,
+    frequency: "weekly",
+    interval: 1,
+    endType: "never",
+  });
   const modal = useModal();
   const createEventMutation = useCreateEvent();
+  const createRecurringEventMutation = useCreateRecurringEvent();
   const createTemplateMutation = useCreateEventTemplate();
   const { data: templates = [], isLoading: templatesLoading } =
     useEventTemplates();
@@ -87,38 +102,99 @@ export function CreateEventForm({
   });
 
   function onSubmit(values: CreateEventValues) {
-    createEventMutation.mutate(values, {
-      onSuccess: () => {
-        if (showSaveAsTemplate) {
-          createTemplateMutation.mutate({
-            name: `${values.name} Template`,
-            description: values.description,
-            location: values.location,
-            time: values.time,
-            color: values.color,
-            groupId: values.groupId,
+    // Use recurring mutation if recurrence is enabled
+    if (recurrenceConfig.enabled) {
+      // Convert recurrence config to match backend schema
+      const recurrence = {
+        enabled: recurrenceConfig.enabled,
+        frequency: recurrenceConfig.frequency as "daily" | "weekly" | "monthly",
+        interval: recurrenceConfig.interval,
+        endType: recurrenceConfig.endType,
+        endAfter: recurrenceConfig.endAfter,
+        endDate: recurrenceConfig.endDate
+          ? recurrenceConfig.endDate.toISOString().split("T")[0]
+          : undefined,
+        weekDays: recurrenceConfig.weekDays,
+      };
+      const recurringValues = {
+        ...values,
+        recurrence,
+      };
+      createRecurringEventMutation.mutate(recurringValues, {
+        onSuccess: () => {
+          if (showSaveAsTemplate) {
+            createTemplateMutation.mutate({
+              name: `${values.name} Template`,
+              description: values.description,
+              location: values.location,
+              time: values.time,
+              color: values.color,
+              groupId: values.groupId,
+            });
+          }
+          form.reset();
+          setShowSaveAsTemplate(false);
+          setRecurrenceConfig({
+            enabled: false,
+            frequency: "weekly",
+            interval: 1,
+            endType: "never",
           });
-        }
-        form.reset();
-        setShowSaveAsTemplate(false);
-        onSuccess?.();
-      },
-    });
+          onSuccess?.();
+        },
+      });
+    } else {
+      createEventMutation.mutate(values, {
+        onSuccess: () => {
+          if (showSaveAsTemplate) {
+            createTemplateMutation.mutate({
+              name: `${values.name} Template`,
+              description: values.description,
+              location: values.location,
+              time: values.time,
+              color: values.color,
+              groupId: values.groupId,
+            });
+          }
+          form.reset();
+          setShowSaveAsTemplate(false);
+          onSuccess?.();
+        },
+      });
+    }
   }
 
   function loadTemplate(templateId: string) {
     const template = templates.find((t) => t.id === templateId);
     if (!template) return;
 
-    form.setValue("name", template.name);
-    form.setValue("description", template.description || "");
-    form.setValue("location", template.location || "");
-    form.setValue("time", template.time || "");
+    // Set all template values with proper options to notify form state
+    form.setValue("name", template.name, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    form.setValue("description", template.description || "", {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    form.setValue("location", template.location || "", {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    form.setValue("time", template.time || "", {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    });
     form.setValue(
       "color",
-      "color" in template ? (template.color as string) || "#3b82f6" : "#3b82f6"
+      "color" in template ? (template.color as string) || "#3b82f6" : "#3b82f6",
+      { shouldValidate: true, shouldDirty: true }
     );
-    form.setValue("groupId", template.groupId || undefined);
+    form.setValue("groupId", template.groupId || undefined, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   }
 
   return (
@@ -175,7 +251,7 @@ export function CreateEventForm({
                 {selectedTemplate?.time && (
                   <span className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    {selectedTemplate.time}
+                    {formatTime(selectedTemplate.time)}
                   </span>
                 )}
                 {selectedTemplate?.location && (
@@ -279,6 +355,22 @@ export function CreateEventForm({
           )}
         />
 
+        {/* Only show recurrence picker after date is selected */}
+        {form.watch("date") ? (
+          <div className="space-y-2">
+            <RecurrencePicker
+              value={recurrenceConfig}
+              onChange={setRecurrenceConfig}
+              eventDate={new Date(form.watch("date"))}
+            />
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+            <Repeat className="mx-auto mb-2 h-6 w-6 opacity-50" />
+            Select a date first to set up recurring events
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="groupId"
@@ -333,11 +425,20 @@ export function CreateEventForm({
 
         <EnhancedLoadingButton
           type="submit"
-          loading={createEventMutation.isPending}
+          loading={
+            createEventMutation.isPending ||
+            createRecurringEventMutation.isPending
+          }
           action="create"
-          loadingText="Creating Event..."
+          loadingText={
+            recurrenceConfig.enabled
+              ? "Creating Recurring Events..."
+              : "Creating Event..."
+          }
         >
-          Create Event
+          {recurrenceConfig.enabled
+            ? "Create Recurring Events"
+            : "Create Event"}
         </EnhancedLoadingButton>
       </form>
     </Form>

@@ -51,3 +51,32 @@ export const formatDate = (
 
   return dateObj.toLocaleString(locale, formatOptions);
 };
+
+export const formatTime = (
+  time: string,
+  options: {
+    format?: "12" | "24";
+    locale?: string;
+  } = {}
+) => {
+  const { format = "12", locale = "en-US" } = options;
+
+  if (!time || !time.includes(":")) return time;
+
+  const [hoursStr, minutes] = time.split(":");
+  const hours = parseInt(hoursStr, 10);
+
+  if (isNaN(hours)) return time;
+
+  // Create a date object with the time
+  const date = new Date();
+  date.setHours(hours, parseInt(minutes, 10), 0, 0);
+
+  const formatOptions: Intl.DateTimeFormatOptions = {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: format === "12",
+  };
+
+  return date.toLocaleTimeString(locale, formatOptions);
+};
