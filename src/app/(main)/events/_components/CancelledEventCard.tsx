@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { formatDate } from "@/lib/date-utils";
+import { Badge } from "@/components/ui/badge";
+import { Repeat } from "lucide-react";
 import {
   Calendar,
   MapPin,
@@ -26,7 +28,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { useModal } from "@/hooks/use-modal";
 import { useReenableEvent } from "@/hooks/mutations/useEventMutations";
 
@@ -36,11 +37,14 @@ interface CancelledEventCardProps {
   description?: string;
   date: string;
   time?: string;
+  timezone?: string;
   location?: string;
   groupId?: string;
   groups: { id: string; name: string; image?: string }[];
   createdByCurrentUser: boolean;
   isRecurring: boolean;
+  recurrenceId?: string | null;
+  recurrenceRule?: string | null;
   cancelledDate?: string;
 }
 
@@ -50,11 +54,14 @@ export function CancelledEventCard({
   description,
   date,
   time,
+  timezone,
   location,
   groupId,
   groups,
   createdByCurrentUser,
   isRecurring,
+  recurrenceId,
+  recurrenceRule,
   cancelledDate,
 }: CancelledEventCardProps) {
   const { open } = useModal();
@@ -87,6 +94,39 @@ export function CancelledEventCard({
     });
   };
 
+  // Parse recurrence rule for display
+  const getRecurrenceInfo = () => {
+    if (!recurrenceRule) return null;
+
+    try {
+      // Simple parsing for common recurrence patterns
+      if (recurrenceRule.includes("FREQ=WEEKLY")) {
+        const byDay = recurrenceRule.match(/BYDAY=([^;]+)/)?.[1];
+        if (byDay) {
+          const days = byDay.split(",").map((day) => {
+            const dayMap: Record<string, string> = {
+              MO: "Mon",
+              TU: "Tue",
+              WE: "Wed",
+              TH: "Thu",
+              FR: "Fri",
+              SA: "Sat",
+              SU: "Sun",
+            };
+            return dayMap[day] || day;
+          });
+          return `Weekly on ${days.join(", ")}`;
+        }
+        return "Weekly";
+      }
+      if (recurrenceRule.includes("FREQ=DAILY")) return "Daily";
+      if (recurrenceRule.includes("FREQ=MONTHLY")) return "Monthly";
+    } catch (error) {
+      console.error("Failed to parse recurrence rule:", error);
+    }
+    return "Recurring Event";
+  };
+
   return (
     <Card className="group relative overflow-hidden border-orange-200/50 dark:border-orange-800/50 bg-gradient-to-br from-orange-50/30 to-red-50/30 dark:from-orange-950/10 dark:to-red-950/10">
       <CardHeader className="pb-3">
@@ -99,6 +139,17 @@ export function CancelledEventCard({
               <CardDescription className="mt-1 line-clamp-2">
                 {description}
               </CardDescription>
+            )}
+            {isRecurring && (
+              <div className="mt-2">
+                <Badge
+                  variant="secondary"
+                  className="flex items-center gap-1 text-xs w-fit"
+                >
+                  <Repeat className="h-3 w-3" />
+                  Recurring
+                </Badge>
+              </div>
             )}
           </div>
 
@@ -121,6 +172,30 @@ export function CancelledEventCard({
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Re-enable Event
               </DropdownMenuItem>
+
+              {isRecurring && createdByCurrentUser && recurrenceId && (
+                <DropdownMenuItem
+                  onClick={() =>
+                    open("edit-recurring-event", {
+                      eventId: id,
+                      eventName: name,
+                      isRecurring: true,
+                      recurrenceId: recurrenceId || undefined,
+                      recurrenceRule: recurrenceRule || undefined,
+                      eventDate: date,
+                      onSingleEdit: handleReenable,
+                      onSeriesEdit: () => {
+                        // TODO: Implement series re-enable functionality
+                        console.log("Re-enable entire series");
+                      },
+                    })
+                  }
+                  className="text-blue-600 dark:text-blue-400"
+                >
+                  <Repeat className="h-4 w-4 mr-2" />
+                  Manage Series
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handlePermanentDelete}
@@ -141,7 +216,11 @@ export function CancelledEventCard({
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4 flex-shrink-0" />
             <span>
-              {formatDate(eventDate, { includeTime: false })} at {time || "TBD"}
+              {formatDate(eventDate, {
+                includeTime: false,
+                timeZone: timezone,
+              })}{" "}
+              at {time || "TBD"}
             </span>
           </div>
 
@@ -158,6 +237,13 @@ export function CancelledEventCard({
               <span>{group.name}</span>
             </div>
           )}
+
+          {isRecurring && getRecurrenceInfo() && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Repeat className="h-4 w-4 flex-shrink-0" />
+              <span>{getRecurrenceInfo()}</span>
+            </div>
+          )}
         </div>
 
         {/* Cancelled Status */}
@@ -171,15 +257,6 @@ export function CancelledEventCard({
                 : "recently"}
             </span>
           </div>
-
-          {isRecurring && (
-            <Badge
-              variant="outline"
-              className="text-xs border-orange-300 text-orange-700 dark:text-orange-300"
-            >
-              Recurring
-            </Badge>
-          )}
         </div>
 
         {/* Action Buttons */}

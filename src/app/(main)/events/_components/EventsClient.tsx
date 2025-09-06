@@ -9,7 +9,7 @@ import {
   AnimatedList,
   AnimatedListItem,
 } from "@/components/ui/list-animations";
-import { formatDate } from "@/lib/date-utils";
+import { formatDate, formatTime } from "@/lib/date-utils";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -312,11 +312,20 @@ export function EventsClient() {
                     name={event.name}
                     description={event.description || undefined}
                     date={event.date}
-                    time={formatDate(new Date(event.date), {
-                      includeTime: true,
-                    })
-                      .split(" ")
-                      .pop()}
+                    time={(() => {
+                      const dateObj = new Date(event.date);
+                      const hours = dateObj
+                        .getHours()
+                        .toString()
+                        .padStart(2, "0");
+                      const minutes = dateObj
+                        .getMinutes()
+                        .toString()
+                        .padStart(2, "0");
+                      return formatTime(`${hours}:${minutes}`, {
+                        format: "12",
+                      });
+                    })()}
                     location={event.location || undefined}
                     groupId={event.groupId || undefined}
                     groups={data?.groups || []}
