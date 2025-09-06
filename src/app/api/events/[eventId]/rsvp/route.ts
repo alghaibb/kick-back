@@ -49,7 +49,18 @@ export async function POST(
 
     // If user is creator but not an attendee, add them as an attendee first
     let attendeeRecord = eventAttendee;
-    if (!isAttendee && isCreator) {
+    if (!attendeeRecord && isCreator) {
+      attendeeRecord = await prisma.eventAttendee.create({
+        data: {
+          eventId,
+          userId: session.user.id,
+          rsvpStatus: "pending", 
+        },
+      });
+    }
+
+    // If still no attendee record (shouldn't happen for creators), create one
+    if (!attendeeRecord) {
       attendeeRecord = await prisma.eventAttendee.create({
         data: {
           eventId,
@@ -160,7 +171,7 @@ export async function GET(
     }
 
     // If user is creator but not an attendee, return default status
-    if (!isAttendee && isCreator) {
+    if (!attendee && isCreator) {
       return NextResponse.json({
         rsvpStatus: "yes", // Creators automatically say yes
         rsvpAt: null,

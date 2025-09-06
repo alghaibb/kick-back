@@ -16,7 +16,7 @@ import { motion } from "framer-motion";
 import { cardHoverVariants } from "@/lib/animationVariants";
 import { useToggleEventFavorite } from "@/hooks/mutations/useEventFavorites";
 import { toast } from "sonner";
-import { deleteSingleOccurrenceAction, cancelEventAction } from "../actions";
+import { deleteSingleOccurrenceAction } from "../actions";
 import { useCancelEvent } from "@/hooks/mutations/useEventMutations";
 
 interface EventCardProps {
@@ -293,6 +293,7 @@ export function EventCard({
                         );
                       }
                     } catch (error) {
+                      console.error("Error deleting single occurrence:", error);
                       toast.error("Failed to delete single occurrence");
                     }
                   },

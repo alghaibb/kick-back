@@ -316,7 +316,7 @@ export async function createRecurringEventAction(
               validatedRecurrence.endDate
                 ? new Date(validatedRecurrence.endDate)
                 : null,
-            parentEventId: i === 0 ? null : createdEvents[0]?.id, // First event is parent
+            parentEventId: i === 0 ? null : createdEvents[0]?.id,
             attendees: {
               create: {
                 userId: session.user.id,
@@ -327,11 +327,6 @@ export async function createRecurringEventAction(
           },
           include: {
             group: true,
-            attendees: {
-              include: {
-                user: true,
-              },
-            },
           },
         });
 

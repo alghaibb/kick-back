@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { formatDate } from "@/lib/date-utils";
-import { useAuth } from "@/hooks/use-auth";
 import {
   Calendar,
   MapPin,
@@ -40,11 +39,8 @@ interface CancelledEventCardProps {
   location?: string;
   groupId?: string;
   groups: { id: string; name: string; image?: string }[];
-  timezone: string;
   createdByCurrentUser: boolean;
   isRecurring: boolean;
-  recurrenceId?: string | null;
-  recurrenceRule?: string | null;
   cancelledDate?: string;
 }
 
@@ -57,14 +53,10 @@ export function CancelledEventCard({
   location,
   groupId,
   groups,
-  timezone,
   createdByCurrentUser,
   isRecurring,
-  recurrenceId,
-  recurrenceRule,
   cancelledDate,
 }: CancelledEventCardProps) {
-  const { user } = useAuth();
   const { open } = useModal();
   const reenableMutation = useReenableEvent();
 
