@@ -130,7 +130,7 @@ export function CancelRecurringEventModal() {
               <div>
                 <div className="font-medium">Cancel this event</div>
                 <div className="text-sm text-muted-foreground">
-                  Hide this occurrence from your calendar. You can re-enable it from the "Cancelled Events" tab.
+                  Hide this occurrence from your calendar. You can re-enable it from the &quot;Cancelled Events&quot; tab.
                 </div>
               </div>
             </div>

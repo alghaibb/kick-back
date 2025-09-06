@@ -896,7 +896,7 @@ export async function editEventAction(
             const lastOriginalDate = new Date(existingEvent.date);
 
             // Calculate the next Thursday after the current event
-            let nextThursday = new Date(lastOriginalDate);
+            const nextThursday = new Date(lastOriginalDate);
             nextThursday.setDate(nextThursday.getDate() + 7); // Next Thursday
 
             let eventsCreated = 0;
